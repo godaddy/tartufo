@@ -7,6 +7,7 @@ INSTALL_REQUIRES = [
 
 EXTRAS_REQUIRE = {
     'tests': [
+        'codecov',
         'coverage',
         'flake8',
         'nose',
@@ -14,9 +15,11 @@ EXTRAS_REQUIRE = {
         'nose-xunitmp',
         'pylint',
         'pyflakes',
+        'pytest-cov',
         'test',
         'tox',
         'twine',
+        'unittest2',
         'vulture',
         'wheel',
     ]

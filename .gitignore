@@ -8,7 +8,7 @@
 /.idea/
 
 # Python virtualenv
-/venv/
+/venv*/
 
 # Tox
 /.pip_cache/
