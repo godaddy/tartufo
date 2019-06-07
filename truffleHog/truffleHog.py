@@ -280,7 +280,7 @@ def handle_results(output, output_dir, found_issues):
         result_path = os.path.join(output_dir, str(uuid.uuid4()))
         with open(result_path, "w+") as result_file:
             result_file.write(json.dumps(found_issue))
-        output["found_issues"].append(result_path)
+        output["foundIssues"].append(result_path)
     return output
 
 
