@@ -47,8 +47,8 @@ class TestStringMethods(unittest.TestCase):
         # Redirect STDOUT, run scan and re-establish STDOUT
         sys.stdout = tmp_stdout
         try:
-            truffleHog.find_strings("https://github.com/dxa4481/truffleHog.git", 
-                since_commit=since_commit, printJson=True, surpress_output=False)
+            truffleHog.find_strings("https://github.com/dxa4481/truffleHog.git",
+                                    since_commit=since_commit, printJson=True, suppress_output=False)
         finally:
             sys.stdout = bak_stdout
 

@@ -1,23 +1,38 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
+from __future__ import print_function
+from __future__ import print_function
+from __future__ import print_function
+from __future__ import print_function
+from __future__ import print_function
+from __future__ import print_function
+from __future__ import print_function
+from __future__ import print_function
+from __future__ import print_function
+from __future__ import print_function
+from __future__ import print_function
+from __future__ import print_function
+from __future__ import print_function
 from __future__ import absolute_import
-import shutil
-import sys
-import math
-import datetime
+
 import argparse
-import uuid
+import datetime
 import hashlib
-import tempfile
+import json
+import math
 import os
 import re
-import json
+import shutil
 import stat
-from git import Repo
-from git import NULL_TREE
-from truffleHogRegexes.regexChecks import regexes
+import sys
+import tempfile
+import uuid
 
+from git import NULL_TREE
+from git import Repo
+from truffleHogRegexes.regexChecks import regexes
 
 
 def main():
@@ -27,7 +42,8 @@ def main():
     parser.add_argument("--rules", dest="rules", help="Ignore default regexes and source from json list file")
     parser.add_argument("--entropy", dest="do_entropy", help="Enable entropy checks")
     parser.add_argument("--since_commit", dest="since_commit", help="Only scan from a given commit hash")
-    parser.add_argument("--max_depth", dest="max_depth", help="The max commit depth to go back when searching for secrets")
+    parser.add_argument("--max_depth", dest="max_depth",
+                        help="The max commit depth to go back when searching for secrets")
     parser.add_argument("--branch", dest="branch", help="Name of the branch to be scanned")
     parser.add_argument('-i', '--include_paths', type=argparse.FileType('r'), metavar='INCLUDE_PATHS_FILE',
                         help='File with regular expressions (one per line), at least one of which must match a Git '
@@ -39,7 +55,8 @@ def main():
                              'in order for it to be scanned; lines starting with "#" are treated as comments and are '
                              'ignored. If empty or not provided (default), no Git object paths are excluded unless '
                              'effectively excluded via the --include_paths option.')
-    parser.add_argument("--repo_path", type=str, dest="repo_path", help="Path to the cloned repo. If provided, git_url will not be used")
+    parser.add_argument("--repo_path", type=str, dest="repo_path",
+                        help="Path to the cloned repo. If provided, git_url will not be used")
     parser.add_argument("--cleanup", dest="cleanup", action="store_true", help="Clean up all temporary result files")
     parser.add_argument('git_url', type=str, help='URL for secret searching')
     parser.set_defaults(regex=False)
@@ -59,7 +76,7 @@ def main():
                 for rule in rules:
                     rules[rule] = re.compile(rules[rule])
         except (IOError, ValueError) as e:
-            raise("Error reading rules file")
+            raise Exception("Error reading rules file: {}".format(e))
         for regex in dict(regexes):
             del regexes[regex]
         for regex in rules:
@@ -79,8 +96,8 @@ def main():
                 path_exclusions.append(re.compile(pattern))
 
     output = find_strings(args.git_url, args.since_commit, args.max_depth, args.output_json, args.do_regex, do_entropy,
-            surpress_output=False, branch=args.branch, repo_path=args.repo_path, path_inclusions=path_inclusions, path_exclusions=path_exclusions)
-    project_path = output["project_path"]
+                          suppress_output=False, branch=args.branch, repo_path=args.repo_path,
+                          path_inclusions=path_inclusions, path_exclusions=path_exclusions)
     if args.cleanup:
         clean_up(output)
     if output["foundIssues"]:
@@ -88,8 +105,9 @@ def main():
     else:
         sys.exit(0)
 
+
 def str2bool(v):
-    if v == None:
+    if v is None:
         return True
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
@@ -102,9 +120,11 @@ def str2bool(v):
 BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
 HEX_CHARS = "1234567890abcdefABCDEF"
 
-def del_rw(action, name, exc):
+
+def del_rw(name):
     os.chmod(name, stat.S_IWRITE)
     os.remove(name)
+
 
 def shannon_entropy(data, iterator):
     """
@@ -114,9 +134,9 @@ def shannon_entropy(data, iterator):
         return 0
     entropy = 0
     for x in iterator:
-        p_x = float(data.count(x))/len(data)
+        p_x = float(data.count(x)) / len(data)
         if p_x > 0:
-            entropy += - p_x*math.log(p_x, 2)
+            entropy += - p_x * math.log(p_x, 2)
     return entropy
 
 
@@ -137,6 +157,7 @@ def get_strings_of_set(word, char_set, threshold=20):
         strings.append(letters)
     return strings
 
+
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -147,10 +168,15 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+    def __init__(self, name):
+        self.name = name
+
+
 def clone_git_repo(git_url):
     project_path = tempfile.mkdtemp()
     Repo.clone_from(git_url, project_path)
     return project_path
+
 
 def print_results(printJson, issue):
     commit_time = issue['date']
@@ -188,7 +214,8 @@ def print_results(printJson, issue):
             print(printableDiff.encode('utf-8'))
         print("~~~~~~~~~~~~~~~~~~~~~")
 
-def find_entropy(printableDiff, commit_time, branch_name, prev_commit, blob, commitHash):
+
+def find_entropy(printableDiff, commit_time, branch_name, prev_commit, blob):
     stringsFound = []
     lines = printableDiff.split("\n")
     for line in lines:
@@ -207,19 +234,16 @@ def find_entropy(printableDiff, commit_time, branch_name, prev_commit, blob, com
                     printableDiff = printableDiff.replace(string, bcolors.WARNING + string + bcolors.ENDC)
     entropicDiff = None
     if len(stringsFound) > 0:
-        entropicDiff = {}
-        entropicDiff['date'] = commit_time
-        entropicDiff['path'] = blob.b_path if blob.b_path else blob.a_path
-        entropicDiff['branch'] = branch_name
-        entropicDiff['commit'] = prev_commit.message
-        entropicDiff['diff'] = blob.diff.decode('utf-8', errors='replace')
-        entropicDiff['stringsFound'] = stringsFound
-        entropicDiff['printDiff'] = printableDiff
-        entropicDiff['commitHash'] = prev_commit.hexsha
-        entropicDiff['reason'] = "High Entropy"
+        entropicDiff = {'date': commit_time, 'path': blob.b_path if blob.b_path else blob.a_path, 'branch': branch_name,
+                        'commit': prev_commit.message, 'diff': blob.diff.decode('utf-8', errors='replace'),
+                        'stringsFound': stringsFound, 'printDiff': printableDiff, 'commitHash': prev_commit.hexsha,
+                        'reason': "High Entropy"}
     return entropicDiff
 
-def regex_check(printableDiff, commit_time, branch_name, prev_commit, blob, commitHash, custom_regexes={}):
+
+def regex_check(printableDiff, commit_time, branch_name, prev_commit, blob, custom_regexes=None):
+    if custom_regexes is None:
+        custom_regexes = {}
     if custom_regexes:
         secret_regexes = custom_regexes
     else:
@@ -230,41 +254,38 @@ def regex_check(printableDiff, commit_time, branch_name, prev_commit, blob, comm
         for found_string in found_strings:
             found_diff = printableDiff.replace(printableDiff, bcolors.WARNING + found_string + bcolors.ENDC)
         if found_strings:
-            foundRegex = {}
-            foundRegex['date'] = commit_time
-            foundRegex['path'] = blob.b_path if blob.b_path else blob.a_path
-            foundRegex['branch'] = branch_name
-            foundRegex['commit'] = prev_commit.message
-            foundRegex['diff'] = blob.diff.decode('utf-8', errors='replace')
-            foundRegex['stringsFound'] = found_strings
-            foundRegex['printDiff'] = found_diff
-            foundRegex['reason'] = key
-            foundRegex['commitHash'] = prev_commit.hexsha
+            foundRegex = {'date': commit_time, 'path': blob.b_path if blob.b_path else blob.a_path,
+                          'branch': branch_name, 'commit': prev_commit.message,
+                          'diff': blob.diff.decode('utf-8', errors='replace'), 'stringsFound': found_strings,
+                          'printDiff': found_diff, 'reason': key, 'commitHash': prev_commit.hexsha}
             regex_matches.append(foundRegex)
     return regex_matches
 
-def diff_worker(diff, curr_commit, prev_commit, branch_name, commitHash, custom_regexes, do_entropy, do_regex, printJson, surpress_output, path_inclusions, path_exclusions):
+
+def diff_worker(diff, prev_commit, branch_name, custom_regexes, do_entropy, do_regex,
+                printJson, surpress_output, path_inclusions, path_exclusions):
     issues = []
     for blob in diff:
-        printableDiff = blob.diff.decode('utf-8', errors='replace')
-        if printableDiff.startswith("Binary files"):
+        printable_diff = blob.diff.decode('utf-8', errors='replace')
+        if printable_diff.startswith("Binary files"):
             continue
         if not path_included(blob, path_inclusions, path_exclusions):
             continue
-        commit_time =  datetime.datetime.fromtimestamp(prev_commit.committed_date).strftime('%Y-%m-%d %H:%M:%S')
-        foundIssues = []
+        commit_time = datetime.datetime.fromtimestamp(prev_commit.committed_date).strftime('%Y-%m-%d %H:%M:%S')
+        found_issues = []
         if do_entropy:
-            entropicDiff = find_entropy(printableDiff, commit_time, branch_name, prev_commit, blob, commitHash)
-            if entropicDiff:
-                foundIssues.append(entropicDiff)
+            entropic_diff = find_entropy(printable_diff, commit_time, branch_name, prev_commit, blob)
+            if entropic_diff:
+                found_issues.append(entropic_diff)
         if do_regex:
-            found_regexes = regex_check(printableDiff, commit_time, branch_name, prev_commit, blob, commitHash, custom_regexes)
-            foundIssues += found_regexes
+            found_regexes = regex_check(printable_diff, commit_time, branch_name, prev_commit, blob, custom_regexes)
+            found_issues += found_regexes
         if not surpress_output:
-            for foundIssue in foundIssues:
+            for foundIssue in found_issues:
                 print_results(printJson, foundIssue)
-        issues += foundIssues
+        issues += found_issues
     return issues
+
 
 def handle_results(output, output_dir, foundIssues):
     for foundIssue in foundIssues:
@@ -273,6 +294,7 @@ def handle_results(output, output_dir, foundIssues):
             result_file.write(json.dumps(foundIssue))
         output["foundIssues"].append(result_path)
     return output
+
 
 def path_included(blob, include_patterns=None, exclude_patterns=None):
     """Check if the diff blob object should included in analysis.
@@ -300,8 +322,11 @@ def path_included(blob, include_patterns=None, exclude_patterns=None):
     return True
 
 
-def find_strings(git_url, since_commit=None, max_depth=1000000, printJson=False, do_regex=False, do_entropy=True, surpress_output=True,
-                custom_regexes={}, branch=None, repo_path=None, path_inclusions=None, path_exclusions=None):
+def find_strings(git_url, since_commit=None, max_depth=1000000, printJson=False, do_regex=False, do_entropy=True,
+                 suppress_output=True, custom_regexes=None, branch=None, repo_path=None, path_inclusions=None,
+                 path_exclusions=None):
+    if custom_regexes is None:
+        custom_regexes = {}
     output = {"foundIssues": []}
     if repo_path:
         project_path = repo_path
@@ -320,6 +345,7 @@ def find_strings(git_url, since_commit=None, max_depth=1000000, printJson=False,
         since_commit_reached = False
         branch_name = remote_branch.name
         prev_commit = None
+        curr_commit = None
         for curr_commit in repo.iter_commits(branch_name, max_count=max_depth):
             commitHash = curr_commit.hexsha
             if commitHash == since_commit:
@@ -341,12 +367,17 @@ def find_strings(git_url, since_commit=None, max_depth=1000000, printJson=False,
                 diff = prev_commit.diff(curr_commit, create_patch=True)
             # avoid searching the same diffs
             already_searched.add(diff_hash)
-            foundIssues = diff_worker(diff, curr_commit, prev_commit, branch_name, commitHash, custom_regexes, do_entropy, do_regex, printJson, surpress_output, path_inclusions, path_exclusions)
+            foundIssues = diff_worker(diff, prev_commit, branch_name, custom_regexes,
+                                      do_entropy, do_regex, printJson, suppress_output, path_inclusions,
+                                      path_exclusions)
             output = handle_results(output, output_dir, foundIssues)
             prev_commit = curr_commit
+        if curr_commit is None:
+            raise Exception("No initial commit found")
         # Handling the first commit
         diff = curr_commit.diff(NULL_TREE, create_patch=True)
-        foundIssues = diff_worker(diff, curr_commit, prev_commit, branch_name, commitHash, custom_regexes, do_entropy, do_regex, printJson, surpress_output, path_inclusions, path_exclusions)
+        foundIssues = diff_worker(diff, prev_commit, branch_name, custom_regexes, do_entropy,
+                                  do_regex, printJson, suppress_output, path_inclusions, path_exclusions)
         output = handle_results(output, output_dir, foundIssues)
     output["project_path"] = project_path
     output["clone_uri"] = git_url
@@ -355,11 +386,13 @@ def find_strings(git_url, since_commit=None, max_depth=1000000, printJson=False,
         shutil.rmtree(project_path, onerror=del_rw)
     return output
 
+
 def clean_up(output):
     print("Whhaat")
     issues_path = output.get("issues_path", None)
     if issues_path and os.path.isdir(issues_path):
         shutil.rmtree(output["issues_path"])
+
 
 if __name__ == "__main__":
     main()

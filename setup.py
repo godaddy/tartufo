@@ -5,15 +5,7 @@ INSTALL_REQUIRES = [
     'truffleHogRegexes == 0.0.7'
 ]
 
-DATABASE_REQUIRES = [
-]
-
-INTERNAL_REQUIRES = [
-                    ] + DATABASE_REQUIRES
-
 EXTRAS_REQUIRE = {
-    'database': DATABASE_REQUIRES,
-    'internal': INTERNAL_REQUIRES,
     'tests': [
         'coverage',
         'flake8',
@@ -29,7 +21,6 @@ EXTRAS_REQUIRE = {
         'wheel',
     ]
 }
-EXTRAS_REQUIRE['tests'].extend(EXTRAS_REQUIRE['internal'])
 
 setup(
     name='gd-truffleHog',
