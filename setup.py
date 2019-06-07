@@ -10,6 +10,8 @@ EXTRAS_REQUIRE = {
         'codecov',
         'coverage',
         'flake8',
+        'mock',
+        'mypy>=0.670,<1; platform_python_implementation == "CPython"',
         'nose',
         'nose-timer',
         'nose-xunitmp',
@@ -20,7 +22,6 @@ EXTRAS_REQUIRE = {
         'tox',
         'twine',
         'unittest2',
-        'vulture',
         'wheel',
     ]
 }

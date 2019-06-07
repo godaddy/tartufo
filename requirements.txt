@@ -1,1 +1,6 @@
+# Explicit requirements for searchOrg.py
+truffleHogRegexes
+requests
+
+# All requirements for truffleHog via setup.py
 -e .

@@ -1,22 +1,24 @@
-import unittest
-import os
-import sys
-import json
 import io
+import json
+import os
 import re
+import sys
+import unittest
 from collections import namedtuple
-from truffleHog import truffleHog
-from mock import patch 
+
 from mock import MagicMock
+from mock import patch
+
+from truffleHog import truffleHog
 
 
 class TestStringMethods(unittest.TestCase):
 
     def test_shannon(self):
-        random_stringB64 = "ZWVTjPQSdhwRgl204Hc51YCsritMIzn8B=/p9UyeX7xu6KkAGqfm3FJ+oObLDNEva"
-        random_stringHex = "b3A0a1FDfe86dcCE945B72" 
-        self.assertGreater(truffleHog.shannon_entropy(random_stringB64, truffleHog.BASE64_CHARS), 4.5)
-        self.assertGreater(truffleHog.shannon_entropy(random_stringHex, truffleHog.HEX_CHARS), 3)
+        random_string_b64 = "ZWVTjPQSdhwRgl204Hc51YCsritMIzn8B=/p9UyeX7xu6KkAGqfm3FJ+oObLDNEva"
+        random_string_hex = "b3A0a1FDfe86dcCE945B72"
+        self.assertGreater(truffleHog.shannon_entropy(random_string_b64, truffleHog.BASE64_CHARS), 4.5)
+        self.assertGreater(truffleHog.shannon_entropy(random_string_hex, truffleHog.HEX_CHARS), 3)
 
     def test_cloning(self):
         project_path = truffleHog.clone_git_repo("https://github.com/dxa4481/truffleHog.git")
@@ -30,14 +32,13 @@ class TestStringMethods(unittest.TestCase):
             self.fail("Unicode print error")
 
     def test_return_correct_commit_hash(self):
-        # Start at commit d15627104d07846ac2914a976e8e347a663bbd9b, which 
+        # Start at commit d15627104d07846ac2914a976e8e347a663bbd9b, which
         # is immediately followed by a secret inserting commit:
         # https://github.com/dxa4481/truffleHog/commit/9ed54617547cfca783e0f81f8dc5c927e3d1e345
         since_commit = 'd15627104d07846ac2914a976e8e347a663bbd9b'
         commit_w_secret = '9ed54617547cfca783e0f81f8dc5c927e3d1e345'
         cross_valdiating_commit_w_secret_comment = 'OH no a secret'
 
-        json_result = ''
         if sys.version_info >= (3,):
             tmp_stdout = io.StringIO()
         else:
@@ -48,7 +49,7 @@ class TestStringMethods(unittest.TestCase):
         sys.stdout = tmp_stdout
         try:
             truffleHog.find_strings("https://github.com/dxa4481/truffleHog.git",
-                                    since_commit=since_commit, printJson=True, suppress_output=False)
+                                    since_commit=since_commit, print_json=True, suppress_output=False)
         finally:
             sys.stdout = bak_stdout
 
@@ -63,11 +64,12 @@ class TestStringMethods(unittest.TestCase):
     @patch('truffleHog.truffleHog.clone_git_repo')
     @patch('truffleHog.truffleHog.Repo')
     @patch('shutil.rmtree')
-    def test_branch(self, rmtree_mock, repo_const_mock, clone_git_repo):
+    def test_branch(self, repo_const_mock):
         repo = MagicMock()
         repo_const_mock.return_value = repo
         truffleHog.find_strings("test_repo", branch="testbranch")
         repo.remotes.origin.fetch.assert_called_once_with("testbranch")
+
     def test_path_included(self):
         Blob = namedtuple('Blob', ('a_path', 'b_path'))
         blobs = {
@@ -100,8 +102,9 @@ class TestStringMethods(unittest.TestCase):
             self.assertFalse(truffleHog.path_included(blob,
                                                       include_patterns=all_paths_patterns,
                                                       exclude_patterns=all_paths_patterns),
-                             '{} should be excluded with overlapping patterns: \n\tinclude: {}\n\texclude: {}'.format(
-                                 blob, all_paths_patterns, all_paths_patterns))
+                             '{blob} should be excluded with overlapping patterns: '
+                             '\n\tinclude: {include}\n\texclude: {exclude}'.format(
+                                 blob=blob, include=all_paths_patterns, exclude=all_paths_patterns))
             self.assertFalse(truffleHog.path_included(blob,
                                                       include_patterns=overlap_patterns,
                                                       exclude_patterns=all_paths_patterns),
@@ -120,7 +123,8 @@ class TestStringMethods(unittest.TestCase):
                                  '{}: exclusion should exclude sub directory paths: {}'.format(blob, sub_dirs_patterns))
             else:
                 self.assertFalse(truffleHog.path_included(blob, include_patterns=sub_dirs_patterns),
-                                 '{}: inclusion should exclude root directory paths: {}'.format(blob, sub_dirs_patterns))
+                                 '{}: inclusion should exclude root directory paths: {}'.format(blob,
+                                                                                                sub_dirs_patterns))
                 self.assertTrue(truffleHog.path_included(blob, exclude_patterns=sub_dirs_patterns),
                                 '{}: exclusion should include root directory paths: {}'.format(blob, sub_dirs_patterns))
             if name.startswith('deleted-file-'):
@@ -129,15 +133,14 @@ class TestStringMethods(unittest.TestCase):
                 self.assertFalse(truffleHog.path_included(blob, exclude_patterns=deleted_paths_patterns),
                                  '{}: exclusion should match deleted paths: {}'.format(blob, deleted_paths_patterns))
 
-
-
     @patch('truffleHog.truffleHog.clone_git_repo')
     @patch('truffleHog.truffleHog.Repo')
     @patch('shutil.rmtree')
-    def test_repo_path(self, rmtree_mock, repo_const_mock, clone_git_repo):
+    def test_repo_path(self, rmtree_mock, clone_git_repo):
         truffleHog.find_strings("test_repo", repo_path="test/path/")
         rmtree_mock.assert_not_called()
         clone_git_repo.assert_not_called()
+
 
 if __name__ == '__main__':
     unittest.main()
