@@ -3,3 +3,9 @@
 /truffleHog.egg-info/
 **/__pycache__/
 **/*.pyc
+
+# Intellij
+/.idea/
+
+# Python virtualenv
+/venv/
