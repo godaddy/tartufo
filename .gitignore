@@ -10,8 +10,9 @@
 # Python virtualenv
 /venv/
 
-# Linting/Testing
+# Tox
 /.pip_cache/
 /.tox/
 /gd_truffleHog.egg-info/
 /reports/
+/html-reports/

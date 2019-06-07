@@ -22,6 +22,7 @@ EXTRAS_REQUIRE = {
         'nose-xunitmp',
         'pylint',
         'pyflakes',
+        'test',
         'tox',
         'twine',
         'vulture',
