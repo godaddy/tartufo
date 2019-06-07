@@ -1,4 +1,34 @@
-from setuptools import setup, find_packages
+from setuptools import setup
+
+INSTALL_REQUIRES = [
+    'GitPython == 2.1.1',
+    'truffleHogRegexes == 0.0.7'
+]
+
+DATABASE_REQUIRES = [
+]
+
+INTERNAL_REQUIRES = [
+                    ] + DATABASE_REQUIRES
+
+EXTRAS_REQUIRE = {
+    'database': DATABASE_REQUIRES,
+    'internal': INTERNAL_REQUIRES,
+    'tests': [
+        'coverage',
+        'flake8',
+        'nose',
+        'nose-timer',
+        'nose-xunitmp',
+        'pylint',
+        'pyflakes',
+        'tox',
+        'twine',
+        'vulture',
+        'wheel',
+    ]
+}
+EXTRAS_REQUIRE['tests'].extend(EXTRAS_REQUIRE['internal'])
 
 setup(
     name='gd-truffleHog',
@@ -10,12 +40,11 @@ setup(
     maintainer='GoDaddy',
     maintainer_email='dev_common_services@godaddy.com',
     license='GNU',
-    packages = ['truffleHog'],
-    install_requires=[
-        'GitPython == 2.1.1',
-        'truffleHogRegexes == 0.0.7'
-    ],
-    entry_points = {
-      'console_scripts': ['trufflehog = truffleHog.truffleHog:main'],
+    packages=['truffleHog'],
+    install_requires=INSTALL_REQUIRES,
+    setup_requires='',
+    extras_require=EXTRAS_REQUIRE,
+    entry_points={
+        'console_scripts': ['trufflehog = truffleHog.truffleHog:main'],
     },
 )
