@@ -1,4 +1,19 @@
-from setuptools import setup, find_packages
+from setuptools import setup
+
+INSTALL_REQUIRES = [
+    'GitPython == 2.1.1',
+    'truffleHogRegexes == 0.0.7'
+]
+
+EXTRAS_REQUIRE = {
+    'tests': [
+        'unittest2 == 1.1.0',
+        'pytest-cov == 2.5.1',
+        'codecov == 2.0.15',
+        'pylint',
+        'mock'
+    ]
+}
 
 setup(
     name='truffleHog',
@@ -8,12 +23,11 @@ setup(
     author='Dylan Ayrey',
     author_email='dxa4481@rit.edu',
     license='GNU',
-    packages = ['truffleHog'],
-    install_requires=[
-        'GitPython == 2.1.1',
-        'truffleHogRegexes == 0.0.7'
-    ],
-    entry_points = {
-      'console_scripts': ['trufflehog = truffleHog.truffleHog:main'],
+    packages=['truffleHog'],
+    install_requires=INSTALL_REQUIRES,
+    setup_requires='',
+    extras_require=EXTRAS_REQUIRE,
+    entry_points={
+        'console_scripts': ['trufflehog = truffleHog.truffleHog:main'],
     },
 )

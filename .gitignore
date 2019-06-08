@@ -3,3 +3,7 @@
 /truffleHog.egg-info/
 **/__pycache__/
 **/*.pyc
+/venv*/
+
+# IDE
+/.idea/
