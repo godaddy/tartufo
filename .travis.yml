@@ -4,3 +4,4 @@ python:
   - "3.7"
 install: pip install -e .[tests]
 script: ./run_lints
+        pytest --cov=./ && codecov
