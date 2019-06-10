@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# Stops warning about module name
 # pylint: disable=C0103
 # pylint: enable=C0103
 
-from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import absolute_import
 
 import argparse
 import datetime
@@ -24,15 +25,15 @@ from git import Repo
 from truffleHogRegexes.regexChecks import regexes
 
 
-def main():  # noqa: C901
+def main():  # noqa:C901
     parser = argparse.ArgumentParser(description='Find secrets hidden in the depths of git.')
     parser.add_argument('--json', dest="output_json", action="store_true", help="Output in JSON")
     parser.add_argument("--regex", dest="do_regex", action="store_true", help="Enable high signal regex checks")
     parser.add_argument("--rules", dest="rules", help="Ignore default regexes and source from json list file")
     parser.add_argument("--entropy", dest="do_entropy", help="Enable entropy checks")
     parser.add_argument("--since_commit", dest="since_commit", help="Only scan from a given commit hash")
-    parser.add_argument("--max_depth", dest="max_depth",
-                        help="The max commit depth to go back when searching for secrets")
+    parser.add_argument("--max_depth", dest="max_depth", help="The max commit depth to go back when searching for "
+                                                              "secrets")
     parser.add_argument("--branch", dest="branch", help="Name of the branch to be scanned")
     parser.add_argument('-i', '--include_paths', type=argparse.FileType('r'), metavar='INCLUDE_PATHS_FILE',
                         help='File with regular expressions (one per line), at least one of which must match a Git '
@@ -44,10 +45,10 @@ def main():  # noqa: C901
                              'in order for it to be scanned; lines starting with "#" are treated as comments and are '
                              'ignored. If empty or not provided (default), no Git object paths are excluded unless '
                              'effectively excluded via the --include_paths option.')
-    parser.add_argument("--repo_path", type=str, dest="repo_path",
-                        help="Path to the cloned repo. If provided, git_url will not be used")
+    parser.add_argument("--repo_path", dest="repo_path", help="Path to the cloned repo. If provided, git_url "
+                                                              "will not be used")
     parser.add_argument("--cleanup", dest="cleanup", action="store_true", help="Clean up all temporary result files")
-    parser.add_argument('git_url', type=str, help='URL for secret searching')
+    parser.add_argument('git_url', help='URL for secret searching')
     parser.set_defaults(regex=False)
     parser.set_defaults(rules={})
     parser.set_defaults(max_depth=1000000)
@@ -63,8 +64,8 @@ def main():  # noqa: C901
                 rules = json.loads(rule_file.read())
                 for rule in rules:
                     rules[rule] = re.compile(rules[rule])
-        except (IOError, ValueError) as exception:
-            raise Exception("Error reading rules file: {}".format(exception))
+        except (IOError, ValueError):
+            raise Exception("Error reading rules file")
         for regex in dict(regexes):
             del regexes[regex]
         for regex in rules:
@@ -95,7 +96,10 @@ def main():  # noqa: C901
 
 
 def str2bool(v_string):
-    if v_string is None or v_string.lower() in ('yes', 'true', 't', 'y', '1'):
+    if v_string is None:
+        return True
+
+    if v_string.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
 
     if v_string.lower() in ('no', 'false', 'f', 'n', '0'):
@@ -108,7 +112,8 @@ BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/
 HEX_CHARS = "1234567890abcdefABCDEF"
 
 
-def del_rw(name):
+# noinspection PyUnusedLocal
+def del_rw(action, name, exc):  # pylint: disable=unused-argument
     os.chmod(name, stat.S_IWRITE)
     os.remove(name)
 
@@ -120,8 +125,8 @@ def shannon_entropy(data, iterator):
     if not data:
         return 0
     entropy = 0
-    for iter_indx in iterator:
-        p_x = float(data.count(iter_indx)) / len(data)
+    for inter_x in iterator:
+        p_x = float(data.count(inter_x)) / len(data)
         if p_x > 0:
             entropy += - p_x * math.log(p_x, 2)
     return entropy
@@ -145,7 +150,7 @@ def get_strings_of_set(word, char_set, threshold=20):
     return strings
 
 
-class Bcolors:
+class Bcolors():
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKGREEN = '\033[92m'
@@ -202,7 +207,9 @@ def print_results(print_json, issue):
         print("~~~~~~~~~~~~~~~~~~~~~")
 
 
-def find_entropy(printable_diff, commit_time, branch_name, prev_commit, blob):
+# noinspection PyUnusedLocal
+# pylint: disable=too-many-arguments,unused-argument
+def find_entropy(printable_diff, commit_time, branch_name, prev_commit, blob, commit_hash):
     strings_found = []
     lines = printable_diff.split("\n")
     for line in lines:
@@ -220,7 +227,7 @@ def find_entropy(printable_diff, commit_time, branch_name, prev_commit, blob):
                     strings_found.append(string)
                     printable_diff = printable_diff.replace(string, Bcolors.WARNING + string + Bcolors.ENDC)
     entropic_diff = None
-    if not strings_found:
+    if strings_found:
         entropic_diff = {'date': commit_time, 'path': blob.b_path if blob.b_path else blob.a_path,
                          'branch': branch_name, 'commit': prev_commit.message,
                          'diff': blob.diff.decode('utf-8', errors='replace'), 'stringsFound': strings_found,
@@ -228,9 +235,9 @@ def find_entropy(printable_diff, commit_time, branch_name, prev_commit, blob):
     return entropic_diff
 
 
-def regex_check(printable_diff, commit_time, branch_name, prev_commit, blob, custom_regexes=None):
-    if custom_regexes is None:
-        custom_regexes = {}
+# noinspection PyUnusedLocal
+# pylint: disable=too-many-arguments,unused-argument
+def regex_check(printable_diff, commit_time, branch_name, prev_commit, blob, commit_hash, custom_regexes=None):
     if custom_regexes:
         secret_regexes = custom_regexes
     else:
@@ -250,8 +257,10 @@ def regex_check(printable_diff, commit_time, branch_name, prev_commit, blob, cus
     return regex_matches
 
 
-def diff_worker(diff, prev_commit, branch_name, custom_regexes, do_entropy, do_regex,
-                print_json, suppress_output, path_inclusions, path_exclusions):
+# noinspection PyUnusedLocal
+# pylint: disable=too-many-arguments,unused-argument
+def diff_worker(diff, curr_commit, prev_commit, branch_name, commit_hash, custom_regexes, do_entropy, do_regex,
+                print_json, surpress_output, path_inclusions, path_exclusions):
     issues = []
     for blob in diff:
         printable_diff = blob.diff.decode('utf-8', errors='replace')
@@ -262,13 +271,14 @@ def diff_worker(diff, prev_commit, branch_name, custom_regexes, do_entropy, do_r
         commit_time = datetime.datetime.fromtimestamp(prev_commit.committed_date).strftime('%Y-%m-%d %H:%M:%S')
         found_issues = []
         if do_entropy:
-            entropic_diff = find_entropy(printable_diff, commit_time, branch_name, prev_commit, blob)
+            entropic_diff = find_entropy(printable_diff, commit_time, branch_name, prev_commit, blob, commit_hash)
             if entropic_diff:
                 found_issues.append(entropic_diff)
         if do_regex:
-            found_regexes = regex_check(printable_diff, commit_time, branch_name, prev_commit, blob, custom_regexes)
+            found_regexes = regex_check(printable_diff, commit_time, branch_name, prev_commit, blob, commit_hash,
+                                        custom_regexes)
             found_issues += found_regexes
-        if not suppress_output:
+        if not surpress_output:
             for found_issue in found_issues:
                 print_results(print_json, found_issue)
         issues += found_issues
@@ -310,11 +320,10 @@ def path_included(blob, include_patterns=None, exclude_patterns=None):
     return True
 
 
+# pylint: disable=too-many-arguments
 def find_strings(git_url, since_commit=None, max_depth=1000000, print_json=False, do_regex=False, do_entropy=True,
                  suppress_output=True, custom_regexes=None, branch=None, repo_path=None, path_inclusions=None,
                  path_exclusions=None):
-    if custom_regexes is None:
-        custom_regexes = {}
     output = {"foundIssues": []}
     if repo_path:
         project_path = repo_path
@@ -334,6 +343,7 @@ def find_strings(git_url, since_commit=None, max_depth=1000000, print_json=False
         branch_name = remote_branch.name
         prev_commit = None
         curr_commit = None
+        commit_hash = None
         for curr_commit in repo.iter_commits(branch_name, max_count=max_depth):
             commit_hash = curr_commit.hexsha
             if commit_hash == since_commit:
@@ -355,16 +365,14 @@ def find_strings(git_url, since_commit=None, max_depth=1000000, print_json=False
                 diff = prev_commit.diff(curr_commit, create_patch=True)
             # avoid searching the same diffs
             already_searched.add(diff_hash)
-            found_issues = diff_worker(diff, prev_commit, branch_name, custom_regexes,
+            found_issues = diff_worker(diff, curr_commit, prev_commit, branch_name, commit_hash, custom_regexes,
                                        do_entropy, do_regex, print_json, suppress_output, path_inclusions,
                                        path_exclusions)
             output = handle_results(output, output_dir, found_issues)
             prev_commit = curr_commit
-        if curr_commit is None:
-            raise Exception("No initial commit found")
         # Handling the first commit
         diff = curr_commit.diff(NULL_TREE, create_patch=True)
-        found_issues = diff_worker(diff, prev_commit, branch_name, custom_regexes, do_entropy,
+        found_issues = diff_worker(diff, curr_commit, prev_commit, branch_name, commit_hash, custom_regexes, do_entropy,
                                    do_regex, print_json, suppress_output, path_inclusions, path_exclusions)
         output = handle_results(output, output_dir, found_issues)
     output["project_path"] = project_path

@@ -37,7 +37,7 @@ class TestStringMethods(unittest.TestCase):
         # https://github.com/dxa4481/truffleHog/commit/9ed54617547cfca783e0f81f8dc5c927e3d1e345
         since_commit = 'd15627104d07846ac2914a976e8e347a663bbd9b'
         commit_w_secret = '9ed54617547cfca783e0f81f8dc5c927e3d1e345'
-        cross_valdiating_commit_w_secret_comment = 'OH no a secret'
+        xcheck_commit_w_scrt_comment = 'OH no a secret'
 
         if sys.version_info >= (3,):
             tmp_stdout = io.StringIO()
@@ -55,35 +55,36 @@ class TestStringMethods(unittest.TestCase):
 
         json_result_list = tmp_stdout.getvalue().split('\n')
         results = [json.loads(r) for r in json_result_list if bool(r.strip())]
-        filtered_results = list(filter(lambda r: r['commitHash'] == commit_w_secret, results))
+        filtered_results = [result for result in results if result['commitHash'] == commit_w_secret]
         self.assertEqual(1, len(filtered_results))
         self.assertEqual(commit_w_secret, filtered_results[0]['commitHash'])
         # Additionally, we cross-validate the commit comment matches the expected comment
-        self.assertEqual(cross_valdiating_commit_w_secret_comment, filtered_results[0]['commit'].strip())
+        self.assertEqual(xcheck_commit_w_scrt_comment, filtered_results[0]['commit'].strip())
 
+    # noinspection PyUnusedLocal
     @patch('truffleHog.truffleHog.clone_git_repo')
     @patch('truffleHog.truffleHog.Repo')
     @patch('shutil.rmtree')
-    def test_branch(self, rmtree_mock, repo_const_mock, clone_git_repo):
+    def test_branch(self, rmtree_mock, repo_const_mock, clone_git_repo):  # pylint: disable=unused-argument
         repo = MagicMock()
         repo_const_mock.return_value = repo
         truffleHog.find_strings("test_repo", branch="testbranch")
-        repo.remotes.origin.fetch.assert_called_once_with("testbranch")
+        self.assertIsNone(repo.remotes.origin.fetch.assert_called_once_with("testbranch"))
 
     def test_path_included(self):
-        Blob = namedtuple('Blob', ('a_path', 'b_path'))
+        blob = namedtuple('Blob', ('a_path', 'b_path'))
         blobs = {
-            'file-root-dir': Blob('file', 'file'),
-            'file-sub-dir': Blob('sub-dir/file', 'sub-dir/file'),
-            'new-file-root-dir': Blob(None, 'new-file'),
-            'new-file-sub-dir': Blob(None, 'sub-dir/new-file'),
-            'deleted-file-root-dir': Blob('deleted-file', None),
-            'deleted-file-sub-dir': Blob('sub-dir/deleted-file', None),
-            'renamed-file-root-dir': Blob('file', 'renamed-file'),
-            'renamed-file-sub-dir': Blob('sub-dir/file', 'sub-dir/renamed-file'),
-            'moved-file-root-dir-to-sub-dir': Blob('moved-file', 'sub-dir/moved-file'),
-            'moved-file-sub-dir-to-root-dir': Blob('sub-dir/moved-file', 'moved-file'),
-            'moved-file-sub-dir-to-sub-dir': Blob('sub-dir/moved-file', 'moved/moved-file'),
+            'file-root-dir': blob('file', 'file'),
+            'file-sub-dir': blob('sub-dir/file', 'sub-dir/file'),
+            'new-file-root-dir': blob(None, 'new-file'),
+            'new-file-sub-dir': blob(None, 'sub-dir/new-file'),
+            'deleted-file-root-dir': blob('deleted-file', None),
+            'deleted-file-sub-dir': blob('sub-dir/deleted-file', None),
+            'renamed-file-root-dir': blob('file', 'renamed-file'),
+            'renamed-file-sub-dir': blob('sub-dir/file', 'sub-dir/renamed-file'),
+            'moved-file-root-dir-to-sub-dir': blob('moved-file', 'sub-dir/moved-file'),
+            'moved-file-sub-dir-to-root-dir': blob('sub-dir/moved-file', 'moved-file'),
+            'moved-file-sub-dir-to-sub-dir': blob('sub-dir/moved-file', 'moved/moved-file'),
         }
         src_paths = set(blob.a_path for blob in blobs.values() if blob.a_path is not None)
         dest_paths = set(blob.b_path for blob in blobs.values() if blob.b_path is not None)
@@ -102,9 +103,9 @@ class TestStringMethods(unittest.TestCase):
             self.assertFalse(truffleHog.path_included(blob,
                                                       include_patterns=all_paths_patterns,
                                                       exclude_patterns=all_paths_patterns),
-                             '{blob} should be excluded with overlapping patterns: '
-                             '\n\tinclude: {include}\n\texclude: {exclude}'.format(
-                                 blob=blob, include=all_paths_patterns, exclude=all_paths_patterns))
+                             '{} should be excluded with overlapping patterns: \n\tinclude: '
+                             '{include_patterns}\n\texclude: {exclude_patterns}'.format(
+                                 blob, include_patterns=all_paths_patterns, exclude_patterns=all_paths_patterns))
             self.assertFalse(truffleHog.path_included(blob,
                                                       include_patterns=overlap_patterns,
                                                       exclude_patterns=all_paths_patterns),
@@ -133,13 +134,14 @@ class TestStringMethods(unittest.TestCase):
                 self.assertFalse(truffleHog.path_included(blob, exclude_patterns=deleted_paths_patterns),
                                  '{}: exclusion should match deleted paths: {}'.format(blob, deleted_paths_patterns))
 
+    # noinspection PyUnusedLocal
     @patch('truffleHog.truffleHog.clone_git_repo')
     @patch('truffleHog.truffleHog.Repo')
     @patch('shutil.rmtree')
-    def test_repo_path(self, rmtree_mock, repo_const_mock, clone_git_repo):
+    def test_repo_path(self, rmtree_mock, repo_const_mock, clone_git_repo):  # pylint: disable=unused-argument
         truffleHog.find_strings("test_repo", repo_path="test/path/")
-        rmtree_mock.assert_not_called()
-        clone_git_repo.assert_not_called()
+        self.assertIsNone(rmtree_mock.assert_not_called())
+        self.assertIsNone(clone_git_repo.assert_not_called())
 
 
 if __name__ == '__main__':
