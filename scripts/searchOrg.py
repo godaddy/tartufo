@@ -32,7 +32,7 @@ RULES = {
 }
 
 for key in RULES:
-    RULES[key] = re.compile(RULES[key])
+    RULES[key] = str(re.compile(RULES[key]))
 
 
 def get_org_repos(orgname, page):
@@ -43,7 +43,7 @@ def get_org_repos(orgname, page):
     for item in json:
 
         if item['fork'] is False:  # and reached:
-            print 'searching ' + item["html_url"]
+            print('searching ' + item["html_url"])
             results = truffleHog.find_strings(item["html_url"], do_regex=True, custom_regexes=RULES, do_entropy=False,
                                               max_depth=100000)
             for issue in results["foundIssues"]:
@@ -52,7 +52,7 @@ def get_org_repos(orgname, page):
                 data['github_commit_url'] = "{}/commit/{}".format(item["html_url"], data['commitHash'])
                 data['diff'] = data['diff'][0:200]
                 data['printDiff'] = data['printDiff'][0:200]
-                print dumps(data, indent=4)
+                print(dumps(data, indent=4))
     get_org_repos(orgname, page + 1)
 
 
