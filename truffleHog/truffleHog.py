@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# Stops warning about module name
+# pylint: disable=C0103
+# pylint: enable=C0103
 
 from __future__ import absolute_import
 
@@ -202,8 +205,8 @@ def print_results(print_json, issue):
 
 
 # noinspection PyUnusedLocal
-def find_entropy(printable_diff, commit_time, branch_name, prev_commit, blob,
-                 commit_hash):  # pylint: disable=too-many-arguments,unused-argument
+# pylint: disable=too-many-arguments,unused-argument
+def find_entropy(printable_diff, commit_time, branch_name, prev_commit, blob, commit_hash):
     strings_found = []
     lines = printable_diff.split("\n")
     for line in lines:
@@ -230,8 +233,8 @@ def find_entropy(printable_diff, commit_time, branch_name, prev_commit, blob,
 
 
 # noinspection PyUnusedLocal
-def regex_check(printable_diff, commit_time, branch_name, prev_commit, blob, commit_hash,
-                custom_regexes=None):  # pylint: disable=too-many-arguments,unused-argument
+# pylint: disable=too-many-arguments,unused-argument
+def regex_check(printable_diff, commit_time, branch_name, prev_commit, blob, commit_hash, custom_regexes=None):
     if custom_regexes:
         secret_regexes = custom_regexes
     else:
@@ -252,8 +255,8 @@ def regex_check(printable_diff, commit_time, branch_name, prev_commit, blob, com
 
 
 # noinspection PyUnusedLocal
+# pylint: disable=too-many-arguments,unused-argument
 def diff_worker(diff, curr_commit, prev_commit, branch_name, commit_hash, custom_regexes, do_entropy, do_regex,
-                # pylint: disable=too-many-arguments,unused-argument
                 print_json, surpress_output, path_inclusions, path_exclusions):
     issues = []
     for blob in diff:
@@ -314,10 +317,10 @@ def path_included(blob, include_patterns=None, exclude_patterns=None):
     return True
 
 
+# pylint: disable=too-many-arguments
 def find_strings(git_url, since_commit=None, max_depth=1000000, print_json=False, do_regex=False, do_entropy=True,
-                 # pylint: disable=too-many-arguments
-                 suppress_output=True,
-                 custom_regexes=None, branch=None, repo_path=None, path_inclusions=None, path_exclusions=None):
+                 suppress_output=True, custom_regexes=None, branch=None, repo_path=None, path_inclusions=None,
+                 path_exclusions=None):
     output = {"foundIssues": []}
     if repo_path:
         project_path = repo_path
