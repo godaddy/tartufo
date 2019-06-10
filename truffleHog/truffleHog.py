@@ -4,6 +4,7 @@
 # pylint: disable=C0103
 # pylint: enable=C0103
 
+from __future__ import print_function
 from __future__ import absolute_import
 
 import argparse
@@ -24,7 +25,7 @@ from git import Repo
 from truffleHogRegexes.regexChecks import regexes
 
 
-def main():
+def main():  # noqa:C901
     parser = argparse.ArgumentParser(description='Find secrets hidden in the depths of git.')
     parser.add_argument('--json', dest="output_json", action="store_true", help="Output in JSON")
     parser.add_argument("--regex", dest="do_regex", action="store_true", help="Enable high signal regex checks")
@@ -97,12 +98,14 @@ def main():
 def str2bool(v_string):
     if v_string is None:
         return True
+
     if v_string.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
-    elif v_string.lower() in ('no', 'false', 'f', 'n', '0'):
+
+    if v_string.lower() in ('no', 'false', 'f', 'n', '0'):
         return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
+
+    raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
 BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
@@ -147,7 +150,7 @@ def get_strings_of_set(word, char_set, threshold=20):
     return strings
 
 
-class Bcolors(object):
+class Bcolors():
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKGREEN = '\033[92m'
@@ -177,31 +180,31 @@ def print_results(print_json, issue):
     path = issue['path']
 
     if print_json:
-        print json.dumps(issue, sort_keys=True)
+        print(json.dumps(issue, sort_keys=True))
     else:
-        print "~~~~~~~~~~~~~~~~~~~~~"
+        print("~~~~~~~~~~~~~~~~~~~~~")
         reason = "{}Reason: {}{}".format(Bcolors.OKGREEN, reason, Bcolors.ENDC)
-        print reason
+        print(reason)
         date_str = "{}Date: {}{}".format(Bcolors.OKGREEN, commit_time, Bcolors.ENDC)
-        print date_str
+        print(date_str)
         hash_str = "{}Hash: {}{}".format(Bcolors.OKGREEN, commit_hash, Bcolors.ENDC)
-        print hash_str
+        print(hash_str)
         file_path = "{}Filepath: {}{}".format(Bcolors.OKGREEN, path, Bcolors.ENDC)
-        print file_path
+        print(file_path)
 
         if sys.version_info >= (3, 0):
             branch_str = "{}Branch: {}{}".format(Bcolors.OKGREEN, branch_name, Bcolors.ENDC)
-            print branch_str
+            print(branch_str)
             commit_str = "{}Commit: {}{}".format(Bcolors.OKGREEN, prev_commit, Bcolors.ENDC)
-            print commit_str
-            print printable_diff
+            print(commit_str)
+            print(printable_diff)
         else:
             branch_str = "{}Branch: {}{}".format(Bcolors.OKGREEN, branch_name.encode('utf-8'), Bcolors.ENDC)
-            print branch_str
+            print(branch_str)
             commit_str = "{}Commit: {}{}".format(Bcolors.OKGREEN, prev_commit.encode('utf-8'), Bcolors.ENDC)
-            print commit_str
-            print printable_diff.encode('utf-8')
-        print "~~~~~~~~~~~~~~~~~~~~~"
+            print(commit_str)
+            print(printable_diff.encode('utf-8'))
+        print("~~~~~~~~~~~~~~~~~~~~~")
 
 
 # noinspection PyUnusedLocal
@@ -381,7 +384,7 @@ def find_strings(git_url, since_commit=None, max_depth=1000000, print_json=False
 
 
 def clean_up(output):
-    print "Whhaat"
+    print("Whhaat")
     issues_path = output.get("issues_path", None)
     if issues_path and os.path.isdir(issues_path):
         shutil.rmtree(output["issues_path"])

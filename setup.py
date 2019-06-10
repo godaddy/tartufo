@@ -7,11 +7,22 @@ INSTALL_REQUIRES = [
 
 EXTRAS_REQUIRE = {
     'tests': [
-        'unittest2 == 1.1.0',
-        'pytest-cov == 2.5.1',
-        'codecov == 2.0.15',
+        'codecov',
+        'coverage',
+        'flake8',
+        'mock',
+        'mypy>=0.670,<1; platform_python_implementation == "CPython"',
+        'nose',
+        'nose-timer',
+        'nose-xunitmp',
         'pylint',
-        'mock'
+        'pyflakes',
+        'pytest-cov',
+        'test',
+        'tox',
+        'twine',
+        'unittest2',
+        'wheel',
     ]
 }
 

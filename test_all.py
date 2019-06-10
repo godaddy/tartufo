@@ -103,8 +103,9 @@ class TestStringMethods(unittest.TestCase):
             self.assertFalse(truffleHog.path_included(blob,
                                                       include_patterns=all_paths_patterns,
                                                       exclude_patterns=all_paths_patterns),
-                             '{} should be excluded with overlapping patterns: \n\tinclude: {}\n\texclude: {}'.format(
-                                 blob, all_paths_patterns, all_paths_patterns))
+                             '{} should be excluded with overlapping patterns: \n\tinclude: '
+                             '{include_patterns}\n\texclude: {exclude_patterns}'.format(
+                                 blob, include_patterns=all_paths_patterns, exclude_patterns=all_paths_patterns))
             self.assertFalse(truffleHog.path_included(blob,
                                                       include_patterns=overlap_patterns,
                                                       exclude_patterns=all_paths_patterns),

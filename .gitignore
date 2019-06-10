@@ -3,7 +3,17 @@
 /truffleHog.egg-info/
 **/__pycache__/
 **/*.pyc
+
+# Intellij
+/.idea/
+
+# Python virtualenv
 /venv*/
 
-# IDE
-/.idea/
+# Tox
+/.pip_cache/
+/.tox/
+/gd_truffleHog.egg-info/
+/reports/
+/html-reports/
+/.mypy_cache/

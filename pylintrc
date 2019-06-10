@@ -28,4 +28,4 @@ max-line-length=120
 [DESIGN]
 
 # Maximum number of arguments for function / method
-#max-args=14
+max-args=14
