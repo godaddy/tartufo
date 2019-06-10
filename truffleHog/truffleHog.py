@@ -41,10 +41,10 @@ def main():
                              'in order for it to be scanned; lines starting with "#" are treated as comments and are '
                              'ignored. If empty or not provided (default), no Git object paths are excluded unless '
                              'effectively excluded via the --include_paths option.')
-    parser.add_argument("--repo_path", type=str, dest="repo_path", help="Path to the cloned repo. If provided, git_url "
-                                                                        "will not be used")
+    parser.add_argument("--repo_path", dest="repo_path", help="Path to the cloned repo. If provided, git_url "
+                                                              "will not be used")
     parser.add_argument("--cleanup", dest="cleanup", action="store_true", help="Clean up all temporary result files")
-    parser.add_argument('git_url', type=str, help='URL for secret searching')
+    parser.add_argument('git_url', help='URL for secret searching')
     parser.set_defaults(regex=False)
     parser.set_defaults(rules={})
     parser.set_defaults(max_depth=1000000)
@@ -54,7 +54,6 @@ def main():
     parser.set_defaults(repo_path=None)
     parser.set_defaults(cleanup=False)
     args = parser.parse_args()
-    rules = {}
     if args.rules:
         try:
             with open(args.rules, "r") as rule_file:
@@ -62,7 +61,7 @@ def main():
                 for rule in rules:
                     rules[rule] = re.compile(rules[rule])
         except (IOError, ValueError):
-            raise "Error reading rules file"
+            raise Exception("Error reading rules file")
         for regex in dict(regexes):
             del regexes[regex]
         for regex in rules:
@@ -91,6 +90,7 @@ def main():
     else:
         sys.exit(0)
 
+
 def str2bool(v_string):
     if v_string is None:
         return True
@@ -106,6 +106,7 @@ BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/
 HEX_CHARS = "1234567890abcdefABCDEF"
 
 
+# noinspection PyUnusedLocal
 def del_rw(action, name, exc):  # pylint: disable=unused-argument
     os.chmod(name, stat.S_IWRITE)
     os.remove(name)
@@ -119,9 +120,9 @@ def shannon_entropy(data, iterator):
         return 0
     entropy = 0
     for inter_x in iterator:
-        p_x = float(data.count(inter_x))/len(data)
+        p_x = float(data.count(inter_x)) / len(data)
         if p_x > 0:
-            entropy += - p_x*math.log(p_x, 2)
+            entropy += - p_x * math.log(p_x, 2)
     return entropy
 
 
@@ -200,7 +201,9 @@ def print_results(print_json, issue):
         print "~~~~~~~~~~~~~~~~~~~~~"
 
 
-def find_entropy(printable_diff, commit_time, branch_name, prev_commit, blob, commit_hash):  # pylint: disable=too-many-arguments,unused-argument
+# noinspection PyUnusedLocal
+def find_entropy(printable_diff, commit_time, branch_name, prev_commit, blob,
+                 commit_hash):  # pylint: disable=too-many-arguments,unused-argument
     strings_found = []
     lines = printable_diff.split("\n")
     for line in lines:
@@ -219,45 +222,38 @@ def find_entropy(printable_diff, commit_time, branch_name, prev_commit, blob, co
                     printable_diff = printable_diff.replace(string, Bcolors.WARNING + string + Bcolors.ENDC)
     entropic_diff = None
     if strings_found:
-        entropic_diff = {}
-        entropic_diff['date'] = commit_time
-        entropic_diff['path'] = blob.b_path if blob.b_path else blob.a_path
-        entropic_diff['branch'] = branch_name
-        entropic_diff['commit'] = prev_commit.message
-        entropic_diff['diff'] = blob.diff.decode('utf-8', errors='replace')
-        entropic_diff['stringsFound'] = strings_found
-        entropic_diff['printDiff'] = printable_diff
-        entropic_diff['commitHash'] = prev_commit.hexsha
-        entropic_diff['reason'] = "High Entropy"
+        entropic_diff = {'date': commit_time, 'path': blob.b_path if blob.b_path else blob.a_path,
+                         'branch': branch_name, 'commit': prev_commit.message,
+                         'diff': blob.diff.decode('utf-8', errors='replace'), 'stringsFound': strings_found,
+                         'printDiff': printable_diff, 'commitHash': prev_commit.hexsha, 'reason': "High Entropy"}
     return entropic_diff
 
 
-def regex_check(printable_diff, commit_time, branch_name, prev_commit, blob, commit_hash, custom_regexes=None):  # pylint: disable=too-many-arguments,unused-argument
+# noinspection PyUnusedLocal
+def regex_check(printable_diff, commit_time, branch_name, prev_commit, blob, commit_hash,
+                custom_regexes=None):  # pylint: disable=too-many-arguments,unused-argument
     if custom_regexes:
         secret_regexes = custom_regexes
     else:
         secret_regexes = regexes
     regex_matches = []
+    found_diff = None
     for key in secret_regexes:
         found_strings = secret_regexes[key].findall(printable_diff)
         for found_string in found_strings:
             found_diff = printable_diff.replace(printable_diff, Bcolors.WARNING + found_string + Bcolors.ENDC)
         if found_strings:
-            found_regex = {}
-            found_regex['date'] = commit_time
-            found_regex['path'] = blob.b_path if blob.b_path else blob.a_path
-            found_regex['branch'] = branch_name
-            found_regex['commit'] = prev_commit.message
-            found_regex['diff'] = blob.diff.decode('utf-8', errors='replace')
-            found_regex['stringsFound'] = found_strings
-            found_regex['printDiff'] = found_diff
-            found_regex['reason'] = key
-            found_regex['commitHash'] = prev_commit.hexsha
+            found_regex = {'date': commit_time, 'path': blob.b_path if blob.b_path else blob.a_path,
+                           'branch': branch_name, 'commit': prev_commit.message,
+                           'diff': blob.diff.decode('utf-8', errors='replace'), 'stringsFound': found_strings,
+                           'printDiff': found_diff, 'reason': key, 'commitHash': prev_commit.hexsha}
             regex_matches.append(found_regex)
     return regex_matches
 
 
-def diff_worker(diff, curr_commit, prev_commit, branch_name, commit_hash, custom_regexes, do_entropy, do_regex,  # pylint: disable=too-many-arguments,unused-argument
+# noinspection PyUnusedLocal
+def diff_worker(diff, curr_commit, prev_commit, branch_name, commit_hash, custom_regexes, do_entropy, do_regex,
+                # pylint: disable=too-many-arguments,unused-argument
                 print_json, surpress_output, path_inclusions, path_exclusions):
     issues = []
     for blob in diff:
@@ -318,7 +314,8 @@ def path_included(blob, include_patterns=None, exclude_patterns=None):
     return True
 
 
-def find_strings(git_url, since_commit=None, max_depth=1000000, print_json=False, do_regex=False, do_entropy=True,  # pylint: disable=too-many-arguments
+def find_strings(git_url, since_commit=None, max_depth=1000000, print_json=False, do_regex=False, do_entropy=True,
+                 # pylint: disable=too-many-arguments
                  suppress_output=True,
                  custom_regexes=None, branch=None, repo_path=None, path_inclusions=None, path_exclusions=None):
     output = {"foundIssues": []}
@@ -340,6 +337,7 @@ def find_strings(git_url, since_commit=None, max_depth=1000000, print_json=False
         branch_name = remote_branch.name
         prev_commit = None
         curr_commit = None
+        commit_hash = None
         for curr_commit in repo.iter_commits(branch_name, max_count=max_depth):
             commit_hash = curr_commit.hexsha
             if commit_hash == since_commit:

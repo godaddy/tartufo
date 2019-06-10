@@ -1,12 +1,14 @@
-import unittest
-import os
-import sys
-import json
 import io
+import json
+import os
 import re
+import sys
+import unittest
 from collections import namedtuple
-from mock import patch
+
 from mock import MagicMock
+from mock import patch
+
 from truffleHog import truffleHog
 
 
@@ -59,6 +61,7 @@ class TestStringMethods(unittest.TestCase):
         # Additionally, we cross-validate the commit comment matches the expected comment
         self.assertEqual(xcheck_commit_w_scrt_comment, filtered_results[0]['commit'].strip())
 
+    # noinspection PyUnusedLocal
     @patch('truffleHog.truffleHog.clone_git_repo')
     @patch('truffleHog.truffleHog.Repo')
     @patch('shutil.rmtree')
@@ -130,6 +133,7 @@ class TestStringMethods(unittest.TestCase):
                 self.assertFalse(truffleHog.path_included(blob, exclude_patterns=deleted_paths_patterns),
                                  '{}: exclusion should match deleted paths: {}'.format(blob, deleted_paths_patterns))
 
+    # noinspection PyUnusedLocal
     @patch('truffleHog.truffleHog.clone_git_repo')
     @patch('truffleHog.truffleHog.Repo')
     @patch('shutil.rmtree')
