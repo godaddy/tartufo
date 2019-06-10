@@ -10,3 +10,7 @@ deploy:
   user: "mxhenry"
   password:
     secure: PYPI_PASS
+  on:
+    branches:
+      only:
+        - publish_to_pypi
