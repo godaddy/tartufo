@@ -113,3 +113,9 @@ optional arguments:
 - ~~Don't rescan diffs if already looked at in another branch~~
 - ~~A since commit X feature~~
 - ~~Print the file affected~~
+
+## Version history
+
+| Version | Change(s)
+| ------- | ---
+| 2.0.99  | GoDaddy Maintainer information
