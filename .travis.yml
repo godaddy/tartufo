@@ -11,6 +11,4 @@ deploy:
   password:
     secure: PYPI_PASS
   on:
-    branches:
-      only:
-        - publish_to_pypi
+    branch: publish_to_pypi
