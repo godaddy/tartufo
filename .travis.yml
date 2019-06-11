@@ -5,3 +5,10 @@ python:
 install: pip install -e .[tests]
 script: ./run_lints
         pytest --cov=./ && codecov
+deploy:
+  provider: pypi
+  user: $PYPI_USER
+  password:
+    secure: $PYPI_PASS
+  on:
+    branch: master
