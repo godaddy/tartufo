@@ -28,7 +28,7 @@ EXTRAS_REQUIRE = {
 
 setup(
     name='gd-truffleHog',
-    version='2.0.100',
+    version='2.0.101',
     description='Searches through git repositories for high entropy strings, digging deep into commit history.',
     url='https://github.com/godaddy/truffleHog',
     author='Dylan Ayrey',
