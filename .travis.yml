@@ -7,8 +7,8 @@ script: ./run_lints
         pytest --cov=./ && codecov
 deploy:
   provider: pypi
-  user: "mxhenry"
+  user: $PYPI_USER
   password:
     secure: $PYPI_PASS
   on:
-    branch: publish_to_pypi
+    branch: master
