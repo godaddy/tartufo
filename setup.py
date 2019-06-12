@@ -7,30 +7,18 @@ INSTALL_REQUIRES = [
 
 EXTRAS_REQUIRE = {
     'tests': [
-        'codecov',
-        'coverage',
-        'flake8',
-        'mock',
-        'mypy>=0.670,<1; platform_python_implementation == "CPython"',
-        'nose',
-        'nose-timer',
-        'nose-xunitmp',
-        'pylint',
-        'pyflakes',
-        'pytest-cov',
-        'test',
         'tox',
-        'twine',
-        'unittest2',
-        'wheel',
     ]
 }
 
 setup(
     name='gd-truffleHog',
-    version='2.0.101',
+    version='2.0.102',
     description='Searches through git repositories for high entropy strings, digging deep into commit history.',
+    long_description='Searches through git repositories for secrets, digging deep into commit history and branches. '
+                     'This is effective at finding secrets accidentally committed.',
     url='https://github.com/godaddy/truffleHog',
+    download_url='https://pypi.org/project/gd-truffleHog/#files',
     author='Dylan Ayrey',
     author_email='dxa4481@rit.edu',
     maintainer='GoDadddy',

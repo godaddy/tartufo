@@ -1,6 +1,5 @@
 /build/
 /dist/
-/truffleHog.egg-info/
 **/__pycache__/
 **/*.pyc
 
@@ -14,6 +13,8 @@
 /.pip_cache/
 /.tox/
 /gd_truffleHog.egg-info/
+/truffleHog.egg-info/
 /reports/
 /html-reports/
 /.mypy_cache/
+/.pytest_cache/
