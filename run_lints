@@ -1,3 +1,0 @@
-#!/bin/bash
-
-tox -e flake8,mypy,pylint,vulture -p all
