@@ -3,7 +3,7 @@ language: python
 python:
   - "3.7"
 install: pip install -e .[tests]
-script: ./lint_and_test
+script: ./scripts/lint_and_test
 deploy:
   provider: pypi
   user: $PYPI_USER
