@@ -2,12 +2,12 @@ dist: xenial   # required for Python >= 3.7
 language: python
 python:
   - "3.7"
-install: pip install -e .[tests]
-script: ./scripts/lint_and_test
-deploy:
-  provider: pypi
-  user: $PYPI_USER
-  password:
-    secure: $PYPI_PASS
-  on:
-    branch: master
+jobs:
+  include:
+    - stage: lint_and_test
+      script: ./scripts/lint_and_test.sh
+    - stage: build_and_deploy
+      # require the branch name to be master (note for PRs this is the base branch name)
+      if: branch = master
+      install: pip install --upgrade setuptools wheel twine
+      script: ./scripts/build_and_deploy_wheel.sh
