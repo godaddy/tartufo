@@ -3,8 +3,7 @@ language: python
 python:
   - "3.7"
 install: pip install -e .[tests]
-script: ./scripts/lint_and_test
-        ./scripts/build_and_deploy_wheel
+script: ./travis_build
 #deploy:
 #  provider: pypi
 #  user: $PYPI_USER
