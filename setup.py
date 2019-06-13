@@ -21,7 +21,7 @@ setup(
     download_url='https://pypi.org/project/gd-truffleHog/#files',
     author='Dylan Ayrey',
     author_email='dxa4481@rit.edu',
-    maintainer='GoDadddy',
+    maintainer='GoDaddy',
     maintainer_email='dev_common_services@godaddy.com',
     license='GNU',
     packages=['truffleHog'],

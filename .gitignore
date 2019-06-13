@@ -10,11 +10,11 @@
 /venv*/
 
 # Tox
+/.mypy_cache/
 /.pip_cache/
+/.pytest_cache/
 /.tox/
 /gd_truffleHog.egg-info/
-/truffleHog.egg-info/
-/reports/
 /html-reports/
-/.mypy_cache/
-/.pytest_cache/
+/reports/
+/truffleHog.egg-info/
