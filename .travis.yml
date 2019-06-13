@@ -8,6 +8,6 @@ jobs:
       script: ./scripts/lint_and_test.sh
     - stage: build_and_deploy
       # require the branch name to be master (note for PRs this is the base branch name)
-      if: branch = build_and_deploy_whl_in_script
+      if: branch = master
       install: pip install --upgrade setuptools wheel twine
       script: ./scripts/build_and_deploy_wheel.sh
