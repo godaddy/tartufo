@@ -6,7 +6,7 @@ jobs:
   include:
     - stage: test
       script: ./scripts/lint_and_test.sh
-  - name: lint_and_test
+    - stage: lint_and_test
       # require the branch name to be master (note for PRs this is the base branch name)
       if: branch = master
       script: ./scripts/build_and_deploy_wheel.sh
