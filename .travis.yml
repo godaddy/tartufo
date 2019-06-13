@@ -3,7 +3,7 @@ language: python
 python:
   - "3.7"
 install: pip install -e .[tests]
-script: ./travis_build
+script: ./travis_build.sh
 #deploy:
 #  provider: pypi
 #  user: $PYPI_USER
