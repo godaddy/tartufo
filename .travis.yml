@@ -6,8 +6,11 @@ jobs:
   include:
     - stage: lint_and_test
       script: ./scripts/lint_and_test.sh
-    - stage: build_and_deploy
+    - stage: python_build_and_deploy
       # require the branch name to be master (note for PRs this is the base branch name)
       if: branch = master
       install: pip install --upgrade setuptools wheel twine
       script: ./scripts/build_and_deploy_wheel.sh
+    - stage: docker_build_and_publish
+      if: branch = docker_build_and_publish
+      script: ./scripts/build_and_publish_docker.sh
