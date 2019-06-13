@@ -2,8 +2,14 @@ dist: xenial   # required for Python >= 3.7
 language: python
 python:
   - "3.7"
-install: pip install -e .[tests]
-script: ./travis_build.sh
+jobs:
+  include:
+    - stage: test
+      script: ./scripts/lint_and_test.sh
+  - name: lint_and_test
+      # require the branch name to be master (note for PRs this is the base branch name)
+      if: branch = master
+      script: ./scripts/build_and_deploy_wheel.sh
 #deploy:
 #  provider: pypi
 #  user: $PYPI_USER
