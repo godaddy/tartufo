@@ -150,7 +150,7 @@ def get_strings_of_set(word, char_set, threshold=20):
     return strings
 
 
-class Bcolors():
+class Bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKGREEN = '\033[92m'
