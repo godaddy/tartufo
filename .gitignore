@@ -5,6 +5,7 @@
 
 # Intellij
 /.idea/
+**/*.iml
 
 # Python virtualenv
 /venv*/
@@ -18,4 +19,4 @@
 /html-reports/
 /reports/
 /truffleHog.egg-info/
-/mxhenry.iml
+
