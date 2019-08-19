@@ -13,7 +13,7 @@ EXTRAS_REQUIRE = {
 
 setup(
     name='gd-truffleHog',
-    version='2.0.110',
+    version='2.0.111',
     description='Searches through git repositories for high entropy strings, digging deep into commit history.',
     long_description='Searches through git repositories for secrets, digging deep into commit history and branches. '
                      'This is effective at finding secrets accidentally committed.',
