@@ -1,19 +1,34 @@
-from setuptools import setup, find_packages
+from setuptools import setup
+
+INSTALL_REQUIRES = [
+    'GitPython == 2.1.1',
+    'truffleHogRegexes == 0.0.7'
+]
+
+EXTRAS_REQUIRE = {
+    'tests': [
+        'tox',
+    ]
+}
 
 setup(
-    name='truffleHog',
-    version='2.0.98',
+    name='gd-truffleHog',
+    version='2.0.111',
     description='Searches through git repositories for high entropy strings, digging deep into commit history.',
-    url='https://github.com/dxa4481/truffleHog',
+    long_description='Searches through git repositories for secrets, digging deep into commit history and branches. '
+                     'This is effective at finding secrets accidentally committed.',
+    url='https://github.com/godaddy/truffleHog',
+    download_url='https://pypi.org/project/gd-truffleHog/#files',
     author='Dylan Ayrey',
     author_email='dxa4481@rit.edu',
+    maintainer='GoDaddy',
+    maintainer_email='dev_common_services@godaddy.com',
     license='GNU',
-    packages = ['truffleHog'],
-    install_requires=[
-        'GitPython == 2.1.1',
-        'truffleHogRegexes == 0.0.7'
-    ],
-    entry_points = {
-      'console_scripts': ['trufflehog = truffleHog.truffleHog:main'],
+    packages=['truffleHog'],
+    install_requires=INSTALL_REQUIRES,
+    setup_requires='',
+    extras_require=EXTRAS_REQUIRE,
+    entry_points={
+        'console_scripts': ['trufflehog = truffleHog.truffleHog:main'],
     },
 )

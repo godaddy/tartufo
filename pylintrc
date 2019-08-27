@@ -1,0 +1,31 @@
+[MESSAGES CONTROL]
+
+# Enable the message, report, category or checker with the given id(s). You can
+# either give multiple identifier separated by comma (,) or put this option
+# multiple time.
+#enable=
+
+# Disable the message, report, category or checker with the given id(s). You
+# can either give multiple identifier separated by comma (,) or put this option
+# multiple time (only on the command line, not in the configuration file where
+# it should appear only once).
+# C0111: Missing docstrings
+# R0903: Too few public methods
+# R0912: Too many branches
+# R0914: Too many local variables
+disable=C0111,R0903,R0912,R0914
+
+[BASIC]
+
+# Regular expression which should only match correct module names
+module-rgx=(([a-z_][a-z0-9_]*)|([a-z][a-zA-Z0-9]+))$
+
+[FORMAT]
+
+# Maximum number of characters on a single line.
+max-line-length=120
+
+[DESIGN]
+
+# Maximum number of arguments for function / method
+max-args=14

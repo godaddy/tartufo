@@ -1,4 +1,16 @@
+dist: xenial   # required for Python >= 3.7
 language: python
 python:
-  - "2.7"
-script: pytest --cov=./ && codecov
+  - "3.7"
+jobs:
+  include:
+    - stage: lint_and_test
+      script: ./scripts/lint_and_test.sh
+    - stage: python_build_and_deploy
+      # require the branch name to be master (note for PRs this is the base branch name)
+      if: branch = master
+      install: pip install --upgrade setuptools wheel twine
+      script: ./scripts/build_and_deploy_wheel.sh
+    - stage: docker_build_and_publish
+      if: branch = master
+      script: ./scripts/build_and_publish_docker.sh

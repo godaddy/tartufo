@@ -1,5 +1,22 @@
 /build/
 /dist/
-/truffleHog.egg-info/
 **/__pycache__/
 **/*.pyc
+
+# Intellij
+/.idea/
+**/*.iml
+
+# Python virtualenv
+/venv*/
+
+# Tox
+/.mypy_cache/
+/.pip_cache/
+/.pytest_cache/
+/.tox/
+/gd_truffleHog.egg-info/
+/html-reports/
+/reports/
+/truffleHog.egg-info/
+.coverage
