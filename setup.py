@@ -22,7 +22,7 @@ setup(
     author='Dylan Ayrey',
     author_email='dxa4481@rit.edu',
     maintainer='GoDaddy',
-    maintainer_email='dev_common_services@godaddy.com',
+    maintainer_email='asaa@godaddy.com',
     license='GNU',
     packages=['truffleHog'],
     install_requires=INSTALL_REQUIRES,
