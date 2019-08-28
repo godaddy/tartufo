@@ -12,13 +12,13 @@ EXTRAS_REQUIRE = {
 }
 
 setup(
-    name='gd-truffleHog',
+    name='truffleHog',
     version='2.0.112',
     description='Searches through git repositories for high entropy strings, digging deep into commit history.',
     long_description='Searches through git repositories for secrets, digging deep into commit history and branches. '
                      'This is effective at finding secrets accidentally committed.',
     url='https://github.com/godaddy/truffleHog',
-    download_url='https://pypi.org/project/gd-truffleHog/#files',
+    download_url='https://pypi.org/project/truffleHog/#files',
     author='Dylan Ayrey',
     author_email='dxa4481@rit.edu',
     maintainer='GoDaddy',
