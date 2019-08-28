@@ -192,5 +192,10 @@ optional arguments:
 
 | Version | Change(s)
 | ------- | ---
+| 2.0.112 | Added support for pre-commit hook checking
+| 2.0.108 | Minor code/comment cleanup
+| 2.0.106 | Prevent deployment on PRs
+| 2.0.105 | Build and deploy wheel on master branch
+| 2.0.102 | Streamlining tox run
 | 2.0.99  | GoDaddy Maintainer information
 
