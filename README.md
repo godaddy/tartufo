@@ -195,6 +195,7 @@ optional arguments:
 
 | Version | Change(s)
 | ------- | ---
+| 2.0.113 | OSWG requested changes
 | 2.0.112 | Added support for pre-commit hook checking
 | 2.0.108 | Minor code/comment cleanup
 | 2.0.106 | Prevent deployment on PRs
