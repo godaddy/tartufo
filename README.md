@@ -201,4 +201,3 @@ optional arguments:
 | 2.0.105 | Build and deploy wheel on master branch
 | 2.0.102 | Streamlining tox run
 | 2.0.99  | GoDaddy Maintainer information
-
