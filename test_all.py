@@ -13,7 +13,7 @@ try:
 except ImportError:
     from mock import MagicMock, patch  # type: ignore
 
-from truffleHog import truffleHog
+from tartufo import tartufo
 
 
 class TestStringMethods(unittest.TestCase):
@@ -23,22 +23,22 @@ class TestStringMethods(unittest.TestCase):
         )
         random_string_hex = "b3A0a1FDfe86dcCE945B72"
         self.assertGreater(
-            truffleHog.shannon_entropy(random_string_b64, truffleHog.BASE64_CHARS), 4.5
+            tartufo.shannon_entropy(random_string_b64, tartufo.BASE64_CHARS), 4.5
         )
         self.assertGreater(
-            truffleHog.shannon_entropy(random_string_hex, truffleHog.HEX_CHARS), 3
+            tartufo.shannon_entropy(random_string_hex, tartufo.HEX_CHARS), 3
         )
 
     def test_cloning(self):
-        project_path = truffleHog.clone_git_repo(
-            "https://github.com/dxa4481/truffleHog.git"
+        project_path = tartufo.clone_git_repo(
+            "https://github.com/godaddy/tartufo.git"
         )
         license_file = os.path.join(project_path, "LICENSE")
         self.assertTrue(os.path.isfile(license_file))
 
     def test_unicode_expection(self):
         try:
-            truffleHog.find_strings("https://github.com/dxa4481/tst.git")
+            tartufo.find_strings("https://github.com/dxa4481/tst.git")
         except UnicodeEncodeError:
             self.fail("Unicode print error")
 
@@ -59,8 +59,8 @@ class TestStringMethods(unittest.TestCase):
         # Redirect STDOUT, run scan and re-establish STDOUT
         sys.stdout = tmp_stdout
         try:
-            truffleHog.find_strings(
-                "https://github.com/dxa4481/truffleHog.git",
+            tartufo.find_strings(
+                "https://github.com/godaddy/tartufo.git",
                 since_commit=since_commit,
                 print_json=True,
                 suppress_output=False,
@@ -81,15 +81,15 @@ class TestStringMethods(unittest.TestCase):
         )
 
     # noinspection PyUnusedLocal
-    @patch("truffleHog.truffleHog.clone_git_repo")
-    @patch("truffleHog.truffleHog.Repo")
+    @patch("tartufo.tartufo.clone_git_repo")
+    @patch("tartufo.tartufo.Repo")
     @patch("shutil.rmtree")
     def test_branch(
         self, rmtree_mock, repo_const_mock, clone_git_repo
     ):  # pylint: disable=unused-argument
         repo = MagicMock()
         repo_const_mock.return_value = repo
-        truffleHog.find_strings("test_repo", branch="testbranch")
+        tartufo.find_strings("test_repo", branch="testbranch")
         self.assertIsNone(
             repo.remotes.origin.fetch.assert_called_once_with("testbranch")
         )
@@ -128,24 +128,24 @@ class TestStringMethods(unittest.TestCase):
         deleted_paths_patterns = [re.compile(r"(.*/)?deleted-file$")]
         for name, blob in blobs.items():
             self.assertTrue(
-                truffleHog.path_included(blob),
+                tartufo.path_included(blob),
                 "{} should be included by default".format(blob),
             )
             self.assertTrue(
-                truffleHog.path_included(blob, include_patterns=all_paths_patterns),
+                tartufo.path_included(blob, include_patterns=all_paths_patterns),
                 "{} should be included with include_patterns: {}".format(
                     blob, all_paths_patterns
                 ),
             )
             self.assertFalse(
-                truffleHog.path_included(blob, exclude_patterns=all_paths_patterns),
+                tartufo.path_included(blob, exclude_patterns=all_paths_patterns),
                 "{} should be excluded with exclude_patterns: {}".format(
                     blob, all_paths_patterns
                 ),
             )
             # pylint: disable=W1308
             self.assertFalse(
-                truffleHog.path_included(
+                tartufo.path_included(
                     blob,
                     include_patterns=all_paths_patterns,
                     exclude_patterns=all_paths_patterns,
@@ -155,7 +155,7 @@ class TestStringMethods(unittest.TestCase):
                 ),
             )
             self.assertFalse(
-                truffleHog.path_included(
+                tartufo.path_included(
                     blob,
                     include_patterns=overlap_patterns,
                     exclude_patterns=all_paths_patterns,
@@ -165,7 +165,7 @@ class TestStringMethods(unittest.TestCase):
                 ),
             )
             self.assertFalse(
-                truffleHog.path_included(
+                tartufo.path_included(
                     blob,
                     include_patterns=all_paths_patterns,
                     exclude_patterns=overlap_patterns,
@@ -177,33 +177,33 @@ class TestStringMethods(unittest.TestCase):
             path = blob.b_path if blob.b_path else blob.a_path
             if "/" in path:
                 self.assertTrue(
-                    truffleHog.path_included(blob, include_patterns=sub_dirs_patterns),
+                    tartufo.path_included(blob, include_patterns=sub_dirs_patterns),
                     "{}: inclusion should include sub directory paths: {}".format(
                         blob, sub_dirs_patterns
                     ),
                 )
                 self.assertFalse(
-                    truffleHog.path_included(blob, exclude_patterns=sub_dirs_patterns),
+                    tartufo.path_included(blob, exclude_patterns=sub_dirs_patterns),
                     "{}: exclusion should exclude sub directory paths: {}".format(
                         blob, sub_dirs_patterns
                     ),
                 )
             else:
                 self.assertFalse(
-                    truffleHog.path_included(blob, include_patterns=sub_dirs_patterns),
+                    tartufo.path_included(blob, include_patterns=sub_dirs_patterns),
                     "{}: inclusion should exclude root directory paths: {}".format(
                         blob, sub_dirs_patterns
                     ),
                 )
                 self.assertTrue(
-                    truffleHog.path_included(blob, exclude_patterns=sub_dirs_patterns),
+                    tartufo.path_included(blob, exclude_patterns=sub_dirs_patterns),
                     "{}: exclusion should include root directory paths: {}".format(
                         blob, sub_dirs_patterns
                     ),
                 )
             if name.startswith("deleted-file-"):
                 self.assertTrue(
-                    truffleHog.path_included(
+                    tartufo.path_included(
                         blob, include_patterns=deleted_paths_patterns
                     ),
                     "{}: inclusion should match deleted paths: {}".format(
@@ -211,7 +211,7 @@ class TestStringMethods(unittest.TestCase):
                     ),
                 )
                 self.assertFalse(
-                    truffleHog.path_included(
+                    tartufo.path_included(
                         blob, exclude_patterns=deleted_paths_patterns
                     ),
                     "{}: exclusion should match deleted paths: {}".format(
@@ -220,13 +220,13 @@ class TestStringMethods(unittest.TestCase):
                 )
 
     # noinspection PyUnusedLocal
-    @patch("truffleHog.truffleHog.clone_git_repo")
-    @patch("truffleHog.truffleHog.Repo")
+    @patch("tartufo.tartufo.clone_git_repo")
+    @patch("tartufo.tartufo.Repo")
     @patch("shutil.rmtree")
     def test_repo_path(
         self, rmtree_mock, repo_const_mock, clone_git_repo
     ):  # pylint: disable=unused-argument
-        truffleHog.find_strings("test_repo", repo_path="test/path/")
+        tartufo.find_strings("test_repo", repo_path="test/path/")
         self.assertIsNone(rmtree_mock.assert_not_called())
         self.assertIsNone(clone_git_repo.assert_not_called())
 

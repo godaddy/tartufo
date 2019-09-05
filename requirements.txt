@@ -2,5 +2,5 @@
 truffleHogRegexes
 requests
 
-# All requirements for truffleHog via setup.py
+# All requirements for tartufo via setup.py
 -e .

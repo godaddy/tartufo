@@ -1,30 +1,29 @@
-# truffleHog
-[![Build Status](https://travis-ci.org/dxa4481/truffleHog.svg?branch=master)](https://travis-ci.org/dxa4481/truffleHog)
-[![codecov](https://codecov.io/gh/dxa4481/truffleHog/branch/master/graph/badge.svg)](https://codecov.io/gh/dxa4481/truffleHog)
+# tartufo
+[![Build Status](https://travis-ci.org/godaddy/tartufo.svg?branch=master)](https://travis-ci.org/godaddy/tartufo)
 
 
 Searches through git repositories for secrets, digging deep into commit history and branches.
-This is effective at finding secrets accidentally committed. truffleHog also can be used by git
+This is effective at finding secrets accidentally committed. tartufo also can be used by git
 pre-commit scripts to screen changes for secrets before they are committed to the repository.
 
 ## Features
 
-truffleHog offers the following features:
+tartufo offers the following features:
 
 ### Regex Checking
 
-truffleHog previously functioned by running entropy checks on git diffs. This functionality still exists, but high signal regex checks have been added, and the ability to surpress entropy checking has also been added.
+tartufo previously functioned by running entropy checks on git diffs. This functionality still exists, but high signal regex checks have been added, and the ability to surpress entropy checking has also been added.
 
 This performs only regular expression checking:
 
 ```bash
-truffleHog --regex --entropy=False https://github.com/dxa4481/truffleHog.git
+tartufo --regex --entropy=False https://github.com/godaddy/tartufo.git
 ```
 
 while this checks only for patterns with high entropy:
 
 ```bash
-truffleHog file:///user/dxa4481/codeprojects/truffleHog/
+tartufo file:///user/godaddy/codeprojects/tartufo/
 ```
 
 Specifying either `--regex` or `--entropy` without a value implies `=True`; if these arguments
@@ -60,10 +59,10 @@ _exclude-patterns.txt:_
 These filter files could then be applied by:
 
 ```bash
-truffleHog --include_paths include-patterns.txt --exclude_paths exclude-patterns.txt file://path/to/my/repo.git
+tartufo --include_paths include-patterns.txt --exclude_paths exclude-patterns.txt file://path/to/my/repo.git
 ```
 
-With these filters, issues found in files in the root-level `src` directory would be reported, unless they had the `.classpath` or `.jmx` extension, or if they were found in the `src/test/dev/resources/` directory, for example. Additional usage information is provided when calling `trufflehog` with the `-h` or `--help` options.
+With these filters, issues found in files in the root-level `src` directory would be reported, unless they had the `.classpath` or `.jmx` extension, or if they were found in the `src/test/dev/resources/` directory, for example. Additional usage information is provided when calling `tartufo` with the `-h` or `--help` options.
 
 These features help cut down on noise, and makes the tool easier to shove into a devops pipeline.
 
@@ -74,15 +73,15 @@ These features help cut down on noise, and makes the tool easier to shove into a
 Normally, the URL of the repository to scan is supplied on the command line:
 
 ```bash
-truffleHog https://github.com/dxa4481/truffleHog.git
+tartufo https://github.com/godaddy/tartufo.git
 ```
 
-When invoked in this way, truffleHog clones the repository to a scratch directory, scans the
+When invoked in this way, tartufo clones the repository to a scratch directory, scans the
 local clone, and then deletes it. If a local repository clone already exists, it can be scanned
 directly:
 
 ```bash
-truffleHog --repo_path /my/local/clone
+tartufo --repo_path /my/local/clone
 ```
 
 If both `--repo_path` and a URL are supplied, the URL is ignored and the specified local clone
@@ -90,12 +89,12 @@ is scanned. If neither is provided, a SyntaxError exception is raised.
 
 ### Pre-Commit Scans
 
-The `--pre_commit` flag instructs truffleHog to scan staged, uncommitted changes in a local
+The `--pre_commit` flag instructs tartufo to scan staged, uncommitted changes in a local
 repository. The repository location can be specified using `--repo_path`, but it is legal to
 not supply a location; in this case, the caller's current working directory is assumed to be
 somewhere within the local clone's tree and the repository root is determined automatically.
 
-The following example demonstrates how truffleHog can be used to verify secrets will not be
+The following example demonstrates how tartufo can be used to verify secrets will not be
 committed to a git repository in error:
 
 _.git/hooks/pre-commit:_
@@ -107,11 +106,11 @@ _.git/hooks/pre-commit:_
 exec 1>&2
 
 # Check for suspicious content.
-truffleHog --pre_commit --regex --entropy
+tartufo --pre_commit --regex --entropy
 ```
 
-Git will execute truffleHog before committing any content. If problematic changes are detected,
-they are reported by truffleHog and git aborts the commit process. Only when truffleHog returns a
+Git will execute tartufo before committing any content. If problematic changes are detected,
+they are reported by tartufo and git aborts the commit process. Only when tartufo returns a
 success status (indicating no potential secrets were discovered) will git commit the staged changes.
 
 Note that it is always possible, although not recommended, to bypass the pre-commit hook by
@@ -120,7 +119,7 @@ using `git commit --no-verify`.
 ## Install
 
 ```bash
-pip install truffleHog
+pip install tartufo
 ```
 
 ## Customizing
@@ -137,16 +136,16 @@ Things like subdomain enumeration, s3 bucket detection, and other useful regexes
 
 Feel free to also contribute high signal regexes upstream that you think will benefit the community. Things like Azure keys, Twilio keys, Google Compute keys, are welcome, provided a high signal regex can be constructed.
 
-trufflehog's base rule set sources from <https://github.com/dxa4481/truffleHogRegexes/blob/master/truffleHogRegexes/regexes.json>
+tartufo's base rule set sources from <https://github.com/dxa4481/truffleHogRegexes/blob/master/truffleHogRegexes/regexes.json>
 
 ## How it works
 
-This module will go through the entire commit history of each branch, and check each diff from each commit, and check for secrets. This is both by regex and by entropy. For entropy checks, truffleHog will evaluate the shannon entropy for both the base64 char set and hexidecimal char set for every blob of text greater than 20 characters comprised of those character sets in each diff. If at any point a high entropy string >20 characters is detected, it will print to the screen.
+This module will go through the entire commit history of each branch, and check each diff from each commit, and check for secrets. This is both by regex and by entropy. For entropy checks, tartufo will evaluate the shannon entropy for both the base64 char set and hexidecimal char set for every blob of text greater than 20 characters comprised of those character sets in each diff. If at any point a high entropy string >20 characters is detected, it will print to the screen.
 
 ## Help
 
 ```bash
-usage: truffleHog [-h] [--json] [--rules RULES] [--entropy [BOOLEAN]]
+usage: tartufo [-h] [--json] [--rules RULES] [--entropy [BOOLEAN]]
                   [--regex [BOOLEAN]] [--since_commit SINCE_COMMIT]
                   [--max_depth MAX_DEPTH] [--branch BRANCH]
                   [-i INCLUDE_PATHS_FILE] [-x EXCLUDE_PATHS_FILE]
