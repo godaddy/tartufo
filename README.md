@@ -116,6 +116,15 @@ success status (indicating no potential secrets were discovered) will git commit
 Note that it is always possible, although not recommended, to bypass the pre-commit hook by
 using `git commit --no-verify`.
 
+### Temporary file cleanup
+
+tartufo stores the results in temporary files, which are left on disk by default, to allow
+inspection if problems are found. To automatically delete these files when tartufo completes, specify
+the `--cleanup` flag:
+```bash
+tartufo --cleanup
+``` 
+
 ## Install
 
 ```bash
@@ -134,6 +143,8 @@ Custom regexes can be added with the following flag `--rules /path/to/rules`. Th
 
 Things like subdomain enumeration, s3 bucket detection, and other useful regexes highly custom to the situation can be added.
 
+Normally, the custom regexes are added to the default regexes. If the default regexes should not be included, add the following flag: `--default-regexes=False`
+
 Feel free to also contribute high signal regexes upstream that you think will benefit the community. Things like Azure keys, Twilio keys, Google Compute keys, are welcome, provided a high signal regex can be constructed.
 
 tartufo's base rule set sources from <https://github.com/dxa4481/truffleHogRegexes/blob/master/truffleHogRegexes/regexes.json>
@@ -145,8 +156,10 @@ This module will go through the entire commit history of each branch, and check 
 ## Help
 
 ```bash
-usage: tartufo [-h] [--json] [--rules RULES] [--entropy [BOOLEAN]]
+usage: tartufo [-h] [--json] [--rules RULES...] [--entropy [BOOLEAN]]
+                  [--git-rules-repo REPO_PATH] [--git-rules RULES...]
                   [--regex [BOOLEAN]] [--since_commit SINCE_COMMIT]
+                  [--default-regexes [BOOLEAN]]
                   [--max_depth MAX_DEPTH] [--branch BRANCH]
                   [-i INCLUDE_PATHS_FILE] [-x EXCLUDE_PATHS_FILE]
                   [--repo_path REPO_PATH] [--cleanup] [--pre_commit]
@@ -160,9 +173,14 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   --json                Output in JSON
-  --rules RULES         Ignore default regexes and source from json list file
+  --rules RULES         One or more json files containing custom regexes
+  --git-rules-repo REPO_PATH
+                        Path to git repo that contains externally-specified rules
+  --git-rules RULES     Relative path(s) to one or more json files in git-rules-repo
   --entropy [BOOLEAN]   Enable entropy checks [default: True]
   --regex [BOOLEAN]     Enable high signal regex checks [default: False]
+  --default-regexes [BOOLEAN]
+                        When --rules is specified, whether to include the default regexes as well [default: True] 
   --since_commit SINCE_COMMIT
                         Only scan from a given commit hash
   --max_depth MAX_DEPTH

@@ -20,13 +20,74 @@ import stat
 import sys
 import tempfile
 import uuid
+import truffleHogRegexes
 
 from git import NULL_TREE
 from git import Repo
-from truffleHogRegexes.regexChecks import regexes
 
 
-def main():  # noqa:C901
+def main(argv=None):  # noqa:C901
+    args = parse_args(argv)
+
+    if not (args.do_entropy or args.do_regex):
+        raise RuntimeError("no analysis requested")
+
+    rules_regexes = configure_regexes_from_args(args, truffleHogRegexes.regexChecks.regexes)
+
+    # read & compile path inclusion/exclusion patterns
+    path_inclusions = []
+    path_exclusions = []
+    if args.include_paths:
+        for pattern in set(l[:-1].lstrip() for l in args.include_paths):
+            if pattern and not pattern.startswith("#"):
+                path_inclusions.append(re.compile(pattern))
+    if args.exclude_paths:
+        for pattern in set(l[:-1].lstrip() for l in args.exclude_paths):
+            if pattern and not pattern.startswith("#"):
+                path_exclusions.append(re.compile(pattern))
+
+    if args.pre_commit:
+        output = find_staged(
+            args.repo_path,
+            args.output_json,
+            args.do_regex,
+            args.do_entropy,
+            custom_regexes=rules_regexes,
+            suppress_output=False,
+            path_inclusions=path_inclusions,
+            path_exclusions=path_exclusions,
+        )
+    else:
+        if args.repo_path is None and args.git_url is None:
+            raise SyntaxError("One of git_url or --repo_path is required")
+        output = find_strings(
+            args.git_url,
+            args.since_commit,
+            args.max_depth,
+            args.output_json,
+            args.do_regex,
+            args.do_entropy,
+            custom_regexes=rules_regexes,
+            suppress_output=False,
+            branch=args.branch,
+            repo_path=args.repo_path,
+            path_inclusions=path_inclusions,
+            path_exclusions=path_exclusions,
+        )
+    if args.cleanup:
+        clean_up(output)
+    else:
+        issues_path = output.get("issues_path", None)
+        if issues_path:
+            print("Results have been saved in {}".format(issues_path))
+
+    if output["found_issues"]:
+        sys.exit(1)
+    else:
+        sys.exit(0)
+
+
+def parse_args(argv):
     parser = argparse.ArgumentParser(
         description="Find secrets hidden in the depths of git."
     )
@@ -34,10 +95,35 @@ def main():  # noqa:C901
         "--json", dest="output_json", action="store_true", help="Output in JSON"
     )
     parser.add_argument(
+        "--git-rules-repo",
+        dest="git_rules_repo",
+        help="Git repo for externally-sourced rules",
+    )
+    parser.add_argument(
+        "--git-rules",
+        dest="git_rules_filenames",
+        nargs="+",
+        default=[],
+        action="append",
+        help="Git-relative path(s) to regex rules json list file(s)",
+    )
+    parser.add_argument(
         "--rules",
-        dest="rules",
-        default={},
-        help="Ignore default regexes and source from json list file",
+        dest="rules_filenames",
+        nargs="+",
+        default=[],
+        action="append",
+        help="Path(s) to regex rules json list file(s)",
+    )
+    parser.add_argument(
+        "--default-regexes",
+        dest="do_default_regexes",
+        metavar="BOOLEAN",
+        nargs="?",
+        default="True",
+        const="True",
+        help="If set to one of (no, n, false, f, n, 0) and --rules or --git-rules is also specified, ignore default" +
+             "regexes, otherwise the regexes from the rules files will be appended to the default regexes",
     )
     parser.add_argument(
         "--entropy",
@@ -114,69 +200,62 @@ def main():  # noqa:C901
         action="store_true",
         help="Scan staged files in local repo clone",
     )
-    args = parser.parse_args()
-    rules = {}
-    do_entropy = str2bool(args.do_entropy)
-    do_regex = str2bool(args.do_regex)
-    if not (do_entropy or do_regex):
-        raise RuntimeError("no analysis requested")
-    if do_regex and args.rules:
-        try:
-            with open(args.rules, "r") as rule_file:
-                rules = json.loads(rule_file.read())
-                for rule in rules:
-                    rules[rule] = re.compile(rules[rule])
-        except (IOError, ValueError):
-            raise Exception("Error reading rules file")
-        for regex in dict(regexes):
-            del regexes[regex]
-        for regex in rules:
-            regexes[regex] = rules[regex]
 
-    # read & compile path inclusion/exclusion patterns
-    path_inclusions = []
-    path_exclusions = []
-    if args.include_paths:
-        for pattern in set(l[:-1].lstrip() for l in args.include_paths):
-            if pattern and not pattern.startswith("#"):
-                path_inclusions.append(re.compile(pattern))
-    if args.exclude_paths:
-        for pattern in set(l[:-1].lstrip() for l in args.exclude_paths):
-            if pattern and not pattern.startswith("#"):
-                path_exclusions.append(re.compile(pattern))
+    args = parser.parse_args(argv)
 
-    if args.pre_commit:
-        output = find_staged(
-            args.repo_path,
-            args.output_json,
-            do_regex,
-            do_entropy,
-            suppress_output=False,
-            path_inclusions=path_inclusions,
-            path_exclusions=path_exclusions,
-        )
-    else:
-        if args.repo_path is None and args.git_url is None:
-            raise SyntaxError("One of git_url or --repo_path is required")
-        output = find_strings(
-            args.git_url,
-            args.since_commit,
-            args.max_depth,
-            args.output_json,
-            do_regex,
-            do_entropy,
-            suppress_output=False,
-            branch=args.branch,
-            repo_path=args.repo_path,
-            path_inclusions=path_inclusions,
-            path_exclusions=path_exclusions,
-        )
-    if args.cleanup:
-        clean_up(output)
-    if output["found_issues"]:
-        sys.exit(1)
-    else:
-        sys.exit(0)
+    # rules_filenames and git_rules_filenames will be generated as a list of lists, they need to be flattened
+    filename_lists = args.rules_filenames
+    args.rules_filenames = [filename for filenames in filename_lists for filename in filenames]
+    filename_lists = args.git_rules_filenames
+    args.git_rules_filenames = [filename for filenames in filename_lists for filename in filenames]
+
+    args.do_entropy = str2bool(args.do_entropy)
+    args.do_regex = str2bool(args.do_regex)
+    args.do_default_regexes = str2bool(args.do_default_regexes)
+    return args
+
+
+def configure_regexes_from_args(args, default_regexes):
+    if args.do_regex:
+        if args.rules_filenames or (args.git_rules_repo and args.git_rules):
+            rules_regexes = dict(default_regexes) if args.do_default_regexes else {}
+            if args.git_rules_repo and args.git_rules:
+                configure_regexes_from_git(args.git_rules_repo, args.git_rules, rules_regexes)
+            if args.rules_filenames:
+                configure_regexes_from_rules_files(args.rules_filenames, rules_regexes)
+            return rules_regexes
+
+        return dict(default_regexes)
+    return {}
+
+
+def configure_regexes_from_git(git_url, repo_rules_filenames, rules_regexes):
+    rules_project_path = clone_git_repo(git_url)
+    try:
+        rules_filenames = [os.path.join(rules_project_path, repo_rules_filename)
+                           for repo_rules_filename in repo_rules_filenames]
+        return configure_regexes_from_rules_files(rules_filenames, rules_regexes)
+    finally:
+        shutil.rmtree(rules_project_path)
+
+
+def configure_regexes_from_rules_files(rules_filenames, rules_regexes):
+    for rules_filename in rules_filenames:
+        load_rules_from_file(rules_filename, rules_regexes)
+
+    return rules_regexes
+
+
+def load_rules_from_file(rules_filename, rules_regexes):
+    try:
+        with open(rules_filename, "r") as rules_file:
+            new_rules = json.loads(rules_file.read())
+            for rule in new_rules:
+                if rule in rules_regexes:
+                    raise ValueError("Rule '{}' has been defined multiple times".format(rule))
+                rules_regexes[rule] = re.compile(new_rules[rule])
+    except (IOError, ValueError) as err:
+        raise Exception("Error reading rules file '{}': {}".format(rules_filename, err))
 
 
 def str2bool(v_string):
@@ -337,7 +416,7 @@ def find_entropy(printable_diff):
 
 def find_regex(printable_diff, regex_list=None):
     if regex_list is None:
-        regex_list = regexes
+        regex_list = {}
     regex_matches = []
     for key in regex_list:
         found_strings = regex_list[key].findall(printable_diff)
@@ -560,11 +639,10 @@ def find_staged(
 
 
 def clean_up(output):
-    print("Whhaat")
     issues_path = output.get("issues_path", None)
     if issues_path and os.path.isdir(issues_path):
         shutil.rmtree(output["issues_path"])
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)

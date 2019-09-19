@@ -13,10 +13,148 @@ try:
 except ImportError:
     from mock import MagicMock, patch  # type: ignore
 
+from truffleHogRegexes.regexChecks import regexes as default_regexes
 from tartufo import tartufo
 
 
-class TestStringMethods(unittest.TestCase):
+class TestStringMethods(unittest.TestCase):  # pylint: disable=too-many-public-methods
+    def test_parse_args_git_rules_repo(self):
+        argv = ["--git-rules-repo", "git@github.test:test-owner/tartufo-test.git"]
+        expected_git_rules_repo = "git@github.test:test-owner/tartufo-test.git"
+        args = tartufo.parse_args(argv)
+        self.assertEqual(expected_git_rules_repo, args.git_rules_repo)
+
+    def test_parse_args_git_rules_not_specified(self):
+        argv = []
+        args = tartufo.parse_args(argv)
+        self.assertEqual(0, len(args.git_rules_filenames), "args.git_rules_filenames should be empty")
+
+    def test_parse_args_git_rules(self):
+        argv = ["--git-rules", "file1", "file2"]
+        expected_rules_filenames = ("file1", "file2")
+        args = tartufo.parse_args(argv)
+        self.assertCountEqual(expected_rules_filenames, args.git_rules_filenames,
+                              "args.git_rules_filenames should be {}, is actually {}".
+                              format(expected_rules_filenames, args.rules_filenames))
+
+    def test_parse_args_git_rules_multiple_times(self):
+        argv = ["--git-rules", "file1", "--git-rules", "file2"]
+        expected_rules_filenames = ("file1", "file2")
+        args = tartufo.parse_args(argv)
+        self.assertCountEqual(expected_rules_filenames, args.git_rules_filenames,
+                              "args.git_rules_filenames should be {}, is actually {}".
+                              format(expected_rules_filenames, args.rules_filenames))
+
+    def test_parse_args_rules_not_specified(self):
+        argv = []
+        args = tartufo.parse_args(argv)
+        self.assertEqual(0, len(args.rules_filenames), "args.rules_filenames should be empty")
+
+    def test_parse_args_rules(self):
+        argv = ["--rules", "file1", "file2"]
+        expected_rules_filenames = ("file1", "file2")
+        args = tartufo.parse_args(argv)
+        self.assertCountEqual(expected_rules_filenames, args.rules_filenames,
+                              "args.rules_filenames should be {}, is actually {}".
+                              format(expected_rules_filenames, args.rules_filenames))
+
+    def test_parse_args_rules_multiple_times(self):
+        argv = ["--rules", "file1", "--rules", "file2"]
+        expected_rules_filenames = ("file1", "file2")
+        args = tartufo.parse_args(argv)
+        self.assertCountEqual(expected_rules_filenames, args.rules_filenames,
+                              "args.rules_filenames should be {}, is actually {}".
+                              format(expected_rules_filenames, args.rules_filenames))
+
+    def test_parse_args_rules_default_regexes_set_to_false(self):
+        argv = ["--default-regexes", "f"]
+        args = tartufo.parse_args(argv)
+        self.assertFalse(args.do_default_regexes, "args.do_default_regexes should be False, is actually {}".
+                         format(args.do_default_regexes))
+
+    def test_parse_args_rules_default_regexes_set_to_true(self):
+        argv = ["--default-regexes", "t"]
+        args = tartufo.parse_args(argv)
+        self.assertTrue(args.do_default_regexes, "args.do_default_regexes should be True, is actually {}".
+                        format(args.do_default_regexes))
+
+    def test_parse_args_rules_default_regexes_specified_with_no_value(self):
+        argv = ["--default-regexes", "--regex"]
+        args = tartufo.parse_args(argv)
+        self.assertTrue(args.do_default_regexes, "args.do_default_regexes should be True, is actually {}".
+                        format(args.do_default_regexes))
+
+    def test_parse_args_rules_default_regexes_unset(self):
+        argv = []
+        args = tartufo.parse_args(argv)
+        self.assertTrue(args.do_default_regexes, "args.do_default_regexes should be True, is actually {}".
+                        format(args.do_default_regexes))
+
+    def test_configure_regexes_from_args_rules_files_without_defaults(self):
+        rules_filenames = ["testRules.json"]
+        expected_regexes = {"RSA private key 2": re.compile("-----BEGIN EC PRIVATE KEY-----")}
+
+        Args = namedtuple("Args", ("do_regex", "git_rules_repo", "git_rules_filenames", "rules_filenames",
+                                   "do_default_regexes"))
+        args = Args(True, None, None, rules_filenames, False)
+        actual_regexes = tartufo.configure_regexes_from_args(args, default_regexes)
+
+        self.assertEqual(len(expected_regexes), len(actual_regexes),
+                         "The regexes dictionary should have the same length as the test rules " +
+                         "(expected: {}, actual: {})".format(len(expected_regexes), len(actual_regexes)))
+        for expected_key in expected_regexes:
+            self.assertIn(expected_key, actual_regexes,
+                          "The regexes dictionary should have the key '{}' from the rules file".format(expected_key))
+            expected_regex = expected_regexes[expected_key]
+            actual_regex = actual_regexes[expected_key]
+            self.assertEqual(expected_regex.pattern, actual_regex.pattern,
+                             "The regexes dictionary should have the compiled regex for '{}' in key '{}'".
+                             format(expected_regex.pattern, expected_key))
+
+    def test_configure_regexes_from_args_rules_files_with_defaults(self):
+        rules_filenames = ["testRules.json"]
+        expected_regexes = dict(default_regexes)
+        expected_regexes["RSA private key 2"] = re.compile("-----BEGIN EC PRIVATE KEY-----")
+
+        Args = namedtuple("Args", ("do_regex", "git_rules_repo", "git_rules_filenames", "rules_filenames",
+                                   "do_default_regexes"))
+        args = Args(True, None, None, rules_filenames, True)
+        actual_regexes = tartufo.configure_regexes_from_args(args, default_regexes)
+
+        self.assertEqual(len(expected_regexes), len(actual_regexes),
+                         "The regexes dictionary should have the same length as the test rules " +
+                         "(expected: {}, actual: {})".format(len(expected_regexes), len(actual_regexes)))
+        for expected_key in expected_regexes:
+            self.assertIn(expected_key, actual_regexes,
+                          "The regexes dictionary should have the key '{}' from the rules file".format(expected_key))
+            expected_regex = expected_regexes[expected_key]
+            actual_regex = actual_regexes[expected_key]
+            self.assertEqual(expected_regex.pattern, actual_regex.pattern,
+                             "The regexes dictionary should have the compiled regex for '{}' in key '{}'".
+                             format(expected_regex.pattern, expected_key))
+
+    def test_configure_regexes_from_args_no_do_regex(self):
+        rules_filenames = ["testRules.json"]
+
+        Args = namedtuple("Args", ("do_regex", "git_rules_repo", "git_rules_filenames", "rules_filenames",
+                                   "do_default_regexes"))
+        args = Args(False, None, None, rules_filenames, True)
+        actual_regexes = tartufo.configure_regexes_from_args(args, default_regexes)
+
+        self.assertDictEqual({}, actual_regexes, "The regexes dictionary should be empty when do_regex is False")
+
+    def test_configure_regexes_from_args_no_rules(self):
+        rules_filenames = []
+        expected_regexes = dict(default_regexes)
+
+        Args = namedtuple("Args", ("do_regex", "git_rules_repo", "git_rules_filenames", "rules_filenames",
+                                   "do_default_regexes"))
+        args = Args(True, None, None, rules_filenames, False)
+        actual_regexes = tartufo.configure_regexes_from_args(args, default_regexes)
+
+        self.assertDictEqual(expected_regexes, actual_regexes,
+                             "The regexes dictionary should not have been changed when no rules files are specified")
+
     def test_shannon(self):
         random_string_b64 = (
             "ZWVTjPQSdhwRgl204Hc51YCsritMIzn8B=/p9UyeX7xu6KkAGqfm3FJ+oObLDNEva"
@@ -229,6 +367,13 @@ class TestStringMethods(unittest.TestCase):
         tartufo.find_strings("test_repo", repo_path="test/path/")
         self.assertIsNone(rmtree_mock.assert_not_called())
         self.assertIsNone(clone_git_repo.assert_not_called())
+
+    # Between Python 2 and 3, the assertItemsEqual method was renamed to assertCountEqual, and the old method name
+    # was removed. In order to maintain cross-version compatibility, we need to map assertCountEqual to
+    # assertItemsEqual for pre-Python 3.
+    if sys.version_info[0] < 3:
+        def assertCountEqual(self, first, second, msg=None):
+            return self.assertItemsEqual(first, second, msg=msg)  # pylint: disable=no-member
 
 
 if __name__ == "__main__":
