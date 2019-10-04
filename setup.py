@@ -7,6 +7,11 @@ INSTALL_REQUIRES = [
 
 EXTRAS_REQUIRE = {
     'tests': [
+        'coverage',
+        "mock; python_version == '2.7'",
+        'pytest',
+        'pytest-cov',
+        'pytest-sugar',
         'tox',
     ]
 }
@@ -31,4 +36,20 @@ setup(
     entry_points={
         'console_scripts': ['tartufo = tartufo.tartufo:main'],
     },
+    classifiers=[
+        "Development Status :: 3 - Alpha",
+        "Environment :: Console",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
+        "Natural Language :: English",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Topic :: Security",
+        "Topic :: Software Development :: Version Control :: Git",
+    ]
 )

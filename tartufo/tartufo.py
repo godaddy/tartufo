@@ -557,14 +557,10 @@ def find_strings(
             diff_hash = hashlib.md5(
                 (str(prev_commit) + str(curr_commit)).encode("utf-8")
             ).digest()
-            if not prev_commit:
+            if not prev_commit or diff_hash in already_searched:
                 prev_commit = curr_commit
                 continue
-            elif diff_hash in already_searched:
-                prev_commit = curr_commit
-                continue
-            else:
-                diff = prev_commit.diff(curr_commit, create_patch=True)
+            diff = prev_commit.diff(curr_commit, create_patch=True)
             # avoid searching the same diffs
             already_searched.add(diff_hash)
             found_issues = diff_worker(
