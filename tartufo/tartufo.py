@@ -20,7 +20,7 @@ import stat
 import sys
 import tempfile
 import uuid
-import truffleHogRegexes
+import truffleHogRegexes.regexChecks
 
 from git import NULL_TREE
 from git import Repo
@@ -59,7 +59,8 @@ def main(argv=None):  # noqa:C901
         )
     else:
         if args.repo_path is None and args.git_url is None:
-            raise SyntaxError("One of git_url or --repo_path is required")
+            print("ERROR: One of git_url or --repo_path is required")
+            return 1
         output = find_strings(
             args.git_url,
             args.since_commit,
@@ -82,9 +83,8 @@ def main(argv=None):  # noqa:C901
             print("Results have been saved in {}".format(issues_path))
 
     if output["found_issues"]:
-        sys.exit(1)
-    else:
-        sys.exit(0)
+        return 1
+    return 0
 
 
 def parse_args(argv):
@@ -641,4 +641,4 @@ def clean_up(output):
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    sys.exit(main(sys.argv))

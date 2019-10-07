@@ -18,6 +18,11 @@ from tartufo import tartufo
 
 
 class TestStringMethods(unittest.TestCase):  # pylint: disable=too-many-public-methods
+
+    def test_main_exits_gracefully_with_empty_argv(self):
+        return_val = tartufo.main([])
+        self.assertEqual(return_val, 1)
+
     def test_parse_args_git_rules_repo(self):
         argv = ["--git-rules-repo", "git@github.test:test-owner/tartufo-test.git"]
         expected_git_rules_repo = "git@github.test:test-owner/tartufo-test.git"
