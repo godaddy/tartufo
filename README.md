@@ -116,6 +116,19 @@ success status (indicating no potential secrets were discovered) will git commit
 Note that it is always possible, although not recommended, to bypass the pre-commit hook by
 using `git commit --no-verify`.
 
+If you would like to automate these hooks, you can use the [pre-commit] tool by
+adding a `.pre-commit-config.yaml` file to your repository similar to the following:
+
+```yaml
+- repo: https://github.com/godaddy/tartufo
+  rev: master
+  hooks:
+  - id: tartufo
+```
+
+That's it! Now your contributors only need to run `pre-commit install --install-hooks`,
+and `tartufo` will automatically be run as a pre-commit hook.
+
 ### Temporary file cleanup
 
 tartufo stores the results in temporary files, which are left on disk by default, to allow
@@ -208,6 +221,56 @@ optional arguments:
   --pre_commit          Scan staged files in local repo clone
 ```
 
+## Contributing
+
+First of all, thank you for considering contributing to `tartufo`! Before diving
+head first into the code, please take a moment to familiarize yourself with a few
+quick guidelines:
+
+* When writing code, please try to match surrounding code style as closely as
+  possible.
+* When writing documentation, please write in plain English, following the
+  conventions followed elsewhere in the project.
+* New code should be covered by unit tests, where applicable. This could mean
+  existing unit tests but, in the case that it does not, we ask that you write
+  new unit tests to cover the code.
+* It is highly recommended that you work on this project inside of an isolated
+  Python virtual environment. This can be set up, along with all necessary
+  Python libraries, via the following commands:
+
+  ```sh
+  > python -m venv .venv
+  > source .venv/bin/activate
+  > pip install -e .[tests]
+  ```
+
+* This project support multiple Python versions in this project. Thus, we ask
+  that you use the `tox` tool to test against them. If you do not have all of the
+  supported Python versions, that's perfectly okay. They will all be tested
+  against by our CI process. But keep in mind that this may delay the adoption
+  of your contribution, if those tests don't all pass.
+* This project uses multiple [pre-commit] hooks to help ensure our code quality.
+  If you have followed the instructions above for setting up your virtual
+  environment, `pre-commit` will already be installed, and you only need to run
+  the following:
+
+  ```sh
+  > pre-commit install --install-hooks
+  ```
+
+  Now, any time you make a new commit to the repository, you will see something
+  like the following:
+
+  ```sh
+  Tartufo..................................................................Passed
+  mypy.....................................................................Passed
+  flake8...................................................................Passed
+  pylint...................................................................Passed
+  ```
+
+* Finally, all changes must be proposed via a pull request on GitHub, which must
+  reviewed and approved by at least one core contributor, before being merged.
+
 ## Version history
 
 | Version | Change(s)
@@ -219,3 +282,5 @@ optional arguments:
 | 2.0.105 | Build and deploy wheel on master branch
 | 2.0.102 | Streamlining tox run
 | 2.0.99  | GoDaddy Maintainer information
+
+[pre-commit]: https://pre-commit.com/

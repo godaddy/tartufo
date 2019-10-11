@@ -9,6 +9,7 @@ EXTRAS_REQUIRE = {
     'tests': [
         'coverage',
         "mock; python_version == '2.7'",
+        "pre-commit",
         'pytest',
         'pytest-cov',
         'pytest-sugar',
