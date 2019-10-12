@@ -10,10 +10,11 @@
 # multiple time (only on the command line, not in the configuration file where
 # it should appear only once).
 # C0111: Missing docstrings
+# R0201: Method could be a function
 # R0903: Too few public methods
 # R0912: Too many branches
 # R0914: Too many local variables
-disable=C0111,R0903,R0912,R0914
+disable=C0111,R0201,R0903,R0912,R0914
 
 [BASIC]
 
