@@ -3,6 +3,7 @@
 IMAGE_NAMESPACE=godaddy
 IMAGE_NAME=tartufo
 
+cd "$( dirname "${BASH_SOURCE[0]}" )"
 IMAGE_VERSION=$(cat ../VERSION | tr -d '[:space:]')
 IMAGE_FULL_NAME=${IMAGE_NAMESPACE}/${IMAGE_NAME}
 
