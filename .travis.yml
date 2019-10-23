@@ -10,20 +10,39 @@ python:
 install: pip install tox-travis codecov
 script: tox
 after_success: codecov
-branches:
-  only:
-  - master
-  - /^v?\d+\.\d+(\.\d+)?(-\S*)?$/
-deploy:
-  - provider: pypi
-    user: "__token__"
-    password: $PYPI_DEPLOY_KEY
-    on:
-      tags: true
+
+stages:
+  - test
+  - lint
+  - name: deploy
+    if: tag IS present
+
+jobs:
+  fast_finish: true
+  include:
+    - stage: lint
       python: 3.7
-      condition: $TOXENV = py37
-      distributions: sdist bdist_wheel
-      repo: godaddy/tartufo
+      env: TOXENV=flake8
+    - python: 3.7
+      env: TOXENV=mypy
+    - python: 3.7
+      env: TOXENV=pylint
+    - python: 3.7
+      env: TOXENV=vulture
+    - stage: deploy
+      python: 3.7
+      install: true
+      script: true
+      after_success: true
+      deploy:
+      - provider: pypi
+        user: "__token__"
+        password: $PYPI_DEPLOY_KEY
+        skip_existing: true
+        distributions: "sdist bdist_wheel"
+        on:
+          branch: master
+          tags: true
   # FIXME: Uncomment once deployment user is determined.
   # - provider: script
   #   script: ./scripts/build_and_publish_docker.sh
