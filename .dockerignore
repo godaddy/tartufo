@@ -1,0 +1,8 @@
+.*_cache
+.tox
+.venv
+.vscode
+*.swp
+.idea
+*.egg-info
+.coverage

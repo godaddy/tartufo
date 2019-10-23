@@ -1,3 +1,4 @@
+import codecs
 from setuptools import setup
 
 INSTALL_REQUIRES = [
@@ -17,14 +18,18 @@ EXTRAS_REQUIRE = {
     ]
 }
 
+
+def read(filename):
+    with codecs.open(filename, 'r', 'utf-8') as file_handle:
+        return file_handle.read().strip()
+
+
 setup(
     name='tartufo',
-    version='0.0.1',
+    version=read('VERSION'),
     description='tartufo is a tool for scanning git repositories for secrets/passwords/high-entropy data',
-    long_description='Seaches for secrets/high-entropy/passwords in git histories and pre-commit blobs '
-                     'with the intent to provide developers a way of preventing accidental leaking of '
-                     'privileged data. This project was inspired by Dylan Ayrey\'s project truffleHog '
-                     'https://github.com/dxa4481/truffleHog',
+    long_description=read('README.md'),
+    long_description_content_type='text/x-markdown',
     url='https://github.com/godaddy/tartufo',
     download_url='https://pypi.org/project/tartufo/#files',
     author='GoDaddy',

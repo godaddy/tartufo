@@ -42,9 +42,8 @@ jobs:
         on:
           branch: master
           tags: true
-  # FIXME: Uncomment once deployment user is determined.
-  # - provider: script
-  #   script: ./scripts/build_and_publish_docker.sh
-  #   on:
-  #     tags: true
-  #     condition: $TOXENV = flake8
+      - provider: script
+        script: ./scripts/build_and_publish_docker.sh
+        on:
+          branch: master
+          tags: true

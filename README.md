@@ -271,16 +271,10 @@ quick guidelines:
 * Finally, all changes must be proposed via a pull request on GitHub, which must
   reviewed and approved by at least one core contributor, before being merged.
 
-## Version history
+## Attributions
 
-| Version | Change(s)
-| ------- | ---
-| 2.0.113 | OSWG requested changes
-| 2.0.112 | Added support for pre-commit hook checking
-| 2.0.108 | Minor code/comment cleanup
-| 2.0.106 | Prevent deployment on PRs
-| 2.0.105 | Build and deploy wheel on master branch
-| 2.0.102 | Streamlining tox run
-| 2.0.99  | GoDaddy Maintainer information
+This project was inspired by and built off of the work done by Dylan Ayrey on
+the [truffleHog] project.
 
 [pre-commit]: https://pre-commit.com/
+[truffleHog]: https://github.com/dxa4481/truffleHog
