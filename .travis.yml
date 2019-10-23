@@ -37,7 +37,6 @@ jobs:
       deploy:
       - provider: pypi
         user: "__token__"
-        password: $PYPI_DEPLOY_KEY
         skip_existing: true
         distributions: "sdist bdist_wheel"
         on:
