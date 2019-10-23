@@ -29,7 +29,7 @@ setup(
     version=read('VERSION'),
     description='tartufo is a tool for scanning git repositories for secrets/passwords/high-entropy data',
     long_description=read('README.md'),
-    long_description_content_type='text/x-markdown',
+    long_description_content_type='text/markdown',
     url='https://github.com/godaddy/tartufo',
     download_url='https://pypi.org/project/tartufo/#files',
     author='GoDaddy',
