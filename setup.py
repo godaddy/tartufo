@@ -35,7 +35,7 @@ setup(
     setup_requires='',
     extras_require=EXTRAS_REQUIRE,
     entry_points={
-        'console_scripts': ['tartufo = tartufo.tartufo:main'],
+        'console_scripts': ['tartufo = tartufo.cli:main'],
     },
     classifiers=[
         "Development Status :: 3 - Alpha",

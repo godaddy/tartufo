@@ -7,7 +7,7 @@ from json import loads, dumps
 
 import requests
 
-from tartufo import tartufo
+from tartufo import scanner
 
 RULES = {
     "Slack Token": "(xox[p|b|o|a]-[0-9]{12}-[0-9]{12}-[0-9]{12}-[a-z0-9]{32})",
@@ -44,7 +44,7 @@ def get_org_repos(orgname, page):
 
         if item['fork'] is False:  # and reached:
             print('searching ' + item["html_url"])
-            results = tartufo.find_strings(item["html_url"], do_regex=True, custom_regexes=RULES, do_entropy=False,
+            results = scanner.find_strings(item["html_url"], do_regex=True, custom_regexes=RULES, do_entropy=False,
                                            max_depth=100000)
             for issue in results["foundIssues"]:
                 data = loads(open(issue).read())

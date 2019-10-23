@@ -14,30 +14,30 @@ except ImportError:
     from mock import MagicMock, patch  # type: ignore
 
 from truffleHogRegexes.regexChecks import regexes as default_regexes
-from tartufo import tartufo
+from tartufo import cli, config, scanner, util
 
 
 class TestStringMethods(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def test_main_exits_gracefully_with_empty_argv(self):
-        return_val = tartufo.main([])
+        return_val = cli.main([])
         self.assertEqual(return_val, 1)
 
     def test_parse_args_git_rules_repo(self):
         argv = ["--git-rules-repo", "git@github.test:test-owner/tartufo-test.git"]
         expected_git_rules_repo = "git@github.test:test-owner/tartufo-test.git"
-        args = tartufo.parse_args(argv)
+        args = cli.parse_args(argv)
         self.assertEqual(expected_git_rules_repo, args.git_rules_repo)
 
     def test_parse_args_git_rules_not_specified(self):
         argv = []
-        args = tartufo.parse_args(argv)
+        args = cli.parse_args(argv)
         self.assertEqual(0, len(args.git_rules_filenames), "args.git_rules_filenames should be empty")
 
     def test_parse_args_git_rules(self):
         argv = ["--git-rules", "file1", "file2"]
         expected_rules_filenames = ("file1", "file2")
-        args = tartufo.parse_args(argv)
+        args = cli.parse_args(argv)
         self.assertCountEqual(expected_rules_filenames, args.git_rules_filenames,
                               "args.git_rules_filenames should be {}, is actually {}".
                               format(expected_rules_filenames, args.rules_filenames))
@@ -45,20 +45,20 @@ class TestStringMethods(unittest.TestCase):  # pylint: disable=too-many-public-m
     def test_parse_args_git_rules_multiple_times(self):
         argv = ["--git-rules", "file1", "--git-rules", "file2"]
         expected_rules_filenames = ("file1", "file2")
-        args = tartufo.parse_args(argv)
+        args = cli.parse_args(argv)
         self.assertCountEqual(expected_rules_filenames, args.git_rules_filenames,
                               "args.git_rules_filenames should be {}, is actually {}".
                               format(expected_rules_filenames, args.rules_filenames))
 
     def test_parse_args_rules_not_specified(self):
         argv = []
-        args = tartufo.parse_args(argv)
+        args = cli.parse_args(argv)
         self.assertEqual(0, len(args.rules_filenames), "args.rules_filenames should be empty")
 
     def test_parse_args_rules(self):
         argv = ["--rules", "file1", "file2"]
         expected_rules_filenames = ("file1", "file2")
-        args = tartufo.parse_args(argv)
+        args = cli.parse_args(argv)
         self.assertCountEqual(expected_rules_filenames, args.rules_filenames,
                               "args.rules_filenames should be {}, is actually {}".
                               format(expected_rules_filenames, args.rules_filenames))
@@ -66,32 +66,32 @@ class TestStringMethods(unittest.TestCase):  # pylint: disable=too-many-public-m
     def test_parse_args_rules_multiple_times(self):
         argv = ["--rules", "file1", "--rules", "file2"]
         expected_rules_filenames = ("file1", "file2")
-        args = tartufo.parse_args(argv)
+        args = cli.parse_args(argv)
         self.assertCountEqual(expected_rules_filenames, args.rules_filenames,
                               "args.rules_filenames should be {}, is actually {}".
                               format(expected_rules_filenames, args.rules_filenames))
 
     def test_parse_args_rules_default_regexes_set_to_false(self):
         argv = ["--default-regexes", "f"]
-        args = tartufo.parse_args(argv)
+        args = cli.parse_args(argv)
         self.assertFalse(args.do_default_regexes, "args.do_default_regexes should be False, is actually {}".
                          format(args.do_default_regexes))
 
     def test_parse_args_rules_default_regexes_set_to_true(self):
         argv = ["--default-regexes", "t"]
-        args = tartufo.parse_args(argv)
+        args = cli.parse_args(argv)
         self.assertTrue(args.do_default_regexes, "args.do_default_regexes should be True, is actually {}".
                         format(args.do_default_regexes))
 
     def test_parse_args_rules_default_regexes_specified_with_no_value(self):
         argv = ["--default-regexes", "--regex"]
-        args = tartufo.parse_args(argv)
+        args = cli.parse_args(argv)
         self.assertTrue(args.do_default_regexes, "args.do_default_regexes should be True, is actually {}".
                         format(args.do_default_regexes))
 
     def test_parse_args_rules_default_regexes_unset(self):
         argv = []
-        args = tartufo.parse_args(argv)
+        args = cli.parse_args(argv)
         self.assertTrue(args.do_default_regexes, "args.do_default_regexes should be True, is actually {}".
                         format(args.do_default_regexes))
 
@@ -102,7 +102,7 @@ class TestStringMethods(unittest.TestCase):  # pylint: disable=too-many-public-m
         Args = namedtuple("Args", ("do_regex", "git_rules_repo", "git_rules_filenames", "rules_filenames",
                                    "do_default_regexes"))
         args = Args(True, None, None, rules_filenames, False)
-        actual_regexes = tartufo.configure_regexes_from_args(args, default_regexes)
+        actual_regexes = config.configure_regexes_from_args(args, default_regexes)
 
         self.assertEqual(len(expected_regexes), len(actual_regexes),
                          "The regexes dictionary should have the same length as the test rules " +
@@ -124,7 +124,7 @@ class TestStringMethods(unittest.TestCase):  # pylint: disable=too-many-public-m
         Args = namedtuple("Args", ("do_regex", "git_rules_repo", "git_rules_filenames", "rules_filenames",
                                    "do_default_regexes"))
         args = Args(True, None, None, rules_filenames, True)
-        actual_regexes = tartufo.configure_regexes_from_args(args, default_regexes)
+        actual_regexes = config.configure_regexes_from_args(args, default_regexes)
 
         self.assertEqual(len(expected_regexes), len(actual_regexes),
                          "The regexes dictionary should have the same length as the test rules " +
@@ -144,7 +144,7 @@ class TestStringMethods(unittest.TestCase):  # pylint: disable=too-many-public-m
         Args = namedtuple("Args", ("do_regex", "git_rules_repo", "git_rules_filenames", "rules_filenames",
                                    "do_default_regexes"))
         args = Args(False, None, None, rules_filenames, True)
-        actual_regexes = tartufo.configure_regexes_from_args(args, default_regexes)
+        actual_regexes = config.configure_regexes_from_args(args, default_regexes)
 
         self.assertDictEqual({}, actual_regexes, "The regexes dictionary should be empty when do_regex is False")
 
@@ -155,7 +155,7 @@ class TestStringMethods(unittest.TestCase):  # pylint: disable=too-many-public-m
         Args = namedtuple("Args", ("do_regex", "git_rules_repo", "git_rules_filenames", "rules_filenames",
                                    "do_default_regexes"))
         args = Args(True, None, None, rules_filenames, False)
-        actual_regexes = tartufo.configure_regexes_from_args(args, default_regexes)
+        actual_regexes = config.configure_regexes_from_args(args, default_regexes)
 
         self.assertDictEqual(expected_regexes, actual_regexes,
                              "The regexes dictionary should not have been changed when no rules files are specified")
@@ -166,14 +166,14 @@ class TestStringMethods(unittest.TestCase):  # pylint: disable=too-many-public-m
         )
         random_string_hex = "b3A0a1FDfe86dcCE945B72"
         self.assertGreater(
-            tartufo.shannon_entropy(random_string_b64, tartufo.BASE64_CHARS), 4.5
+            scanner.shannon_entropy(random_string_b64, scanner.BASE64_CHARS), 4.5
         )
         self.assertGreater(
-            tartufo.shannon_entropy(random_string_hex, tartufo.HEX_CHARS), 3
+            scanner.shannon_entropy(random_string_hex, scanner.HEX_CHARS), 3
         )
 
     def test_cloning(self):
-        project_path = tartufo.clone_git_repo(
+        project_path = util.clone_git_repo(
             "https://github.com/godaddy/tartufo.git"
         )
         license_file = os.path.join(project_path, "LICENSE")
@@ -181,7 +181,7 @@ class TestStringMethods(unittest.TestCase):  # pylint: disable=too-many-public-m
 
     def test_unicode_expection(self):
         try:
-            tartufo.find_strings("https://github.com/dxa4481/tst.git")
+            scanner.find_strings("https://github.com/dxa4481/tst.git")
         except UnicodeEncodeError:
             self.fail("Unicode print error")
 
@@ -202,7 +202,7 @@ class TestStringMethods(unittest.TestCase):  # pylint: disable=too-many-public-m
         # Redirect STDOUT, run scan and re-establish STDOUT
         sys.stdout = tmp_stdout
         try:
-            tartufo.find_strings(
+            scanner.find_strings(
                 "https://github.com/godaddy/tartufo.git",
                 since_commit=since_commit,
                 print_json=True,
@@ -224,15 +224,15 @@ class TestStringMethods(unittest.TestCase):  # pylint: disable=too-many-public-m
         )
 
     # noinspection PyUnusedLocal
-    @patch("tartufo.tartufo.clone_git_repo")
-    @patch("tartufo.tartufo.Repo")
+    @patch("tartufo.scanner.util.clone_git_repo")
+    @patch("tartufo.scanner.Repo")
     @patch("shutil.rmtree")
     def test_branch(
         self, rmtree_mock, repo_const_mock, clone_git_repo
     ):  # pylint: disable=unused-argument
         repo = MagicMock()
         repo_const_mock.return_value = repo
-        tartufo.find_strings("test_repo", branch="testbranch")
+        scanner.find_strings("test_repo", branch="testbranch")
         self.assertIsNone(
             repo.remotes.origin.fetch.assert_called_once_with("testbranch")
         )
@@ -271,24 +271,24 @@ class TestStringMethods(unittest.TestCase):  # pylint: disable=too-many-public-m
         deleted_paths_patterns = [re.compile(r"(.*/)?deleted-file$")]
         for name, blob in blobs.items():
             self.assertTrue(
-                tartufo.path_included(blob),
+                scanner.path_included(blob),
                 "{} should be included by default".format(blob),
             )
             self.assertTrue(
-                tartufo.path_included(blob, include_patterns=all_paths_patterns),
+                scanner.path_included(blob, include_patterns=all_paths_patterns),
                 "{} should be included with include_patterns: {}".format(
                     blob, all_paths_patterns
                 ),
             )
             self.assertFalse(
-                tartufo.path_included(blob, exclude_patterns=all_paths_patterns),
+                scanner.path_included(blob, exclude_patterns=all_paths_patterns),
                 "{} should be excluded with exclude_patterns: {}".format(
                     blob, all_paths_patterns
                 ),
             )
             # pylint: disable=W1308
             self.assertFalse(
-                tartufo.path_included(
+                scanner.path_included(
                     blob,
                     include_patterns=all_paths_patterns,
                     exclude_patterns=all_paths_patterns,
@@ -298,7 +298,7 @@ class TestStringMethods(unittest.TestCase):  # pylint: disable=too-many-public-m
                 ),
             )
             self.assertFalse(
-                tartufo.path_included(
+                scanner.path_included(
                     blob,
                     include_patterns=overlap_patterns,
                     exclude_patterns=all_paths_patterns,
@@ -308,7 +308,7 @@ class TestStringMethods(unittest.TestCase):  # pylint: disable=too-many-public-m
                 ),
             )
             self.assertFalse(
-                tartufo.path_included(
+                scanner.path_included(
                     blob,
                     include_patterns=all_paths_patterns,
                     exclude_patterns=overlap_patterns,
@@ -320,33 +320,33 @@ class TestStringMethods(unittest.TestCase):  # pylint: disable=too-many-public-m
             path = blob.b_path if blob.b_path else blob.a_path
             if "/" in path:
                 self.assertTrue(
-                    tartufo.path_included(blob, include_patterns=sub_dirs_patterns),
+                    scanner.path_included(blob, include_patterns=sub_dirs_patterns),
                     "{}: inclusion should include sub directory paths: {}".format(
                         blob, sub_dirs_patterns
                     ),
                 )
                 self.assertFalse(
-                    tartufo.path_included(blob, exclude_patterns=sub_dirs_patterns),
+                    scanner.path_included(blob, exclude_patterns=sub_dirs_patterns),
                     "{}: exclusion should exclude sub directory paths: {}".format(
                         blob, sub_dirs_patterns
                     ),
                 )
             else:
                 self.assertFalse(
-                    tartufo.path_included(blob, include_patterns=sub_dirs_patterns),
+                    scanner.path_included(blob, include_patterns=sub_dirs_patterns),
                     "{}: inclusion should exclude root directory paths: {}".format(
                         blob, sub_dirs_patterns
                     ),
                 )
                 self.assertTrue(
-                    tartufo.path_included(blob, exclude_patterns=sub_dirs_patterns),
+                    scanner.path_included(blob, exclude_patterns=sub_dirs_patterns),
                     "{}: exclusion should include root directory paths: {}".format(
                         blob, sub_dirs_patterns
                     ),
                 )
             if name.startswith("deleted-file-"):
                 self.assertTrue(
-                    tartufo.path_included(
+                    scanner.path_included(
                         blob, include_patterns=deleted_paths_patterns
                     ),
                     "{}: inclusion should match deleted paths: {}".format(
@@ -354,7 +354,7 @@ class TestStringMethods(unittest.TestCase):  # pylint: disable=too-many-public-m
                     ),
                 )
                 self.assertFalse(
-                    tartufo.path_included(
+                    scanner.path_included(
                         blob, exclude_patterns=deleted_paths_patterns
                     ),
                     "{}: exclusion should match deleted paths: {}".format(
@@ -363,13 +363,13 @@ class TestStringMethods(unittest.TestCase):  # pylint: disable=too-many-public-m
                 )
 
     # noinspection PyUnusedLocal
-    @patch("tartufo.tartufo.clone_git_repo")
-    @patch("tartufo.tartufo.Repo")
+    @patch("tartufo.scanner.util.clone_git_repo")
+    @patch("tartufo.scanner.Repo")
     @patch("shutil.rmtree")
     def test_repo_path(
         self, rmtree_mock, repo_const_mock, clone_git_repo
     ):  # pylint: disable=unused-argument
-        tartufo.find_strings("test_repo", repo_path="test/path/")
+        scanner.find_strings("test_repo", repo_path="test/path/")
         self.assertIsNone(rmtree_mock.assert_not_called())
         self.assertIsNone(clone_git_repo.assert_not_called())
 
