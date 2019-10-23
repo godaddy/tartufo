@@ -1,5 +1,5 @@
 # tartufo
-[![Build Status](https://travis-ci.org/godaddy/tartufo.svg?branch=master)](https://travis-ci.org/godaddy/tartufo)
+[![Build Status](https://travis-ci.com/godaddy/tartufo.svg?branch=master)](https://travis-ci.com/godaddy/tartufo)
 
 
 Searches through git repositories for secrets, digging deep into commit history and branches.
