@@ -7,7 +7,7 @@ from collections import namedtuple
 
 from truffleHogRegexes.regexChecks import regexes as default_regexes
 
-from tartufo import tartufo
+from tartufo import config
 
 
 class ConfigureRegexTests(unittest.TestCase):
@@ -19,7 +19,7 @@ class ConfigureRegexTests(unittest.TestCase):
         Args = namedtuple("Args", ("do_regex", "git_rules_repo", "git_rules_filenames", "rules_filenames",
                                    "do_default_regexes"))
         args = Args(True, None, None, rules_filenames, False)
-        actual_regexes = tartufo.configure_regexes_from_args(args, default_regexes)
+        actual_regexes = config.configure_regexes_from_args(args, default_regexes)
 
         self.assertEqual(
             expected_regexes, actual_regexes,
@@ -35,7 +35,7 @@ class ConfigureRegexTests(unittest.TestCase):
         Args = namedtuple("Args", ("do_regex", "git_rules_repo", "git_rules_filenames", "rules_filenames",
                                    "do_default_regexes"))
         args = Args(True, None, None, rules_filenames, True)
-        actual_regexes = tartufo.configure_regexes_from_args(args, default_regexes)
+        actual_regexes = config.configure_regexes_from_args(args, default_regexes)
 
         self.assertEqual(
             expected_regexes, actual_regexes,
@@ -49,7 +49,7 @@ class ConfigureRegexTests(unittest.TestCase):
         Args = namedtuple("Args", ("do_regex", "git_rules_repo", "git_rules_filenames", "rules_filenames",
                                    "do_default_regexes"))
         args = Args(False, None, None, rules_filenames, True)
-        actual_regexes = tartufo.configure_regexes_from_args(args, default_regexes)
+        actual_regexes = config.configure_regexes_from_args(args, default_regexes)
 
         self.assertEqual({}, actual_regexes, "The regexes dictionary should be empty when do_regex is False")
 
@@ -60,7 +60,7 @@ class ConfigureRegexTests(unittest.TestCase):
         Args = namedtuple("Args", ("do_regex", "git_rules_repo", "git_rules_filenames", "rules_filenames",
                                    "do_default_regexes"))
         args = Args(True, None, None, rules_filenames, False)
-        actual_regexes = tartufo.configure_regexes_from_args(args, default_regexes)
+        actual_regexes = config.configure_regexes_from_args(args, default_regexes)
 
         self.assertEqual(
             expected_regexes, actual_regexes,

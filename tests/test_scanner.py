@@ -5,7 +5,7 @@ import unittest
 from collections import namedtuple
 
 import six
-from tartufo import tartufo
+from tartufo import scanner
 
 try:
     from unittest import mock
@@ -13,56 +13,46 @@ except ImportError:
     import mock  # type: ignore
 
 
-class GitTests(unittest.TestCase):
-    """Test that we interact with git properly.
+class EntropyTests(unittest.TestCase):
 
-    We will not test that we get the eventual result desired (e.g. a fully
-    cloned repo) for a couple of reasons.
-
-      1. That functionality is not the responsibility of our package;
-         it is the responsibility of the `git` package.
-      2. Full tests such as those would require an internet connection,
-         and rely on the functionality of external systems. Unit tests
-         should only ever rely on the code which is being directly tested.
-    """
-
-    @mock.patch("tartufo.tartufo.Repo.clone_from")
-    @mock.patch("tartufo.tartufo.tempfile.mkdtemp")
-    def test_tartufo_clones_git_repo_into_temp_dir(self, mock_mkdtemp, mock_clone):
-        tartufo.clone_git_repo("https://github.com/godaddy/tartufo.git")
-        mock_clone.assert_called_once_with(
-            "https://github.com/godaddy/tartufo.git",
-            mock_mkdtemp.return_value
+    def test_shannon(self):
+        random_string_b64 = (
+            "ZWVTjPQSdhwRgl204Hc51YCsritMIzn8B=/p9UyeX7xu6KkAGqfm3FJ+oObLDNEva"
+        )
+        random_string_hex = "b3A0a1FDfe86dcCE945B72"
+        self.assertGreater(
+            scanner.shannon_entropy(random_string_b64, scanner.BASE64_CHARS),
+            4.5
+        )
+        self.assertGreater(
+            scanner.shannon_entropy(random_string_hex, scanner.HEX_CHARS),
+            3
         )
 
-    @mock.patch("tartufo.tartufo.Repo.clone_from", new=mock.MagicMock())
-    @mock.patch("tartufo.tartufo.tempfile.mkdtemp")
-    def test_clone_git_repo_returns_path_to_clone(self, mock_mkdtemp):
-        repo_path = tartufo.clone_git_repo("https://github.com/godaddy/tartufo.git")
-        self.assertEqual(repo_path, mock_mkdtemp.return_value)
 
-    @mock.patch("tartufo.tartufo.hashlib", new=mock.MagicMock())
-    @mock.patch("tartufo.tartufo.tempfile", new=mock.MagicMock())
-    @mock.patch("tartufo.tartufo.Repo")
-    @mock.patch("tartufo.tartufo.clone_git_repo")
-    @mock.patch("tartufo.tartufo.shutil.rmtree")
+class ScannerTests(unittest.TestCase):
+    @mock.patch("tartufo.scanner.hashlib", new=mock.MagicMock())
+    @mock.patch("tartufo.scanner.tempfile", new=mock.MagicMock())
+    @mock.patch("tartufo.scanner.Repo")
+    @mock.patch("tartufo.scanner.util.clone_git_repo")
+    @mock.patch("tartufo.scanner.util.shutil.rmtree")
     def test_find_strings_works_against_already_cloned_repo(self, mock_rmtree, mock_clone, mock_repo):
-        tartufo.find_strings("find_repo", repo_path="/test/path")
+        scanner.find_strings("find_repo", repo_path="/test/path")
         mock_repo.assert_called_once_with("/test/path")
         mock_rmtree.assert_not_called()
         mock_clone.assert_not_called()
 
-    @mock.patch("tartufo.tartufo.clone_git_repo", new=mock.MagicMock())
-    @mock.patch("tartufo.tartufo.shutil.rmtree", new=mock.MagicMock())
-    @mock.patch("tartufo.tartufo.tempfile", new=mock.MagicMock())
-    @mock.patch("tartufo.tartufo.Repo")
+    @mock.patch("tartufo.scanner.util.clone_git_repo", new=mock.MagicMock())
+    @mock.patch("tartufo.scanner.util.shutil.rmtree", new=mock.MagicMock())
+    @mock.patch("tartufo.scanner.tempfile", new=mock.MagicMock())
+    @mock.patch("tartufo.scanner.Repo")
     def test_find_strings_checks_out_branch_when_specified(self, mock_repo):
-        tartufo.find_strings("test_repo", branch="testbranch")
+        scanner.find_strings("test_repo", branch="testbranch")
         mock_repo.return_value.remotes.origin.fetch.assert_called_once_with("testbranch")
 
-    @mock.patch("tartufo.tartufo.tempfile", new=mock.MagicMock())
-    @mock.patch("tartufo.tartufo.Repo")
-    @mock.patch("tartufo.tartufo.diff_worker")
+    @mock.patch("tartufo.scanner.tempfile", new=mock.MagicMock())
+    @mock.patch("tartufo.scanner.Repo")
+    @mock.patch("tartufo.scanner.diff_worker")
     def test_all_commits_are_passed_to_diff_worker(self, mock_worker, mock_repo):
         # Expose a "master" branch for our "repo"
         branches = mock_repo.return_value.remotes.origin.fetch
@@ -74,7 +64,7 @@ class GitTests(unittest.TestCase):
         commit_3 = mock.MagicMock(name="first commit")
         mock_repo.return_value.iter_commits.return_value = [commit_1, commit_2, commit_3]
 
-        tartufo.find_strings(
+        scanner.find_strings(
             "git://fake/repo.git", repo_path="/fake/repo",
             print_json=True, suppress_output=False
         )
@@ -99,7 +89,7 @@ class GitTests(unittest.TestCase):
         How can we test the same thing without cloning an external repo?
         """
         try:
-            tartufo.find_strings("https://github.com/dxa4481/tst.git")
+            scanner.find_strings("https://github.com/dxa4481/tst.git")
         except UnicodeEncodeError:
             self.fail("Unicode print error")
 
@@ -125,7 +115,7 @@ class GitTests(unittest.TestCase):
         # Redirect STDOUT, run scan and re-establish STDOUT
         sys.stdout = tmp_stdout
         try:
-            tartufo.find_strings(
+            scanner.find_strings(
                 "https://github.com/godaddy/tartufo.git",
                 since_commit=since_commit,
                 print_json=True,
@@ -185,24 +175,24 @@ class GitTests(unittest.TestCase):
         deleted_paths_patterns = [re.compile(r"(.*/)?deleted-file$")]
         for name, blob in blobs.items():
             self.assertTrue(
-                tartufo.path_included(blob),
+                scanner.path_included(blob),
                 "{} should be included by default".format(blob),
             )
             self.assertTrue(
-                tartufo.path_included(blob, include_patterns=all_paths_patterns),
+                scanner.path_included(blob, include_patterns=all_paths_patterns),
                 "{} should be included with include_patterns: {}".format(
                     blob, all_paths_patterns
                 ),
             )
             self.assertFalse(
-                tartufo.path_included(blob, exclude_patterns=all_paths_patterns),
+                scanner.path_included(blob, exclude_patterns=all_paths_patterns),
                 "{} should be excluded with exclude_patterns: {}".format(
                     blob, all_paths_patterns
                 ),
             )
             # pylint: disable=W1308
             self.assertFalse(
-                tartufo.path_included(
+                scanner.path_included(
                     blob,
                     include_patterns=all_paths_patterns,
                     exclude_patterns=all_paths_patterns,
@@ -212,7 +202,7 @@ class GitTests(unittest.TestCase):
                 ),
             )
             self.assertFalse(
-                tartufo.path_included(
+                scanner.path_included(
                     blob,
                     include_patterns=overlap_patterns,
                     exclude_patterns=all_paths_patterns,
@@ -222,7 +212,7 @@ class GitTests(unittest.TestCase):
                 ),
             )
             self.assertFalse(
-                tartufo.path_included(
+                scanner.path_included(
                     blob,
                     include_patterns=all_paths_patterns,
                     exclude_patterns=overlap_patterns,
@@ -234,33 +224,33 @@ class GitTests(unittest.TestCase):
             path = blob.b_path if blob.b_path else blob.a_path
             if "/" in path:
                 self.assertTrue(
-                    tartufo.path_included(blob, include_patterns=sub_dirs_patterns),
+                    scanner.path_included(blob, include_patterns=sub_dirs_patterns),
                     "{}: inclusion should include sub directory paths: {}".format(
                         blob, sub_dirs_patterns
                     ),
                 )
                 self.assertFalse(
-                    tartufo.path_included(blob, exclude_patterns=sub_dirs_patterns),
+                    scanner.path_included(blob, exclude_patterns=sub_dirs_patterns),
                     "{}: exclusion should exclude sub directory paths: {}".format(
                         blob, sub_dirs_patterns
                     ),
                 )
             else:
                 self.assertFalse(
-                    tartufo.path_included(blob, include_patterns=sub_dirs_patterns),
+                    scanner.path_included(blob, include_patterns=sub_dirs_patterns),
                     "{}: inclusion should exclude root directory paths: {}".format(
                         blob, sub_dirs_patterns
                     ),
                 )
                 self.assertTrue(
-                    tartufo.path_included(blob, exclude_patterns=sub_dirs_patterns),
+                    scanner.path_included(blob, exclude_patterns=sub_dirs_patterns),
                     "{}: exclusion should include root directory paths: {}".format(
                         blob, sub_dirs_patterns
                     ),
                 )
             if name.startswith("deleted-file-"):
                 self.assertTrue(
-                    tartufo.path_included(
+                    scanner.path_included(
                         blob, include_patterns=deleted_paths_patterns
                     ),
                     "{}: inclusion should match deleted paths: {}".format(
@@ -268,7 +258,7 @@ class GitTests(unittest.TestCase):
                     ),
                 )
                 self.assertFalse(
-                    tartufo.path_included(
+                    scanner.path_included(
                         blob, exclude_patterns=deleted_paths_patterns
                     ),
                     "{}: exclusion should match deleted paths: {}".format(
