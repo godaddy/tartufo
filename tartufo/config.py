@@ -1,12 +1,18 @@
+import argparse  # pylint: disable=unused-import
 import json
 import os
 import re
 import shutil
+from typing import Dict, List, Pattern, Union
 
 from tartufo import util
 
 
+PatternDict = Dict[str, Union[str, Pattern]]
+
+
 def configure_regexes_from_args(args, default_regexes):
+    # type: (argparse.Namespace, PatternDict) -> PatternDict
     if args.do_regex:
         if args.rules_filenames or (args.git_rules_repo and args.git_rules):
             rules_regexes = dict(default_regexes) if args.do_default_regexes else {}
@@ -21,6 +27,7 @@ def configure_regexes_from_args(args, default_regexes):
 
 
 def configure_regexes_from_git(git_url, repo_rules_filenames, rules_regexes):
+    # type: (str, List[str], PatternDict) -> PatternDict
     rules_project_path = util.clone_git_repo(git_url)
     try:
         rules_filenames = [os.path.join(rules_project_path, repo_rules_filename)
@@ -31,6 +38,7 @@ def configure_regexes_from_git(git_url, repo_rules_filenames, rules_regexes):
 
 
 def configure_regexes_from_rules_files(rules_filenames, rules_regexes):
+    # type: (List[str], PatternDict) -> PatternDict
     for rules_filename in rules_filenames:
         load_rules_from_file(rules_filename, rules_regexes)
 
@@ -38,6 +46,8 @@ def configure_regexes_from_rules_files(rules_filenames, rules_regexes):
 
 
 def load_rules_from_file(rules_filename, rules_regexes):
+    # type: (str, PatternDict) -> None
+    # FIXME: This relies on side-effects by mutating the passed-in dictionary
     try:
         with open(rules_filename, "r") as rules_file:
             new_rules = json.loads(rules_file.read())

@@ -14,7 +14,8 @@
 # R0903: Too few public methods
 # R0912: Too many branches
 # R0914: Too many local variables
-disable=C0111,R0201,R0903,R0912,R0914
+# W0511: FIXME
+disable=C0111,R0201,R0903,R0912,R0914,W0511
 
 [BASIC]
 

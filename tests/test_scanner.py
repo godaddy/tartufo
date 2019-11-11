@@ -33,7 +33,7 @@ class EntropyTests(unittest.TestCase):
 class ScannerTests(unittest.TestCase):
     @mock.patch("tartufo.scanner.hashlib", new=mock.MagicMock())
     @mock.patch("tartufo.scanner.tempfile", new=mock.MagicMock())
-    @mock.patch("tartufo.scanner.Repo")
+    @mock.patch("tartufo.scanner.git.Repo")
     @mock.patch("tartufo.scanner.util.clone_git_repo")
     @mock.patch("tartufo.scanner.util.shutil.rmtree")
     def test_find_strings_works_against_already_cloned_repo(self, mock_rmtree, mock_clone, mock_repo):
@@ -45,13 +45,13 @@ class ScannerTests(unittest.TestCase):
     @mock.patch("tartufo.scanner.util.clone_git_repo", new=mock.MagicMock())
     @mock.patch("tartufo.scanner.util.shutil.rmtree", new=mock.MagicMock())
     @mock.patch("tartufo.scanner.tempfile", new=mock.MagicMock())
-    @mock.patch("tartufo.scanner.Repo")
+    @mock.patch("tartufo.scanner.git.Repo")
     def test_find_strings_checks_out_branch_when_specified(self, mock_repo):
         scanner.find_strings("test_repo", branch="testbranch")
         mock_repo.return_value.remotes.origin.fetch.assert_called_once_with("testbranch")
 
     @mock.patch("tartufo.scanner.tempfile", new=mock.MagicMock())
-    @mock.patch("tartufo.scanner.Repo")
+    @mock.patch("tartufo.scanner.git.Repo")
     @mock.patch("tartufo.scanner.diff_worker")
     def test_all_commits_are_passed_to_diff_worker(self, mock_worker, mock_repo):
         # Expose a "master" branch for our "repo"

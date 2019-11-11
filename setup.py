@@ -3,7 +3,8 @@ from setuptools import setup
 
 INSTALL_REQUIRES = [
     'GitPython == 2.1.1',
-    'truffleHogRegexes == 0.0.7'
+    'truffleHogRegexes == 0.0.7',
+    "typing; python_version < '3.5'",
 ]
 
 EXTRAS_REQUIRE = {

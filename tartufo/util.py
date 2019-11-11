@@ -5,11 +5,13 @@ import os
 import shutil
 import stat
 import tempfile
+from typing import Callable
 
 from git import Repo
 
 
 def del_rw(_func, name, _exc):
+    # type: (Callable, str, Exception) -> None
     os.chmod(name, stat.S_IWRITE)
     os.remove(name)
 
@@ -21,6 +23,7 @@ def clean_outputs(output):
 
 
 def str2bool(v_string):
+    # type: (str) -> bool
     if v_string is None:
         return True
 
@@ -34,6 +37,7 @@ def str2bool(v_string):
 
 
 def clone_git_repo(git_url):
+    # type: (str) -> str
     project_path = tempfile.mkdtemp()
     Repo.clone_from(git_url, project_path)
     return project_path
