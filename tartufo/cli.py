@@ -2,13 +2,15 @@
 
 import argparse
 import re
+from typing import List, Optional
 
 import truffleHogRegexes.regexChecks
 
 from tartufo import config, scanner, util
 
 
-def main(argv=None):  # noqa:C901
+def main(argv=None):
+    # type: (Optional[List[str]]) -> int
     args = parse_args(argv)
 
     if not (args.do_entropy or args.do_regex):
@@ -69,7 +71,8 @@ def main(argv=None):  # noqa:C901
     return 0
 
 
-def parse_args(argv):
+def parse_args(argv=None):
+    # type: (Optional[List[str]]) -> argparse.Namespace
     parser = argparse.ArgumentParser(
         description="Find secrets hidden in the depths of git."
     )
