@@ -1,6 +1,11 @@
 # tartufo
-[![Build Status](https://travis-ci.com/godaddy/tartufo.svg?branch=master)](https://travis-ci.com/godaddy/tartufo)
 
+![Travis (.org)](https://img.shields.io/travis/godaddy/tartufo)
+![Codecov](https://img.shields.io/codecov/c/github/godaddy/tartufo)
+![PyPI](https://img.shields.io/pypi/v/tartufo)
+![PyPI - Status](https://img.shields.io/pypi/status/tartufo)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/tartufo)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/tartufo)
 
 Searches through git repositories for secrets, digging deep into commit history and branches.
 This is effective at finding secrets accidentally committed. tartufo also can be used by git
@@ -134,9 +139,10 @@ and `tartufo` will automatically be run as a pre-commit hook.
 tartufo stores the results in temporary files, which are left on disk by default, to allow
 inspection if problems are found. To automatically delete these files when tartufo completes, specify
 the `--cleanup` flag:
+
 ```bash
 tartufo --cleanup
-``` 
+```
 
 ## Install
 
