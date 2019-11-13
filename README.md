@@ -175,56 +175,53 @@ This module will go through the entire commit history of each branch, and check 
 ## Help
 
 ```bash
-usage: tartufo [-h] [--json] [--rules RULES...] [--entropy [BOOLEAN]]
-                  [--git-rules-repo REPO_PATH] [--git-rules RULES...]
-                  [--regex [BOOLEAN]] [--since_commit SINCE_COMMIT]
-                  [--default-regexes [BOOLEAN]]
-                  [--max_depth MAX_DEPTH] [--branch BRANCH]
-                  [-i INCLUDE_PATHS_FILE] [-x EXCLUDE_PATHS_FILE]
-                  [--repo_path REPO_PATH] [--cleanup] [--pre_commit]
-                  [git_url]
+Usage: tartufo [OPTIONS] [GIT_URL]
 
-Find secrets hidden in the depths of git.
+  Find secrets hidden in the depths of git.
 
-positional arguments:
-  git_url               repository URL for secret searching
+  Tartufo will, by default, scan the entire history of a git repository for
+  any text which looks like a secret, password, credential, etc. It can also
+  be made to work in pre-commit mode, for scanning blobs of text as a pre-
+  commit hook.
 
-optional arguments:
-  -h, --help            show this help message and exit
-  --json                Output in JSON
-  --rules RULES         One or more json files containing custom regexes
-  --git-rules-repo REPO_PATH
-                        Path to git repo that contains externally-specified rules
-  --git-rules RULES     Relative path(s) to one or more json files in git-rules-repo
-  --entropy [BOOLEAN]   Enable entropy checks [default: True]
-  --regex [BOOLEAN]     Enable high signal regex checks [default: False]
-  --default-regexes [BOOLEAN]
-                        When --rules is specified, whether to include the default regexes as well [default: True] 
-  --since_commit SINCE_COMMIT
-                        Only scan from a given commit hash
-  --max_depth MAX_DEPTH
-                        The max commit depth to go back when searching for
-                        secrets
-  --branch BRANCH       Name of the branch to be scanned
-  -i INCLUDE_PATHS_FILE, --include_paths INCLUDE_PATHS_FILE
-                        File with regular expressions (one per line), at least
-                        one of which must match a Git object path in order for
-                        it to be scanned; lines starting with "#" are treated
-                        as comments and are ignored. If empty or not provided
-                        (default), all Git object paths are included unless
-                        otherwise excluded via the --exclude_paths option.
-  -x EXCLUDE_PATHS_FILE, --exclude_paths EXCLUDE_PATHS_FILE
-                        File with regular expressions (one per line), none of
-                        which may match a Git object path in order for it to
-                        be scanned; lines starting with "#" are treated as
-                        comments and are ignored. If empty or not provided
-                        (default), no Git object paths are excluded unless
-                        effectively excluded via the --include_paths option.
-  --repo_path REPO_PATH
-                        Path to local repo clone. If provided, git_url will
-                        not be used
-  --cleanup             Clean up all temporary result files
-  --pre_commit          Scan staged files in local repo clone
+Options:
+  --json                          Output in JSON format.
+  --rules FILENAME                Path(s) to regex rules json list file(s).
+  --default-regexes / --no-default-regexes
+                                  Whether to include the default regex list
+                                  when configuring search patterns. Only
+                                  applicable if --rules is also specified.
+                                  [default: --default-regexes]
+  --entropy / --no-entropy        Enable entropy checks. [default: True]
+  --regex / --no-regex            Enable high signal regexes checks. [default:
+                                  False]
+  --since-commit TEXT             Only scan from a given commit hash.
+  --max-depth INTEGER             The max commit depth to go back when
+                                  searching for secrets. [default: 1000000]
+  --branch TEXT                   Specify a branch name to scan only that
+                                  branch.
+  -i, --include-paths FILENAME    File with regular expressions (one per
+                                  line), at least one of which must match a
+                                  Git object path in order for it to be
+                                  scanned; lines starting with '#' are treated
+                                  as comments and are ignored. If empty or not
+                                  provided (default), all Git object paths are
+                                  included unless otherwise excluded via the
+                                  --exclude-paths option.
+  -x, --exclude-paths FILENAME    File with regular expressions (one per
+                                  line), none of which may match a Git object
+                                  path in order for it to be scanned; lines
+                                  starting with '#' are treated as comments
+                                  and are ignored. If empty or not provided
+                                  (default), no Git object paths are excluded
+                                  unless effectively excluded via the
+                                  --include-paths option.
+  --repo-path PATH                Path to local repo clone. If provided,
+                                  git_url will not be used.
+  --cleanup                       Clean up all temporary result files.
+                                  [default: False]
+  --pre-commit                    Scan staged files in local repo clone.
+  -h, --help                      Show this message and exit.
 ```
 
 ## Contributing
