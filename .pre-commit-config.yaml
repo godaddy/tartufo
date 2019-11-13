@@ -4,7 +4,7 @@ repos:
   - id: tartufo
     name: tartufo
     entry: tartufo
-    args: [--pre_commit, --cleanup]
+    args: [--pre-commit, --cleanup]
     language: python
     pass_filenames: false
   - id: pylint
