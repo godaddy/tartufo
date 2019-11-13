@@ -1,6 +1,11 @@
 # tartufo
-[![Build Status](https://travis-ci.com/godaddy/tartufo.svg?branch=master)](https://travis-ci.com/godaddy/tartufo)
 
+![Travis (.org)](https://img.shields.io/travis/godaddy/tartufo)
+![Codecov](https://img.shields.io/codecov/c/github/godaddy/tartufo)
+![PyPI](https://img.shields.io/pypi/v/tartufo)
+![PyPI - Status](https://img.shields.io/pypi/status/tartufo)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/tartufo)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/tartufo)
 
 Searches through git repositories for secrets, digging deep into commit history and branches.
 This is effective at finding secrets accidentally committed. tartufo also can be used by git
@@ -134,9 +139,10 @@ and `tartufo` will automatically be run as a pre-commit hook.
 tartufo stores the results in temporary files, which are left on disk by default, to allow
 inspection if problems are found. To automatically delete these files when tartufo completes, specify
 the `--cleanup` flag:
+
 ```bash
 tartufo --cleanup
-``` 
+```
 
 ## Install
 
@@ -223,53 +229,7 @@ optional arguments:
 
 ## Contributing
 
-First of all, thank you for considering contributing to `tartufo`! Before diving
-head first into the code, please take a moment to familiarize yourself with a few
-quick guidelines:
-
-* When writing code, please try to match surrounding code style as closely as
-  possible.
-* When writing documentation, please write in plain English, following the
-  conventions followed elsewhere in the project.
-* New code should be covered by unit tests, where applicable. This could mean
-  existing unit tests but, in the case that it does not, we ask that you write
-  new unit tests to cover the code.
-* It is highly recommended that you work on this project inside of an isolated
-  Python virtual environment. This can be set up, along with all necessary
-  Python libraries, via the following commands:
-
-  ```sh
-  > python -m venv .venv
-  > source .venv/bin/activate
-  > pip install -e .[tests]
-  ```
-
-* This project support multiple Python versions in this project. Thus, we ask
-  that you use the `tox` tool to test against them. If you do not have all of the
-  supported Python versions, that's perfectly okay. They will all be tested
-  against by our CI process. But keep in mind that this may delay the adoption
-  of your contribution, if those tests don't all pass.
-* This project uses multiple [pre-commit] hooks to help ensure our code quality.
-  If you have followed the instructions above for setting up your virtual
-  environment, `pre-commit` will already be installed, and you only need to run
-  the following:
-
-  ```sh
-  > pre-commit install --install-hooks
-  ```
-
-  Now, any time you make a new commit to the repository, you will see something
-  like the following:
-
-  ```sh
-  Tartufo..................................................................Passed
-  mypy.....................................................................Passed
-  flake8...................................................................Passed
-  pylint...................................................................Passed
-  ```
-
-* Finally, all changes must be proposed via a pull request on GitHub, which must
-  reviewed and approved by at least one core contributor, before being merged.
+Please see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Attributions
 
