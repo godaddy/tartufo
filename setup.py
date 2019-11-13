@@ -2,8 +2,9 @@ import codecs
 from setuptools import setup
 
 INSTALL_REQUIRES = [
-    'GitPython == 2.1.1',
-    'truffleHogRegexes == 0.0.7',
+    "click >= 7.0.0, < 8.0.0",
+    "GitPython >= 2.1.1, < 4.0.0",
+    "truffleHogRegexes >= 0.0.7, < 1.0.0",
     "typing; python_version < '3.5'",
 ]
 
