@@ -185,7 +185,7 @@ Usage: tartufo [OPTIONS] [GIT_URL]
   commit hook.
 
 Options:
-  --json                          Output in JSON format.
+  --json / --no-json              Output in JSON format.
   --rules FILENAME                Path(s) to regex rules json list file(s).
   --default-regexes / --no-default-regexes
                                   Whether to include the default regex list
@@ -216,11 +216,13 @@ Options:
                                   (default), no Git object paths are excluded
                                   unless effectively excluded via the
                                   --include-paths option.
-  --repo-path PATH                Path to local repo clone. If provided,
+  --repo-path DIRECTORY           Path to local repo clone. If provided,
                                   git_url will not be used.
-  --cleanup                       Clean up all temporary result files.
+  --cleanup / --no-cleanup        Clean up all temporary result files.
                                   [default: False]
   --pre-commit                    Scan staged files in local repo clone.
+  --config FILENAME               Read configuration from specified file.
+                                  [default: pyproject.toml]
   -h, --help                      Show this message and exit.
 ```
 
