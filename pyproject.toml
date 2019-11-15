@@ -6,6 +6,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [tool.tartufo]
+repo-path = "."
 json = false
 cleanup = true
 regex = true
