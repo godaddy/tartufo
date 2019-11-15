@@ -91,11 +91,11 @@ def main(ctx, **kwargs):
     path_inclusions = []
     path_exclusions = []
     if kwargs["include_paths"]:
-        for pattern in set(l[:-1].lstrip() for l in kwargs["include_paths"]):
+        for pattern in [l[:-1].lstrip() for l in kwargs["include_paths"]]:
             if pattern and not pattern.startswith("#"):
                 path_inclusions.append(re.compile(pattern))
     if kwargs["exclude_paths"]:
-        for pattern in set(l[:-1].lstrip() for l in kwargs["exclude_paths"]):
+        for pattern in [l[:-1].lstrip() for l in kwargs["exclude_paths"]]:
             if pattern and not pattern.startswith("#"):
                 path_exclusions.append(re.compile(pattern))
 
