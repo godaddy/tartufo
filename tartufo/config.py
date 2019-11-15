@@ -1,6 +1,5 @@
 import argparse  # pylint: disable=unused-import
 import json
-import pathlib
 import re
 import shutil
 from functools import partial
@@ -9,6 +8,11 @@ from typing import cast, Dict, List, Optional, Pattern, TextIO, Tuple, Union
 import click
 import toml
 from tartufo import util
+
+try:
+    import pathlib
+except ImportError:
+    import pathlib2 as pathlib  # type: ignore
 
 
 err = partial(click.secho, fg="red", bold=True, err=True)  # pylint: disable=invalid-name

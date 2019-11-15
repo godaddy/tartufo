@@ -1,9 +1,13 @@
-import pathlib
 import re
 import unittest
 
 from click.testing import CliRunner
 from tartufo import cli
+
+try:
+    import pathlib
+except ImportError:
+    import pathlib2 as pathlib  # type: ignore
 
 try:
     from unittest import mock
@@ -115,7 +119,7 @@ class CLITests(unittest.TestCase):
                 cli.main,
                 [
                     "-i",
-                    include_files.resolve(),
+                    str(include_files.resolve()),
                     "--no-regex",
                     "--max-depth",
                     "42",
@@ -148,7 +152,7 @@ class CLITests(unittest.TestCase):
                 cli.main,
                 [
                     "-x",
-                    exclude_files.resolve(),
+                    str(exclude_files.resolve()),
                     "--no-regex",
                     "--max-depth",
                     "42",
@@ -168,7 +172,7 @@ class CLITests(unittest.TestCase):
                 branch=None,
                 repo_path=None,
                 path_inclusions=[],
-                path_exclusions=[re.compile("tests/"), re.compile(r".*\.egg-info/"), re.compile(r"\.venv/")]
+                path_exclusions=[re.compile("tests/"), re.compile(r"\.venv/"), re.compile(r".*\.egg-info/")]
             )
 
     @mock.patch("tartufo.cli.scanner.find_strings")

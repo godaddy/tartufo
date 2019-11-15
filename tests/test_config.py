@@ -1,12 +1,16 @@
 from __future__ import unicode_literals
 
-import pathlib
 import re
 import unittest
 
 from truffleHogRegexes.regexChecks import regexes as default_regexes
 
 from tartufo import config
+
+try:
+    import pathlib
+except ImportError:
+    import pathlib2 as pathlib  # type: ignore
 
 
 class ConfigureRegexTests(unittest.TestCase):
