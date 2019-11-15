@@ -1,0 +1,4 @@
+# This should be ignored
+tests/
+\.venv/
+.*\.egg-info/
