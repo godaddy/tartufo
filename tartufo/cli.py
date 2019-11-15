@@ -14,7 +14,7 @@ err = partial(click.secho, fg="red", bold=True, err=True)  # pylint: disable=inv
 
 @click.command(name="tartufo",  # noqa: C901
                context_settings=dict(help_option_names=["-h", "--help"]))
-@click.option("--json", help="Output in JSON format.", is_flag=True)
+@click.option("--json/--no-json", help="Output in JSON format.", is_flag=True)
 @click.option("--rules", multiple=True, type=click.File("r"),
               help="Path(s) to regex rules json list file(s).")
 @click.option("--default-regexes/--no-default-regexes", is_flag=True, default=True,
@@ -23,7 +23,7 @@ err = partial(click.secho, fg="red", bold=True, err=True)  # pylint: disable=inv
                    " [default: --default-regexes]")
 @click.option("--entropy/--no-entropy", is_flag=True, default=True,
               help="Enable entropy checks. [default: True]")
-@click.option("--regex/--no-regex", is_flag=True, default=True,
+@click.option("--regex/--no-regex", is_flag=True, default=False,
               help="Enable high signal regexes checks. [default: False]")
 @click.option("--since-commit", help="Only scan from a given commit hash.")
 @click.option("--max-depth", default=1000000,
@@ -42,12 +42,23 @@ err = partial(click.secho, fg="red", bold=True, err=True)  # pylint: disable=inv
                    "starting with '#' are treated as comments and are ignored. If "
                    "empty or not provided (default), no Git object paths are excluded "
                    "unless effectively excluded via the --include-paths option.")
-@click.option("--repo-path", type=click.Path(),
+@click.option("--repo-path",
+              type=click.Path(
+                  exists=True,
+                  file_okay=False,
+                  resolve_path=True,
+                  allow_dash=False
+              ),
               help="Path to local repo clone. If provided, git_url will not be used.")
-@click.option("--cleanup", is_flag=True, default=False,
+@click.option("--cleanup/--no-cleanup", is_flag=True, default=False,
               help="Clean up all temporary result files. [default: False]")
 @click.option("--pre-commit", is_flag=True, default=False,
               help="Scan staged files in local repo clone.")
+@click.option("--config",
+              type=click.File(mode='r'),
+              is_eager=True,
+              callback=config.read_pyproject_toml,
+              help="Read configuration from specified file. [default: pyproject.toml]")
 @click.argument("git_url", required=False)
 @click.pass_context
 def main(ctx, **kwargs):
