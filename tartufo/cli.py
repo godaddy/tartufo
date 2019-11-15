@@ -69,8 +69,6 @@ def main(ctx, **kwargs):
     also be made to work in pre-commit mode, for scanning blobs of text as a
     pre-commit hook.
     """
-    click.echo(dir(ctx))
-    click.echo(kwargs)
     if not any((kwargs["entropy"], kwargs["regex"])):
         err("No analysis requested.")
         ctx.exit(1)
