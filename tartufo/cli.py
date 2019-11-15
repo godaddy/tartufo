@@ -2,6 +2,7 @@
 
 import re
 from functools import partial
+from typing import cast, TextIO
 
 import click
 import truffleHogRegexes.regexChecks
@@ -62,6 +63,7 @@ err = partial(click.secho, fg="red", bold=True, err=True)  # pylint: disable=inv
 @click.argument("git_url", required=False)
 @click.pass_context
 def main(ctx, **kwargs):
+    # type: (click.Context, config.OptionTypes) -> None
     """Find secrets hidden in the depths of git.
 
     Tartufo will, by default, scan the entire history of a git repository
@@ -90,21 +92,23 @@ def main(ctx, **kwargs):
     # read & compile path inclusion/exclusion patterns
     path_inclusions = []
     path_exclusions = []
-    if kwargs["include_paths"]:
-        for pattern in [l[:-1].lstrip() for l in kwargs["include_paths"]]:
+    paths_file = cast(TextIO, kwargs["include_paths"])
+    if paths_file:
+        for pattern in [l[:-1].lstrip() for l in paths_file]:
             if pattern and not pattern.startswith("#"):
                 path_inclusions.append(re.compile(pattern))
-    if kwargs["exclude_paths"]:
-        for pattern in [l[:-1].lstrip() for l in kwargs["exclude_paths"]]:
+    paths_file = cast(TextIO, kwargs["exclude_paths"])
+    if paths_file:
+        for pattern in [l[:-1].lstrip() for l in paths_file]:
             if pattern and not pattern.startswith("#"):
                 path_exclusions.append(re.compile(pattern))
 
     if kwargs["pre_commit"]:
         output = scanner.find_staged(
-            kwargs["repo_path"],
-            kwargs["json"],
-            kwargs["regex"],
-            kwargs["entropy"],
+            cast(str, kwargs["repo_path"]),
+            cast(bool, kwargs["json"]),
+            cast(bool, kwargs["regex"]),
+            cast(bool, kwargs["entropy"]),
             custom_regexes=rules_regexes,
             suppress_output=False,
             path_inclusions=path_inclusions,
@@ -112,16 +116,16 @@ def main(ctx, **kwargs):
         )
     else:
         output = scanner.find_strings(
-            kwargs["git_url"],
-            kwargs["since_commit"],
-            kwargs["max_depth"],
-            kwargs["json"],
-            kwargs["regex"],
-            kwargs["entropy"],
+            cast(str, kwargs["git_url"]),
+            cast(str, kwargs["since_commit"]),
+            cast(int, kwargs["max_depth"]),
+            cast(bool, kwargs["json"]),
+            cast(bool, kwargs["regex"]),
+            cast(bool, kwargs["entropy"]),
             custom_regexes=rules_regexes,
             suppress_output=False,
-            branch=kwargs["branch"],
-            repo_path=kwargs["repo_path"],
+            branch=cast(str, kwargs["branch"]),
+            repo_path=cast(str, kwargs["repo_path"]),
             path_inclusions=path_inclusions,
             path_exclusions=path_exclusions,
         )

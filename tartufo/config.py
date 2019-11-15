@@ -16,6 +16,8 @@ except ImportError:
 
 
 err = partial(click.secho, fg="red", bold=True, err=True)  # pylint: disable=invalid-name
+OptionTypes = Union[str, int, bool, None, TextIO, Tuple[TextIO, ...]]
+OptionsDict = Dict[str, OptionTypes]
 PatternDict = Dict[str, Union[str, Pattern]]
 
 
@@ -50,7 +52,7 @@ def read_pyproject_toml(ctx, _param, value):
 
 
 def configure_regexes_from_args(args, default_regexes):
-    # type: (Dict[str, Union[str, int, bool, Tuple[TextIO, ...]]], PatternDict) -> PatternDict
+    # type: (OptionsDict, PatternDict) -> PatternDict
     regexes = {}
     if args["regex"]:
         if args["default_regexes"]:
