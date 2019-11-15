@@ -1,16 +1,48 @@
 import argparse  # pylint: disable=unused-import
 import json
+import pathlib
 import re
 import shutil
 from functools import partial
-from typing import cast, Dict, List, Pattern, TextIO, Tuple, Union
+from typing import cast, Dict, List, Optional, Pattern, TextIO, Tuple, Union
 
 import click
+import toml
 from tartufo import util
 
 
 err = partial(click.secho, fg="red", bold=True, err=True)  # pylint: disable=invalid-name
 PatternDict = Dict[str, Union[str, Pattern]]
+
+
+def read_pyproject_toml(ctx, _param, value):
+    # type: (click.Context, click.Parameter, Union[str, TextIO]) -> Optional[str]
+    if not value:
+        root_path = ctx.params.get("repo_path", None)
+        if not root_path:
+            root_path = "."
+        root_path = pathlib.Path(root_path).resolve()
+        config_path = root_path / "pyproject.toml"
+        if config_path.is_file():
+            value = str(config_path)
+        else:
+            return None
+    try:
+        toml_file = toml.load(value)
+        config = toml_file.get("tool", {}).get("tartufo", {})
+    except (toml.TomlDecodeError, OSError) as exc:
+        raise click.FileError(
+            filename=str(config_path),
+            hint="Error reading configuration file: {}".format(exc)
+        )
+    if not config:
+        return None
+    if ctx.default_map is None:
+        ctx.default_map = {}
+    ctx.default_map.update(  # type: ignore
+        {k.replace("--", "").replace("-", "_"): v for k, v in config.items()}
+    )
+    return str(value)
 
 
 def configure_regexes_from_args(args, default_regexes):
