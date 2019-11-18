@@ -12,7 +12,7 @@ INSTALL_REQUIRES = [
 
 EXTRAS_REQUIRE = {
     "tests": [
-        "black==19.10b0; python_version >= '3.6'",
+        "black==19.10b0; python_version >= '3.6' and platform_python_implementation == 'CPython'",
         "coverage",
         "mock; python_version == '2.7'",
         "pre-commit",
