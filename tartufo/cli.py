@@ -10,9 +10,9 @@ import truffleHogRegexes.regexChecks
 from tartufo import config, scanner, util
 
 
-err = partial(
+err = partial(  # pylint: disable=invalid-name
     click.secho, fg="red", bold=True, err=True
-)  # pylint: disable=invalid-name
+)
 
 
 @click.command(

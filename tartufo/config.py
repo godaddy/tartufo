@@ -1,4 +1,3 @@
-import argparse  # pylint: disable=unused-import
 import json
 import re
 import shutil
@@ -15,9 +14,9 @@ except ImportError:
     import pathlib2 as pathlib  # type: ignore
 
 
-err = partial(
+err = partial(  # pylint: disable=invalid-name
     click.secho, fg="red", bold=True, err=True
-)  # pylint: disable=invalid-name
+)
 OptionTypes = Union[str, int, bool, None, TextIO, Tuple[TextIO, ...]]
 OptionsDict = Dict[str, OptionTypes]
 PatternDict = Dict[str, Union[str, Pattern]]
