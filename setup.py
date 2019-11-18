@@ -20,6 +20,7 @@ EXTRAS_REQUIRE = {
         "pytest-cov",
         "pytest-sugar",
         "tox",
+        "vulture",
     ]
 }
 
