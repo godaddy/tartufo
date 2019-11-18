@@ -14,19 +14,16 @@ except ImportError:
 
 
 class EntropyTests(unittest.TestCase):
-
     def test_shannon(self):
         random_string_b64 = (
             "ZWVTjPQSdhwRgl204Hc51YCsritMIzn8B=/p9UyeX7xu6KkAGqfm3FJ+oObLDNEva"
         )
         random_string_hex = "b3A0a1FDfe86dcCE945B72"
         self.assertGreater(
-            scanner.shannon_entropy(random_string_b64, scanner.BASE64_CHARS),
-            4.5
+            scanner.shannon_entropy(random_string_b64, scanner.BASE64_CHARS), 4.5
         )
         self.assertGreater(
-            scanner.shannon_entropy(random_string_hex, scanner.HEX_CHARS),
-            3
+            scanner.shannon_entropy(random_string_hex, scanner.HEX_CHARS), 3
         )
 
 
@@ -36,7 +33,9 @@ class ScannerTests(unittest.TestCase):
     @mock.patch("tartufo.scanner.git.Repo")
     @mock.patch("tartufo.scanner.util.clone_git_repo")
     @mock.patch("tartufo.scanner.util.shutil.rmtree")
-    def test_find_strings_works_against_already_cloned_repo(self, mock_rmtree, mock_clone, mock_repo):
+    def test_find_strings_works_against_already_cloned_repo(
+        self, mock_rmtree, mock_clone, mock_repo
+    ):
         scanner.find_strings("find_repo", repo_path="/test/path")
         mock_repo.assert_called_once_with("/test/path")
         mock_rmtree.assert_not_called()
@@ -48,7 +47,9 @@ class ScannerTests(unittest.TestCase):
     @mock.patch("tartufo.scanner.git.Repo")
     def test_find_strings_checks_out_branch_when_specified(self, mock_repo):
         scanner.find_strings("test_repo", branch="testbranch")
-        mock_repo.return_value.remotes.origin.fetch.assert_called_once_with("testbranch")
+        mock_repo.return_value.remotes.origin.fetch.assert_called_once_with(
+            "testbranch"
+        )
 
     @mock.patch("tartufo.scanner.tempfile", new=mock.MagicMock())
     @mock.patch("tartufo.scanner.git.Repo")
@@ -62,24 +63,54 @@ class ScannerTests(unittest.TestCase):
         commit_1 = mock.MagicMock(name="third commit")
         commit_2 = mock.MagicMock(name="second commit")
         commit_3 = mock.MagicMock(name="first commit")
-        mock_repo.return_value.iter_commits.return_value = [commit_1, commit_2, commit_3]
+        mock_repo.return_value.iter_commits.return_value = [
+            commit_1,
+            commit_2,
+            commit_3,
+        ]
 
         scanner.find_strings(
-            "git://fake/repo.git", repo_path="/fake/repo",
-            print_json=True, suppress_output=False
+            "git://fake/repo.git",
+            repo_path="/fake/repo",
+            print_json=True,
+            suppress_output=False,
         )
 
         call_1 = mock.call(
-            commit_1.diff.return_value, None, True, False, True, False,
-            None, None, commit_1, master_branch.name
+            commit_1.diff.return_value,
+            None,
+            True,
+            False,
+            True,
+            False,
+            None,
+            None,
+            commit_1,
+            master_branch.name,
         )
         call_2 = mock.call(
-            commit_2.diff.return_value, None, True, False, True, False,
-            None, None, commit_2, master_branch.name
+            commit_2.diff.return_value,
+            None,
+            True,
+            False,
+            True,
+            False,
+            None,
+            None,
+            commit_2,
+            master_branch.name,
         )
         call_3 = mock.call(
-            commit_3.diff.return_value, None, True, False, True, False,
-            None, None, commit_3, master_branch.name
+            commit_3.diff.return_value,
+            None,
+            True,
+            False,
+            True,
+            False,
+            None,
+            None,
+            commit_3,
+            master_branch.name,
         )
         mock_worker.assert_has_calls((call_1, call_2, call_3), any_order=True)
 

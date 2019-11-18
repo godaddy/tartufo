@@ -16,7 +16,6 @@ except ImportError:
 
 
 class CLITests(unittest.TestCase):
-
     def test_command_exits_gracefully_with_empty_argv(self):
         runner = CliRunner()
         with runner.isolated_filesystem():
@@ -44,20 +43,17 @@ class CLITests(unittest.TestCase):
         mock_config_regex.side_effect = ValueError("Foo!")
         runner = CliRunner()
         with runner.isolated_filesystem():
-            result = runner.invoke(
-                cli.main, ["--repo-path", "."]
-            )
+            result = runner.invoke(cli.main, ["--repo-path", "."])
             self.assertEqual(result.output, "Foo!\n")
 
     @mock.patch("tartufo.cli.scanner.find_staged")
-    def test_command_calls_find_staged_for_pre_commit(
-            self, mock_find_staged
-    ):
+    def test_command_calls_find_staged_for_pre_commit(self, mock_find_staged):
         mock_find_staged.return_value = {}
         runner = CliRunner()
         with runner.isolated_filesystem():
             runner.invoke(
-                cli.main, ["--pre-commit", "--repo-path", "/", "--no-regex", "--entropy"]
+                cli.main,
+                ["--pre-commit", "--repo-path", "/", "--no-regex", "--entropy"],
             )
             mock_find_staged.assert_called_once_with(
                 "/",
@@ -67,18 +63,23 @@ class CLITests(unittest.TestCase):
                 custom_regexes={},
                 suppress_output=False,
                 path_inclusions=[],
-                path_exclusions=[]
+                path_exclusions=[],
             )
 
     @mock.patch("tartufo.cli.scanner.find_strings")
-    def test_command_calls_find_strings_by_default(
-            self, mock_find_strings
-    ):
+    def test_command_calls_find_strings_by_default(self, mock_find_strings):
         mock_find_strings.return_value = {}
         runner = CliRunner()
         with runner.isolated_filesystem():
             runner.invoke(
-                cli.main, ["--no-regex", "--max-depth", "42", "--entropy", "git@github.com:godaddy/tartufo.git"]
+                cli.main,
+                [
+                    "--no-regex",
+                    "--max-depth",
+                    "42",
+                    "--entropy",
+                    "git@github.com:godaddy/tartufo.git",
+                ],
             )
             mock_find_strings.assert_called_once_with(
                 "git@github.com:godaddy/tartufo.git",
@@ -92,20 +93,25 @@ class CLITests(unittest.TestCase):
                 branch=None,
                 repo_path=None,
                 path_inclusions=[],
-                path_exclusions=[]
+                path_exclusions=[],
             )
 
     @mock.patch("tartufo.cli.scanner.find_strings")
     @mock.patch("tartufo.cli.util.clean_outputs")
-    def test_command_calls_cleanup_when_requested(
-            self, mock_clean, mock_find_strings
-    ):
+    def test_command_calls_cleanup_when_requested(self, mock_clean, mock_find_strings):
         mock_find_strings.return_value = {"foo": "bar"}
         runner = CliRunner()
         with runner.isolated_filesystem():
             runner.invoke(
                 cli.main,
-                ["--cleanup", "--no-regex", "--max-depth", "42", "--entropy", "git@github.com:godaddy/tartufo.git"]
+                [
+                    "--cleanup",
+                    "--no-regex",
+                    "--max-depth",
+                    "42",
+                    "--entropy",
+                    "git@github.com:godaddy/tartufo.git",
+                ],
             )
             mock_clean.assert_called_once_with({"foo": "bar"})
 
@@ -124,8 +130,8 @@ class CLITests(unittest.TestCase):
                     "--max-depth",
                     "42",
                     "--entropy",
-                    "git@github.com:godaddy/tartufo.git"
-                ]
+                    "git@github.com:godaddy/tartufo.git",
+                ],
             )
             mock_find_strings.assert_called_once_with(
                 "git@github.com:godaddy/tartufo.git",
@@ -139,7 +145,7 @@ class CLITests(unittest.TestCase):
                 branch=None,
                 repo_path=None,
                 path_inclusions=[re.compile("tartufo/"), re.compile("scripts/")],
-                path_exclusions=[]
+                path_exclusions=[],
             )
 
     @mock.patch("tartufo.cli.scanner.find_strings")
@@ -157,8 +163,8 @@ class CLITests(unittest.TestCase):
                     "--max-depth",
                     "42",
                     "--entropy",
-                    "git@github.com:godaddy/tartufo.git"
-                ]
+                    "git@github.com:godaddy/tartufo.git",
+                ],
             )
             mock_find_strings.assert_called_once_with(
                 "git@github.com:godaddy/tartufo.git",
@@ -172,7 +178,11 @@ class CLITests(unittest.TestCase):
                 branch=None,
                 repo_path=None,
                 path_inclusions=[],
-                path_exclusions=[re.compile("tests/"), re.compile(r"\.venv/"), re.compile(r".*\.egg-info/")]
+                path_exclusions=[
+                    re.compile("tests/"),
+                    re.compile(r"\.venv/"),
+                    re.compile(r".*\.egg-info/"),
+                ],
             )
 
     @mock.patch("tartufo.cli.scanner.find_strings")
@@ -180,21 +190,17 @@ class CLITests(unittest.TestCase):
         mock_find_strings.return_value = {"issues_path": "/foo"}
         runner = CliRunner()
         with runner.isolated_filesystem():
-            result = runner.invoke(
-                cli.main,
-                ["git@github.com:godaddy/tartufo.git"]
-            )
+            result = runner.invoke(cli.main, ["git@github.com:godaddy/tartufo.git"])
             self.assertEqual(result.output, "Results have been saved in /foo\n")
 
     @mock.patch("tartufo.cli.scanner.find_strings")
-    def test_command_exits_with_positive_return_code_when_issues_found(self, mock_find_strings):
+    def test_command_exits_with_positive_return_code_when_issues_found(
+        self, mock_find_strings
+    ):
         mock_find_strings.return_value = {"found_issues": True}
         runner = CliRunner()
         with runner.isolated_filesystem():
-            result = runner.invoke(
-                cli.main,
-                ["git@github.com:godaddy/tartufo.git"]
-            )
+            result = runner.invoke(cli.main, ["git@github.com:godaddy/tartufo.git"])
             self.assertGreater(result.exit_code, 0)
 
 

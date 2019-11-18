@@ -176,16 +176,16 @@ def find_regex(printable_diff, regex_list=None):
 
 
 def diff_worker(
-        diff,              # type: git.Diff
-        custom_regexes,    # type: Optional[PatternDict]
-        do_entropy,        # type: bool
-        do_regex,          # type: bool
-        print_json,        # type: bool
-        suppress_output,   # type: bool
-        path_inclusions,   # type: Optional[Iterable[Pattern]]
-        path_exclusions,   # type: Optional[Iterable[Pattern]]
-        prev_commit=None,  # type: Optional[git.Commit]
-        branch_name=None,  # type: Optional[str]
+    diff,  # type: git.Diff
+    custom_regexes,  # type: Optional[PatternDict]
+    do_entropy,  # type: bool
+    do_regex,  # type: bool
+    print_json,  # type: bool
+    suppress_output,  # type: bool
+    path_inclusions,  # type: Optional[Iterable[Pattern]]
+    path_exclusions,  # type: Optional[Iterable[Pattern]]
+    prev_commit=None,  # type: Optional[git.Commit]
+    branch_name=None,  # type: Optional[str]
 ):
     # type: (...) -> List[IssueDict]
     issues = []  # type: List[IssueDict]
@@ -261,18 +261,18 @@ def path_included(blob, include_patterns=None, exclude_patterns=None):
 
 
 def find_strings(
-        git_url,               # type: str
-        since_commit=None,     # type: Optional[str]
-        max_depth=1000000,     # type: int
-        print_json=False,      # type: bool
-        do_regex=False,        # type: bool
-        do_entropy=True,       # type: bool
-        suppress_output=True,  # type: bool
-        custom_regexes=None,   # type: Optional[PatternDict]
-        branch=None,           # type: Optional[str]
-        repo_path=None,        # type: Optional[str]
-        path_inclusions=None,  # type: Optional[Iterable[Pattern]]
-        path_exclusions=None,  # type: Optional[Iterable[Pattern]]
+    git_url,  # type: str
+    since_commit=None,  # type: Optional[str]
+    max_depth=1000000,  # type: int
+    print_json=False,  # type: bool
+    do_regex=False,  # type: bool
+    do_entropy=True,  # type: bool
+    suppress_output=True,  # type: bool
+    custom_regexes=None,  # type: Optional[PatternDict]
+    branch=None,  # type: Optional[str]
+    repo_path=None,  # type: Optional[str]
+    path_inclusions=None,  # type: Optional[Iterable[Pattern]]
+    path_exclusions=None,  # type: Optional[Iterable[Pattern]]
 ):
     # type: (...) -> IssueDict
     output = {"found_issues": []}  # type: IssueDict
@@ -352,14 +352,14 @@ def find_strings(
 
 
 def find_staged(
-        project_path,          # type: str
-        print_json=False,      # type: bool
-        do_regex=False,        # type: bool
-        do_entropy=True,       # type: bool
-        suppress_output=True,  # type: bool
-        custom_regexes=None,   # type: Optional[PatternDict]
-        path_inclusions=None,  # type: Optional[Iterable[Pattern]]
-        path_exclusions=None,  # type: Optional[Iterable[Pattern]]
+    project_path,  # type: str
+    print_json=False,  # type: bool
+    do_regex=False,  # type: bool
+    do_entropy=True,  # type: bool
+    suppress_output=True,  # type: bool
+    custom_regexes=None,  # type: Optional[PatternDict]
+    path_inclusions=None,  # type: Optional[Iterable[Pattern]]
+    path_exclusions=None,  # type: Optional[Iterable[Pattern]]
 ):
     # type: (...) -> IssueDict
     output = {"found_issues": []}  # type: IssueDict
