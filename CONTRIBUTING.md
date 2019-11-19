@@ -114,9 +114,15 @@ you:
 
 ### Code Style
 
-Generally speaking, you should follow [PEP 8] when writing code for `tartufo`.
-But the most important thing is to match the style of the surrounding code. Keep
-in mind that all code in this project is scanned by both `flake8` and `pylint`.
+To make code formatting easy on developers, and to simplify the conversation
+around pull request reviews, this project has adopted the
+[black] code formatter. This formatter must be run against any new code written
+for this project. The advantage is, you no longer have to think about how your
+code is styled; it's all handled for you!
+
+To make this easier on you, you can [set up most editors][black-editors] to
+auto-run `black` for you. We have also set up a [pre-commit] hook to run
+automatically on every commit, which is detailed below!
 
 ## Running tests
 
@@ -141,7 +147,7 @@ like the following:
 ```sh
 Tartufo..................................................................Passed
 mypy.....................................................................Passed
-flake8...................................................................Passed
+black....................................................................Passed
 pylint...................................................................Passed
 ```
 
@@ -150,6 +156,8 @@ pylint...................................................................Passed
 - [General GitHub Documentation](https://help.github.com/)
 - [GitHub Pull Request documentation](https://help.github.com/send-pull-requests/)
 
+[black]: https://github.com/psf/black
+[black-editors]: https://github.com/psf/black#editor-integration
 [issues]: https://github.com/godaddy/tartufo/issues
 [PEP 8]: https://www.python.org/dev/peps/pep-0008/
 [pre-commit]: https://pre-commit.com/

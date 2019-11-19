@@ -1,4 +1,3 @@
-import argparse  # pylint: disable=unused-import
 import json
 import re
 import shutil
@@ -15,7 +14,9 @@ except ImportError:
     import pathlib2 as pathlib  # type: ignore
 
 
-err = partial(click.secho, fg="red", bold=True, err=True)  # pylint: disable=invalid-name
+err = partial(  # pylint: disable=invalid-name
+    click.secho, fg="red", bold=True, err=True
+)
 OptionTypes = Union[str, int, bool, None, TextIO, Tuple[TextIO, ...]]
 OptionsDict = Dict[str, OptionTypes]
 PatternDict = Dict[str, Union[str, Pattern]]
@@ -39,7 +40,7 @@ def read_pyproject_toml(ctx, _param, value):
     except (toml.TomlDecodeError, OSError) as exc:
         raise click.FileError(
             filename=str(config_path),
-            hint="Error reading configuration file: {}".format(exc)
+            hint="Error reading configuration file: {}".format(exc),
         )
     if not config:
         return None
@@ -68,12 +69,16 @@ def configure_regexes_from_args(args, default_regexes):
                     loaded = load_rules_from_file(rules_file)
                     dupes = set(loaded.keys()).intersection(regexes.keys())
                     if dupes:
-                        raise ValueError("Rule(s) were defined multiple time: {}".format(dupes))
+                        raise ValueError(
+                            "Rule(s) were defined multiple time: {}".format(dupes)
+                        )
                     regexes.update(loaded)
     return regexes
 
 
-def configure_regexes_from_git(git_url, repo_rules_filenames, rules_regexes):  # pylint: disable=unused-argument
+def configure_regexes_from_git(
+    git_url, repo_rules_filenames, rules_regexes
+):  # pylint: disable=unused-argument
     # type: (str, List[str], PatternDict) -> PatternDict
     # FIXME: This was never called or tested.
     #  https://github.com/godaddy/tartufo/issues/17 has been added for tracking

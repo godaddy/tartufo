@@ -26,8 +26,7 @@ class GitTests(unittest.TestCase):
     def test_tartufo_clones_git_repo_into_temp_dir(self, mock_mkdtemp, mock_clone):
         util.clone_git_repo("https://github.com/godaddy/tartufo.git")
         mock_clone.assert_called_once_with(
-            "https://github.com/godaddy/tartufo.git",
-            mock_mkdtemp.return_value
+            "https://github.com/godaddy/tartufo.git", mock_mkdtemp.return_value
         )
 
     @mock.patch("tartufo.util.Repo.clone_from", new=mock.MagicMock())

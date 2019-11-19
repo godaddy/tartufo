@@ -10,12 +10,14 @@
 # multiple time (only on the command line, not in the configuration file where
 # it should appear only once).
 # C0111: Missing docstrings
+# C0301: Line too long (Note: This is all handled by black now)
+# C0330: Wrong hanging indentation before block (Note: black disagrees on this)
 # R0201: Method could be a function
 # R0903: Too few public methods
 # R0912: Too many branches
 # R0914: Too many local variables
 # W0511: FIXME
-disable=C0111,R0201,R0903,R0912,R0914,W0511
+disable=C0111,C0301,C0330,R0201,R0903,R0912,R0914,W0511
 
 [BASIC]
 
