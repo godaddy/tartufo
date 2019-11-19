@@ -1,3 +1,4 @@
+include CHANGELOG.md
 include MANIFEST.in
 include README.md
 include VERSION
