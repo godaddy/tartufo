@@ -47,7 +47,7 @@ setup(
     extras_require=EXTRAS_REQUIRE,
     entry_points={"console_scripts": ["tartufo = tartufo.cli:main"],},
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
