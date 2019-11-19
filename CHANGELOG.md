@@ -1,5 +1,12 @@
 # ChangeLog
 
+## v1.0.2 - 19 November 2019
+
+This release is essentially the same as the v1.0.0 release, but with a new number.
+Unfortunately, we had historical releases versioned as v1.0.0 and v1.0.1. Due to
+[limitations in PyPI](https://pypi.org/help/#file-name-reuse), even if a previous
+release has been deleted, the version number may not be reused.
+
 ## v1.0.0 - 19 November 2019
 
 Version 1.0.0! Initial stable release!
