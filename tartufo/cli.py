@@ -93,7 +93,14 @@ err = partial(  # pylint: disable=invalid-name
 )
 @click.option(
     "--config",
-    type=click.File(mode="r"),
+    type=click.Path(
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        resolve_path=True,
+        allow_dash=False,
+    ),
     is_eager=True,
     callback=config.read_pyproject_toml,
     help="Read configuration from specified file. [default: pyproject.toml]",

@@ -23,7 +23,7 @@ PatternDict = Dict[str, Union[str, Pattern]]
 
 
 def read_pyproject_toml(ctx, _param, value):
-    # type: (click.Context, click.Parameter, Union[str, TextIO]) -> Optional[str]
+    # type: (click.Context, click.Parameter, str) -> Optional[str]
     if not value:
         root_path = ctx.params.get("repo_path", None)
         if not root_path:
