@@ -33,7 +33,11 @@ def read_pyproject_toml(ctx, _param, value):
         if config_path.is_file():
             value = str(config_path)
         else:
-            return None
+            config_path = root_path / "tartufo.toml"
+            if config_path.is_file():
+                value = str(config_path)
+            else:
+                return None
     try:
         toml_file = toml.load(value)
         config = toml_file.get("tool", {}).get("tartufo", {})
