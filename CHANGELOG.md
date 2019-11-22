@@ -1,5 +1,10 @@
 # ChangeLog
 
+## vX.Y.Z -
+
+* Support reading config from `tartufo.toml` for non-Python projects
+* #18 - Read the `pyproject.toml` or `tartufo.toml` from the repo being scanned
+
 ## v1.0.2 - 19 November 2019
 
 This release is essentially the same as the v1.0.0 release, but with a new number.
