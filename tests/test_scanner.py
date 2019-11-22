@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import json
 import re
 import shutil
@@ -126,7 +128,7 @@ class ScannerTests(unittest.TestCase):
         sys.stdout = tmp_stdout
         try:
             # We have to clone tartufo mostly because TravisCI only does a shallow clone
-            repo_path = util.clone_git_repo("git@github.com:godaddy/tartufo.git")
+            repo_path = util.clone_git_repo("https://github.com/godaddy/tartufo.git")
             try:
                 scanner.find_strings(
                     str(repo_path),
@@ -418,7 +420,7 @@ class ScanRepoTests(unittest.TestCase):
             branch=None,
             path_inclusions=[],
             path_exclusions=[
-                re.compile(r"tests/"),
+                re.compile("tests/"),
                 re.compile(r"\.venv/"),
                 re.compile(r".*\.egg-info/"),
             ],

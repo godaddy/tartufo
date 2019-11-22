@@ -371,7 +371,7 @@ def scan_repo(
         if extra_paths:
             file_path = pathlib.Path(extra_paths).resolve()
             if file_path.is_file():
-                with file_path.open() as paths_file:
+                with file_path.open("r", encoding="utf8") as paths_file:
                     path_inclusions.extend(
                         config.compile_path_rules(paths_file.readlines())
                     )
@@ -379,7 +379,7 @@ def scan_repo(
         if extra_paths:
             file_path = pathlib.Path(extra_paths).resolve()
             if file_path.is_file():
-                with file_path.open() as paths_file:
+                with file_path.open("r", encoding="utf8") as paths_file:
                     path_exclusions.extend(
                         config.compile_path_rules(paths_file.readlines())
                     )
