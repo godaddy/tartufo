@@ -2,7 +2,7 @@ import json
 import re
 import shutil
 from functools import partial
-from typing import cast, Dict, List, Optional, Pattern, TextIO, Tuple, Union
+from typing import cast, Dict, Iterable, List, Optional, Pattern, TextIO, Tuple, Union
 
 import click
 import toml
@@ -105,3 +105,12 @@ def load_rules_from_file(rules_file):
     for rule in new_rules:
         regexes[rule] = re.compile(new_rules[rule])
     return regexes
+
+
+def compile_path_rules(patterns):
+    # type: (Iterable[str]) -> List[Pattern]
+    return [
+        re.compile(pattern.strip())
+        for pattern in patterns
+        if pattern and not pattern.startswith("#")
+    ]
