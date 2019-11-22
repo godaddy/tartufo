@@ -278,5 +278,148 @@ class ScannerTests(unittest.TestCase):
                 )
 
 
+class ScanRepoTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.data_dir = pathlib.Path(__file__).parent / "data"
+        return super(ScanRepoTests, cls).setUpClass()
+
+    @mock.patch("tartufo.scanner.find_strings", new=mock.MagicMock())
+    @mock.patch("tartufo.scanner.toml")
+    def test_pyproject_toml_gets_loaded_from_scanned_repo(self, mock_toml):
+        scanner.scan_repo(
+            str(self.data_dir),
+            {},
+            [],
+            [],
+            {
+                "config": None,
+                "since_commit": None,
+                "max_depth": None,
+                "json": False,
+                "regex": False,
+                "entropy": False,
+                "branch": None,
+            },
+        )
+        mock_toml.load.assert_called_once_with(str(self.data_dir / "pyproject.toml"))
+
+    @mock.patch("tartufo.scanner.find_strings", new=mock.MagicMock())
+    @mock.patch("tartufo.scanner.toml")
+    def test_tartufo_toml_gets_loaded_from_scanned_repo(self, mock_toml):
+        scanner.scan_repo(
+            str(self.data_dir / "config"),
+            {},
+            [],
+            [],
+            {
+                "config": None,
+                "since_commit": None,
+                "max_depth": None,
+                "json": False,
+                "regex": False,
+                "entropy": False,
+                "branch": None,
+            },
+        )
+        mock_toml.load.assert_called_once_with(
+            str(self.data_dir / "config" / "tartufo.toml")
+        )
+
+    @mock.patch("tartufo.scanner.find_strings", new=mock.MagicMock())
+    @mock.patch("tartufo.scanner.toml")
+    def test_config_file_not_loaded_if_read_from_cli(self, mock_toml):
+        scanner.scan_repo(
+            str(self.data_dir),
+            {},
+            [],
+            [],
+            {
+                "config": str(self.data_dir / "pyproject.toml"),
+                "since_commit": None,
+                "max_depth": None,
+                "json": False,
+                "regex": False,
+                "entropy": False,
+                "branch": None,
+            },
+        )
+        mock_toml.load.assert_not_called()
+
+    @mock.patch("tartufo.scanner.find_strings")
+    @mock.patch("tartufo.scanner.toml")
+    def test_extra_inclusions_get_added(self, mock_toml, mock_find_strings):
+        mock_toml.load.return_value = {
+            "tool": {"tartufo": {"include-paths": str(self.data_dir / "include-files")}}
+        }
+        scanner.scan_repo(
+            str(self.data_dir),
+            {},
+            [],
+            [],
+            {
+                "config": None,
+                "since_commit": None,
+                "max_depth": None,
+                "json": False,
+                "regex": False,
+                "entropy": False,
+                "branch": None,
+            },
+        )
+        mock_find_strings.assert_called_once_with(
+            str(self.data_dir),
+            since_commit=None,
+            max_depth=None,
+            print_json=False,
+            do_regex=False,
+            do_entropy=False,
+            custom_regexes={},
+            suppress_output=False,
+            branch=None,
+            path_inclusions=[re.compile("tartufo/"), re.compile("scripts/")],
+            path_exclusions=[],
+        )
+
+    @mock.patch("tartufo.scanner.find_strings")
+    @mock.patch("tartufo.scanner.toml")
+    def test_extra_exclusions_get_added(self, mock_toml, mock_find_strings):
+        mock_toml.load.return_value = {
+            "tool": {"tartufo": {"exclude-paths": str(self.data_dir / "exclude-files")}}
+        }
+        scanner.scan_repo(
+            str(self.data_dir),
+            {},
+            [],
+            [],
+            {
+                "config": None,
+                "since_commit": None,
+                "max_depth": None,
+                "json": False,
+                "regex": False,
+                "entropy": False,
+                "branch": None,
+            },
+        )
+        mock_find_strings.assert_called_once_with(
+            str(self.data_dir),
+            since_commit=None,
+            max_depth=None,
+            print_json=False,
+            do_regex=False,
+            do_entropy=False,
+            custom_regexes={},
+            suppress_output=False,
+            branch=None,
+            path_inclusions=[],
+            path_exclusions=[
+                re.compile(r"tests/"),
+                re.compile(r"\.venv/"),
+                re.compile(r".*\.egg-info/"),
+            ],
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

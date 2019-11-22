@@ -361,7 +361,7 @@ def scan_repo(
     if not config_file.is_file():
         config_file = path / "tartufo.toml"
     if config_file.is_file() and str(config_file.resolve()) != str(options["config"]):
-        toml_file = toml.load(config_file)
+        toml_file = toml.load(str(config_file))
         repo_config = toml_file.get("tool", {}).get("tartufo", {})
     if repo_config:
         normalized_config = {
