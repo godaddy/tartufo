@@ -1,11 +1,12 @@
 import json
 import re
+import shutil
 import sys
 import unittest
 from collections import namedtuple
 
 import six
-from tartufo import scanner
+from tartufo import scanner, util
 
 try:
     import pathlib
@@ -124,14 +125,17 @@ class ScannerTests(unittest.TestCase):
         # Redirect STDOUT, run scan and re-establish STDOUT
         sys.stdout = tmp_stdout
         try:
-            # Scan this repo itself
-            repo_path = pathlib.Path(__file__).parent.parent
-            scanner.find_strings(
-                str(repo_path),
-                since_commit=since_commit,
-                print_json=True,
-                suppress_output=False,
-            )
+            # We have to clone tartufo mostly because TravisCI only does a shallow clone
+            repo_path = util.clone_git_repo("git@github.com:godaddy/tartufo.git")
+            try:
+                scanner.find_strings(
+                    str(repo_path),
+                    since_commit=since_commit,
+                    print_json=True,
+                    suppress_output=False,
+                )
+            finally:
+                shutil.rmtree(repo_path)
         finally:
             sys.stdout = bak_stdout
 
