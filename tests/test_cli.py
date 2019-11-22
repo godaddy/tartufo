@@ -220,6 +220,8 @@ class CLITests(unittest.TestCase):
             )
 
     @mock.patch("tartufo.cli.scanner.scan_repo")
+    @mock.patch("tartufo.cli.util.clone_git_repo", new=mock.MagicMock())
+    @mock.patch("tartufo.cli.shutil.rmtree", new=mock.MagicMock())
     def test_issues_path_is_called_out(self, mock_scan_repo):
         mock_scan_repo.return_value = {"issues_path": "/foo"}
         runner = CliRunner()
@@ -228,6 +230,8 @@ class CLITests(unittest.TestCase):
             self.assertEqual(result.output, "Results have been saved in /foo\n")
 
     @mock.patch("tartufo.cli.scanner.scan_repo")
+    @mock.patch("tartufo.cli.util.clone_git_repo", new=mock.MagicMock())
+    @mock.patch("tartufo.cli.shutil.rmtree", new=mock.MagicMock())
     def test_command_exits_with_positive_return_code_when_issues_found(
         self, mock_scan_repo
     ):
