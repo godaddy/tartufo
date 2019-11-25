@@ -42,6 +42,8 @@ setup(
     author_email="oss@godaddy.com",
     license="GNU",
     packages=["tartufo"],
+    package_data={"tartufo": ["py.typed"]},
+    zip_safe=False,
     install_requires=INSTALL_REQUIRES,
     setup_requires="",
     extras_require=EXTRAS_REQUIRE,

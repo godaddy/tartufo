@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import re
+import shutil
 from functools import partial
-from typing import cast, TextIO
+from typing import cast, List, Pattern, TextIO
 
 import click
 import truffleHogRegexes.regexChecks
@@ -93,7 +93,14 @@ err = partial(  # pylint: disable=invalid-name
 )
 @click.option(
     "--config",
-    type=click.File(mode="r"),
+    type=click.Path(
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        resolve_path=True,
+        allow_dash=False,
+    ),
     is_eager=True,
     callback=config.read_pyproject_toml,
     help="Read configuration from specified file. [default: pyproject.toml]",
@@ -127,18 +134,14 @@ def main(ctx, **kwargs):
         ctx.exit(1)
 
     # read & compile path inclusion/exclusion patterns
-    path_inclusions = []
-    path_exclusions = []
+    path_inclusions = []  # type: List[Pattern]
+    path_exclusions = []  # type: List[Pattern]
     paths_file = cast(TextIO, kwargs["include_paths"])
     if paths_file:
-        for pattern in [l[:-1].lstrip() for l in paths_file]:
-            if pattern and not pattern.startswith("#"):
-                path_inclusions.append(re.compile(pattern))
+        path_inclusions = config.compile_path_rules(paths_file.readlines())
     paths_file = cast(TextIO, kwargs["exclude_paths"])
     if paths_file:
-        for pattern in [l[:-1].lstrip() for l in paths_file]:
-            if pattern and not pattern.startswith("#"):
-                path_exclusions.append(re.compile(pattern))
+        path_exclusions = config.compile_path_rules(paths_file.readlines())
 
     if kwargs["pre_commit"]:
         output = scanner.find_staged(
@@ -152,20 +155,19 @@ def main(ctx, **kwargs):
             path_exclusions=path_exclusions,
         )
     else:
-        output = scanner.find_strings(
-            cast(str, kwargs["git_url"]),
-            cast(str, kwargs["since_commit"]),
-            cast(int, kwargs["max_depth"]),
-            cast(bool, kwargs["json"]),
-            cast(bool, kwargs["regex"]),
-            cast(bool, kwargs["entropy"]),
-            custom_regexes=rules_regexes,
-            suppress_output=False,
-            branch=cast(str, kwargs["branch"]),
-            repo_path=cast(str, kwargs["repo_path"]),
-            path_inclusions=path_inclusions,
-            path_exclusions=path_exclusions,
+        remove_repo = False
+        if kwargs["git_url"]:
+            repo_path = util.clone_git_repo(cast(str, kwargs["git_url"]))
+            remove_repo = True
+        else:
+            repo_path = cast(str, kwargs["repo_path"])
+
+        output = scanner.scan_repo(
+            repo_path, rules_regexes, path_inclusions, path_exclusions, kwargs
         )
+
+        if remove_repo:
+            shutil.rmtree(repo_path, onerror=util.del_rw)
 
     if kwargs["cleanup"]:
         util.clean_outputs(output)

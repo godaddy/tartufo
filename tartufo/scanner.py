@@ -9,15 +9,19 @@ import hashlib
 import json
 import math
 import os
-import shutil
 import sys
 import tempfile
 import uuid
-from typing import Dict, Iterable, List, Optional, Pattern, Set, Union
+from typing import cast, Dict, Iterable, List, Optional, Pattern, Set, Union
 
 import git
+import toml
+from tartufo import config
 
-from tartufo import util
+try:
+    import pathlib
+except ImportError:
+    import pathlib2 as pathlib  # type: ignore
 
 
 BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
@@ -261,7 +265,7 @@ def path_included(blob, include_patterns=None, exclude_patterns=None):
 
 
 def find_strings(
-    git_url,  # type: str
+    repo_path,  # type: str
     since_commit=None,  # type: Optional[str]
     max_depth=1000000,  # type: int
     print_json=False,  # type: bool
@@ -270,17 +274,12 @@ def find_strings(
     suppress_output=True,  # type: bool
     custom_regexes=None,  # type: Optional[PatternDict]
     branch=None,  # type: Optional[str]
-    repo_path=None,  # type: Optional[str]
     path_inclusions=None,  # type: Optional[Iterable[Pattern]]
     path_exclusions=None,  # type: Optional[Iterable[Pattern]]
 ):
     # type: (...) -> IssueDict
     output = {"found_issues": []}  # type: IssueDict
-    if repo_path:
-        project_path = repo_path
-    else:
-        project_path = util.clone_git_repo(git_url)
-    repo = git.Repo(project_path)
+    repo = git.Repo(repo_path)
     already_searched = set()  # type: Set[bytes]
     output_dir = tempfile.mkdtemp()
 
@@ -343,11 +342,61 @@ def find_strings(
             branch_name,
         )
         output = handle_results(output, output_dir, found_issues)
-    output["project_path"] = project_path
-    output["clone_uri"] = git_url
+    output["project_path"] = repo_path
     output["issues_path"] = output_dir
-    if not repo_path:
-        shutil.rmtree(project_path, onerror=util.del_rw)
+    return output
+
+
+def scan_repo(
+    repo_path,  # type: str
+    regexes,  # type: Optional[PatternDict]
+    path_inclusions,  # type: List[Pattern]
+    path_exclusions,  # type: List[Pattern]
+    options,  # type: Dict[str, config.OptionTypes]
+):
+    # Check the repo for any local configs
+    repo_config = {}  # type: Dict[str, config.OptionTypes]
+    path = pathlib.Path(repo_path)
+    config_file = path / "pyproject.toml"
+    if not config_file.is_file():
+        config_file = path / "tartufo.toml"
+    if config_file.is_file() and str(config_file.resolve()) != str(options["config"]):
+        toml_file = toml.load(str(config_file))
+        repo_config = toml_file.get("tool", {}).get("tartufo", {})
+    if repo_config:
+        normalized_config = {
+            k.replace("--", "").replace("-", "_"): v for k, v in repo_config.items()
+        }
+        extra_paths = cast(str, normalized_config.get("include_paths", None))
+        if extra_paths:
+            file_path = pathlib.Path(extra_paths).resolve()
+            if file_path.is_file():
+                with file_path.open("r", encoding="utf8") as paths_file:
+                    path_inclusions.extend(
+                        config.compile_path_rules(paths_file.readlines())
+                    )
+        extra_paths = cast(str, normalized_config.get("exclude_paths", None))
+        if extra_paths:
+            file_path = pathlib.Path(extra_paths).resolve()
+            if file_path.is_file():
+                with file_path.open("r", encoding="utf8") as paths_file:
+                    path_exclusions.extend(
+                        config.compile_path_rules(paths_file.readlines())
+                    )
+
+    output = find_strings(
+        repo_path,
+        since_commit=cast(str, options["since_commit"]),
+        max_depth=cast(int, options["max_depth"]),
+        print_json=cast(bool, options["json"]),
+        do_regex=cast(bool, options["regex"]),
+        do_entropy=cast(bool, options["entropy"]),
+        custom_regexes=regexes,
+        suppress_output=False,
+        branch=cast(str, options["branch"]),
+        path_inclusions=path_inclusions,
+        path_exclusions=path_exclusions,
+    )
     return output
 
 

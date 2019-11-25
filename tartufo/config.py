@@ -2,7 +2,7 @@ import json
 import re
 import shutil
 from functools import partial
-from typing import cast, Dict, List, Optional, Pattern, TextIO, Tuple, Union
+from typing import cast, Dict, Iterable, List, Optional, Pattern, TextIO, Tuple, Union
 
 import click
 import toml
@@ -23,7 +23,7 @@ PatternDict = Dict[str, Union[str, Pattern]]
 
 
 def read_pyproject_toml(ctx, _param, value):
-    # type: (click.Context, click.Parameter, Union[str, TextIO]) -> Optional[str]
+    # type: (click.Context, click.Parameter, str) -> Optional[str]
     if not value:
         root_path = ctx.params.get("repo_path", None)
         if not root_path:
@@ -33,7 +33,11 @@ def read_pyproject_toml(ctx, _param, value):
         if config_path.is_file():
             value = str(config_path)
         else:
-            return None
+            config_path = root_path / "tartufo.toml"
+            if config_path.is_file():
+                value = str(config_path)
+            else:
+                return None
     try:
         toml_file = toml.load(value)
         config = toml_file.get("tool", {}).get("tartufo", {})
@@ -101,3 +105,12 @@ def load_rules_from_file(rules_file):
     for rule in new_rules:
         regexes[rule] = re.compile(new_rules[rule])
     return regexes
+
+
+def compile_path_rules(patterns):
+    # type: (Iterable[str]) -> List[Pattern]
+    return [
+        re.compile(pattern.strip())
+        for pattern in patterns
+        if pattern and not pattern.startswith("#")
+    ]

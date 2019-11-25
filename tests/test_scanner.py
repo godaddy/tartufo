@@ -1,11 +1,19 @@
+from __future__ import unicode_literals
+
 import json
 import re
+import shutil
 import sys
 import unittest
 from collections import namedtuple
 
 import six
-from tartufo import scanner
+from tartufo import scanner, util
+
+try:
+    import pathlib
+except ImportError:
+    import pathlib2 as pathlib  # type: ignore
 
 try:
     from unittest import mock
@@ -28,21 +36,6 @@ class EntropyTests(unittest.TestCase):
 
 
 class ScannerTests(unittest.TestCase):
-    @mock.patch("tartufo.scanner.hashlib", new=mock.MagicMock())
-    @mock.patch("tartufo.scanner.tempfile", new=mock.MagicMock())
-    @mock.patch("tartufo.scanner.git.Repo")
-    @mock.patch("tartufo.scanner.util.clone_git_repo")
-    @mock.patch("tartufo.scanner.util.shutil.rmtree")
-    def test_find_strings_works_against_already_cloned_repo(
-        self, mock_rmtree, mock_clone, mock_repo
-    ):
-        scanner.find_strings("find_repo", repo_path="/test/path")
-        mock_repo.assert_called_once_with("/test/path")
-        mock_rmtree.assert_not_called()
-        mock_clone.assert_not_called()
-
-    @mock.patch("tartufo.scanner.util.clone_git_repo", new=mock.MagicMock())
-    @mock.patch("tartufo.scanner.util.shutil.rmtree", new=mock.MagicMock())
     @mock.patch("tartufo.scanner.tempfile", new=mock.MagicMock())
     @mock.patch("tartufo.scanner.git.Repo")
     def test_find_strings_checks_out_branch_when_specified(self, mock_repo):
@@ -70,10 +63,7 @@ class ScannerTests(unittest.TestCase):
         ]
 
         scanner.find_strings(
-            "git://fake/repo.git",
-            repo_path="/fake/repo",
-            print_json=True,
-            suppress_output=False,
+            "/fake/repo", print_json=True, suppress_output=False,
         )
 
         call_1 = mock.call(
@@ -114,18 +104,9 @@ class ScannerTests(unittest.TestCase):
         )
         mock_worker.assert_has_calls((call_1, call_2, call_3), any_order=True)
 
-    def test_unicode_expection(self):
-        """FIXME: What is this test actually testing?
-
-        How can we test the same thing without cloning an external repo?
-        """
-        try:
-            scanner.find_strings("https://github.com/dxa4481/tst.git")
-        except UnicodeEncodeError:
-            self.fail("Unicode print error")
-
     def test_return_correct_commit_hash(self):
         """FIXME: Split this test out into multiple smaller tests w/o real clone
+        FIXME: Also, this test will continue to grow slower the more times we commit
 
         Necessary:
             * Make sure all commits are checked (done)
@@ -146,12 +127,17 @@ class ScannerTests(unittest.TestCase):
         # Redirect STDOUT, run scan and re-establish STDOUT
         sys.stdout = tmp_stdout
         try:
-            scanner.find_strings(
-                "https://github.com/godaddy/tartufo.git",
-                since_commit=since_commit,
-                print_json=True,
-                suppress_output=False,
-            )
+            # We have to clone tartufo mostly because TravisCI only does a shallow clone
+            repo_path = util.clone_git_repo("https://github.com/godaddy/tartufo.git")
+            try:
+                scanner.find_strings(
+                    str(repo_path),
+                    since_commit=since_commit,
+                    print_json=True,
+                    suppress_output=False,
+                )
+            finally:
+                shutil.rmtree(repo_path)
         finally:
             sys.stdout = bak_stdout
 
@@ -296,6 +282,149 @@ class ScannerTests(unittest.TestCase):
                         blob, deleted_paths_patterns
                     ),
                 )
+
+
+class ScanRepoTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.data_dir = pathlib.Path(__file__).parent / "data"
+        return super(ScanRepoTests, cls).setUpClass()
+
+    @mock.patch("tartufo.scanner.find_strings", new=mock.MagicMock())
+    @mock.patch("tartufo.scanner.toml")
+    def test_pyproject_toml_gets_loaded_from_scanned_repo(self, mock_toml):
+        scanner.scan_repo(
+            str(self.data_dir),
+            {},
+            [],
+            [],
+            {
+                "config": None,
+                "since_commit": None,
+                "max_depth": None,
+                "json": False,
+                "regex": False,
+                "entropy": False,
+                "branch": None,
+            },
+        )
+        mock_toml.load.assert_called_once_with(str(self.data_dir / "pyproject.toml"))
+
+    @mock.patch("tartufo.scanner.find_strings", new=mock.MagicMock())
+    @mock.patch("tartufo.scanner.toml")
+    def test_tartufo_toml_gets_loaded_from_scanned_repo(self, mock_toml):
+        scanner.scan_repo(
+            str(self.data_dir / "config"),
+            {},
+            [],
+            [],
+            {
+                "config": None,
+                "since_commit": None,
+                "max_depth": None,
+                "json": False,
+                "regex": False,
+                "entropy": False,
+                "branch": None,
+            },
+        )
+        mock_toml.load.assert_called_once_with(
+            str(self.data_dir / "config" / "tartufo.toml")
+        )
+
+    @mock.patch("tartufo.scanner.find_strings", new=mock.MagicMock())
+    @mock.patch("tartufo.scanner.toml")
+    def test_config_file_not_loaded_if_read_from_cli(self, mock_toml):
+        scanner.scan_repo(
+            str(self.data_dir),
+            {},
+            [],
+            [],
+            {
+                "config": str(self.data_dir / "pyproject.toml"),
+                "since_commit": None,
+                "max_depth": None,
+                "json": False,
+                "regex": False,
+                "entropy": False,
+                "branch": None,
+            },
+        )
+        mock_toml.load.assert_not_called()
+
+    @mock.patch("tartufo.scanner.find_strings")
+    @mock.patch("tartufo.scanner.toml")
+    def test_extra_inclusions_get_added(self, mock_toml, mock_find_strings):
+        mock_toml.load.return_value = {
+            "tool": {"tartufo": {"include-paths": str(self.data_dir / "include-files")}}
+        }
+        scanner.scan_repo(
+            str(self.data_dir),
+            {},
+            [],
+            [],
+            {
+                "config": None,
+                "since_commit": None,
+                "max_depth": None,
+                "json": False,
+                "regex": False,
+                "entropy": False,
+                "branch": None,
+            },
+        )
+        mock_find_strings.assert_called_once_with(
+            str(self.data_dir),
+            since_commit=None,
+            max_depth=None,
+            print_json=False,
+            do_regex=False,
+            do_entropy=False,
+            custom_regexes={},
+            suppress_output=False,
+            branch=None,
+            path_inclusions=[re.compile("tartufo/"), re.compile("scripts/")],
+            path_exclusions=[],
+        )
+
+    @mock.patch("tartufo.scanner.find_strings")
+    @mock.patch("tartufo.scanner.toml")
+    def test_extra_exclusions_get_added(self, mock_toml, mock_find_strings):
+        mock_toml.load.return_value = {
+            "tool": {"tartufo": {"exclude-paths": str(self.data_dir / "exclude-files")}}
+        }
+        scanner.scan_repo(
+            str(self.data_dir),
+            {},
+            [],
+            [],
+            {
+                "config": None,
+                "since_commit": None,
+                "max_depth": None,
+                "json": False,
+                "regex": False,
+                "entropy": False,
+                "branch": None,
+            },
+        )
+        mock_find_strings.assert_called_once_with(
+            str(self.data_dir),
+            since_commit=None,
+            max_depth=None,
+            print_json=False,
+            do_regex=False,
+            do_entropy=False,
+            custom_regexes={},
+            suppress_output=False,
+            branch=None,
+            path_inclusions=[],
+            path_exclusions=[
+                re.compile("tests/"),
+                re.compile(r"\.venv/"),
+                re.compile(r".*\.egg-info/"),
+            ],
+        )
 
 
 if __name__ == "__main__":
