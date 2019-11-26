@@ -72,10 +72,10 @@ def read_pyproject_toml(ctx, _param, value):
 
 
 def configure_regexes(
-    include_default,  # type: bool
-    rules_files,  # type: Optional[Tuple[TextIO, ...]]
-    rules_repo,  # type: Optional[str]
-    rules_repo_files,  # type: Optional[Tuple[str, ...]]
+    include_default=True,  # type: bool
+    rules_files=None,  # type: Optional[Iterable[TextIO]]
+    rules_repo=None,  # type: Optional[str]
+    rules_repo_files=None,  # type: Optional[Iterable[str]]
 ):
     # type: (...) -> PatternDict
     if include_default:
@@ -91,7 +91,7 @@ def configure_regexes(
         cloned_repo = False
         repo_path = None
         if rules_repo:
-            repo_path = pathlib.Path(rules_repo)
+            repo_path = pathlib.Path(rules_repo).resolve()
             if not repo_path.is_dir():
                 repo_path = pathlib.Path(util.clone_git_repo(rules_repo))
             if not rules_repo_files:
