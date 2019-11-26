@@ -37,12 +37,12 @@ class CLITests(unittest.TestCase):
                 result.output, "Regex checks requested, but no regexes found.\n"
             )
 
-    @mock.patch("tartufo.cli.config.configure_regexes_from_args")
+    @mock.patch("tartufo.cli.config.configure_regexes")
     def test_command_fails_from_invalid_regex(self, mock_config_regex):
         mock_config_regex.side_effect = ValueError("Foo!")
         runner = CliRunner()
         with runner.isolated_filesystem():
-            result = runner.invoke(cli.main, ["--repo-path", "."])
+            result = runner.invoke(cli.main, ["--repo-path", ".", "--regex"])
             self.assertEqual(result.output, "Foo!\n")
 
     @mock.patch("tartufo.cli.scanner.find_staged")
@@ -103,6 +103,8 @@ class CLITests(unittest.TestCase):
                     "repo_path": None,
                     "cleanup": False,
                     "pre_commit": False,
+                    "git_rules_repo": None,
+                    "git_rules_files": (),
                 },
             )
 
@@ -142,6 +144,8 @@ class CLITests(unittest.TestCase):
                     "repo_path": working_dir,
                     "cleanup": False,
                     "pre_commit": False,
+                    "git_rules_repo": None,
+                    "git_rules_files": (),
                 },
             )
 
