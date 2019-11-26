@@ -91,7 +91,7 @@ def configure_regexes(
         cloned_repo = False
         repo_path = None
         if rules_repo:
-            repo_path = pathlib.Path(rules_repo).resolve()
+            repo_path = pathlib.Path(rules_repo)
             if not repo_path.is_dir():
                 repo_path = pathlib.Path(util.clone_git_repo(rules_repo))
             if not rules_repo_files:

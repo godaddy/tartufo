@@ -91,7 +91,7 @@ class ConfigureRegexTests(unittest.TestCase):
     ):
         runner = CliRunner()
         with runner.isolated_filesystem():
-            repo_path = mock_pathlib.Path.return_value.resolve.return_value
+            repo_path = mock_pathlib.Path.return_value
             repo_path.is_dir.return_value = True
             repo_path.glob.return_value = []
             config.configure_regexes(rules_repo=".")
@@ -103,7 +103,7 @@ class ConfigureRegexTests(unittest.TestCase):
     ):
         runner = CliRunner()
         with runner.isolated_filesystem():
-            repo_path = mock_pathlib.Path.return_value.resolve.return_value
+            repo_path = mock_pathlib.Path.return_value
             repo_path.is_dir.return_value = True
             repo_path.glob.return_value = []
             config.configure_regexes(rules_repo=".", rules_repo_files=("tartufo.json",))
