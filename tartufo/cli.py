@@ -2,10 +2,9 @@
 
 import shutil
 from functools import partial
-from typing import cast, List, Pattern, TextIO
+from typing import cast, List, Optional, Pattern, TextIO, Tuple
 
 import click
-import truffleHogRegexes.regexChecks
 
 from tartufo import config, scanner, util
 
@@ -92,6 +91,19 @@ err = partial(  # pylint: disable=invalid-name
     help="Scan staged files in local repo clone.",
 )
 @click.option(
+    "--git-rules-repo",
+    help="A file path, or git URL, pointing to a git repository containing regex "
+    "rules to be used for scanning. By default, all .json files will be loaded "
+    "from the root of that repository. --git-rules-files can be used to override "
+    "this behavior and load specific files.",
+)
+@click.option(
+    "--git-rules-files",
+    multiple=True,
+    help="Used in conjunction with --git-rules-repo, specify glob-style patterns "
+    "for files from which to load the regex rules. Can be specified multiple times.",
+)
+@click.option(
     "--config",
     type=click.Path(
         exists=True,
@@ -122,16 +134,22 @@ def main(ctx, **kwargs):
     if not any((kwargs["pre_commit"], kwargs["repo_path"], kwargs["git_url"])):
         err("You must specify one of --pre-commit, --repo-path, or git_url.")
         ctx.exit(1)
-    try:
-        rules_regexes = config.configure_regexes_from_args(
-            kwargs, truffleHogRegexes.regexChecks.regexes
-        )
-    except ValueError as exc:
-        err(str(exc))
-        ctx.exit(1)
-    if kwargs["regex"] and not rules_regexes:
-        err("Regex checks requested, but no regexes found.")
-        ctx.exit(1)
+    if kwargs["regex"]:
+        try:
+            rules_regexes = config.configure_regexes(
+                cast(bool, kwargs["default_regexes"]),
+                cast(Tuple[TextIO, ...], kwargs["rules"]),
+                cast(Optional[str], kwargs["git_rules_repo"]),
+                cast(Tuple[str, ...], kwargs["git_rules_files"]),
+            )
+        except ValueError as exc:
+            err(str(exc))
+            ctx.exit(1)
+        if not rules_regexes:
+            err("Regex checks requested, but no regexes found.")
+            ctx.exit(1)
+    else:
+        rules_regexes = {}
 
     # read & compile path inclusion/exclusion patterns
     path_inclusions = []  # type: List[Pattern]
