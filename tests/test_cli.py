@@ -1,7 +1,7 @@
 import unittest
 
 from click.testing import CliRunner
-from tartufo import cli
+from tartufo import cli, config
 
 try:
     import pathlib
@@ -90,6 +90,49 @@ class CLITests(unittest.TestCase):
                 {
                     "config": None,
                     "regex": False,
+                    "max_depth": 42,
+                    "entropy": True,
+                    "git_url": "git@github.com:godaddy/tartufo.git",
+                    "json": False,
+                    "rules": (),
+                    "default_regexes": True,
+                    "since_commit": None,
+                    "branch": None,
+                    "include_paths": None,
+                    "exclude_paths": None,
+                    "repo_path": None,
+                    "cleanup": False,
+                    "pre_commit": False,
+                    "git_rules_repo": None,
+                    "git_rules_files": (),
+                },
+            )
+
+    @mock.patch("tartufo.cli.util.clone_git_repo")
+    @mock.patch("tartufo.cli.scanner.scan_repo")
+    @mock.patch("tartufo.cli.shutil.rmtree", new=mock.MagicMock())
+    def test_default_regexes_get_used_by_default(self, mock_scan_repo, mock_clone):
+        mock_scan_repo.return_value = {}
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            runner.invoke(
+                cli.main,
+                [
+                    "--regex",
+                    "--max-depth",
+                    "42",
+                    "--entropy",
+                    "git@github.com:godaddy/tartufo.git",
+                ],
+            )
+            mock_scan_repo.assert_called_once_with(
+                mock_clone.return_value,
+                config.DEFAULT_REGEXES,
+                [],
+                [],
+                {
+                    "config": None,
+                    "regex": True,
                     "max_depth": 42,
                     "entropy": True,
                     "git_url": "git@github.com:godaddy/tartufo.git",
