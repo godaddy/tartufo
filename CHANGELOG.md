@@ -3,6 +3,7 @@
 ## vX.Y.Z -
 
 * Support reading config from `tartufo.toml` for non-Python projects
+* #17 - A separate repository can be used for storing rules files
 * #18 - Read the `pyproject.toml` or `tartufo.toml` from the repo being scanned
 
 ## v1.0.2 - 19 November 2019

@@ -221,7 +221,18 @@ Options:
   --cleanup / --no-cleanup        Clean up all temporary result files.
                                   [default: False]
   --pre-commit                    Scan staged files in local repo clone.
-  --config FILENAME               Read configuration from specified file.
+  --git-rules-repo TEXT           A file path, or git URL, pointing to a git
+                                  repository containing regex rules to be used
+                                  for scanning. By default, all .json files
+                                  will be loaded from the root of that
+                                  repository. --git-rules-files can be used to
+                                  override this behavior and load specific
+                                  files.
+  --git-rules-files TEXT          Used in conjunction with --git-rules-repo,
+                                  specify glob-style patterns for files from
+                                  which to load the regex rules. Can be
+                                  specified multiple times.
+  --config FILE                   Read configuration from specified file.
                                   [default: pyproject.toml]
   -h, --help                      Show this message and exit.
 ```
