@@ -1,6 +1,6 @@
 # ChangeLog
 
-## vX.Y.Z -
+## v1.1.0 - 27 November 2019
 
 * Support reading config from `tartufo.toml` for non-Python projects
 * #17 - A separate repository can be used for storing rules files
