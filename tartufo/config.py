@@ -1,9 +1,10 @@
 import copy
 import json
+import pathlib
 import re
 import shutil
 from functools import partial
-from typing import (
+from typing import (  # pylint: disable=unused-import
     Any,
     Dict,
     IO,
@@ -20,11 +21,6 @@ import click
 import toml
 import truffleHogRegexes.regexChecks
 from tartufo import util
-
-try:
-    import pathlib
-except ImportError:
-    import pathlib2 as pathlib  # type: ignore
 
 
 err = partial(  # pylint: disable=invalid-name

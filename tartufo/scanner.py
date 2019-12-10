@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import datetime
 import enum
 import hashlib
 import json
 import math
 import os
+import pathlib
 import tempfile
 import uuid
 from typing import cast, Dict, Iterable, List, Optional, Pattern, Set, Union
@@ -19,11 +16,6 @@ import git
 import toml
 from tartufo import config
 from tartufo.util import style_ok, style_warning
-
-try:
-    import pathlib
-except ImportError:
-    import pathlib2 as pathlib  # type: ignore
 
 
 BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
