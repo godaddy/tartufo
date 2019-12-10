@@ -1,24 +1,14 @@
-from __future__ import unicode_literals
-
 import json
+import pathlib
 import re
 import shutil
 import sys
 import unittest
 from collections import namedtuple
+from unittest import mock
 
 import six
 from tartufo import scanner, util
-
-try:
-    import pathlib
-except ImportError:
-    import pathlib2 as pathlib  # type: ignore
-
-try:
-    from unittest import mock
-except ImportError:
-    import mock  # type: ignore
 
 
 class EntropyTests(unittest.TestCase):

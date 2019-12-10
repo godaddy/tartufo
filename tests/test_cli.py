@@ -1,17 +1,9 @@
+import pathlib
 import unittest
+from unittest import mock
 
 from click.testing import CliRunner
 from tartufo import cli, config
-
-try:
-    import pathlib
-except ImportError:
-    import pathlib2 as pathlib  # type: ignore
-
-try:
-    from unittest import mock
-except ImportError:
-    import mock  # type: ignore
 
 
 class CLITests(unittest.TestCase):
