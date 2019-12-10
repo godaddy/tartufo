@@ -4,19 +4,15 @@ from setuptools import setup
 INSTALL_REQUIRES = [
     "click >= 7.0.0, < 8.0.0",
     "colorama; sys_platform == 'win32'",
-    "enum34; python_version < '3.4'",
     "GitPython >= 2.1.1, < 4.0.0",
-    "pathlib2; python_version < '3.4'",
     "toml >= 0.10.0, < 1.0.0",
     "truffleHogRegexes >= 0.0.7, < 1.0.0",
-    "typing; python_version < '3.5'",
 ]
 
 EXTRAS_REQUIRE = {
     "tests": [
         "black==19.10b0; python_version >= '3.6' and platform_python_implementation == 'CPython'",
         "coverage",
-        "mock; python_version == '2.7'",
         "pre-commit",
         "pytest",
         "pytest-cov",
@@ -58,7 +54,6 @@ setup(
         "Natural Language :: English",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
