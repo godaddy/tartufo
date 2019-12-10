@@ -5,18 +5,20 @@ from __future__ import division
 from __future__ import print_function
 
 import datetime
+import enum
 import hashlib
 import json
 import math
 import os
-import sys
 import tempfile
 import uuid
 from typing import cast, Dict, Iterable, List, Optional, Pattern, Set, Union
 
+import click
 import git
 import toml
 from tartufo import config
+from tartufo.util import style_ok, style_warning
 
 try:
     import pathlib
@@ -32,19 +34,108 @@ IssueDict = Dict[str, Union[str, List[str]]]
 PatternDict = Dict[str, Union[str, Pattern]]
 
 
-class Bcolors:
-    HEADER = "\033[95m"
-    OKBLUE = "\033[94m"
-    OKGREEN = "\033[92m"
-    WARNING = "\033[93m"
-    FAIL = "\033[91m"
-    ENDC = "\033[0m"
-    BOLD = "\033[1m"
-    UNDERLINE = "\033[4m"
+class IssueType(enum.Enum):
+    Entropy = "High Entropy"
+    RegEx = "Regular Expression Match"
 
-    def __init__(self, name):
-        # type: (str) -> None
-        self.name = name
+
+class Issue:
+    """Represents an issue found while scanning the code."""
+
+    OUTPUT_SEPARATOR = "~~~~~~~~~~~~~~~~~~~~~"  # type: str
+    DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"  # type: str
+
+    issue_type = None  # type: Optional[IssueType]
+    issue_detail = None  # type: Optional[str]
+    diff = None  # type: Optional[git.Diff]
+    strings_found = None  # type: Optional[List[str]]
+    commit = None  # type: Optional[git.Commit]
+    branch_name = None  # type: Optional[str]
+
+    def __init__(self, issue_type, strings_found):
+        # type: (IssueType, List[str]) -> None
+        self.issue_type = issue_type
+        self.strings_found = strings_found
+
+    def as_dict(self):
+        # type: () -> Dict[str, Optional[str]]
+        """Return a dictionary representation of an issue.
+
+        This is primarily meant to aid in JSON serialization.
+        """
+        output = {
+            "issue_type": self.issue_type.value,  # type: ignore
+            "issue_detail": self.issue_detail,
+            "diff": self.printable_diff,
+            "strings_found": self.strings_found,
+            "commit_time": self.commit_time,
+            "commit_message": self.commit_message,
+            "commit_hash": self.commit_hash,
+            "file_path": self.file_path,
+            "branch": self.branch_name,
+        }
+        return output
+
+    @property
+    def printable_diff(self):
+        # type: () -> str
+        if not self.diff:
+            return "No diff available."
+        return self.diff.diff.decode("utf-8", errors="replace")
+
+    @property
+    def commit_time(self):
+        # type: () -> Optional[str]
+        if not self.commit:
+            return None
+        commit_time = datetime.datetime.fromtimestamp(self.commit.committed_date)
+        return commit_time.strftime(self.DATETIME_FORMAT)
+
+    @property
+    def commit_message(self):
+        # type: () -> Optional[str]
+        if not self.commit:
+            return None
+        return self.commit.message
+
+    @property
+    def commit_hash(self):
+        # type: () -> Optional[str]
+        if not self.commit:
+            return None
+        return self.commit.hexsha
+
+    @property
+    def file_path(self):
+        # type: () -> Optional[str]
+        if not self.diff:
+            return None
+        if self.diff.b_path:
+            return self.diff.b_path
+        return self.diff.a_path
+
+    def __str__(self):
+        # type: () -> str
+        output = []
+        diff_body = self.printable_diff
+        for bad_str in self.strings_found:  # type: ignore
+            diff_body = diff_body.replace(bad_str, style_warning(bad_str))
+        output.append(self.OUTPUT_SEPARATOR)
+        output.append(style_ok("Reason: {}".format(self.issue_type.value)))  # type: ignore
+        if self.issue_detail:
+            output.append(style_ok("Detail: {}".format(self.issue_detail)))
+        if self.diff:
+            output.append(style_ok("Filepath: {}".format(self.file_path)))
+        if self.branch_name:
+            output.append(style_ok("Branch: {}".format(self.branch_name)))
+        if self.commit:
+            output.append(style_ok("Date: {}".format(self.commit_time)))
+            output.append(style_ok("Hash: {}".format(self.commit_hash)))
+            output.append(style_ok("Commit: {}".format(self.commit_message)))
+
+        output.append(diff_body)
+        output.append(self.OUTPUT_SEPARATOR)
+        return "\n".join(output)
 
 
 def shannon_entropy(data, iterator):
@@ -81,67 +172,8 @@ def get_strings_of_set(word, char_set, threshold=20):
     return strings
 
 
-def print_results(print_json, issue):
-    # type: (bool, IssueDict) -> None
-    if print_json:
-        print(json.dumps(issue, sort_keys=True))
-    else:
-        printable_diff = issue["printDiff"]
-        for string in issue["strings_found"]:
-            printable_diff = printable_diff.replace(  # type: ignore
-                string, Bcolors.WARNING + string + Bcolors.ENDC
-            )
-        print("~~~~~~~~~~~~~~~~~~~~~")
-        if "reason" in issue:
-            print(
-                "{}Reason: {}{}".format(Bcolors.OKGREEN, issue["reason"], Bcolors.ENDC)
-            )
-        if "date" in issue:
-            print("{}Date: {}{}".format(Bcolors.OKGREEN, issue["date"], Bcolors.ENDC))
-        if "commit_hash" in issue:
-            print(
-                "{}Hash: {}{}".format(
-                    Bcolors.OKGREEN, issue["commit_hash"], Bcolors.ENDC
-                )
-            )
-        if "path" in issue:
-            print(
-                "{}Filepath: {}{}".format(Bcolors.OKGREEN, issue["path"], Bcolors.ENDC)
-            )
-
-        if sys.version_info >= (3, 0):
-            if "branch" in issue:
-                print(
-                    "{}Branch: {}{}".format(
-                        Bcolors.OKGREEN, issue["branch"], Bcolors.ENDC
-                    )
-                )
-            if "commit" in issue:
-                print(
-                    "{}Commit: {}{}".format(
-                        Bcolors.OKGREEN, issue["commit"], Bcolors.ENDC
-                    )
-                )
-            print(printable_diff)
-        else:
-            if "branch" in issue:
-                print(
-                    "{}Branch: {}{}".format(
-                        Bcolors.OKGREEN, issue["branch"].encode("utf-8"), Bcolors.ENDC
-                    )
-                )
-            if "commit" in issue:
-                print(
-                    "{}Commit: {}{}".format(
-                        Bcolors.OKGREEN, issue["commit"].encode("utf-8"), Bcolors.ENDC
-                    )
-                )
-            print(printable_diff.encode("utf-8"))
-        print("~~~~~~~~~~~~~~~~~~~~~")
-
-
 def find_entropy(printable_diff):
-    # type: (str) -> List[Dict[str, Union[str, List[str]]]]
+    # type: (str) -> Optional[Issue]
     strings_found = []
     lines = printable_diff.split("\n")
     for line in lines:
@@ -157,30 +189,26 @@ def find_entropy(printable_diff):
                 if hex_entropy > 3:
                     strings_found.append(string)
     if strings_found:
-        entropic_diff = {}  # type: Dict[str, Union[str, List[str]]]
-        entropic_diff["strings_found"] = strings_found
-        entropic_diff["reason"] = "High Entropy"
-        return [entropic_diff]
-    return []
+        return Issue(IssueType.Entropy, strings_found)
+    return None
 
 
 def find_regex(printable_diff, regex_list=None):
-    # type: (str, Optional[PatternDict]) -> List[IssueDict]
+    # type: (str, Optional[PatternDict]) -> List[Issue]
     if regex_list is None:
         regex_list = {}
     regex_matches = []
     for key in regex_list:
         found_strings = regex_list[key].findall(printable_diff)  # type: ignore
         if found_strings:
-            found_regex = {}
-            found_regex["strings_found"] = found_strings
-            found_regex["reason"] = key
-            regex_matches.append(found_regex)
+            issue = Issue(IssueType.RegEx, found_strings)
+            issue.issue_detail = key
+            regex_matches.append(issue)
     return regex_matches
 
 
 def diff_worker(
-    diff,  # type: git.Diff
+    diff,  # type: git.DiffIndex
     custom_regexes,  # type: Optional[PatternDict]
     do_entropy,  # type: bool
     do_regex,  # type: bool
@@ -191,48 +219,40 @@ def diff_worker(
     prev_commit=None,  # type: Optional[git.Commit]
     branch_name=None,  # type: Optional[str]
 ):
-    # type: (...) -> List[IssueDict]
-    issues = []  # type: List[IssueDict]
+    # type: (...) -> List[Issue]
+    issues = []  # type: List[Issue]
     for blob in diff:
         printable_diff = blob.diff.decode("utf-8", errors="replace")
         if printable_diff.startswith("Binary files"):
             continue
         if not path_included(blob, path_inclusions, path_exclusions):
             continue
-        if prev_commit is not None:
-            commit_time = datetime.datetime.fromtimestamp(
-                prev_commit.committed_date
-            ).strftime("%Y-%m-%d %H:%M:%S")
-        else:
-            commit_time = ""
-        found_issues = []  # type: List[IssueDict]
+        found_issues = []  # type: List[Issue]
         if do_entropy:
-            found_issues = find_entropy(printable_diff)
+            entropy_issue = find_entropy(printable_diff)
+            if entropy_issue:
+                found_issues.append(entropy_issue)
         if do_regex:
             found_issues += find_regex(printable_diff, custom_regexes)
         for finding in found_issues:
-            # FIXME: This is relying on side effects to modify the origin dict
-            finding["path"] = blob.b_path if blob.b_path else blob.a_path
-            finding["diff"] = blob.diff.decode("utf-8", errors="replace")
-            finding["printDiff"] = printable_diff
-            if prev_commit is not None:
-                finding["date"] = commit_time
-                finding["commit"] = prev_commit.message
-                finding["commit_hash"] = prev_commit.hexsha
-            if branch_name is not None:
-                finding["branch"] = branch_name
+            finding.diff = blob
+            finding.commit = prev_commit
+            finding.branch_name = branch_name
             if not suppress_output:
-                print_results(print_json, finding)
+                if print_json:
+                    click.echo(json.dumps(finding.as_dict()))
+                else:
+                    click.echo(finding)
         issues += found_issues
     return issues
 
 
 def handle_results(output, output_dir, found_issues):
-    # type: (IssueDict, str, Iterable[IssueDict]) -> IssueDict
+    # type: (IssueDict, str, List[Issue]) -> IssueDict
     for found_issue in found_issues:
         result_path = os.path.join(output_dir, str(uuid.uuid4()))
         with open(result_path, "w+") as result_file:
-            result_file.write(json.dumps(found_issue))
+            result_file.write(json.dumps(found_issue.as_dict()))
         output["found_issues"].append(result_path)  # type: ignore
     return output
 

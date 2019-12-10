@@ -150,7 +150,7 @@ class ScannerTests(unittest.TestCase):
         self.assertEqual(commit_w_secret, filtered_results[0]["commit_hash"])
         # Additionally, we cross-validate the commit comment matches the expected comment
         self.assertEqual(
-            xcheck_commit_w_scrt_comment, filtered_results[0]["commit"].strip()
+            xcheck_commit_w_scrt_comment, filtered_results[0]["commit_message"].strip()
         )
 
     def test_path_included(self):
