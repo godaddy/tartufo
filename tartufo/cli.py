@@ -119,8 +119,7 @@ err = partial(  # pylint: disable=invalid-name
 )
 @click.argument("git_url", required=False)
 @click.pass_context
-def main(ctx, **kwargs):
-    # type: (click.Context, config.OptionTypes) -> None
+def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
     """Find secrets hidden in the depths of git.
 
     Tartufo will, by default, scan the entire history of a git repository

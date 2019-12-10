@@ -60,5 +60,6 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Topic :: Security",
         "Topic :: Software Development :: Version Control :: Git",
+        "Typing :: Typed",
     ],
 )
