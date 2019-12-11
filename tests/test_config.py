@@ -1,24 +1,14 @@
-from __future__ import unicode_literals
-
 import copy
 import os
+import pathlib
 import re
 import unittest
+from unittest import mock
 
 import click
 from click.testing import CliRunner
 
 from tartufo import config
-
-try:
-    import pathlib
-except ImportError:
-    import pathlib2 as pathlib  # type: ignore
-
-try:
-    from unittest import mock
-except ImportError:
-    import mock  # type: ignore
 
 
 class ConfigureRegexTests(unittest.TestCase):

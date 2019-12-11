@@ -5,26 +5,24 @@ import shutil
 import stat
 import tempfile
 from functools import partial
-from typing import Callable
+from typing import Any, Callable, Dict
 
 import click
 from git import Repo
 
 
-def del_rw(_func, name, _exc):
-    # type: (Callable, str, Exception) -> None
+def del_rw(_func: Callable, name: str, _exc: Exception) -> None:
     os.chmod(name, stat.S_IWRITE)
     os.remove(name)
 
 
-def clean_outputs(output):
+def clean_outputs(output: Dict[str, Any]) -> None:
     issues_path = output.get("issues_path", None)
     if issues_path and os.path.isdir(issues_path):
         shutil.rmtree(output["issues_path"])
 
 
-def clone_git_repo(git_url):
-    # type: (str) -> str
+def clone_git_repo(git_url: str) -> str:
     project_path = tempfile.mkdtemp()
     Repo.clone_from(git_url, project_path)
     return project_path

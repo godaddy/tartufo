@@ -1,11 +1,7 @@
 import unittest
+from unittest import mock
 
 from tartufo import util
-
-try:
-    from unittest import mock
-except ImportError:
-    import mock  # type: ignore
 
 
 class GitTests(unittest.TestCase):

@@ -1,9 +1,10 @@
 import copy
 import json
+import pathlib
 import re
 import shutil
 from functools import partial
-from typing import (
+from typing import (  # pylint: disable=unused-import
     Any,
     Dict,
     IO,
@@ -21,24 +22,19 @@ import toml
 import truffleHogRegexes.regexChecks
 from tartufo import util
 
-try:
-    import pathlib
-except ImportError:
-    import pathlib2 as pathlib  # type: ignore
-
 
 err = partial(  # pylint: disable=invalid-name
     click.secho, fg="red", bold=True, err=True
 )
 OptionTypes = Union[str, int, bool, None, TextIO, Tuple[TextIO, ...]]
 OptionsDict = Dict[str, OptionTypes]
-PatternDict = Dict[str, Union[str, Pattern]]
 
 DEFAULT_REGEXES = truffleHogRegexes.regexChecks.regexes
 
 
-def read_pyproject_toml(ctx, _param, value):
-    # type: (click.Context, click.Parameter, str) -> Optional[str]
+def read_pyproject_toml(
+    ctx: click.Context, _param: click.Parameter, value: str
+) -> Optional[str]:
     if not value:
         root_path = ctx.params.get("repo_path", None)
         if not root_path:
@@ -72,12 +68,11 @@ def read_pyproject_toml(ctx, _param, value):
 
 
 def configure_regexes(
-    include_default=True,  # type: bool
-    rules_files=None,  # type: Optional[Iterable[TextIO]]
-    rules_repo=None,  # type: Optional[str]
-    rules_repo_files=None,  # type: Optional[Iterable[str]]
-):
-    # type: (...) -> PatternDict
+    include_default: bool = True,
+    rules_files: Optional[Iterable[TextIO]] = None,
+    rules_repo: Optional[str] = None,
+    rules_repo_files: Optional[Iterable[str]] = None,
+) -> Dict[str, Pattern]:
     if include_default:
         rules = copy.copy(DEFAULT_REGEXES)
     else:
@@ -114,8 +109,7 @@ def configure_regexes(
     return rules
 
 
-def load_rules_from_file(rules_file):
-    # type: (TextIO) -> Dict[str, Pattern]
+def load_rules_from_file(rules_file: TextIO) -> Dict[str, Pattern]:
     regexes = {}
     try:
         new_rules = json.load(rules_file)
@@ -126,8 +120,7 @@ def load_rules_from_file(rules_file):
     return regexes
 
 
-def compile_path_rules(patterns):
-    # type: (Iterable[str]) -> List[Pattern]
+def compile_path_rules(patterns: Iterable[str]) -> List[Pattern]:
     return [
         re.compile(pattern.strip())
         for pattern in patterns

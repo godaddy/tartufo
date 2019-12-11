@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import datetime
 import enum
 import hashlib
 import json
 import math
 import os
+import pathlib
 import tempfile
 import uuid
 from typing import cast, Dict, Iterable, List, Optional, Pattern, Set, Union
@@ -20,18 +17,12 @@ import toml
 from tartufo import config
 from tartufo.util import style_ok, style_warning
 
-try:
-    import pathlib
-except ImportError:
-    import pathlib2 as pathlib  # type: ignore
-
 
 BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
 HEX_CHARS = "1234567890abcdefABCDEF"
 
 # FIXME: This should be replaced with a dataclass to better track the attributes
 IssueDict = Dict[str, Union[str, List[str]]]
-PatternDict = Dict[str, Union[str, Pattern]]
 
 
 class IssueType(enum.Enum):
@@ -52,13 +43,11 @@ class Issue:
     commit = None  # type: Optional[git.Commit]
     branch_name = None  # type: Optional[str]
 
-    def __init__(self, issue_type, strings_found):
-        # type: (IssueType, List[str]) -> None
+    def __init__(self, issue_type: IssueType, strings_found: List[str]) -> None:
         self.issue_type = issue_type
         self.strings_found = strings_found
 
-    def as_dict(self):
-        # type: () -> Dict[str, Optional[str]]
+    def as_dict(self) -> Dict[str, Optional[str]]:
         """Return a dictionary representation of an issue.
 
         This is primarily meant to aid in JSON serialization.
@@ -77,45 +66,39 @@ class Issue:
         return output
 
     @property
-    def printable_diff(self):
-        # type: () -> str
+    def printable_diff(self) -> str:
         if not self.diff:
             return "No diff available."
         return self.diff.diff.decode("utf-8", errors="replace")
 
     @property
-    def commit_time(self):
-        # type: () -> Optional[str]
+    def commit_time(self) -> Optional[str]:
         if not self.commit:
             return None
         commit_time = datetime.datetime.fromtimestamp(self.commit.committed_date)
         return commit_time.strftime(self.DATETIME_FORMAT)
 
     @property
-    def commit_message(self):
-        # type: () -> Optional[str]
+    def commit_message(self) -> Optional[str]:
         if not self.commit:
             return None
         return self.commit.message
 
     @property
-    def commit_hash(self):
-        # type: () -> Optional[str]
+    def commit_hash(self) -> Optional[str]:
         if not self.commit:
             return None
         return self.commit.hexsha
 
     @property
-    def file_path(self):
-        # type: () -> Optional[str]
+    def file_path(self) -> Optional[str]:
         if not self.diff:
             return None
         if self.diff.b_path:
             return self.diff.b_path
         return self.diff.a_path
 
-    def __str__(self):
-        # type: () -> str
+    def __str__(self) -> str:
         output = []
         diff_body = self.printable_diff
         for bad_str in self.strings_found:  # type: ignore
@@ -138,8 +121,7 @@ class Issue:
         return "\n".join(output)
 
 
-def shannon_entropy(data, iterator):
-    # type: (str, Iterable[str]) -> float
+def shannon_entropy(data: str, iterator: Iterable[str]) -> float:
     """
     Borrowed from http://blog.dkbza.org/2007/05/scanning-data-for-entropy-anomalies.html
     """
@@ -153,8 +135,9 @@ def shannon_entropy(data, iterator):
     return entropy
 
 
-def get_strings_of_set(word, char_set, threshold=20):
-    # type: (str, Iterable[str], int) -> List[str]
+def get_strings_of_set(
+    word: str, char_set: Iterable[str], threshold: int = 20
+) -> List[str]:
     count = 0
     letters = ""
     strings = []
@@ -172,8 +155,7 @@ def get_strings_of_set(word, char_set, threshold=20):
     return strings
 
 
-def find_entropy(printable_diff):
-    # type: (str) -> Optional[Issue]
+def find_entropy(printable_diff: str) -> Optional[Issue]:
     strings_found = []
     lines = printable_diff.split("\n")
     for line in lines:
@@ -193,13 +175,14 @@ def find_entropy(printable_diff):
     return None
 
 
-def find_regex(printable_diff, regex_list=None):
-    # type: (str, Optional[PatternDict]) -> List[Issue]
+def find_regex(
+    printable_diff: str, regex_list: Optional[Dict[str, Pattern]] = None
+) -> List[Issue]:
     if regex_list is None:
         regex_list = {}
     regex_matches = []
     for key in regex_list:
-        found_strings = regex_list[key].findall(printable_diff)  # type: ignore
+        found_strings = regex_list[key].findall(printable_diff)
         if found_strings:
             issue = Issue(IssueType.RegEx, found_strings)
             issue.issue_detail = key
@@ -208,18 +191,17 @@ def find_regex(printable_diff, regex_list=None):
 
 
 def diff_worker(
-    diff,  # type: git.DiffIndex
-    custom_regexes,  # type: Optional[PatternDict]
-    do_entropy,  # type: bool
-    do_regex,  # type: bool
-    print_json,  # type: bool
-    suppress_output,  # type: bool
-    path_inclusions,  # type: Optional[Iterable[Pattern]]
-    path_exclusions,  # type: Optional[Iterable[Pattern]]
-    prev_commit=None,  # type: Optional[git.Commit]
-    branch_name=None,  # type: Optional[str]
-):
-    # type: (...) -> List[Issue]
+    diff: git.DiffIndex,
+    custom_regexes: Optional[Dict[str, Pattern]],
+    do_entropy: bool,
+    do_regex: bool,
+    print_json: bool,
+    suppress_output: bool,
+    path_inclusions: Optional[Iterable[Pattern]],
+    path_exclusions: Optional[Iterable[Pattern]],
+    prev_commit: Optional[git.Commit] = None,
+    branch_name: Optional[str] = None,
+) -> List[Issue]:
     issues = []  # type: List[Issue]
     for blob in diff:
         printable_diff = blob.diff.decode("utf-8", errors="replace")
@@ -247,8 +229,9 @@ def diff_worker(
     return issues
 
 
-def handle_results(output, output_dir, found_issues):
-    # type: (IssueDict, str, List[Issue]) -> IssueDict
+def handle_results(
+    output: IssueDict, output_dir: str, found_issues: List[Issue]
+) -> IssueDict:
     for found_issue in found_issues:
         result_path = os.path.join(output_dir, str(uuid.uuid4()))
         with open(result_path, "w+") as result_file:
@@ -257,8 +240,11 @@ def handle_results(output, output_dir, found_issues):
     return output
 
 
-def path_included(blob, include_patterns=None, exclude_patterns=None):
-    # type: (git.Blob, Optional[Iterable[Pattern]], Optional[Iterable[Pattern]]) -> bool
+def path_included(
+    blob: git.Blob,
+    include_patterns: Optional[Iterable[Pattern]] = None,
+    exclude_patterns: Optional[Iterable[Pattern]] = None,
+) -> bool:
     """Check if the diff blob object should included in analysis.
 
     If defined and non-empty, `include_patterns` has precedence over `exclude_patterns`, such that a blob that is not
@@ -285,19 +271,18 @@ def path_included(blob, include_patterns=None, exclude_patterns=None):
 
 
 def find_strings(
-    repo_path,  # type: str
-    since_commit=None,  # type: Optional[str]
-    max_depth=1000000,  # type: int
-    print_json=False,  # type: bool
-    do_regex=False,  # type: bool
-    do_entropy=True,  # type: bool
-    suppress_output=True,  # type: bool
-    custom_regexes=None,  # type: Optional[PatternDict]
-    branch=None,  # type: Optional[str]
-    path_inclusions=None,  # type: Optional[Iterable[Pattern]]
-    path_exclusions=None,  # type: Optional[Iterable[Pattern]]
-):
-    # type: (...) -> IssueDict
+    repo_path: str,
+    since_commit: Optional[str] = None,
+    max_depth: int = 1000000,
+    print_json: bool = False,
+    do_regex: bool = False,
+    do_entropy: bool = True,
+    suppress_output: bool = True,
+    custom_regexes: Optional[Dict[str, Pattern]] = None,
+    branch: Optional[str] = None,
+    path_inclusions: Optional[Iterable[Pattern]] = None,
+    path_exclusions: Optional[Iterable[Pattern]] = None,
+) -> IssueDict:
     output = {"found_issues": []}  # type: IssueDict
     repo = git.Repo(repo_path)
     already_searched = set()  # type: Set[bytes]
@@ -368,12 +353,12 @@ def find_strings(
 
 
 def scan_repo(
-    repo_path,  # type: str
-    regexes,  # type: Optional[PatternDict]
-    path_inclusions,  # type: List[Pattern]
-    path_exclusions,  # type: List[Pattern]
-    options,  # type: Dict[str, config.OptionTypes]
-):
+    repo_path: str,
+    regexes: Optional[Dict[str, Pattern]],
+    path_inclusions: List[Pattern],
+    path_exclusions: List[Pattern],
+    options: Dict[str, config.OptionTypes],
+) -> IssueDict:
     # Check the repo for any local configs
     repo_config = {}  # type: Dict[str, config.OptionTypes]
     path = pathlib.Path(repo_path)
@@ -421,16 +406,15 @@ def scan_repo(
 
 
 def find_staged(
-    project_path,  # type: str
-    print_json=False,  # type: bool
-    do_regex=False,  # type: bool
-    do_entropy=True,  # type: bool
-    suppress_output=True,  # type: bool
-    custom_regexes=None,  # type: Optional[PatternDict]
-    path_inclusions=None,  # type: Optional[Iterable[Pattern]]
-    path_exclusions=None,  # type: Optional[Iterable[Pattern]]
-):
-    # type: (...) -> IssueDict
+    project_path: str,
+    print_json: bool = False,
+    do_regex: bool = False,
+    do_entropy: bool = True,
+    suppress_output: bool = True,
+    custom_regexes: Optional[Dict[str, Pattern]] = None,
+    path_inclusions: Optional[Iterable[Pattern]] = None,
+    path_exclusions: Optional[Iterable[Pattern]] = None,
+) -> IssueDict:
     output = {"found_issues": []}  # type: IssueDict
     output_dir = tempfile.mkdtemp()
     repo = git.Repo(project_path, search_parent_directories=True)

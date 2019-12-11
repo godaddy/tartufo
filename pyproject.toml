@@ -13,7 +13,7 @@ regex = true
 entropy = true
 
 [tool.black]
-target-version = ['py27', 'py35', 'py36', 'py37', 'py38']
+target-version = ['py35', 'py36', 'py37', 'py38']
 exclude = '''
 /(
     \.eggs         # exclude a few common directories in the
