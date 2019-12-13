@@ -1,5 +1,10 @@
 # ChangeLog
 
+## v1.1.1 - 13 December 2019
+
+* Fix the docs and pre-commit hook to use hyphens in CLI arguments, as opposed
+  to underscores.
+
 ## v1.1.0 - 27 November 2019
 
 * Support reading config from `tartufo.toml` for non-Python projects
