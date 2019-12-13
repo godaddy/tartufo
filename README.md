@@ -39,7 +39,7 @@ the caller did not intend to request an operation that scans nothing.
 
 ### Limiting Scans by Path
 
-With the `--include_paths` and `--exclude_paths` options, it is also possible to limit scanning to a subset of objects in the Git history by defining regular expressions (one per line) in a file to match the targeted object paths. To illustrate, see the example include and exclude files below:
+With the `--include-paths` and `--exclude-paths` options, it is also possible to limit scanning to a subset of objects in the Git history by defining regular expressions (one per line) in a file to match the targeted object paths. To illustrate, see the example include and exclude files below:
 
 _include-patterns.txt:_
 
@@ -64,7 +64,7 @@ _exclude-patterns.txt:_
 These filter files could then be applied by:
 
 ```bash
-tartufo --include_paths include-patterns.txt --exclude_paths exclude-patterns.txt file://path/to/my/repo.git
+tartufo --include-paths include-patterns.txt --exclude-paths exclude-patterns.txt file://path/to/my/repo.git
 ```
 
 With these filters, issues found in files in the root-level `src` directory would be reported, unless they had the `.classpath` or `.jmx` extension, or if they were found in the `src/test/dev/resources/` directory, for example. Additional usage information is provided when calling `tartufo` with the `-h` or `--help` options.
@@ -89,13 +89,13 @@ directly:
 tartufo --repo_path /my/local/clone
 ```
 
-If both `--repo_path` and a URL are supplied, the URL is ignored and the specified local clone
+If both `--repo-path` and a URL are supplied, the URL is ignored and the specified local clone
 is scanned. If neither is provided, a SyntaxError exception is raised.
 
 ### Pre-Commit Scans
 
-The `--pre_commit` flag instructs tartufo to scan staged, uncommitted changes in a local
-repository. The repository location can be specified using `--repo_path`, but it is legal to
+The `--pre-commit` flag instructs tartufo to scan staged, uncommitted changes in a local
+repository. The repository location can be specified using `--repo-path`, but it is legal to
 not supply a location; in this case, the caller's current working directory is assumed to be
 somewhere within the local clone's tree and the repository root is determined automatically.
 
@@ -111,7 +111,7 @@ _.git/hooks/pre-commit:_
 exec 1>&2
 
 # Check for suspicious content.
-tartufo --pre_commit --regex --entropy
+tartufo --pre-commit --regex --entropy
 ```
 
 Git will execute tartufo before committing any content. If problematic changes are detected,
@@ -162,7 +162,7 @@ Custom regexes can be added with the following flag `--rules /path/to/rules`. Th
 
 Things like subdomain enumeration, s3 bucket detection, and other useful regexes highly custom to the situation can be added.
 
-Normally, the custom regexes are added to the default regexes. If the default regexes should not be included, add the following flag: `--default-regexes=False`
+Normally, the custom regexes are added to the default regexes. If the default regexes should not be included, add the following flag: `--no-default-regexes`
 
 Feel free to also contribute high signal regexes upstream that you think will benefit the community. Things like Azure keys, Twilio keys, Google Compute keys, are welcome, provided a high signal regex can be constructed.
 
