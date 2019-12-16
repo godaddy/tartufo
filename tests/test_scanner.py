@@ -57,7 +57,7 @@ class ScannerTests(unittest.TestCase):
         )
 
         call_1 = mock.call(
-            commit_1.diff.return_value,
+            commit_2.diff.return_value,
             None,
             True,
             False,
@@ -69,7 +69,7 @@ class ScannerTests(unittest.TestCase):
             master_branch.name,
         )
         call_2 = mock.call(
-            commit_2.diff.return_value,
+            commit_3.diff.return_value,
             None,
             True,
             False,
