@@ -1,3 +1,11 @@
+V2.0.0 - XX YY ZZ
+-----------------
+
+* Issues found during the scan are now represented by a class, instead of some
+  amorphous dictionary (#29)
+* #25 - Set up full documentation on Read The Docs (via #38)
+* #30 - Support for Python 2 has been dropped (via #31)
+
 v1.1.0 - 27 November 2019
 -------------------------
 
