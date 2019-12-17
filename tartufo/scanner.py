@@ -315,7 +315,7 @@ def find_strings(
             if not prev_commit or diff_hash in already_searched:
                 prev_commit = curr_commit
                 continue
-            diff = prev_commit.diff(curr_commit, create_patch=True)
+            diff = curr_commit.diff(prev_commit, create_patch=True)
             # avoid searching the same diffs
             already_searched.add(diff_hash)
             found_issues = diff_worker(
