@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import json
+import pathlib
 import shutil
+import tempfile
 from functools import partial
 from typing import cast, List, Optional, Pattern, TextIO, Tuple
 
@@ -90,7 +93,7 @@ err = partial(  # pylint: disable=invalid-name
     default=False,
     help="Scan staged files in local repo clone.",
 )
-@click.option(
+@click.option(  # pylint: disable=too-many-statements
     "--git-rules-repo",
     help="A file path, or git URL, pointing to a git repository containing regex "
     "rules to be used for scanning. By default, all .json files will be loaded "
@@ -160,14 +163,14 @@ def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
     if paths_file:
         path_exclusions = config.compile_path_rules(paths_file.readlines())
 
+    found_issues = []  # type: List[scanner.Issue]
     if kwargs["pre_commit"]:
-        output = scanner.find_staged(
-            cast(str, kwargs["repo_path"]),
-            cast(bool, kwargs["json"]),
+        repo_path = cast(str, kwargs["repo_path"])
+        found_issues = scanner.find_staged(
+            repo_path,
             cast(bool, kwargs["regex"]),
             cast(bool, kwargs["entropy"]),
             custom_regexes=rules_regexes,
-            suppress_output=False,
             path_inclusions=path_inclusions,
             path_exclusions=path_exclusions,
         )
@@ -179,20 +182,34 @@ def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
         else:
             repo_path = cast(str, kwargs["repo_path"])
 
-        output = scanner.scan_repo(
+        found_issues = scanner.scan_repo(
             repo_path, rules_regexes, path_inclusions, path_exclusions, kwargs
         )
 
         if remove_repo:
             shutil.rmtree(repo_path, onerror=util.del_rw)
+    if found_issues:
+        output_dir = pathlib.Path(tempfile.mkdtemp())
+        util.write_outputs(found_issues, output_dir)
+    else:
+        output_dir = None  # type: ignore
+    if kwargs["json"]:
+        output = {
+            "project_path": repo_path,
+            "issues_path": output_dir,
+            "found_issues": [issue.as_dict() for issue in found_issues],
+        }
+        click.echo(json.dumps(output))
+    else:
+        for issue in found_issues:
+            click.echo(issue)
 
     if kwargs["cleanup"]:
-        util.clean_outputs(output)
+        util.clean_outputs(output_dir)
     else:
-        issues_path = output.get("issues_path", None)
-        if issues_path:
-            print("Results have been saved in {}".format(issues_path))
+        if output_dir and not kwargs["json"]:
+            click.echo("Results have been saved in {}".format(output_dir))
 
-    if output.get("found_issues", False):
+    if found_issues:
         ctx.exit(1)
     ctx.exit(0)
