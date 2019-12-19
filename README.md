@@ -6,6 +6,7 @@
 ![PyPI - Status](https://img.shields.io/pypi/status/tartufo)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/tartufo)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/tartufo)
+[![Documentation Status](https://readthedocs.org/projects/tartufo/badge/?version=latest)](https://tartufo.readthedocs.io/en/latest/?badge=latest)
 
 Searches through git repositories for secrets, digging deep into commit history and branches.
 This is effective at finding secrets accidentally committed. tartufo also can be used by git
