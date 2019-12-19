@@ -10,10 +10,15 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import codecs
+import os
+import pathlib
+import sys
 
+sys.path.insert(0, os.path.abspath("."))
+
+
+DOCS_PATH = pathlib.Path(__file__).parent.parent
 
 # -- Project information -----------------------------------------------------
 
@@ -21,6 +26,10 @@ project = "tartufo"
 copyright = "2019, GoDaddy.com, LLC"
 author = "GoDaddy.com, LLC"
 
+version = None
+with codecs.open(str(DOCS_PATH.parent / "VERSION"), "r", "utf-8") as fh:
+    version = fh.read().strip()
+release = version
 
 # -- General configuration ---------------------------------------------------
 
