@@ -1,4 +1,4 @@
-# tartufo
+# ![tartufo logo](docs/source/_static/img/tartufo.png)
 
 ![Travis (.org)](https://img.shields.io/travis/godaddy/tartufo)
 ![Codecov](https://img.shields.io/codecov/c/github/godaddy/tartufo)
