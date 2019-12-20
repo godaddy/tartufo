@@ -57,6 +57,8 @@ on the `truffleHog`_ project.
    features
    usage
    configuration
+   CONTRIBUTING
+   SECURITY
    changelog
 
 
