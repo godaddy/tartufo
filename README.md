@@ -25,34 +25,6 @@ screen.
 
 ![Example Issue](docs/source/_static/img/example_issue.png)
 
-### Temporary file cleanup
-
-tartufo stores the results in temporary files, which are left on disk by default, to allow
-inspection if problems are found. To automatically delete these files when tartufo completes, specify
-the `--cleanup` flag:
-
-```bash
-tartufo --cleanup
-```
-
-## Customizing
-
-Custom regexes can be added with the following flag `--rules /path/to/rules`. This should be a json file of the following format:
-
-```ini
-{
-    "RSA private key": "-----BEGIN EC PRIVATE KEY-----"
-}
-```
-
-Things like subdomain enumeration, s3 bucket detection, and other useful regexes highly custom to the situation can be added.
-
-Normally, the custom regexes are added to the default regexes. If the default regexes should not be included, add the following flag: `--no-default-regexes`
-
-Feel free to also contribute high signal regexes upstream that you think will benefit the community. Things like Azure keys, Twilio keys, Google Compute keys, are welcome, provided a high signal regex can be constructed.
-
-tartufo's base rule set sources from <https://github.com/dxa4481/truffleHogRegexes/blob/master/truffleHogRegexes/regexes.json>
-
 ## Documentation
 
 Our main documentation site is hosted by Read The Docs, at

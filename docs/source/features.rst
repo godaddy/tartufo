@@ -10,11 +10,29 @@ SSH keys, EC2 credentials, etc. These scans are activated by use of the
 of ``Regular Expression Match``, and the issue detail will be the name of the
 regular expression which was matched.
 
+Customizing
++++++++++++
+
 Additional rules can be specified in a JSON file, pointed to on the command
-line with the ``--rules`` flag.
+line with the ``--rules`` argument. The file should be in the following format:
+
+.. code-block:: json
+
+   {
+       "RSA private key": "-----BEGIN EC PRIVATE KEY-----"
+   }
+
+Things like subdomain enumeration, s3 bucket detection, and other useful
+regexes highly custom to the situation can be added.
 
 If you would like to deactivate the default regex rules, using only your custom
 rule set, you can use the ``--no-default-regexes`` flag.
+
+Feel free to also contribute high signal regexes upstream that you think will
+benefit the community. Things like Azure keys, Twilio keys, Google Compute
+keys, are welcome, provided a high signal regex can be constructed.
+
+tartufo's base rule set sources from <https://github.com/dxa4481/truffleHogRegexes/blob/master/truffleHogRegexes/regexes.json>
 
 High Entropy Checking
 ---------------------

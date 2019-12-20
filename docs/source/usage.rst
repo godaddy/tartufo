@@ -73,3 +73,14 @@ That's it! Now your contributors only need to run ``pre-commit install
    You probably don't actually want to use the `master` rev. This is the active
    development branch for this project, and can not be guaranteed stable. Your
    best bet would be to choose the latest version, currently |version|.
+
+Temporary File Cleanup
+----------------------
+
+`tartufo` stores the results in temporary files, which are left on disk by
+default, to allow inspection if problems are found. To automatically delete
+these files when tartufo completes, specify the ``--cleanup`` flag:
+
+.. code-block:: sh
+
+   tartufo --cleanup
