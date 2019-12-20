@@ -11,20 +11,27 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import codecs
+import datetime
 import os
 import pathlib
 import sys
 
 sys.path.insert(0, os.path.abspath("."))
 
-
+# ON_RTD is whether we are on readthedocs.org
+ON_RTD = os.environ.get("READTHEDOCS", None) == "True"
 DOCS_PATH = pathlib.Path(__file__).parent.parent
 
 # -- Project information -----------------------------------------------------
 
 project = "tartufo"
-copyright = "2019, GoDaddy.com, LLC"
 author = "GoDaddy.com, LLC"
+
+copyright_year = "2019"
+now = datetime.datetime.now()
+if now.year > 2019:
+    copyright_year = "%s-%s" % (copyright_year, now.year)
+copyright = "%s, GoDaddy.com, LLC" % copyright_year
 
 version = None
 with codecs.open(str(DOCS_PATH.parent / "VERSION"), "r", "utf-8") as fh:
@@ -51,6 +58,7 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 # exclude_patterns = []
 
+pygments_style = "sphinx"
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -58,6 +66,12 @@ templates_path = ["_templates"]
 # a list of builtin themes.
 #
 # html_theme = "alabaster"
+if not ON_RTD:
+    import sphinx_rtd_theme
+
+    html_theme = "sphinx_rtd_theme"
+    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -65,3 +79,9 @@ templates_path = ["_templates"]
 html_static_path = ["_static"]
 
 html_logo = "_static/img/tartufo.png"
+
+# If false, no module index is generated.
+html_use_modindex = False
+
+# If false, no index is generated.
+html_use_index = False

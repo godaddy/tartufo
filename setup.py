@@ -20,7 +20,11 @@ EXTRAS_REQUIRE = {
         "tox",
         "vulture",
     ],
-    "docs": ["recommonmark >= 0.6.0, < 1.0.0", "sphinx >= 2.3.0, < 3.0.0"],
+    "docs": [
+        "recommonmark >= 0.6.0, < 1.0.0",
+        "sphinx >= 2.3.0, < 3.0.0",
+        "sphinx-rtd-theme >= 0.4.3, < 1.0.0",
+    ],
 }
 
 
