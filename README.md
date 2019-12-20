@@ -8,132 +8,22 @@
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/tartufo)
 [![Documentation Status](https://readthedocs.org/projects/tartufo/badge/?version=latest)](https://tartufo.readthedocs.io/en/latest/?badge=latest)
 
-Searches through git repositories for secrets, digging deep into commit history and branches.
-This is effective at finding secrets accidentally committed. tartufo also can be used by git
-pre-commit scripts to screen changes for secrets before they are committed to the repository.
+`tartufo` searches through git repositories for secrets, digging deep into
+commit history and branches. This is effective at finding secrets accidentally
+committed. `tartufo` also can be used by git pre-commit scripts to screen
+changes for secrets before they are committed to the repository.
 
-## Features
+This tool will go through the entire commit history of each branch, and check
+each diff from each commit, and check for secrets. This is both by regex and by
+entropy. For entropy checks, tartufo will evaluate the shannon entropy for both
+the base64 char set and hexidecimal char set for every blob of text greater
+than 20 characters comprised of those character sets in each diff. If at any
+point a high entropy string > 20 characters is detected, it will print to the
+screen.
 
-tartufo offers the following features:
+## Example
 
-### Regex Checking
-
-tartufo previously functioned by running entropy checks on git diffs. This functionality still exists, but high signal regex checks have been added, and the ability to surpress entropy checking has also been added.
-
-This performs only regular expression checking:
-
-```bash
-tartufo --regex --entropy=False https://github.com/godaddy/tartufo.git
-```
-
-while this checks only for patterns with high entropy:
-
-```bash
-tartufo file:///user/godaddy/codeprojects/tartufo/
-```
-
-Specifying either `--regex` or `--entropy` without a value implies `=True`; if these arguments
-are missing, the default behavior is to perform entropy checking but not regex checking.
-
-If all types of checking are disabled, a RuntimeError exception is raised. It is presumed that
-the caller did not intend to request an operation that scans nothing.
-
-### Limiting Scans by Path
-
-With the `--include-paths` and `--exclude-paths` options, it is also possible to limit scanning to a subset of objects in the Git history by defining regular expressions (one per line) in a file to match the targeted object paths. To illustrate, see the example include and exclude files below:
-
-_include-patterns.txt:_
-
-```ini
-src/
-# lines beginning with "#" are treated as comments and are ignored
-gradle/
-# regexes must match the entire path, but can use python's regex syntax for
-# case-insensitive matching and other advanced options
-(?i).*\.(properties|conf|ini|txt|y(a)?ml)$
-(.*/)?id_[rd]sa$
-```
-
-_exclude-patterns.txt:_
-
-```ini
-(.*/)?\.classpath$
-.*\.jmx$
-(.*/)?test/(.*/)?resources/
-```
-
-These filter files could then be applied by:
-
-```bash
-tartufo --include-paths include-patterns.txt --exclude-paths exclude-patterns.txt file://path/to/my/repo.git
-```
-
-With these filters, issues found in files in the root-level `src` directory would be reported, unless they had the `.classpath` or `.jmx` extension, or if they were found in the `src/test/dev/resources/` directory, for example. Additional usage information is provided when calling `tartufo` with the `-h` or `--help` options.
-
-These features help cut down on noise, and makes the tool easier to shove into a devops pipeline.
-
-![Example](https://i.imgur.com/YAXndLD.png)
-
-### Specifying Repositories
-
-Normally, the URL of the repository to scan is supplied on the command line:
-
-```bash
-tartufo https://github.com/godaddy/tartufo.git
-```
-
-When invoked in this way, tartufo clones the repository to a scratch directory, scans the
-local clone, and then deletes it. If a local repository clone already exists, it can be scanned
-directly:
-
-```bash
-tartufo --repo_path /my/local/clone
-```
-
-If both `--repo-path` and a URL are supplied, the URL is ignored and the specified local clone
-is scanned. If neither is provided, a SyntaxError exception is raised.
-
-### Pre-Commit Scans
-
-The `--pre-commit` flag instructs tartufo to scan staged, uncommitted changes in a local
-repository. The repository location can be specified using `--repo-path`, but it is legal to
-not supply a location; in this case, the caller's current working directory is assumed to be
-somewhere within the local clone's tree and the repository root is determined automatically.
-
-The following example demonstrates how tartufo can be used to verify secrets will not be
-committed to a git repository in error:
-
-_.git/hooks/pre-commit:_
-
-```bash
-#!/bin/sh
-
-# Redirect output to stderr.
-exec 1>&2
-
-# Check for suspicious content.
-tartufo --pre-commit --regex --entropy
-```
-
-Git will execute tartufo before committing any content. If problematic changes are detected,
-they are reported by tartufo and git aborts the commit process. Only when tartufo returns a
-success status (indicating no potential secrets were discovered) will git commit the staged changes.
-
-Note that it is always possible, although not recommended, to bypass the pre-commit hook by
-using `git commit --no-verify`.
-
-If you would like to automate these hooks, you can use the [pre-commit] tool by
-adding a `.pre-commit-config.yaml` file to your repository similar to the following:
-
-```yaml
-- repo: https://github.com/godaddy/tartufo
-  rev: master
-  hooks:
-  - id: tartufo
-```
-
-That's it! Now your contributors only need to run `pre-commit install --install-hooks`,
-and `tartufo` will automatically be run as a pre-commit hook.
+![Example Issue](docs/source/_static/img/example_issue.png)
 
 ### Temporary file cleanup
 
@@ -143,12 +33,6 @@ the `--cleanup` flag:
 
 ```bash
 tartufo --cleanup
-```
-
-## Install
-
-```bash
-pip install tartufo
 ```
 
 ## Customizing
@@ -169,9 +53,10 @@ Feel free to also contribute high signal regexes upstream that you think will be
 
 tartufo's base rule set sources from <https://github.com/dxa4481/truffleHogRegexes/blob/master/truffleHogRegexes/regexes.json>
 
-## How it works
+## Documentation
 
-This module will go through the entire commit history of each branch, and check each diff from each commit, and check for secrets. This is both by regex and by entropy. For entropy checks, tartufo will evaluate the shannon entropy for both the base64 char set and hexidecimal char set for every blob of text greater than 20 characters comprised of those character sets in each diff. If at any point a high entropy string >20 characters is detected, it will print to the screen.
+Our main documentation site is hosted by Read The Docs, at
+<https://tartufo.readthedocs.io>.
 
 ## Help
 
