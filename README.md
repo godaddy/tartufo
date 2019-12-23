@@ -30,7 +30,7 @@ screen.
 Our main documentation site is hosted by Read The Docs, at
 <https://tartufo.readthedocs.io>.
 
-## Help
+## Usage
 
 ```bash
 Usage: tartufo [OPTIONS] [GIT_URL]
