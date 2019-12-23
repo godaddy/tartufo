@@ -18,6 +18,9 @@ stages:
 jobs:
   fast_finish: true
   include:
+    - stage: test
+      python: 3.7
+      env: TOXENV=docs
     - stage: lint
       python: 3.7
       env: TOXENV=black
