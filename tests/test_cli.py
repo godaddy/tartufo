@@ -3,7 +3,7 @@ import unittest
 from unittest import mock
 
 from click.testing import CliRunner
-from tartufo import cli, config
+from tartufo import cli, config, scanner
 
 
 class CLITests(unittest.TestCase):
@@ -49,10 +49,8 @@ class CLITests(unittest.TestCase):
             mock_find_staged.assert_called_once_with(
                 "/",
                 False,
-                False,
                 True,
                 custom_regexes={},
-                suppress_output=False,
                 path_inclusions=[],
                 path_exclusions=[],
             )
@@ -187,9 +185,10 @@ class CLITests(unittest.TestCase):
     @mock.patch("tartufo.cli.scanner.scan_repo")
     @mock.patch("tartufo.cli.util.clean_outputs")
     @mock.patch("tartufo.cli.util.clone_git_repo", new=mock.MagicMock())
+    @mock.patch("tartufo.cli.util.echo_issues", new=mock.MagicMock())
     @mock.patch("tartufo.cli.shutil.rmtree", new=mock.MagicMock())
     def test_command_calls_cleanup_when_requested(self, mock_clean, mock_scan_repo):
-        mock_scan_repo.return_value = {"foo": "bar"}
+        mock_scan_repo.return_value = []
         runner = CliRunner()
         with runner.isolated_filesystem():
             runner.invoke(
@@ -203,7 +202,7 @@ class CLITests(unittest.TestCase):
                     "git@github.com:godaddy/tartufo.git",
                 ],
             )
-            mock_clean.assert_called_once_with({"foo": "bar"})
+            mock_clean.assert_called_once_with(None)
 
     @mock.patch("tartufo.cli.config.compile_path_rules")
     @mock.patch("tartufo.cli.util.clone_git_repo", new=mock.MagicMock())
@@ -258,14 +257,26 @@ class CLITests(unittest.TestCase):
                 ]
             )
 
+    @mock.patch("tartufo.cli.mkdtemp")
     @mock.patch("tartufo.cli.scanner.scan_repo")
     @mock.patch("tartufo.cli.util.clone_git_repo", new=mock.MagicMock())
+    @mock.patch("tartufo.cli.util.echo_issues", new=mock.MagicMock())
+    @mock.patch("tartufo.cli.util.write_outputs", new=mock.MagicMock())
     @mock.patch("tartufo.cli.shutil.rmtree", new=mock.MagicMock())
-    def test_issues_path_is_called_out(self, mock_scan_repo):
-        mock_scan_repo.return_value = {"issues_path": "/foo"}
+    def test_issues_path_is_called_out(self, mock_scan_repo, mock_temp):
+        mock_scan_repo.return_value = [scanner.Issue(scanner.IssueType.Entropy, [])]
+        mock_temp.return_value = "/foo"
         runner = CliRunner()
         with runner.isolated_filesystem():
-            result = runner.invoke(cli.main, ["git@github.com:godaddy/tartufo.git"])
+            result = runner.invoke(
+                cli.main,
+                [
+                    "--no-cleanup",
+                    "--no-regex",
+                    "--entropy",
+                    "git@github.com:godaddy/tartufo.git",
+                ],
+            )
             self.assertEqual(result.output, "Results have been saved in /foo\n")
 
     @mock.patch("tartufo.cli.scanner.scan_repo")

@@ -3,7 +3,6 @@ import json
 import pathlib
 import re
 import shutil
-from functools import partial
 from typing import (  # pylint: disable=unused-import
     Any,
     Dict,
@@ -23,9 +22,6 @@ import truffleHogRegexes.regexChecks
 from tartufo import util
 
 
-err = partial(  # pylint: disable=invalid-name
-    click.secho, fg="red", bold=True, err=True
-)
 OptionTypes = Union[str, int, bool, None, TextIO, Tuple[TextIO, ...]]
 OptionsDict = Dict[str, OptionTypes]
 

@@ -22,6 +22,22 @@ def del_rw(_func: Callable, name: str, _exc: Exception) -> None:
     os.remove(name)
 
 
+def echo_issues(
+    issues: "List[Issue]", as_json: bool, repo_path: str, output_dir: pathlib.Path
+) -> None:
+    """Print all found issues out to the console, optionally as JSON."""
+    if as_json:
+        output = {
+            "project_path": repo_path,
+            "issues_path": output_dir,
+            "found_issues": [issue.as_dict() for issue in issues],
+        }
+        click.echo(json.dumps(output))
+    else:
+        for issue in issues:
+            click.echo(issue)
+
+
 def write_outputs(found_issues: "List[Issue]", output_dir: pathlib.Path) -> List[str]:
     result_files = []
     for issue in found_issues:
@@ -43,7 +59,11 @@ def clone_git_repo(git_url: str) -> str:
 
 
 style_ok = partial(click.style, fg="bright_green")  # pylint: disable=invalid-name
-style_error = partial(  # pylint: disable=invalid-name
-    click.style, fg="red", bold=True, err=True
-)
+style_error = partial(click.style, fg="red", bold=True)  # pylint: disable=invalid-name
 style_warning = partial(click.style, fg="bright_yellow")  # pylint: disable=invalid-name
+
+
+def fail(msg: str, ctx: click.Context, code: int = 1) -> None:
+    """Print out a styled error message and exit."""
+    click.echo(style_error(msg), err=True)
+    ctx.exit(code)
