@@ -1,6 +1,11 @@
 """
 Credit for this code goes to https://github.com/ryanbaxendale
 via https://github.com/dxa4481/truffleHog/pull/9
+
+DEPRECATED:
+    This script will no longer work with the code structure introduced in the
+    work toward v2.0. This functionality will probably be introduced into the
+    primary codebase at some point.
 """
 import re
 from json import loads, dumps
@@ -52,7 +57,8 @@ def get_org_repos(orgname, page):
                 do_entropy=False,
                 max_depth=100000,
             )
-            for issue in results["foundIssues"]:
+            for issue in results:
+                # FIXME: This does not at all work with the new code structure.
                 data = loads(open(issue).read())
                 data["github_url"] = "{}/blob/{}/{}".format(
                     item["html_url"], data["commitHash"], data["path"]
