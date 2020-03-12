@@ -79,12 +79,13 @@ Docker pre-commit hook
 ++++++++++++++++++++++
 
 Use the docker image as pre-commit hook by adding the docker run command to `.git/hooks/pre-commit`:
-```
-docker pull godaddy/tartufo
-cat <<EOF > .git/hooks/pre-commit
-docker run -t --rm -v "$PWD:/git" godaddy/tartufo --pre-commit
-EOF
-```
+
+.. code-block:: sh
+
+    docker pull godaddy/tartufo
+    cat <<EOF > .git/hooks/pre-commit
+    docker run -t --rm -v "$PWD:/git" godaddy/tartufo --pre-commit
+    EOF
 
 Temporary File Cleanup
 ----------------------
