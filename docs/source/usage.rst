@@ -53,10 +53,11 @@ were discovered) will git commit the staged changes.
 Note that it is always possible, although not recommended, to bypass the
 pre-commit hook by using ``git commit --no-verify``.
 
-If you would like to automate these hooks, you can use either the ``Python pre-commit hook`` Python tartufo invocation, or use the ``Docker pre-commit hook``.
+If you would like to automate these hooks, you can use either the ``Python`` or ``Docker`` approach to setting up tartufo as a pre-commit hook
 
 Python pre-commit hook
 +++++++++++++++++++++
+
 Add a ``.pre-commit-config.yaml`` file to your repository. You can copy and paste the following to get you started:
 
 .. code-block:: yaml
@@ -78,7 +79,7 @@ That's it! Now your contributors only need to run ``pre-commit install
 Docker pre-commit hook
 ++++++++++++++++++++++
 
-Use the docker image as pre-commit hook by adding the docker run command to `.git/hooks/pre-commit`:
+Use the docker image as pre-commit hook by adding the docker run command to ``.git/hooks/pre-commit``:
 
 .. code-block:: sh
 
