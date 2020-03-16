@@ -6,5 +6,7 @@ WORKDIR /app
 
 RUN pip install -e .
 
-ENTRYPOINT [ "tartufo" ]
-CMD [ "-h" ]
+WORKDIR /git
+
+ENTRYPOINT [ "tartufo"]
+CMD ["-h"]
