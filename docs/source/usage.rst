@@ -13,6 +13,13 @@ by passing a git URL to `tartufo`. For example:
 
    $ tartufo https://github.com/godaddy/tartufo.git
 
+
+For ``docker``:
+
+.. code-block:: sh
+   
+   $ docker run --rm godaddy/tartufo https://github.com/godaddy/tartufo.git
+   
 When used this way, `tartufo` will clone the repository to a temporary
 directory, scan the local clone, and then delete it.
 
@@ -22,6 +29,24 @@ without the need for the temporary clone:
 .. code-block:: sh
 
    $ tartufo --repo-path /path/to/my/repo
+
+For ``docker``, mount the local clone to the ``/git`` folder in the docker image:
+
+.. code-block:: sh
+
+   $ docker run --rm -v "/path/to/my/repo:/git" godaddy/tartufo
+
+When scanning private repositories, the ``docker`` image needs to have access to SSH keys for authorization. Mount the SSH key to ``/tmp/id_rsa`` in the docker image: 
+
+.. code-block:: sh
+    
+    $ docker run --rm -v "/path/to/sshkey/id_rsa:/tmp/id_rsa" -v "/path/to/your/git/repo:/git" godaddy/tartufo
+
+If your SSH key has passphrase protection, you can add the passphrase as the environment variable ``SSH_PASS`` when running the docker image: 
+
+.. code-block:: sh
+
+    $ docker run --rm -v "/path/to/sshkey/id_rsa:/tmp/id_rsa" -v "/path/to/your/git/repo:/git" -e SSH_PASS="$SSH_PASS" godaddy/tartufo
 
 Pre-commit
 ----------
