@@ -34,7 +34,7 @@ For ``docker``, mount the local clone to the ``/git`` folder in the docker image
 
 .. code-block:: sh
 
-   $ docker run --rm -v "/path/to/my/repo:/git" godaddy/tartufo
+   $ docker run --rm -v "/path/to/my/repo:/git" godaddy/tartufo 
 
 When scanning private repositories, the ``docker`` image needs to have access to SSH keys for authorization. Mount the SSH key to ``/tmp/id_rsa`` in the docker image: 
 
