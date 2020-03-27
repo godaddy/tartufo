@@ -16,7 +16,7 @@ EXTRAS_REQUIRE = {
         "coverage",
         "mock; python_version == '2.7'",
         "pre-commit",
-        "pytest",
+        "pytest<5.4.0",  # https://github.com/Teemu/pytest-sugar/issues/187
         "pytest-cov",
         "pytest-sugar",
         "tox",
