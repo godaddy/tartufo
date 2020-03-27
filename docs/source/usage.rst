@@ -13,6 +13,13 @@ by passing a git URL to `tartufo`. For example:
 
    $ tartufo https://github.com/godaddy/tartufo.git
 
+
+For ``docker``:
+
+.. code-block:: sh
+   
+   $ docker run --rm godaddy/tartufo https://github.com/godaddy/tartufo.git
+   
 When used this way, `tartufo` will clone the repository to a temporary
 directory, scan the local clone, and then delete it.
 
@@ -22,6 +29,29 @@ without the need for the temporary clone:
 .. code-block:: sh
 
    $ tartufo --repo-path /path/to/my/repo
+
+For ``docker``, mount the local clone to the ``/git`` folder in the docker image:
+
+.. code-block:: sh
+
+   $ docker run --rm -v "/path/to/my/repo:/git" godaddy/tartufo 
+
+When scanning private repositories, the ``docker`` runtime needs to have access to SSH keys for authorization. 
+Make sure ``ssh-agent`` is running on your host machine and has the key added. (Verify using ``ssh-add -L`` on host machine).
+
+For Docker for Linux, mount the location of ``SSH_AUTH_SOCK`` to a location in the docker container, and point the environment variable ``SSH_AUTH_SOCK`` to the same location:
+
+.. code-block:: sh
+    
+    $ docker run --rm -v "/path/to/my/repo:/git" -v $SSH_AUTH_SOCK:/agent -e SSH_AUTH_SOCK=/agent godaddy/tartufo
+
+
+If using Docker Desktop for Mac, use ``/run/host-services/ssh-auth.sock`` both as source and target, and point the environment variable ``SSH_AUTH_SOCK`` to the same location:
+
+.. code-block:: sh
+    
+    $ docker run --rm -v "/path/to/my/repo:/git" -v /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock -e SSH_AUTH_SOCK="/run/host-services/ssh-auth.sock" godaddy/tartufo
+
 
 Pre-commit
 ----------

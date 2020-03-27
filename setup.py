@@ -14,7 +14,7 @@ EXTRAS_REQUIRE = {
         "black==19.10b0; python_version >= '3.6' and platform_python_implementation == 'CPython'",
         "coverage",
         "pre-commit",
-        "pytest",
+        "pytest<5.4.0",  # https://github.com/Teemu/pytest-sugar/issues/187
         "pytest-cov",
         "pytest-sugar",
         "tox",
