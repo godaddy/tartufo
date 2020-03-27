@@ -36,17 +36,22 @@ For ``docker``, mount the local clone to the ``/git`` folder in the docker image
 
    $ docker run --rm -v "/path/to/my/repo:/git" godaddy/tartufo 
 
-When scanning private repositories, the ``docker`` image needs to have access to SSH keys for authorization. Mount the SSH key to ``/tmp/id_rsa`` in the docker image: 
+When scanning private repositories, the ``docker`` runtime needs to have access to SSH keys for authorization. 
+Make sure ``ssh-agent`` is running on your host machine and has the key added. (Verify using ``ssh-add -L`` on host machine).
+
+For Docker for Linux, mount the location of ``SSH_AUTH_SOCK`` to a location in the docker container, and point the environment variable ``SSH_AUTH_SOCK`` to the same location:
 
 .. code-block:: sh
     
-    $ docker run --rm -v "/path/to/sshkey/id_rsa:/tmp/id_rsa" -v "/path/to/your/git/repo:/git" godaddy/tartufo
+    $ docker run --rm -v "/path/to/my/repo:/git" -v $SSH_AUTH_SOCK:/agent -e SSH_AUTH_SOCK=/agent godaddy/tartufo
 
-If your SSH key has passphrase protection, you can add the passphrase as the environment variable ``SSH_PASS`` when running the docker image: 
+
+If using Docker Desktop for Mac, use ``/run/host-services/ssh-auth.sock`` both as source and target, and point the environment variable ``SSH_AUTH_SOCK`` to the same location:
 
 .. code-block:: sh
+    
+    $ docker run --rm -v "/path/to/my/repo:/git" -v /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock -e SSH_AUTH_SOCK="/run/host-services/ssh-auth.sock" godaddy/tartufo
 
-    $ docker run --rm -v "/path/to/sshkey/id_rsa:/tmp/id_rsa" -v "/path/to/your/git/repo:/git" -e SSH_PASS="$SSH_PASS" godaddy/tartufo
 
 Pre-commit
 ----------
