@@ -23,7 +23,7 @@ An End-to-End example walkthrough of tartufo cleanup
 
 #. Take results and create a "bad password" file. 
 
-This file will be used by ``BFG`` and replace these flagged "bad password" entries with ``***REMOVED***```. It is important that you read through this file to make sure there are not exceptions that you want to remove and exclude with tartufo!
+    This file will be used by ``BFG`` and replace these flagged "bad password" entries with ``***REMOVED***```. It is important that you read through this file to make sure there are not exceptions that you want to remove and exclude with tartufo!
 
     .. code-block:: console
 
@@ -42,7 +42,7 @@ This file will be used by ``BFG`` and replace these flagged "bad password" entri
 
 #. Cleanup repo using ``BFG`` and the above passwords file
 
-By default the ``BFG`` doesn't modify the contents of your latest commit on your master (or 'HEAD') branch, even though it will clean all the commits before it. This of course means if you have active code with "bad passwords" tartufo will still fail, but let's take the bulk of the old entries out first.
+    By default the ``BFG`` doesn't modify the contents of your latest commit on your master (or 'HEAD') branch, even though it will clean all the commits before it. This of course means if you have active code with "bad passwords" tartufo will still fail, but let's take the bulk of the old entries out first.
 
     .. code-block:: console
 
@@ -59,7 +59,7 @@ By default the ``BFG`` doesn't modify the contents of your latest commit on your
 
 #. Danger Will Robinson, Danger! 
 
-You MAY get an error (example error below), if so keep reading!
+    You MAY get an error (example error below), if so keep reading!
 
     .. code-block:: console
 
@@ -86,7 +86,7 @@ You MAY get an error (example error below), if so keep reading!
 
 #. Only if you get the above error: 
 
-It might actually be ok, re-run tartufo. Only if there are results that are not clean continue:
+    It might actually be ok, re-run tartufo. Only if there are results that are not clean continue:
 
     .. code-block:: console
 
