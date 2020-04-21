@@ -1,3 +1,7 @@
+v1.1.2 - 21 April 2020
+----------------------
+* Fixes running Tartufo from a Docker container
+
 v1.1.0 - 27 November 2019
 -------------------------
 
