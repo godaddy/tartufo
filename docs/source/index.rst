@@ -78,6 +78,7 @@ on the `truffleHog`_ project.
    CONTRIBUTING
    SECURITY
    changelog
+   examplecleanup
 
 
 .. _tartufo page on the Python Package Index: https://pypi.python.org/pypi/tartufo
