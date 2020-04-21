@@ -23,7 +23,7 @@ An End-to-End example walkthrough of tartufo cleanup
 
 #. Take results and create a "bad password" file. 
 
-   This file will be used by ``BFG`` and replace these flagged "bad password" entries with ``***REMOVED***```. It is important that you read through this file to make sure there are not exceptions that you want to remove and exclude with tartufo!
+   This file will be used by ``BFG`` and replace these flagged "bad password" entries with ``***REMOVED***``. It is important that you read through this file to make sure there are not exceptions that you want to remove and exclude with tartufo!
 
    .. code-block:: console
 
