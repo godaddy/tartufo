@@ -8,17 +8,17 @@ An End-to-End example walkthrough of tartufo cleanup
 
 #. Use ``tartufo`` to scan your repository and find any secrets in its history!
 
-    .. code-block:: console
+   .. code-block:: console
 
-       # Run Tartufo on your repo:
-       GITHUBPROJECT="yourproject"
-       GITHUBREPO="yourrepo.git"
-       GITHUBADDRESS="github.com"
-       tartufo git@${GITHUBADDRESS}:${GITHUBPROJECT}/${GITHUBREPO}
-       # it'll spit out a bunch of stuff and end with something like: Results have been saved in /tmp/tmp_jm3hyne
-       TARTUFOSCANPATH="/tmp/tmp_jm3hyne"
-       # this is the number of individual bad password hits tartufo has found:
-       ls ${TARTUFOSCANPATH} | wc -l
+      # Run Tartufo on your repo:
+      GITHUBPROJECT="yourproject"
+      GITHUBREPO="yourrepo.git"
+      GITHUBADDRESS="github.com"
+      tartufo git@${GITHUBADDRESS}:${GITHUBPROJECT}/${GITHUBREPO}
+      # it'll spit out a bunch of stuff and end with something like: Results have been saved in /tmp/tmp_jm3hyne
+      TARTUFOSCANPATH="/tmp/tmp_jm3hyne"
+      # this is the number of individual bad password hits tartufo has found:
+      ls ${TARTUFOSCANPATH} | wc -l
 
 
 #. Take results and create a "bad password" file. 
