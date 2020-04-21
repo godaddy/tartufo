@@ -85,9 +85,7 @@ An End-to-End example walkthrough of tartufo cleanup
       error: failed to push some refs to 'git@${GITHUBADDRESS}:yourproject/yourrepo.git'
       (.venv) you@LTDV-you:~/tartufo/yourrepo.git$
 
-#. Only if you get the above error: 
-
-   It might actually be ok, re-run tartufo. Only if there are results that are not clean continue:
+   If you get the above error; It might actually be ok, re-run tartufo. Only if there are results that are not clean continue:
 
    .. code-block:: console
 
