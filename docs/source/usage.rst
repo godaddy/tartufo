@@ -128,3 +128,5 @@ these files when tartufo completes, specify the ``--cleanup`` flag:
 .. code-block:: sh
 
    tartufo --cleanup
+
+   Would you like to know more? See :ref:`examplecleanup`.
