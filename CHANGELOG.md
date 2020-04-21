@@ -1,3 +1,11 @@
+v1.1.2 - 21 April 2020
+----------------------
+
+* #48 (Backport of #45 & #46)
+  * Documented Docker usage
+  * Small fixes to Docker to allow SSH clones and avoid scanning tartufo itself
+* Docs have been backported from the `master` branch.
+
 v1.1.1 - 13 December 2019
 -------------------------
 
