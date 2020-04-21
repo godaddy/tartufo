@@ -37,7 +37,8 @@ An End-to-End example walkthrough of tartufo cleanup
       printf "%s\n" "${SORTED_UNIQUE_ENTRIES[@]}" > badpwz.txt
       # remove leading/trailing quotes and trailing commas
       sed -i -e 's/\,$//g' -e 's/\"$//g' -e 's/^\"//g' badpwz.txt
-      # Now you have a "bad password" file! Take a look through it, see if anything is wrong, these values will be replaced in your code history
+      
+   Now you have a "bad password" file! Take a look through it, see if anything is wrong, these values will be replaced in your code history
 
 
 #. Cleanup repo using ``BFG`` and the above passwords file
