@@ -130,4 +130,4 @@ these files when tartufo completes, specify the ``--cleanup`` flag:
    tartufo --cleanup
 
 
-Would you like to know more? See :ref:`examplecleanup`.
+Would you like to know more? See :ref:`Link title <examplecleanup>`.
