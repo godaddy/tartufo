@@ -86,7 +86,7 @@ pre-commit hook by using ``git commit --no-verify``.
 If you would like to automate these hooks, you can use either the ``Python`` or ``Docker`` approach to setting up tartufo as a pre-commit hook
 
 Python pre-commit hook
-+++++++++++++++++++++
+++++++++++++++++++++++
 
 Add a ``.pre-commit-config.yaml`` file to your repository. You can copy and paste the following to get you started:
 
