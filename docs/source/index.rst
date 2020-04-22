@@ -18,6 +18,7 @@ Example
 -------
 
 .. image:: _static/img/example_issue.png
+.. _usage:
 
 Quick start
 -----------
@@ -59,7 +60,7 @@ Getting started is easy!
       # Mount a local clone of a repo and scan it using docker!
       $ docker run --rm -v "/path/to/your/git/repo:/git" godaddy/tartufo
       
-   For more detail on usage and options, see :ref:`usage`.
+   For more detail on usage and options, see :ref:`Link title <usage>`.
       
 Attributions
 ------------
