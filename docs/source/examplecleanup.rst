@@ -103,7 +103,7 @@ An End-to-End example walkthrough of tartufo cleanup
       git push --mirror git@${GITHUBADDRESS}:${GITHUBPROJECT}/${NEWGITHUBREPO}
       cd ..
       rm -rf ${GITHUBREPO}
-      # bare clones are missing data, it is easier to re-clone the repo now that it doesn't have PRs
+      # bare clones are missing data, it is easier to re-clone the repo now that it does not have PRs
       git clone git@${GITHUBADDRESS}:${GITHUBPROJECT}/${NEWGITHUBREPO}
       # Now run tartufo/bfg 
       java -jar bfg-1.13.0.jar --replace-text badpwz.txt ${NEWGITHUBREPO}
