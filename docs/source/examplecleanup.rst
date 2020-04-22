@@ -17,7 +17,7 @@ An End-to-End example walkthrough of tartufo cleanup
       GITHUBREPO="yourrepo.git"
       GITHUBADDRESS="github.com"
       tartufo git@${GITHUBADDRESS}:${GITHUBPROJECT}/${GITHUBREPO}
-      # it'll spit out a bunch of stuff and end with something like: Results have been saved in /tmp/tmp_jm3hyne
+      # this will spit out a bunch of stuff and end with something like: Results have been saved in /tmp/tmp_jm3hyne
       TARTUFOSCANPATH="/tmp/tmp_jm3hyne"
       # this is the number of individual bad password hits tartufo has found:
       ls ${TARTUFOSCANPATH} | wc -l
@@ -32,7 +32,7 @@ An End-to-End example walkthrough of tartufo cleanup
       # Create a "Bad password" file
       BADSTRINGARR=`cat ${TARTUFOSCANPATH}/* | jq .strings_found | grep -v '\[' | grep -v '\]'`
       readarray -t PEWPEWPEWARR <<<"$BADSTRINGARR"
-      #shows entires in array, may be larger than the earlier word count
+      # shows entires in array, may be larger than the earlier word count
       echo ${#PEWPEWPEWARR[@]};
       SORTED_UNIQUE_ENTRIES=($(echo "${PEWPEWPEWARR[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
       echo ${#SORTED_UNIQUE_ENTRIES[@]};
@@ -103,7 +103,7 @@ An End-to-End example walkthrough of tartufo cleanup
       git push --mirror git@${GITHUBADDRESS}:${GITHUBPROJECT}/${NEWGITHUBREPO}
       cd ..
       rm -rf ${GITHUBREPO}
-      # bare clones are missing data, it's easier to re-clone the repo now that it doesn't have PR's
+      # bare clones are missing data, it is easier to re-clone the repo now that it doesn't have PRs
       git clone git@${GITHUBADDRESS}:${GITHUBPROJECT}/${NEWGITHUBREPO}
       # Now run tartufo/bfg 
       java -jar bfg-1.13.0.jar --replace-text badpwz.txt ${NEWGITHUBREPO}
@@ -112,5 +112,5 @@ An End-to-End example walkthrough of tartufo cleanup
       git push
       # re-run tartufo on new repo
       tartufo git@${GITHUBADDRESS}:${GITHUBPROJECT}/${NEWGITHUBREPO}
-      #should have very little (if any) output. check the newly outputed results
+      # should have very little (if any) output. check the newly outputed results
       ls /tmp/tmp_4i4c978 | wc -l
