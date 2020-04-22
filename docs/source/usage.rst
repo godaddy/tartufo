@@ -118,6 +118,9 @@ Use the docker image as pre-commit hook by adding the docker run command to ``.g
     docker run -t --rm -v "$PWD:/git" godaddy/tartufo --pre-commit
     EOF
 
+
+.. _examplecleanup:
+
 Temporary File Cleanup
 ----------------------
 
