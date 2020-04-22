@@ -8,6 +8,8 @@ An End-to-End example walkthrough of tartufo cleanup
 
 #. Use ``tartufo`` to scan your repository and find any secrets in its history!
 
+   Use what you've learned to scan your repo!
+
    .. code-block:: console
 
       # Run Tartufo on your repo:
@@ -84,6 +86,7 @@ An End-to-End example walkthrough of tartufo cleanup
        ! [remote rejected] refs/pull/9/head -> refs/pull/9/head (deny updating a hidden ref)
       error: failed to push some refs to 'git@${GITHUBADDRESS}:yourproject/yourrepo.git'
       (.venv) you@LTDV-you:~/tartufo/yourrepo.git$
+
 
    If you get the above error; It might actually be ok, re-run tartufo. Only if there are results that are not clean continue:
 
