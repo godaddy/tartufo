@@ -59,7 +59,7 @@ Getting started is easy!
       # Mount a local clone of a repo and scan it using docker!
       $ docker run --rm -v "/path/to/your/git/repo:/git" godaddy/tartufo
       
-   For more detail on usage and options, see :ref:`usage`.
+   For more detail on usage and options, see :doc:`usage`.
       
 Attributions
 ------------
@@ -78,6 +78,7 @@ on the `truffleHog`_ project.
    CONTRIBUTING
    SECURITY
    changelog
+   examplecleanup
 
 
 .. _tartufo page on the Python Package Index: https://pypi.python.org/pypi/tartufo
