@@ -4,7 +4,7 @@ Would you like to know more?
 End-to-End Example
 ------------------
 
-An End-to-End example walkthrough of tartufo cleanup
+An End-to-End example walkthrough of a tartufo scan and the process of purging the dirty evil passwords that somehow ended up in your code commits. We will use an additional tool: ``BFG`` (https://rtyley.github.io/bfg-repo-cleaner/, more on this later!). 
 
 #. Use ``tartufo`` to scan your repository and find any secrets in its history!
 
@@ -45,11 +45,11 @@ An End-to-End example walkthrough of tartufo cleanup
 
 #. Cleanup repo using ``BFG`` and the above passwords file
 
-   By default the ``BFG`` doesn't modify the contents of your latest commit on your master (or 'HEAD') branch, even though it will clean all the commits before it. This of course means if you have active code with "bad passwords" tartufo will still fail, but let's take the bulk of the old entries out first.
+   There's a very slick tool designed to cleanup git commit history called ``BFG``: https://rtyley.github.io/bfg-repo-cleaner/. By default ``BFG`` doesn't modify the contents of your latest commit on your master (or 'HEAD') branch, even though it will clean all the commits before it. This of course means if you have active code with "bad passwords" tartufo will still fail, but let's take the bulk of the old entries out first.
 
    .. code-block:: console
 
-      # Cleanup with https://rtyley.github.io/bfg-repo-cleaner/
+      # Cleanup with
       wget https://repo1.maven.org/maven2/com/madgag/bfg/1.13.0/bfg-1.13.0.jar
       git clone --mirror git@${GITHUBADDRESS}:${GITHUBPROJECT}/${GITHUBREPO}
       # Make a backup
