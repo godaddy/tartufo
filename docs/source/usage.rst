@@ -119,8 +119,6 @@ Use the docker image as pre-commit hook by adding the docker run command to ``.g
     EOF
 
 
-.. _examplecleanup:
-
 Temporary File Cleanup
 ----------------------
 
@@ -133,4 +131,4 @@ these files when tartufo completes, specify the ``--cleanup`` flag:
    tartufo --cleanup
 
 
-Would you like to know more? See :ref:`Link title <examplecleanup>`.
+Would you like to know more? See :doc:`examplecleanup`.
