@@ -31,6 +31,9 @@ classifiers = [
 ]
 include = ["CHANGELOG.md", "README.md"]
 
+[tool.poetry.scripts]
+tartufo = "tartufo.cli:main"
+
 [tool.poetry.dependencies]
 python = "^3.5"
 click = "^7"
