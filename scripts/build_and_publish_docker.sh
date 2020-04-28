@@ -5,7 +5,7 @@ IMAGE_NAME=tartufo
 
 # Move into the scripts folder
 cd "$( dirname "${BASH_SOURCE[0]}" )"
-IMAGE_VERSION=$(cat ../VERSION | tr -d '[:space:]')
+IMAGE_VERSION=$(awk -F'[ ="]+' '$1 == "version" { print $2 }' ../pyproject.toml)
 IMAGE_FULL_NAME=${IMAGE_NAMESPACE}/${IMAGE_NAME}
 
 # Go back to the top level of the project
