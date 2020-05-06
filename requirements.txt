@@ -1,6 +1,0 @@
-# Explicit requirements for searchOrg.py
-truffleHogRegexes
-requests
-
-# All requirements for tartufo via setup.py
--e .
