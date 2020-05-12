@@ -79,3 +79,9 @@ exclude = '''
     | dist
 )/
 '''
+
+[tool.pytest]
+# Not yet supported, see https://github.com/pytest-dev/pytest/issues/1556
+
+[tool.mypy]
+# Not yet supported, see https://github.com/python/mypy/issues/5205
