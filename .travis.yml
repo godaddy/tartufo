@@ -5,7 +5,7 @@ python:
   - "3.7"
   - "3.8"
   - "pypy3"
-install: pip install tox-travis codecov
+install: pip install poetry tox-travis codecov
 script: tox
 after_success: codecov
 
