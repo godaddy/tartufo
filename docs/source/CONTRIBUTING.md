@@ -102,15 +102,17 @@ speaking, Git handles attribution automatically.
 
 ### Setting Up A Development Environment
 
-As a general best practice, you should work on this project in an isolated
-Python virtual environment. The following set of commands will set that up for
-you:
+This project uses [Poetry] to manage its dependencies and do a lot of the heavy
+lifting. This includes managing development environments! If you are not
+familiar with this tool, we highly recommend checking out [their docs][poetry docs]
+to get used to the basic usage.
 
-```sh
-> python -m venv .venv
-> source .venv/bin/activate
-> pip install -e .[tests]
-```
+Now, setting up a development environment is super simple!
+
+Step 1: [Install Poetry]  
+Step 2: Run ``poetry install``
+
+Done!
 
 ### Code Style
 
@@ -126,11 +128,32 @@ automatically on every commit, which is detailed below!
 
 ## Running tests
 
-This project support multiple Python versions in this project. Thus, we ask
-that you use the `tox` tool to test against them. If you do not have all of the
-supported Python versions, that's perfectly okay. They will all be tested
-against by our CI process. But keep in mind that this may delay the adoption
-of your contribution, if those tests don't all pass.
+This project support multiple Python versions. Thus, we ask that you use the
+[tox] tool to test against them. In conjunction with poetry, this will look
+something like:
+
+```sh
+$ poetry run tox
+.package recreate: /home/username/tartufo/.tox/.package
+.package installdeps: poetry>=0.12
+...
+  py35: commands succeeded
+  py36: commands succeeded
+  py37: commands succeeded
+  py38: commands succeeded
+  pypy3: ignored failed command
+  black: commands succeeded
+  mypy: commands succeeded
+  pylint: commands succeeded
+  vulture: commands succeeded
+  docs: commands succeeded
+  congratulations :)
+$
+```
+
+If you do not have all of the supported Python versions, that's perfectly okay.
+They will all be tested against by our CI process. But keep in mind that this
+may delay the adoption of your contribution, if those tests don't all pass.
 
 Finally, this project uses multiple [pre-commit] hooks to help ensure our code
 quality. If you have followed the instructions above for setting up your virtual
@@ -138,7 +161,9 @@ environment, `pre-commit` will already be installed, and you only need to run
 the following:
 
 ```sh
-> pre-commit install --install-hooks
+$ pre-commit install --install-hooks
+pre-commit installed at .git/hooks/pre-commit
+$
 ```
 
 Now, any time you make a new commit to the repository, you will see something
@@ -159,7 +184,11 @@ pylint...................................................................Passed
 [black]: https://github.com/psf/black
 [black-editors]: https://github.com/psf/black#editor-integration
 [issues]: https://github.com/godaddy/tartufo/issues
+[Install Poetry]: https://python-poetry.org/docs/#installation
 [PEP 8]: https://www.python.org/dev/peps/pep-0008/
+[Poetry]: https://python-poetry.org/
+[poetry docs]: https://python-poetry.org/docs/
 [pre-commit]: https://pre-commit.com/
 [PyPI]: http://pypi.org/
 [slack]: https://godaddy-oss.slack.com/
+[tox]: https://tox.readthedocs.io/en/latest/
