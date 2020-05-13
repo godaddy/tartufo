@@ -1,12 +1,12 @@
 # Contributing
 
 Everyone is welcome to contribute to GoDaddy's Open Source Software.
-Contributing doesn’t just mean submitting pull requests. To get involved you can
-report or triage bugs and participate in discussions on the evolution of each
+Contributing doesn’t just mean submitting pull requests. You can also get
+involved by reporting/triaging bugs, or participating in discussions on the evolution of each
 project.
 
 No matter how you want to get involved, we ask that you first learn what’s
-expected of anyone who participates in the project by reading the Contribution
+expected of anyone who participates in the project by reading these Contribution
 Guidelines.
 
 **Please Note:** GitHub is for bug reports and contributions primarily - if you
@@ -23,7 +23,7 @@ way to help others.
 ## Reporting Bugs
 
 **Do not report potential security vulnerabilities here. Refer to
-[SECURITY.md](./SECURITY.md) for more details about the process of reporting
+[our security policy] for more details about the process of reporting
 security vulnerabilities.**
 
 Before submitting a ticket, please be sure to have a simple replication of the
@@ -185,6 +185,7 @@ pylint...................................................................Passed
 [black-editors]: https://github.com/psf/black#editor-integration
 [issues]: https://github.com/godaddy/tartufo/issues
 [Install Poetry]: https://python-poetry.org/docs/#installation
+[our security policy]: https://github.com/godaddy/tartufo/security/policy
 [PEP 8]: https://www.python.org/dev/peps/pep-0008/
 [Poetry]: https://python-poetry.org/
 [poetry docs]: https://python-poetry.org/docs/
