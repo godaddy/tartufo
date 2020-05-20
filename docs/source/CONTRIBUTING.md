@@ -151,7 +151,7 @@ $ poetry run tox
 $
 ```
 
-If you do not have all of the supported Python versions, that's perfectly okay.
+If you do not have all the supported Python versions, that's perfectly okay.
 They will all be tested against by our CI process. But keep in mind that this
 may delay the adoption of your contribution, if those tests don't all pass.
 
