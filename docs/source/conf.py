@@ -13,8 +13,14 @@
 import codecs
 import datetime
 import os
-import pathlib
 import sys
+
+import toml
+
+try:
+    import pathlib
+except ImportError:
+    import pathlib2 as pathlib  # type: ignore
 
 sys.path.insert(0, os.path.abspath("."))
 
@@ -33,9 +39,9 @@ if now.year > 2019:
     copyright_year = "%s-%s" % (copyright_year, now.year)
 copyright = "%s, GoDaddy.com, LLC" % copyright_year
 
-version = None
-with codecs.open(str(DOCS_PATH.parent / "VERSION"), "r", "utf-8") as fh:
-    version = fh.read().strip()
+version = toml.load(str(DOCS_PATH.parent / "pyproject.toml"))["tool"]["poetry"][
+    "version"
+]
 release = version
 
 # -- General configuration ---------------------------------------------------
