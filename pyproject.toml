@@ -41,6 +41,9 @@ colorama = {version = "*", markers = "sys_platform == 'win32'"}
 GitPython = ">= 2.1.1, <4.0.0"
 toml = "^0.10"
 truffleHogRegexes = "^0.0.7"
+recommonmark = {version = "^0.6", optional = true}
+sphinx = {version = "^2.3", optional = true}
+sphinx-rtd-theme = {version = "^0.4.3", optional = true}
 
 [tool.poetry.dev-dependencies]
 black = {version = "19.10b0", allow-prereleases = true, python = "^3.6"}
@@ -49,13 +52,13 @@ pre-commit = "*"
 pytest = "^5.4.1"
 pytest-sugar = "^0.9.3"
 mypy = "^0.770"
-recommonmark = "^0.6"
-sphinx = "^2.3"
-sphinx-rtd-theme = "^0.4.3"
 pytest-cov = "^2.8.1"
 tox = "^3.14.6"
 vulture = "^1.4"
 pylint = "^2.5.2"
+
+[tool.poetry.extras]
+docs = ["recommonmark", "sphinx", "sphinx-rtd-theme"]
 
 [tool.tartufo]
 repo-path = "."
