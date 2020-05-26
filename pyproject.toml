@@ -1,9 +1,63 @@
 [build-system]
-requires = [
-    "setuptools >= 40.6.2",
-    "wheel >= 0.30.0",
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
+
+[tool.poetry]
+name = "tartufo"
+version = "1.1.2"
+description = "tartufo is a tool for scanning git repositories for secrets/passwords/high-entropy data"
+authors = ["Dylan Ayrey <dxa4481@rit.edu>"]
+maintainers = ["GoDaddy <oss@godaddy.com>"]
+license = "GPL-2.0-only"
+readme = "README.md"
+repository = "https://github.com/godaddy/tartufo/"
+documentation = "https://tartufo.readthedocs.io/"
+keywords = ["git", "security", "secrets", "entropy", "scanner"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.5",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Topic :: Security",
+    "Topic :: Software Development :: Version Control :: Git",
+    "Typing :: Typed",
 ]
-build-backend = "setuptools.build_meta"
+include = ["CHANGELOG.md", "README.md"]
+
+[tool.poetry.scripts]
+tartufo = "tartufo.cli:main"
+
+[tool.poetry.dependencies]
+python = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+click = "^7"
+colorama = {version = "*", markers = "sys_platform == 'win32'"}
+GitPython = ">= 2.1.1, <4.0.0"
+toml = "^0.10"
+truffleHogRegexes = "^0.0.7"
+pathlib2 = {version = "*", python = "^2.7"}
+
+[tool.poetry.dev-dependencies]
+black = {version = "19.10b0", allow-prereleases = true, python = "^3.6"}
+coverage = {extras = ["toml"], version = "^5.1", python = "^3.5"}
+pre-commit = "*"
+pytest = "<5.4.0"
+pytest-sugar = "^0.9.3"
+mypy = {version = "^0.770", python = "^3.5"}
+recommonmark = "^0.6"
+sphinx = {version = "^2.3", python = "^3.5"}
+sphinx-rtd-theme = "^0.4.3"
+pytest-cov = "^2.8.1"
+tox = "^3.14.6"
+vulture = "^1.4"
+pylint = {version = "^2.5.2", python = "^3.5"}
+mock = "*"
 
 [tool.tartufo]
 repo-path = "."
@@ -11,9 +65,10 @@ json = false
 cleanup = true
 regex = true
 entropy = true
+exclude-paths = ".tartufo-excludes"
 
 [tool.black]
-target-version = ['py27', 'py35', 'py36', 'py37', 'py38']
+target-version = ['py35', 'py36', 'py37', 'py38']
 exclude = '''
 /(
     \.eggs         # exclude a few common directories in the
@@ -27,3 +82,56 @@ exclude = '''
     | dist
 )/
 '''
+
+[tool.pytest]
+# Not yet supported, see https://github.com/pytest-dev/pytest/issues/1556
+
+[tool.mypy]
+# Not yet supported, see https://github.com/python/mypy/issues/5205
+
+[tool.pylint.'MESSAGES CONTROL']
+# C0111: Missing docstrings
+# C0301: Line too long (Note: This is all handled by black now)
+# C0330: Wrong hanging indentation before block (Note: black disagrees on this)
+# R0201: Method could be a function
+# R0801: Similar lines in other files
+# R0903: Too few public methods
+# R0912: Too many branches
+# R0914: Too many local variables
+# W0511: FIXME
+disable="C0111,C0301,C0330,R0201,R0801,R0903,R0912,R0914,W0511"
+
+[tool.pylint.BASIC]
+module-rgx = "(([a-z_][a-z0-9_]*)|([a-z][a-zA-Z0-9]+))$"
+
+[tool.pylint.FORMAT]
+max-line-length = "120"
+
+[tool.pylint.DESIGN]
+max-args = "14"
+
+[tool.pylint.MASTER]
+ignore = "docs/"
+
+[tool.coverage.run]
+branch = true
+source = ["tartufo"]
+
+[tool.coverage.report]
+ignore_errors = true
+exclude_lines = [
+    # Have to re-enable the standard pragma
+    "pragma: no cover",
+
+    # Don't complain about missing debug-only code:
+    "def __repr__",
+    "if self.debug",
+
+    # Don't complain if tests don't hit defensive assertion code:
+    "raise AssertionError",
+    "raise NotImplementedError",
+
+    # Don't complain if non-runnable code isn't run:
+    "if 0:",
+    "if __name__ == .__main__.:"
+]

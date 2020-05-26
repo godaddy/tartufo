@@ -7,7 +7,7 @@ python:
   - "3.8"
   - "pypy"
   - "pypy3"
-install: pip install tox-travis codecov
+install: pip install poetry tox-travis codecov
 script: tox
 after_success: codecov
 
@@ -37,16 +37,20 @@ jobs:
       install: true
       script: true
       after_success: true
-      deploy:
-      - provider: pypi
-        user: "__token__"
-        skip_existing: true
-        distributions: "sdist bdist_wheel"
-        on:
-          branch: master
-          tags: true
-      - provider: script
-        script: ./scripts/build_and_publish_docker.sh
-        on:
-          branch: master
-          tags: true
+
+before_deploy:
+  - pip install --upgrade pip
+  - pip install poetry
+  - poetry config pypi-token.pypi $PYPI_PASSWORD
+
+deploy:
+- provider: script
+  script: poetry publish
+  on:
+    branch: master
+    tags: true
+- provider: script
+  script: ./scripts/build_and_publish_docker.sh
+  on:
+    branch: master
+    tags: true
