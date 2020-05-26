@@ -42,6 +42,9 @@ GitPython = ">= 2.1.1, <4.0.0"
 toml = "^0.10"
 truffleHogRegexes = "^0.0.7"
 pathlib2 = {version = "*", python = "^2.7"}
+recommonmark = {version = "^0.6", optional = true}
+sphinx = {version = "^2.3", python = "^3.5", optional = true}
+sphinx-rtd-theme = {version = "^0.4.3", optional = true}
 
 [tool.poetry.dev-dependencies]
 black = {version = "19.10b0", allow-prereleases = true, python = "^3.6"}
@@ -50,14 +53,14 @@ pre-commit = "*"
 pytest = "<5.4.0"
 pytest-sugar = "^0.9.3"
 mypy = {version = "^0.770", python = "^3.5"}
-recommonmark = "^0.6"
-sphinx = {version = "^2.3", python = "^3.5"}
-sphinx-rtd-theme = "^0.4.3"
 pytest-cov = "^2.8.1"
 tox = "^3.14.6"
 vulture = "^1.4"
 pylint = {version = "^2.5.2", python = "^3.5"}
 mock = "*"
+
+[tool.poetry.extras]
+docs = ["recommonmark", "sphinx", "sphinx-rtd-theme"]
 
 [tool.tartufo]
 repo-path = "."
