@@ -1,13 +1,10 @@
-import json
 import pathlib
 import re
 import shutil
-import sys
 import unittest
 from collections import namedtuple
 from unittest import mock
 
-import six
 from tartufo import scanner, util
 
 
@@ -26,7 +23,6 @@ class EntropyTests(unittest.TestCase):
 
 
 class ScannerTests(unittest.TestCase):
-    @mock.patch("tartufo.scanner.tempfile", new=mock.MagicMock())
     @mock.patch("tartufo.scanner.git.Repo")
     def test_find_strings_checks_out_branch_when_specified(self, mock_repo):
         scanner.find_strings("test_repo", branch="testbranch")
@@ -34,7 +30,6 @@ class ScannerTests(unittest.TestCase):
             "testbranch"
         )
 
-    @mock.patch("tartufo.scanner.tempfile", new=mock.MagicMock())
     @mock.patch("tartufo.scanner.git.Repo")
     @mock.patch("tartufo.scanner.diff_worker")
     def test_all_commits_are_passed_to_diff_worker(self, mock_worker, mock_repo):
@@ -52,15 +47,11 @@ class ScannerTests(unittest.TestCase):
             commit_3,
         ]
 
-        scanner.find_strings(
-            "/fake/repo", print_json=True, suppress_output=False,
-        )
+        scanner.find_strings("/fake/repo")
 
         call_1 = mock.call(
             commit_2.diff.return_value,
             None,
-            True,
-            False,
             True,
             False,
             None,
@@ -73,8 +64,6 @@ class ScannerTests(unittest.TestCase):
             None,
             True,
             False,
-            True,
-            False,
             None,
             None,
             commit_2,
@@ -83,8 +72,6 @@ class ScannerTests(unittest.TestCase):
         call_3 = mock.call(
             commit_3.diff.return_value,
             None,
-            True,
-            False,
             True,
             False,
             None,
@@ -110,38 +97,21 @@ class ScannerTests(unittest.TestCase):
         since_commit = "d15627104d07846ac2914a976e8e347a663bbd9b"
         commit_w_secret = "9ed54617547cfca783e0f81f8dc5c927e3d1e345"
         xcheck_commit_w_scrt_comment = "OH no a secret"
-
-        tmp_stdout = six.StringIO()
-        bak_stdout = sys.stdout
-
-        # Redirect STDOUT, run scan and re-establish STDOUT
-        sys.stdout = tmp_stdout
+        # We have to clone tartufo mostly because TravisCI only does a shallow clone
+        repo_path = util.clone_git_repo("https://github.com/godaddy/tartufo.git")
         try:
-            # We have to clone tartufo mostly because TravisCI only does a shallow clone
-            repo_path = util.clone_git_repo("https://github.com/godaddy/tartufo.git")
-            try:
-                scanner.find_strings(
-                    str(repo_path),
-                    since_commit=since_commit,
-                    print_json=True,
-                    suppress_output=False,
-                )
-            finally:
-                shutil.rmtree(repo_path)
+            issues = scanner.find_strings(repo_path, since_commit=since_commit,)
+            filtered_results = [
+                result for result in issues if result.commit_hash == commit_w_secret
+            ]
+            self.assertEqual(1, len(filtered_results))
+            self.assertEqual(commit_w_secret, filtered_results[0].commit_hash)
+            # Additionally, we cross-validate the commit comment matches the expected comment
+            self.assertEqual(
+                xcheck_commit_w_scrt_comment, filtered_results[0].commit_message.strip()
+            )
         finally:
-            sys.stdout = bak_stdout
-
-        json_result_list = tmp_stdout.getvalue().split("\n")
-        results = [json.loads(r) for r in json_result_list if bool(r.strip())]
-        filtered_results = [
-            result for result in results if result["commit_hash"] == commit_w_secret
-        ]
-        self.assertEqual(1, len(filtered_results))
-        self.assertEqual(commit_w_secret, filtered_results[0]["commit_hash"])
-        # Additionally, we cross-validate the commit comment matches the expected comment
-        self.assertEqual(
-            xcheck_commit_w_scrt_comment, filtered_results[0]["commit_message"].strip()
-        )
+            shutil.rmtree(repo_path)
 
     def test_path_included(self):
         """FIXME: This has WAAAAAAY too many asserts.
@@ -197,15 +167,14 @@ class ScannerTests(unittest.TestCase):
                     blob, all_paths_patterns
                 ),
             )
-            # pylint: disable=W1308
             self.assertFalse(
                 scanner.path_included(
                     blob,
                     include_patterns=all_paths_patterns,
                     exclude_patterns=all_paths_patterns,
                 ),
-                "{} should be excluded with overlapping patterns: \n\tinclude: {}\n\texclude: {}".format(
-                    blob, all_paths_patterns, all_paths_patterns
+                "{} should be excluded with overlapping patterns: \n\tinclude: {patterns}\n\texclude: {patterns}".format(
+                    blob, patterns=all_paths_patterns
                 ),
             )
             self.assertFalse(
@@ -367,11 +336,9 @@ class ScanRepoTests(unittest.TestCase):
             str(self.data_dir),
             since_commit=None,
             max_depth=None,
-            print_json=False,
             do_regex=False,
             do_entropy=False,
             custom_regexes={},
-            suppress_output=False,
             branch=None,
             path_inclusions=[re.compile("tartufo/"), re.compile("scripts/")],
             path_exclusions=[],
@@ -402,11 +369,9 @@ class ScanRepoTests(unittest.TestCase):
             str(self.data_dir),
             since_commit=None,
             max_depth=None,
-            print_json=False,
             do_regex=False,
             do_entropy=False,
             custom_regexes={},
-            suppress_output=False,
             branch=None,
             path_inclusions=[],
             path_exclusions=[

@@ -3,15 +3,10 @@
 import datetime
 import enum
 import hashlib
-import json
 import math
-import os
 import pathlib
-import tempfile
-import uuid
-from typing import cast, Dict, Iterable, List, Optional, Pattern, Set, Union
+from typing import cast, Dict, Iterable, List, Optional, Pattern, Set
 
-import click
 import git
 import toml
 from tartufo import config
@@ -20,9 +15,6 @@ from tartufo.util import style_ok, style_warning
 
 BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
 HEX_CHARS = "1234567890abcdefABCDEF"
-
-# FIXME: This should be replaced with a dataclass to better track the attributes
-IssueDict = Dict[str, Union[str, List[str]]]
 
 
 class IssueType(enum.Enum):
@@ -195,8 +187,6 @@ def diff_worker(
     custom_regexes: Optional[Dict[str, Pattern]],
     do_entropy: bool,
     do_regex: bool,
-    print_json: bool,
-    suppress_output: bool,
     path_inclusions: Optional[Iterable[Pattern]],
     path_exclusions: Optional[Iterable[Pattern]],
     prev_commit: Optional[git.Commit] = None,
@@ -220,24 +210,8 @@ def diff_worker(
             finding.diff = blob
             finding.commit = prev_commit
             finding.branch_name = branch_name
-            if not suppress_output:
-                if print_json:
-                    click.echo(json.dumps(finding.as_dict()))
-                else:
-                    click.echo(finding)
         issues += found_issues
     return issues
-
-
-def handle_results(
-    output: IssueDict, output_dir: str, found_issues: List[Issue]
-) -> IssueDict:
-    for found_issue in found_issues:
-        result_path = os.path.join(output_dir, str(uuid.uuid4()))
-        with open(result_path, "w+") as result_file:
-            result_file.write(json.dumps(found_issue.as_dict()))
-        output["found_issues"].append(result_path)  # type: ignore
-    return output
 
 
 def path_included(
@@ -274,19 +248,16 @@ def find_strings(
     repo_path: str,
     since_commit: Optional[str] = None,
     max_depth: int = 1000000,
-    print_json: bool = False,
     do_regex: bool = False,
     do_entropy: bool = True,
-    suppress_output: bool = True,
     custom_regexes: Optional[Dict[str, Pattern]] = None,
     branch: Optional[str] = None,
     path_inclusions: Optional[Iterable[Pattern]] = None,
     path_exclusions: Optional[Iterable[Pattern]] = None,
-) -> IssueDict:
-    output = {"found_issues": []}  # type: IssueDict
+) -> List[Issue]:
     repo = git.Repo(repo_path)
     already_searched = set()  # type: Set[bytes]
-    output_dir = tempfile.mkdtemp()
+    all_issues = []  # type: List[Issue]
 
     if branch:
         branches = repo.remotes.origin.fetch(branch)
@@ -323,14 +294,12 @@ def find_strings(
                 custom_regexes,
                 do_entropy,
                 do_regex,
-                print_json,
-                suppress_output,
                 path_inclusions,
                 path_exclusions,
                 prev_commit,
                 branch_name,
             )
-            output = handle_results(output, output_dir, found_issues)
+            all_issues.extend(found_issues)
             prev_commit = curr_commit
         # Handling the first commit
         diff = curr_commit.diff(git.NULL_TREE, create_patch=True)
@@ -339,17 +308,13 @@ def find_strings(
             custom_regexes,
             do_entropy,
             do_regex,
-            print_json,
-            suppress_output,
             path_inclusions,
             path_exclusions,
             prev_commit,
             branch_name,
         )
-        output = handle_results(output, output_dir, found_issues)
-    output["project_path"] = repo_path
-    output["issues_path"] = output_dir
-    return output
+        all_issues.extend(found_issues)
+    return all_issues
 
 
 def scan_repo(
@@ -358,7 +323,7 @@ def scan_repo(
     path_inclusions: List[Pattern],
     path_exclusions: List[Pattern],
     options: Dict[str, config.OptionTypes],
-) -> IssueDict:
+) -> List[Issue]:
     # Check the repo for any local configs
     repo_config = {}  # type: Dict[str, config.OptionTypes]
     path = pathlib.Path(repo_path)
@@ -389,51 +354,32 @@ def scan_repo(
                         config.compile_path_rules(paths_file.readlines())
                     )
 
-    output = find_strings(
+    return find_strings(
         repo_path,
         since_commit=cast(str, options["since_commit"]),
         max_depth=cast(int, options["max_depth"]),
-        print_json=cast(bool, options["json"]),
         do_regex=cast(bool, options["regex"]),
         do_entropy=cast(bool, options["entropy"]),
         custom_regexes=regexes,
-        suppress_output=False,
         branch=cast(str, options["branch"]),
         path_inclusions=path_inclusions,
         path_exclusions=path_exclusions,
     )
-    return output
 
 
 def find_staged(
     project_path: str,
-    print_json: bool = False,
     do_regex: bool = False,
     do_entropy: bool = True,
-    suppress_output: bool = True,
     custom_regexes: Optional[Dict[str, Pattern]] = None,
     path_inclusions: Optional[Iterable[Pattern]] = None,
     path_exclusions: Optional[Iterable[Pattern]] = None,
-) -> IssueDict:
-    output = {"found_issues": []}  # type: IssueDict
-    output_dir = tempfile.mkdtemp()
+) -> List[Issue]:
     repo = git.Repo(project_path, search_parent_directories=True)
     # using "create_patch=True" below causes output list to be empty
     # unless "R=True" also is specified. See GitPython issue 852:
     # https://github.com/gitpython-developers/GitPython/issues/852
     diff = repo.index.diff(repo.head.commit, create_patch=True, R=True)
-    found_issues = diff_worker(
-        diff,
-        custom_regexes,
-        do_entropy,
-        do_regex,
-        print_json,
-        suppress_output,
-        path_inclusions,
-        path_exclusions,
+    return diff_worker(
+        diff, custom_regexes, do_entropy, do_regex, path_inclusions, path_exclusions,
     )
-
-    output = handle_results(output, output_dir, found_issues)
-    output["project_path"] = project_path
-    output["issues_path"] = output_dir
-    return output
