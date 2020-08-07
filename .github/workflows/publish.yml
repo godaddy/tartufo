@@ -3,6 +3,7 @@ name: publish
 on:
   release:
     types: [created] # Trigger when release is created
+
 jobs:
   publish:
     runs-on: ubuntu-latest
