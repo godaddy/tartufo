@@ -2,7 +2,7 @@ name: publish
 
 on:
   release:
-    types: [created] # Trigger when release is created
+    types: [published] # Trigger when release is created
 
 jobs:
   publish:
@@ -20,7 +20,7 @@ jobs:
     - name: Package and publish with Poetry
       run: |
         poetry config pypi-token.pypi $PYPI_TOKEN
-        poetry publish --build
+        poetry publish
       env: 
         PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
     - name: Publish to Docker Hub

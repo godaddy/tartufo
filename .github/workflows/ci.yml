@@ -1,6 +1,6 @@
 name: ci
 
-on: push
+on: [push, pull_request]
 
 jobs:
   tox:
@@ -19,6 +19,7 @@ jobs:
     - name: Run tox environments
       run: tox
     - name: Run codecov
+      if: matrix.python-version == '3.7'
       run: codecov
       env: 
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
