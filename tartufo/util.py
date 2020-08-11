@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import hashlib
 import json
 import os
 import pathlib
@@ -67,3 +68,13 @@ def fail(msg: str, ctx: click.Context, code: int = 1) -> None:
     """Print out a styled error message and exit."""
     click.echo(style_error(msg), err=True)
     ctx.exit(code)
+
+
+def generate_signature(snippet: str, filename: str) -> str:
+    """Generate a stable hash signature for an issue found in a commit.
+
+    These signatures are used for configuring excluded/approved issues,
+    such as secrets intentionally embedded in tests."""
+    return hashlib.blake2s(
+        "{}$${}".format(snippet, filename).encode("utf-8")
+    ).hexdigest()
