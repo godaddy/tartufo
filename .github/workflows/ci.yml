@@ -1,6 +1,10 @@
 name: ci
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
 
 jobs:
   tox:
@@ -9,7 +13,7 @@ jobs:
       matrix:
         python-version: [3.5, 3.6, 3.7, 3.8, pypy3]
     steps:
-    - uses: actions/checkout@592cf69 
+    - uses: actions/checkout@592cf69
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@0c28554
       with:
@@ -21,5 +25,5 @@ jobs:
     - name: Run codecov
       if: matrix.python-version == '3.7'
       run: codecov
-      env: 
+      env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
