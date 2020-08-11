@@ -1,12 +1,13 @@
 # ![tartufo logo](docs/source/_static/img/tartufo.png)
 
-![Travis (.org)](https://img.shields.io/travis/godaddy/tartufo)
-![Codecov](https://img.shields.io/codecov/c/github/godaddy/tartufo)
-![PyPI](https://img.shields.io/pypi/v/tartufo)
-![PyPI - Status](https://img.shields.io/pypi/status/tartufo)
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/tartufo)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/tartufo)
+[![ci](https://github.com/godaddy/tartufo/workflows/ci/badge.svg)](https://github.com/godaddy/tartufo/actions?query=workflow%3Aci)
+[![Codecov](https://img.shields.io/codecov/c/github/godaddy/tartufo)](https://codecov.io/gh/godaddy/tartufo)
+[![PyPI](https://img.shields.io/pypi/v/tartufo)](https://pypi.org/project/tartufo/)
+[![PyPI - Status](https://img.shields.io/pypi/status/tartufo)](https://pypi.org/project/tartufo/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/tartufo)](https://pypi.org/project/tartufo/)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/tartufo)](https://pypi.org/project/tartufo/)
 [![Documentation Status](https://readthedocs.org/projects/tartufo/badge/?version=latest)](https://tartufo.readthedocs.io/en/latest/?badge=latest)
+[![License](https://img.shields.io/github/license/godaddy/tartufo)](https://github.com/godaddy/tartufo/blob/master/LICENSE)
 
 `tartufo` searches through git repositories for secrets, digging deep into
 commit history and branches. This is effective at finding secrets accidentally
