@@ -1,0 +1,32 @@
+name: publish
+
+on:
+  release:
+    types: [published] # Trigger when release is created
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@592cf69 
+    - name: Set up Python 3.7
+      uses: actions/setup-python@0c28554
+      with:
+        python-version: 3.7
+    - name: Install dependencies
+      run:  |
+        pip install --upgrade pip
+        pip install --upgrade poetry
+    - name: Package and publish with Poetry
+      run: |
+        poetry config pypi-token.pypi $PYPI_TOKEN
+        poetry publish
+      env: 
+        PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+    - name: Publish to Docker Hub
+      run: |
+        ./scripts/build_and_publish_docker.sh
+      env: 
+        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+   

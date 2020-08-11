@@ -1,0 +1,25 @@
+name: ci
+
+on: [push, pull_request]
+
+jobs:
+  tox:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.5, 3.6, 3.7, 3.8, pypy3]
+    steps:
+    - uses: actions/checkout@592cf69 
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@0c28554
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run:  pip install poetry tox codecov tox-gh-actions
+    - name: Run tox environments
+      run: tox
+    - name: Run codecov
+      if: matrix.python-version == '3.7'
+      run: codecov
+      env: 
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
