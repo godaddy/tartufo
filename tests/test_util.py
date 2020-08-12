@@ -43,8 +43,8 @@ class OutputTests(unittest.TestCase):
     @mock.patch("tartufo.util.click", new=mock.MagicMock())
     @mock.patch("tartufo.util.json")
     def test_echo_issues_outputs_proper_json_when_requested(self, mock_json):
-        issue_1 = scanner.Issue(scanner.IssueType.Entropy, ["foo"])
-        issue_2 = scanner.Issue(scanner.IssueType.RegEx, ["bar"])
+        issue_1 = scanner.Issue(scanner.IssueType.Entropy, "foo")
+        issue_2 = scanner.Issue(scanner.IssueType.RegEx, "bar")
         util.echo_issues([issue_1, issue_2], True, "/repo", "/output")
         mock_json.dumps.assert_called_once_with(
             {
@@ -55,7 +55,7 @@ class OutputTests(unittest.TestCase):
                         "issue_type": "High Entropy",
                         "issue_detail": None,
                         "diff": "No diff available.",
-                        "strings_found": ["foo"],
+                        "matched_string": "foo",
                         "commit_time": None,
                         "commit_message": None,
                         "commit_hash": None,
@@ -66,7 +66,7 @@ class OutputTests(unittest.TestCase):
                         "issue_type": "Regular Expression Match",
                         "issue_detail": None,
                         "diff": "No diff available.",
-                        "strings_found": ["bar"],
+                        "matched_string": "bar",
                         "commit_time": None,
                         "commit_message": None,
                         "commit_hash": None,

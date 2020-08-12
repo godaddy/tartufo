@@ -31,13 +31,13 @@ class Issue:
     issue_type = None  # type: Optional[IssueType]
     issue_detail = None  # type: Optional[str]
     diff = None  # type: Optional[git.Diff]
-    strings_found = None  # type: Optional[List[str]]
+    matched_string = ""  # type: str
     commit = None  # type: Optional[git.Commit]
     branch_name = None  # type: Optional[str]
 
-    def __init__(self, issue_type: IssueType, strings_found: List[str]) -> None:
+    def __init__(self, issue_type: IssueType, matched_string: str) -> None:
         self.issue_type = issue_type
-        self.strings_found = strings_found
+        self.matched_string = matched_string
 
     def as_dict(self) -> Dict[str, Optional[str]]:
         """Return a dictionary representation of an issue.
@@ -48,7 +48,7 @@ class Issue:
             "issue_type": self.issue_type.value,  # type: ignore
             "issue_detail": self.issue_detail,
             "diff": self.printable_diff,
-            "strings_found": self.strings_found,
+            "matched_string": self.matched_string,
             "commit_time": self.commit_time,
             "commit_message": self.commit_message,
             "commit_hash": self.commit_hash,
@@ -93,8 +93,9 @@ class Issue:
     def __str__(self) -> str:
         output = []
         diff_body = self.printable_diff
-        for bad_str in self.strings_found:  # type: ignore
-            diff_body = diff_body.replace(bad_str, style_warning(bad_str))
+        diff_body = diff_body.replace(
+            self.matched_string, style_warning(self.matched_string)
+        )
         output.append(self.OUTPUT_SEPARATOR)
         output.append(style_ok("Reason: {}".format(self.issue_type.value)))  # type: ignore
         if self.issue_detail:
@@ -147,8 +148,8 @@ def get_strings_of_set(
     return strings
 
 
-def find_entropy(printable_diff: str) -> Optional[Issue]:
-    strings_found = []
+def find_entropy(printable_diff: str) -> List[Issue]:
+    issues = []
     lines = printable_diff.split("\n")
     for line in lines:
         for word in line.split():
@@ -157,14 +158,12 @@ def find_entropy(printable_diff: str) -> Optional[Issue]:
             for string in base64_strings:
                 b64_entropy = shannon_entropy(string, BASE64_CHARS)
                 if b64_entropy > 4.5:
-                    strings_found.append(string)
+                    issues.append(Issue(IssueType.Entropy, string))
             for string in hex_strings:
                 hex_entropy = shannon_entropy(string, HEX_CHARS)
                 if hex_entropy > 3:
-                    strings_found.append(string)
-    if strings_found:
-        return Issue(IssueType.Entropy, strings_found)
-    return None
+                    issues.append(Issue(IssueType.Entropy, string))
+    return issues
 
 
 def find_regex(
@@ -175,8 +174,8 @@ def find_regex(
     regex_matches = []
     for key in regex_list:
         found_strings = regex_list[key].findall(printable_diff)
-        if found_strings:
-            issue = Issue(IssueType.RegEx, found_strings)
+        for found in found_strings:
+            issue = Issue(IssueType.RegEx, found)
             issue.issue_detail = key
             regex_matches.append(issue)
     return regex_matches
@@ -201,9 +200,8 @@ def diff_worker(
             continue
         found_issues = []  # type: List[Issue]
         if do_entropy:
-            entropy_issue = find_entropy(printable_diff)
-            if entropy_issue:
-                found_issues.append(entropy_issue)
+            entropy_issues = find_entropy(printable_diff)
+            found_issues.extend(entropy_issues)
         if do_regex:
             found_issues += find_regex(printable_diff, custom_regexes)
         for finding in found_issues:
