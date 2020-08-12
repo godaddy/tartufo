@@ -9,8 +9,10 @@ from typing import cast, Dict, Iterable, List, Optional, Pattern, Set
 
 import git
 import toml
+from cached_property import cached_property
+
 from tartufo import config
-from tartufo.util import style_ok, style_warning
+from tartufo.util import generate_signature, style_ok, style_warning
 
 
 BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
@@ -49,6 +51,7 @@ class Issue:
             "issue_detail": self.issue_detail,
             "diff": self.printable_diff,
             "matched_string": self.matched_string,
+            "signature": self.signature,
             "commit_time": self.commit_time,
             "commit_message": self.commit_message,
             "commit_hash": self.commit_hash,
@@ -90,6 +93,12 @@ class Issue:
             return self.diff.b_path
         return self.diff.a_path
 
+    @cached_property
+    def signature(self) -> Optional[str]:
+        if self.file_path:
+            return generate_signature(self.matched_string, self.file_path)
+        return None
+
     def __str__(self) -> str:
         output = []
         diff_body = self.printable_diff
@@ -100,8 +109,10 @@ class Issue:
         output.append(style_ok("Reason: {}".format(self.issue_type.value)))  # type: ignore
         if self.issue_detail:
             output.append(style_ok("Detail: {}".format(self.issue_detail)))
-        if self.diff:
+        if self.file_path:
             output.append(style_ok("Filepath: {}".format(self.file_path)))
+        if self.signature:
+            output.append(style_ok("Signature: {}".format(self.signature)))
         if self.branch_name:
             output.append(style_ok("Branch: {}".format(self.branch_name)))
         if self.commit:
