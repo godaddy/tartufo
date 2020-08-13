@@ -8,7 +8,7 @@ import shutil
 import stat
 import tempfile
 import uuid
-from functools import partial
+from functools import lru_cache, partial
 from typing import Callable, List, TYPE_CHECKING
 
 import click
@@ -70,6 +70,7 @@ def fail(msg: str, ctx: click.Context, code: int = 1) -> None:
     ctx.exit(code)
 
 
+@lru_cache()
 def generate_signature(snippet: str, filename: str) -> str:
     """Generate a stable hash signature for an issue found in a commit.
 

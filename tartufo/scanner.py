@@ -9,7 +9,6 @@ from typing import cast, Dict, Iterable, List, Optional, Pattern, Set
 
 import git
 import toml
-from cached_property import cached_property
 
 from tartufo import config
 from tartufo.util import generate_signature, style_ok, style_warning
@@ -93,7 +92,7 @@ class Issue:
             return self.diff.b_path
         return self.diff.a_path
 
-    @cached_property
+    @property
     def signature(self) -> Optional[str]:
         if self.file_path:
             return generate_signature(self.matched_string, self.file_path)

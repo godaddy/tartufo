@@ -44,7 +44,6 @@ truffleHogRegexes = "^0.0.7"
 recommonmark = {version = "^0.6", optional = true}
 sphinx = {version = "^2.3", optional = true}
 sphinx-rtd-theme = {version = "^0.4.3", optional = true}
-cached_property = "^1.5.1"
 
 [tool.poetry.dev-dependencies]
 black = {version = "19.10b0", allow-prereleases = true, python = "^3.6"}
