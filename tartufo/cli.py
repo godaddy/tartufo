@@ -70,6 +70,15 @@ from tartufo import config, scanner, util
     "unless effectively excluded via the --include-paths option.",
 )
 @click.option(
+    "-a",
+    "--allow-signatures",
+    multiple=True,
+    help="Specify signatures of matches that you explicitly want to allow, and "
+    "mark as okay. These signatures are generated during the scan process, and "
+    "reported out with each individual match. This option can be specified "
+    "multiple times, to allow as many signatures as you would like.",
+)
+@click.option(
     "--repo-path",
     type=click.Path(exists=True, file_okay=False, resolve_path=True, allow_dash=False),
     help="Path to local repo clone. If provided, git_url will not be used.",
@@ -142,6 +151,7 @@ def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
     else:
         rules_regexes = {}
 
+    allowed_signatures = cast(List[str], kwargs["allow_signatures"])
     # read & compile path inclusion/exclusion patterns
     path_inclusions = []  # type: List[Pattern]
     path_exclusions = []  # type: List[Pattern]
@@ -172,7 +182,12 @@ def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
             repo_path = cast(str, kwargs["repo_path"])
 
         found_issues = scanner.scan_repo(
-            repo_path, rules_regexes, path_inclusions, path_exclusions, kwargs
+            repo_path,
+            rules_regexes,
+            path_inclusions,
+            path_exclusions,
+            allowed_signatures,
+            kwargs,
         )
 
     if found_issues:

@@ -199,6 +199,7 @@ def diff_worker(
     do_regex: bool,
     path_inclusions: Optional[Iterable[Pattern]],
     path_exclusions: Optional[Iterable[Pattern]],
+    allowed_signatures: Optional[Iterable[str]],
     prev_commit: Optional[git.Commit] = None,
     branch_name: Optional[str] = None,
 ) -> List[Issue]:
@@ -211,8 +212,7 @@ def diff_worker(
             continue
         found_issues = []  # type: List[Issue]
         if do_entropy:
-            entropy_issues = find_entropy(printable_diff)
-            found_issues.extend(entropy_issues)
+            found_issues += find_entropy(printable_diff)
         if do_regex:
             found_issues += find_regex(printable_diff, custom_regexes)
         for finding in found_issues:
@@ -263,6 +263,7 @@ def find_strings(
     branch: Optional[str] = None,
     path_inclusions: Optional[Iterable[Pattern]] = None,
     path_exclusions: Optional[Iterable[Pattern]] = None,
+    allowed_signatures: Optional[Iterable[str]] = None,
 ) -> List[Issue]:
     repo = git.Repo(repo_path)
     already_searched = set()  # type: Set[bytes]
@@ -305,6 +306,7 @@ def find_strings(
                 do_regex,
                 path_inclusions,
                 path_exclusions,
+                allowed_signatures,
                 prev_commit,
                 branch_name,
             )
@@ -319,6 +321,7 @@ def find_strings(
             do_regex,
             path_inclusions,
             path_exclusions,
+            allowed_signatures,
             prev_commit,
             branch_name,
         )
@@ -331,6 +334,7 @@ def scan_repo(
     regexes: Optional[Dict[str, Pattern]],
     path_inclusions: List[Pattern],
     path_exclusions: List[Pattern],
+    allowed_signatures: Iterable[str],
     options: Dict[str, config.OptionTypes],
 ) -> List[Issue]:
     # Check the repo for any local configs
@@ -373,6 +377,7 @@ def scan_repo(
         branch=cast(str, options["branch"]),
         path_inclusions=path_inclusions,
         path_exclusions=path_exclusions,
+        allowed_signatures=allowed_signatures,
     )
 
 
@@ -383,6 +388,7 @@ def find_staged(
     custom_regexes: Optional[Dict[str, Pattern]] = None,
     path_inclusions: Optional[Iterable[Pattern]] = None,
     path_exclusions: Optional[Iterable[Pattern]] = None,
+    allowed_signatures: Optional[Iterable[str]] = None,
 ) -> List[Issue]:
     repo = git.Repo(project_path, search_parent_directories=True)
     # using "create_patch=True" below causes output list to be empty
@@ -390,5 +396,11 @@ def find_staged(
     # https://github.com/gitpython-developers/GitPython/issues/852
     diff = repo.index.diff(repo.head.commit, create_patch=True, R=True)
     return diff_worker(
-        diff, custom_regexes, do_entropy, do_regex, path_inclusions, path_exclusions,
+        diff,
+        custom_regexes,
+        do_entropy,
+        do_regex,
+        path_inclusions,
+        path_exclusions,
+        allowed_signatures,
     )
