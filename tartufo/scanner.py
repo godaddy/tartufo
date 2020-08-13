@@ -202,6 +202,8 @@ def diff_worker(
     prev_commit: Optional[git.Commit] = None,
     branch_name: Optional[str] = None,
 ) -> List[Issue]:
+    if allowed_signatures is None:
+        allowed_signatures = []
     issues = []  # type: List[Issue]
     for blob in diff:
         printable_diff = blob.diff.decode("utf-8", errors="replace")
@@ -219,6 +221,9 @@ def diff_worker(
             finding.commit = prev_commit
             finding.branch_name = branch_name
         issues += found_issues
+    issues = list(
+        filter(lambda x: x.signature not in allowed_signatures, issues)  # type: ignore
+    )
     return issues
 
 
