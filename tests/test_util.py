@@ -108,3 +108,8 @@ class GeneralUtilTests(unittest.TestCase):
         util.fail("Foo!", mock.MagicMock(), 42)
         mock_style.assert_called_once_with("Foo!")
         mock_click.echo.assert_called_once_with(mock_style.return_value, err=True)
+
+    @mock.patch("tartufo.util.blake2s")
+    def test_signature_is_generated_with_snippet_and_filename(self, mock_hash):
+        util.generate_signature("foo", "bar")
+        mock_hash.assert_called_once_with(b"foo$$bar")

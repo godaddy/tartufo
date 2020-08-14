@@ -392,5 +392,27 @@ class ScanRepoTests(unittest.TestCase):
         )
 
 
+class DiffWorkerTests(unittest.TestCase):
+    @mock.patch("tartufo.scanner.path_included")
+    @mock.patch("tartufo.scanner.find_entropy")
+    @mock.patch("tartufo.scanner.find_regex")
+    @mock.patch("tartufo.scanner.generate_signature")
+    def test_allowed_signatures_are_filtered_out(
+        self, mock_signature, mock_regex, mock_entropy, mock_paths
+    ):
+        mock_signature.side_effect = ["foo", "bar"]
+        entropy_issue = scanner.Issue(scanner.IssueType.Entropy, "foo")
+        mock_entropy.return_value = [entropy_issue]
+        regex_issue = scanner.Issue(scanner.IssueType.RegEx, "bar")
+        mock_regex.return_value = [regex_issue]
+        mock_paths.return_value = True
+        mock_diff = mock.MagicMock()
+        mock_diff.diff.decode.return_value = "blah"
+        issues = scanner.diff_worker(
+            [mock_diff], None, True, True, None, None, ["foo"], None, None
+        )
+        self.assertEqual(issues, [regex_issue])
+
+
 if __name__ == "__main__":
     unittest.main()
