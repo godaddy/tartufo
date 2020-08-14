@@ -56,6 +56,7 @@ class ScannerTests(unittest.TestCase):
             False,
             None,
             None,
+            None,
             commit_1,
             master_branch.name,
         )
@@ -66,6 +67,7 @@ class ScannerTests(unittest.TestCase):
             False,
             None,
             None,
+            None,
             commit_2,
             master_branch.name,
         )
@@ -74,6 +76,7 @@ class ScannerTests(unittest.TestCase):
             None,
             True,
             False,
+            None,
             None,
             None,
             commit_3,
@@ -257,6 +260,7 @@ class ScanRepoTests(unittest.TestCase):
             {},
             [],
             [],
+            (),
             {
                 "config": None,
                 "since_commit": None,
@@ -277,6 +281,7 @@ class ScanRepoTests(unittest.TestCase):
             {},
             [],
             [],
+            (),
             {
                 "config": None,
                 "since_commit": None,
@@ -299,6 +304,7 @@ class ScanRepoTests(unittest.TestCase):
             {},
             [],
             [],
+            (),
             {
                 "config": str(self.data_dir / "pyproject.toml"),
                 "since_commit": None,
@@ -322,6 +328,7 @@ class ScanRepoTests(unittest.TestCase):
             {},
             [],
             [],
+            (),
             {
                 "config": None,
                 "since_commit": None,
@@ -342,6 +349,7 @@ class ScanRepoTests(unittest.TestCase):
             branch=None,
             path_inclusions=[re.compile("tartufo/"), re.compile("scripts/")],
             path_exclusions=[],
+            allowed_signatures=(),
         )
 
     @mock.patch("tartufo.scanner.find_strings")
@@ -355,6 +363,7 @@ class ScanRepoTests(unittest.TestCase):
             {},
             [],
             [],
+            (),
             {
                 "config": None,
                 "since_commit": None,
@@ -379,6 +388,7 @@ class ScanRepoTests(unittest.TestCase):
                 re.compile(r"\.venv/"),
                 re.compile(r".*\.egg-info/"),
             ],
+            allowed_signatures=(),
         )
 
 
