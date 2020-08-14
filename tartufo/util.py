@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import hashlib
 import json
 import os
 import pathlib
@@ -13,6 +12,11 @@ from typing import Callable, List, TYPE_CHECKING
 
 import click
 from git import Repo
+
+try:
+    from hashlib import blake2s
+except ImportError:  # For Python 3.5
+    from pyblake2 import blake2s  # type: ignore
 
 if TYPE_CHECKING:
     from tartufo.scanner import Issue  # pylint: disable=cyclic-import
@@ -76,6 +80,4 @@ def generate_signature(snippet: str, filename: str) -> str:
 
     These signatures are used for configuring excluded/approved issues,
     such as secrets intentionally embedded in tests."""
-    return hashlib.blake2s(
-        "{}$${}".format(snippet, filename).encode("utf-8")
-    ).hexdigest()
+    return blake2s("{}$${}".format(snippet, filename).encode("utf-8")).hexdigest()
