@@ -45,7 +45,7 @@ sphinx = {version = "^2.3", optional = true}
 sphinx-rtd-theme = {version = "^0.4.3", optional = true}
 
 [tool.poetry.dev-dependencies]
-black = {version = "19.10b0", allow-prereleases = true, python = "^3.6"}
+black = {version = "19.10b0", allow-prereleases = true}
 coverage = {extras = ["toml"], version = "^5.1"}
 pre-commit = "*"
 pytest = "^5.4.1"
