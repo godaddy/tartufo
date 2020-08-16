@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.5, 3.6, 3.7, 3.8, pypy3]
+        python-version: [3.6, 3.7, 3.8, pypy3]
     steps:
     - uses: actions/checkout@592cf69
     - name: Set up Python ${{ matrix.python-version }}
@@ -21,9 +21,10 @@ jobs:
     - name: Install dependencies
       run:  pip install poetry tox codecov tox-gh-actions
     - name: Run tox environments
-      run: tox
+      run: tox -- --cov --cov-append --cov-report=xml
     - name: Run codecov
       if: matrix.python-version == '3.7'
-      run: codecov
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      uses: codecov/codecov-action@v1
+      with:
+        file: ./coverage.xml
+        token: ${{ secrets.CODECOV_TOKEN }}
