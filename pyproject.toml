@@ -21,7 +21,6 @@ classifiers = [
     "Natural Language :: English",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.5",
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
@@ -35,7 +34,7 @@ include = ["CHANGELOG.md", "README.md"]
 tartufo = "tartufo.cli:main"
 
 [tool.poetry.dependencies]
-python = "^3.5"
+python = "^3.6"
 click = "^7"
 colorama = {version = "*", markers = "sys_platform == 'win32'"}
 GitPython = ">= 2.1.1, <4.0.0"
