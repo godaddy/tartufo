@@ -55,6 +55,13 @@ line switch, as seen here:
                                      (default), no Git object paths are excluded
                                      unless effectively excluded via the
                                      --include-paths option.
+     -a, --allow-signatures TEXT     Specify signatures of matches that you
+                                     explicitly want to allow, and mark as okay.
+                                     These signatures are generated during the
+                                     scan process, and reported out with each
+                                     individual match. This option can be
+                                     specified multiple times, to allow as many
+                                     signatures as you would like.
      --repo-path DIRECTORY           Path to local repo clone. If provided,
                                      git_url will not be used.
      --cleanup / --no-cleanup        Clean up all temporary result files.
