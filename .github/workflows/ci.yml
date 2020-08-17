@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.5, 3.6, 3.7, 3.8, pypy3]
+        python-version: [3.6, 3.7, 3.8, pypy3]
     steps:
     - uses: actions/checkout@592cf69
     - name: Set up Python ${{ matrix.python-version }}
@@ -24,6 +24,6 @@ jobs:
       run: tox
     - name: Run codecov
       if: matrix.python-version == '3.7'
-      run: codecov
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      uses: codecov/codecov-action@v1
+      with:
+        file: ./.coverage
