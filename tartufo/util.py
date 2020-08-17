@@ -8,15 +8,11 @@ import stat
 import tempfile
 import uuid
 from functools import lru_cache, partial
+from hashlib import blake2s
 from typing import Callable, List, TYPE_CHECKING
 
 import click
 from git import Repo
-
-try:
-    from hashlib import blake2s
-except ImportError:  # For Python 3.5
-    from pyblake2 import blake2s  # type: ignore
 
 if TYPE_CHECKING:
     from tartufo.scanner import Issue  # pylint: disable=cyclic-import
