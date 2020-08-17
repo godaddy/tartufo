@@ -75,7 +75,7 @@ def configure_regexes(
         rules = {}
 
     if rules_files:
-        all_files = list(rules_files)  # type: List[IO[Any]]
+        all_files: List[IO[Any]] = list(rules_files)
     else:
         all_files = []
     try:

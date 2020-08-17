@@ -153,8 +153,8 @@ def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
 
     allowed_signatures = cast(List[str], kwargs["allow_signatures"])
     # read & compile path inclusion/exclusion patterns
-    path_inclusions = []  # type: List[Pattern]
-    path_exclusions = []  # type: List[Pattern]
+    path_inclusions: List[Pattern] = []
+    path_exclusions: List[Pattern] = []
     paths_file = cast(TextIO, kwargs["include_paths"])
     if paths_file:
         path_inclusions = config.compile_path_rules(paths_file.readlines())
@@ -162,7 +162,7 @@ def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
     if paths_file:
         path_exclusions = config.compile_path_rules(paths_file.readlines())
 
-    found_issues = []  # type: List[scanner.Issue]
+    found_issues: List[scanner.Issue] = []
     remove_repo = False
     if kwargs["pre_commit"]:
         repo_path = cast(str, kwargs["repo_path"])

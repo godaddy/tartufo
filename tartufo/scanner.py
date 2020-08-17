@@ -26,15 +26,15 @@ class IssueType(enum.Enum):
 class Issue:
     """Represents an issue found while scanning the code."""
 
-    OUTPUT_SEPARATOR = "~~~~~~~~~~~~~~~~~~~~~"  # type: str
-    DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"  # type: str
+    OUTPUT_SEPARATOR: str = "~~~~~~~~~~~~~~~~~~~~~"
+    DATETIME_FORMAT: str = "%Y-%m-%d %H:%M:%S"
 
-    issue_type = None  # type: Optional[IssueType]
-    issue_detail = None  # type: Optional[str]
-    diff = None  # type: Optional[git.Diff]
-    matched_string = ""  # type: str
-    commit = None  # type: Optional[git.Commit]
-    branch_name = None  # type: Optional[str]
+    issue_type: Optional[IssueType] = None
+    issue_detail: Optional[str] = None
+    diff: Optional[git.Diff] = None
+    matched_string: str = ""
+    commit: Optional[git.Commit] = None
+    branch_name: Optional[str] = None
 
     def __init__(self, issue_type: IssueType, matched_string: str) -> None:
         self.issue_type = issue_type
@@ -204,14 +204,14 @@ def diff_worker(
 ) -> List[Issue]:
     if allowed_signatures is None:
         allowed_signatures = []
-    issues = []  # type: List[Issue]
+    issues: List[Issue] = []
     for blob in diff:
         printable_diff = blob.diff.decode("utf-8", errors="replace")
         if printable_diff.startswith("Binary files"):
             continue
         if not path_included(blob, path_inclusions, path_exclusions):
             continue
-        found_issues = []  # type: List[Issue]
+        found_issues: List[Issue] = []
         if do_entropy:
             found_issues += find_entropy(printable_diff)
         if do_regex:
@@ -270,8 +270,8 @@ def find_strings(
     allowed_signatures: Optional[Iterable[str]] = None,
 ) -> List[Issue]:
     repo = git.Repo(repo_path)
-    already_searched = set()  # type: Set[bytes]
-    all_issues = []  # type: List[Issue]
+    already_searched: Set[bytes] = set()
+    all_issues: List[Issue] = []
 
     if branch:
         branches = repo.remotes.origin.fetch(branch)
@@ -342,7 +342,7 @@ def scan_repo(
     options: Dict[str, config.OptionTypes],
 ) -> List[Issue]:
     # Check the repo for any local configs
-    repo_config = {}  # type: Dict[str, config.OptionTypes]
+    repo_config: Dict[str, config.OptionTypes] = {}
     path = pathlib.Path(repo_path)
     config_file = path / "pyproject.toml"
     if not config_file.is_file():
