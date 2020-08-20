@@ -70,13 +70,14 @@ from tartufo import config, scanner, util
     "unless effectively excluded via the --include-paths option.",
 )
 @click.option(
-    "-a",
-    "--allow-signatures",
+    "-e",
+    "--exclude-signatures",
     multiple=True,
-    help="Specify signatures of matches that you explicitly want to allow, and "
-    "mark as okay. These signatures are generated during the scan process, and "
-    "reported out with each individual match. This option can be specified "
-    "multiple times, to allow as many signatures as you would like.",
+    help="Specify signatures of matches that you explicitly want to exclude "
+    "from the scan, and mark as okay. These signatures are generated during "
+    "the scan process, and reported out with each individual match. This "
+    "option can be specified multiple times, to exclude as many signatures as "
+    "you would like.",
 )
 @click.option(
     "--repo-path",
@@ -151,7 +152,7 @@ def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
     else:
         rules_regexes = {}
 
-    allowed_signatures = cast(List[str], kwargs["allow_signatures"])
+    excluded_signatures = cast(List[str], kwargs["exclude_signatures"])
     # read & compile path inclusion/exclusion patterns
     path_inclusions: List[Pattern] = []
     path_exclusions: List[Pattern] = []
@@ -186,7 +187,7 @@ def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
             rules_regexes,
             path_inclusions,
             path_exclusions,
-            allowed_signatures,
+            excluded_signatures,
             kwargs,
         )
 

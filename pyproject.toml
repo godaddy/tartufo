@@ -60,7 +60,10 @@ vulture = "^1.4"
 docs = ["recommonmark", "sphinx", "sphinx-rtd-theme"]
 
 [tool.tartufo]
-allow-signatures = [
+cleanup = true
+entropy = true
+exclude-paths = ".tartufo-excludes"
+exclude-signatures = [
   "62f22e4500140a6ed959a6143c52b0e81c74e7491081292fce733de4ec574542",
   "ecbbe1edd6373c7e2b88b65d24d7fe84610faafd1bc2cf6ae35b43a77183e80b",
   "8396b1d3644342be68687c60baa0c514947a378145d73e7024124dc41374716f",
@@ -114,9 +117,6 @@ allow-signatures = [
   "586f9df1870fcfafd3070dc553e97db25b3fce82c9144602567d69a86597c06f",
   "842533f44cf32fb3d93a7f56227977aa4f16caafe82ace8f5f4de27d750c1ec1",
 ]
-cleanup = true
-entropy = true
-exclude-paths = ".tartufo-excludes"
 json = false
 regex = true
 repo-path = "."

@@ -64,7 +64,7 @@ To do this, you can either specify it on the command line...
 
 .. code-block:: sh
 
-    > tartufo -a 2a3cb329b81351e357b09f1b97323ff726e72bd5ff8427c9295e6ef68226e1d1
+    > tartufo -e 2a3cb329b81351e357b09f1b97323ff726e72bd5ff8427c9295e6ef68226e1d1
     # No output! Success!
     >
 
@@ -74,7 +74,7 @@ remembered!
 .. code-block:: toml
 
     [tool.tartufo]
-    allow-signatures = [
+    exclude-signatures = [
       "2a3cb329b81351e357b09f1b97323ff726e72bd5ff8427c9295e6ef68226e1d1",
     ]
 

@@ -349,7 +349,7 @@ class ScanRepoTests(unittest.TestCase):
             branch=None,
             path_inclusions=[re.compile("tartufo/"), re.compile("scripts/")],
             path_exclusions=[],
-            allowed_signatures=(),
+            excluded_signatures=(),
         )
 
     @mock.patch("tartufo.scanner.find_strings")
@@ -388,7 +388,7 @@ class ScanRepoTests(unittest.TestCase):
                 re.compile(r"\.venv/"),
                 re.compile(r".*\.egg-info/"),
             ],
-            allowed_signatures=(),
+            excluded_signatures=(),
         )
 
 
@@ -397,7 +397,7 @@ class DiffWorkerTests(unittest.TestCase):
     @mock.patch("tartufo.scanner.find_entropy")
     @mock.patch("tartufo.scanner.find_regex")
     @mock.patch("tartufo.scanner.generate_signature")
-    def test_allowed_signatures_are_filtered_out(
+    def test_excluded_signatures_are_filtered_out(
         self, mock_signature, mock_regex, mock_entropy, mock_paths
     ):
         mock_signature.side_effect = ["foo", "bar"]
