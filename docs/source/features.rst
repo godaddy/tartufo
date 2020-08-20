@@ -43,6 +43,43 @@ pieces of data which look random, as these are likely to be things such as
 cryptographic keys. These scans are activated by usage of the ``--entropy``
 command line flag.
 
+Limiting Scans by Signatures
+----------------------------
+
+.. versionadded:: 2.0.0
+
+Every time an issue is found during a scan, `tartufo` will generate a
+"signature" for that issue. This is a stable hash generated from the filename
+and the actual string that was identified as being an issue.
+
+For example, you might see the following header in the output for an issue:
+
+.. image:: _static/img/issue-signature.png
+
+Looking at this information, it's clear that this issue was found in a test
+file, and it's probably okay. Of course, you will want to look at the actual
+body of what was found and determine that for yourself. But let's say that this
+really is okay, and we want tell `tartufo` to ignore this issue in future scans.
+To do this, you can either specify it on the command line...
+
+.. code-block:: sh
+
+    > tartufo -e 2a3cb329b81351e357b09f1b97323ff726e72bd5ff8427c9295e6ef68226e1d1
+    # No output! Success!
+    >
+
+Or you can add it to your config file, so that this exclusion is always
+remembered!
+
+.. code-block:: toml
+
+    [tool.tartufo]
+    exclude-signatures = [
+      "2a3cb329b81351e357b09f1b97323ff726e72bd5ff8427c9295e6ef68226e1d1",
+    ]
+
+Done! This particular issue will no longer show up in your scan results.
+
 Limiting Scans by Path
 ----------------------
 

@@ -56,6 +56,7 @@ class ScannerTests(unittest.TestCase):
             False,
             None,
             None,
+            None,
             commit_1,
             master_branch.name,
         )
@@ -66,6 +67,7 @@ class ScannerTests(unittest.TestCase):
             False,
             None,
             None,
+            None,
             commit_2,
             master_branch.name,
         )
@@ -74,6 +76,7 @@ class ScannerTests(unittest.TestCase):
             None,
             True,
             False,
+            None,
             None,
             None,
             commit_3,
@@ -257,6 +260,7 @@ class ScanRepoTests(unittest.TestCase):
             {},
             [],
             [],
+            (),
             {
                 "config": None,
                 "since_commit": None,
@@ -277,6 +281,7 @@ class ScanRepoTests(unittest.TestCase):
             {},
             [],
             [],
+            (),
             {
                 "config": None,
                 "since_commit": None,
@@ -299,6 +304,7 @@ class ScanRepoTests(unittest.TestCase):
             {},
             [],
             [],
+            (),
             {
                 "config": str(self.data_dir / "pyproject.toml"),
                 "since_commit": None,
@@ -322,6 +328,7 @@ class ScanRepoTests(unittest.TestCase):
             {},
             [],
             [],
+            (),
             {
                 "config": None,
                 "since_commit": None,
@@ -342,6 +349,7 @@ class ScanRepoTests(unittest.TestCase):
             branch=None,
             path_inclusions=[re.compile("tartufo/"), re.compile("scripts/")],
             path_exclusions=[],
+            excluded_signatures=(),
         )
 
     @mock.patch("tartufo.scanner.find_strings")
@@ -355,6 +363,7 @@ class ScanRepoTests(unittest.TestCase):
             {},
             [],
             [],
+            (),
             {
                 "config": None,
                 "since_commit": None,
@@ -379,7 +388,30 @@ class ScanRepoTests(unittest.TestCase):
                 re.compile(r"\.venv/"),
                 re.compile(r".*\.egg-info/"),
             ],
+            excluded_signatures=(),
         )
+
+
+class DiffWorkerTests(unittest.TestCase):
+    @mock.patch("tartufo.scanner.path_included")
+    @mock.patch("tartufo.scanner.find_entropy")
+    @mock.patch("tartufo.scanner.find_regex")
+    @mock.patch("tartufo.scanner.generate_signature")
+    def test_excluded_signatures_are_filtered_out(
+        self, mock_signature, mock_regex, mock_entropy, mock_paths
+    ):
+        mock_signature.side_effect = ["foo", "bar"]
+        entropy_issue = scanner.Issue(scanner.IssueType.Entropy, "foo")
+        mock_entropy.return_value = [entropy_issue]
+        regex_issue = scanner.Issue(scanner.IssueType.RegEx, "bar")
+        mock_regex.return_value = [regex_issue]
+        mock_paths.return_value = True
+        mock_diff = mock.MagicMock()
+        mock_diff.diff.decode.return_value = "blah"
+        issues = scanner.diff_worker(
+            [mock_diff], None, True, True, None, None, ["foo"], None, None
+        )
+        self.assertEqual(issues, [regex_issue])
 
 
 if __name__ == "__main__":

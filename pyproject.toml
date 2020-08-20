@@ -1,74 +1,127 @@
 [build-system]
-requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
+requires = ["poetry>=0.12"]
 
 [tool.poetry]
-name = "tartufo"
-version = "2.0.0-dev1"
-description = "tartufo is a tool for scanning git repositories for secrets/passwords/high-entropy data"
 authors = ["Dylan Ayrey <dxa4481@rit.edu>"]
-maintainers = ["GoDaddy <oss@godaddy.com>"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
+  "Natural Language :: English",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.6",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Topic :: Security",
+  "Topic :: Software Development :: Version Control :: Git",
+  "Typing :: Typed",
+]
+description = "tartufo is a tool for scanning git repositories for secrets/passwords/high-entropy data"
+documentation = "https://tartufo.readthedocs.io/"
+include = ["CHANGELOG.md", "README.md"]
+keywords = ["git", "security", "secrets", "entropy", "scanner"]
 license = "GPL-2.0-only"
+maintainers = ["GoDaddy <oss@godaddy.com>"]
+name = "tartufo"
 readme = "README.md"
 repository = "https://github.com/godaddy/tartufo/"
-documentation = "https://tartufo.readthedocs.io/"
-keywords = ["git", "security", "secrets", "entropy", "scanner"]
-classifiers = [
-    "Development Status :: 5 - Production/Stable",
-    "Environment :: Console",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
-    "Natural Language :: English",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python",
-    "Programming Language :: Python :: 3.6",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
-    "Topic :: Security",
-    "Topic :: Software Development :: Version Control :: Git",
-    "Typing :: Typed",
-]
-include = ["CHANGELOG.md", "README.md"]
+version = "2.0.0-dev1"
 
 [tool.poetry.scripts]
 tartufo = "tartufo.cli:main"
 
 [tool.poetry.dependencies]
-python = "^3.6"
+GitPython = ">= 2.1.1, <4.0.0"
 click = "^7"
 colorama = {version = "*", markers = "sys_platform == 'win32'"}
-GitPython = ">= 2.1.1, <4.0.0"
-toml = "^0.10"
-truffleHogRegexes = "^0.0.7"
+python = "^3.6"
 recommonmark = {version = "^0.6", optional = true}
 sphinx = {version = "^2.3", optional = true}
 sphinx-rtd-theme = {version = "^0.4.3", optional = true}
+toml = "^0.10"
+truffleHogRegexes = "^0.0.7"
 
 [tool.poetry.dev-dependencies]
 black = {version = "19.10b0", allow-prereleases = true}
 coverage = {extras = ["toml"], version = "^5.1"}
-pre-commit = "*"
-pytest = "^5.4.1"
-pytest-sugar = "^0.9.3"
 mypy = "^0.770"
+pre-commit = "*"
+pylint = "^2.5.2"
+pytest = "^5.4.1"
 pytest-cov = "^2.8.1"
+pytest-sugar = "^0.9.3"
 tox = "^3.14.6"
 vulture = "^1.4"
-pylint = "^2.5.2"
 
 [tool.poetry.extras]
 docs = ["recommonmark", "sphinx", "sphinx-rtd-theme"]
 
 [tool.tartufo]
-repo-path = "."
-json = false
 cleanup = true
-regex = true
 entropy = true
 exclude-paths = ".tartufo-excludes"
+exclude-signatures = [
+  "62f22e4500140a6ed959a6143c52b0e81c74e7491081292fce733de4ec574542",
+  "ecbbe1edd6373c7e2b88b65d24d7fe84610faafd1bc2cf6ae35b43a77183e80b",
+  "8396b1d3644342be68687c60baa0c514947a378145d73e7024124dc41374716f",
+  "39c9b3d1841fd0a9e2f17cddc42be2f2f860e321026403a0ebee997c0b9cb823",
+  "7ac6c26fb6d5a4de410588cfc372bb7b8de705c081843e34921389be7f66da99",
+  "e427548d2111e3b04aa23c998a8288645385206cea30cf7137acf7147dc32354",
+  "dbc084c22395931afd734a5be53f1cde913c7d988034b856087c744b424d9673",
+  "bc67523b08b2170ca9b802535684454140679af3156bff808508cf32b33aa240",
+  "978dc8605ef9bf471e467dd2d8570fd658f0a5f25378799a2ad8bb6ea480173d",
+  "85109edb8081a60f3a44139a98b643b8cacb777f4d5c814276ae729d50fe414c",
+  "bf48e316ecad0a37071ed81cc54a6b629a1a3bf73cf52d06a77c9fbaf91bc833",
+  "23996f9309c042d37958d28c2cc0c16a060a03376ee075b5b077609e2a299e44",
+  "482e7b31188f1e59dd6eb5b21c46f7467449ffcbeba9a4ca412dfcd8ea9ef66f",
+  "51dad1be0950e627bb3660a6246b42ddc6d6d431267b309af2469114fd2df2e5",
+  "74c056ae650ffb202ea3b68207dce82ebeae0414cfe3b49f9db0c79841473da1",
+  "36617c71d89b78193c99fdd2a28027319dfdb361d649372bc72c45317f9edf24",
+  "52aad73c20887b42debd58c7fb8fb2794ff8990d542e12eb81a8b73f96d48d9e",
+  "c3620c90dbf5ac6d7a1b64ec0d917d15934cef0007dfb8cdac42f2f503626907",
+  "0d63f28f38ef29d7712bd1cb79003396c43eacd05510d1ac1bfe7ab2d0e5a566",
+  "1ee4639648367a6da4eb5fd1d2370792347effe3262a85b6f0dfd4154d44ca73",
+  "9bf77a3d3a3aa28241a06271f3b53adcef5fd9b7a238fd2bba6dbe903b20b46c",
+  "2d2c6b94cef37ee67091eb7f9a3b703a35db478e27480783b1a6214b93b78b41",
+  "95938e68fe1b14e031b39823e3e52751742f11c9ae72768d74e37f54da570a8d",
+  "18569cec99ff6fcb7f8d284feb8986ea60f8de4c7e277e5f351ca46d6a220bb2",
+  "dc619cca965dd9bf04eaa4fcb25e2ca255969a10054eba4f6cd4d18823d04f7d",
+  "2997b5e91c6fce7ac139f7dae75233e92a4071622278f1655a1b6b2da153f369",
+  "06a16d530df98a23aa64849e174e6fcabaf5f9ed694689d52dabbd94c4119d74",
+  "24ea5e2e5cc32d28717d82d0a1590ad2dbeb156f78d6c44e0c532651a30d112a",
+  "7fc09a40d723d6319925807f289ae938555727ae5923ed8d9c33c623be63b377",
+  "2a0942431fa590b69f39dc07deb3a45f7c2c0ed924779cee71d5dca50da3add4",
+  "1bab27e1d3d5c57b1af01801e18859710e96562e90c3614b693ee9c077023d1e",
+  "7b340aece8b98acd35df24e5379960d66d2f0a11eaf5a28ea8c65d0646bd0086",
+  "72d729cd5c77b291c7b91b7ffb07cf349d9de9cc69b5f39c3d4811b7384ce90d",
+  "c4cf271e74541b1e2bf9a051f57f1bf014c6fd66aa3c3d8fc4051d479f8ae3af",
+  "b5fed92561af0d82cda01713676a590dbefe3fdb70b1a56468a74d52432d4ff4",
+  "160436596acda73284ee4300da19785d2bf9a8a2eba48ec66e57bf80590157e4",
+  "95771bfa1cf0f2c66844c06519574d2afe9474d5507f00a5a1d73f2960280484",
+  "cdcf071aa7aa3360f358dc67c34a89dd9f5f8cb566a75b5558687cfca2750296",
+  "7a4ec0657d846e559e6605fb0cb43b74ee4c32d13426fbcc76176604cc749dfb",
+  "948237ebd4761233e14aa6ff0cf8acc9920f0132b270e2af987e7957e6b31f00",
+  "1f08f266f7eb6932cdfcd6ba256067552dec3d85f9d7599612e94360e9890ec1",
+  "0cdf53e226fcbdc95a5f9533de3b79e0d6993a411ebf5976bdacf416d1845e95",
+  "29c93895d1b1703d8a6b9b0210bb2b93dbd210273cf9ee210e740e109533e977",
+  "c7cf2a9e938b89a0fa8850fda1110dd7a1f9263648389fec5b8dbacd9e06c918",
+  "a47a9cc3ceac2df681683678569cde5e5298930090d26665be80066a569378a5",
+  "24db34759e7eee9168990583b3551aa6c019176e75a1655bf94e07c62e26cc19",
+  "ba554d07d9d78f56f9a0e670e094d0247b3d51fb95c4112e0a9317d4cc960855",
+  "baa9ed3d871b6392cfc79a17fcffa562d2b9aa51cb548c5939c2a41f1acc8467",
+  "27eb03ed9af3707094c142b6bd485793e579ae1c59ce13193cb6b9f31c0f011f",
+  "2a3cb329b81351e357b09f1b97323ff726e72bd5ff8427c9295e6ef68226e1d1",
+  "586f9df1870fcfafd3070dc553e97db25b3fce82c9144602567d69a86597c06f",
+  "842533f44cf32fb3d93a7f56227977aa4f16caafe82ace8f5f4de27d750c1ec1",
+]
+json = false
+regex = true
+repo-path = "."
 
 [tool.black]
-target-version = ['py35', 'py36', 'py37', 'py38']
 exclude = '''
 /(
     \.eggs         # exclude a few common directories in the
@@ -82,6 +135,7 @@ exclude = '''
     | dist
 )/
 '''
+target-version = ['py35', 'py36', 'py37', 'py38']
 
 [tool.pytest]
 # Not yet supported, see https://github.com/pytest-dev/pytest/issues/1556
@@ -99,7 +153,7 @@ exclude = '''
 # R0912: Too many branches
 # R0914: Too many local variables
 # W0511: FIXME
-disable="C0111,C0301,C0330,R0201,R0801,R0903,R0912,R0914,W0511"
+disable = "C0111,C0301,C0330,R0201,R0801,R0903,R0912,R0914,W0511"
 
 [tool.pylint.BASIC]
 module-rgx = "(([a-z_][a-z0-9_]*)|([a-z][a-zA-Z0-9]+))$"
@@ -118,23 +172,15 @@ branch = true
 source = ["tartufo"]
 
 [tool.coverage.report]
-ignore_errors = true
 exclude_lines = [
-    # Have to re-enable the standard pragma
-    "pragma: no cover",
-
-    # Don't complain about missing debug-only code:
-    "def __repr__",
-    "if self.debug",
-
-    # Don't complain if tests don't hit defensive assertion code:
-    "raise AssertionError",
-    "raise NotImplementedError",
-
-    # Don't complain if non-runnable code isn't run:
-    "if 0:",
-    "if __name__ == .__main__.:",
-
-    # Don't complain about mypy-specific code
-    "if TYPE_CHECKING:",
+  # Have to re-enable the standard pragma
+  "pragma: no cover", # Don't complain about missing debug-only code:
+  "def __repr__",
+  "if self.debug", # Don't complain if tests don't hit defensive assertion code:
+  "raise AssertionError",
+  "raise NotImplementedError", # Don't complain if non-runnable code isn't run:
+  "if 0:",
+  "if __name__ == .__main__.:", # Don't complain about mypy-specific code
+  "if TYPE_CHECKING:",
 ]
+ignore_errors = true

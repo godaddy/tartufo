@@ -77,6 +77,7 @@ class CLITests(unittest.TestCase):
                 {},
                 [],
                 [],
+                (),
                 {
                     "config": None,
                     "regex": False,
@@ -90,6 +91,7 @@ class CLITests(unittest.TestCase):
                     "branch": None,
                     "include_paths": None,
                     "exclude_paths": None,
+                    "exclude_signatures": (),
                     "repo_path": None,
                     "cleanup": False,
                     "pre_commit": False,
@@ -120,6 +122,7 @@ class CLITests(unittest.TestCase):
                 config.DEFAULT_REGEXES,
                 [],
                 [],
+                (),
                 {
                     "config": None,
                     "regex": True,
@@ -133,6 +136,7 @@ class CLITests(unittest.TestCase):
                     "branch": None,
                     "include_paths": None,
                     "exclude_paths": None,
+                    "exclude_signatures": (),
                     "repo_path": None,
                     "cleanup": False,
                     "pre_commit": False,
@@ -161,6 +165,7 @@ class CLITests(unittest.TestCase):
                 {},
                 [],
                 [],
+                (),
                 {
                     "config": None,
                     "regex": False,
@@ -174,6 +179,7 @@ class CLITests(unittest.TestCase):
                     "branch": None,
                     "include_paths": None,
                     "exclude_paths": None,
+                    "exclude_signatures": (),
                     "repo_path": working_dir,
                     "cleanup": False,
                     "pre_commit": False,

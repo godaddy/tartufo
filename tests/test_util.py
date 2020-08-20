@@ -43,8 +43,8 @@ class OutputTests(unittest.TestCase):
     @mock.patch("tartufo.util.click", new=mock.MagicMock())
     @mock.patch("tartufo.util.json")
     def test_echo_issues_outputs_proper_json_when_requested(self, mock_json):
-        issue_1 = scanner.Issue(scanner.IssueType.Entropy, ["foo"])
-        issue_2 = scanner.Issue(scanner.IssueType.RegEx, ["bar"])
+        issue_1 = scanner.Issue(scanner.IssueType.Entropy, "foo")
+        issue_2 = scanner.Issue(scanner.IssueType.RegEx, "bar")
         util.echo_issues([issue_1, issue_2], True, "/repo", "/output")
         mock_json.dumps.assert_called_once_with(
             {
@@ -55,7 +55,8 @@ class OutputTests(unittest.TestCase):
                         "issue_type": "High Entropy",
                         "issue_detail": None,
                         "diff": "No diff available.",
-                        "strings_found": ["foo"],
+                        "matched_string": "foo",
+                        "signature": None,
                         "commit_time": None,
                         "commit_message": None,
                         "commit_hash": None,
@@ -66,7 +67,8 @@ class OutputTests(unittest.TestCase):
                         "issue_type": "Regular Expression Match",
                         "issue_detail": None,
                         "diff": "No diff available.",
-                        "strings_found": ["bar"],
+                        "matched_string": "bar",
+                        "signature": None,
                         "commit_time": None,
                         "commit_message": None,
                         "commit_hash": None,
@@ -106,3 +108,8 @@ class GeneralUtilTests(unittest.TestCase):
         util.fail("Foo!", mock.MagicMock(), 42)
         mock_style.assert_called_once_with("Foo!")
         mock_click.echo.assert_called_once_with(mock_style.return_value, err=True)
+
+    @mock.patch("tartufo.util.blake2s")
+    def test_signature_is_generated_with_snippet_and_filename(self, mock_hash):
+        util.generate_signature("foo", "bar")
+        mock_hash.assert_called_once_with(b"foo$$bar")

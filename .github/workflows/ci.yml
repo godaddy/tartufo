@@ -12,6 +12,8 @@ jobs:
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8, pypy3]
+    env:
+      PYTHON: ${{ matrix.python-version }}
     steps:
     - uses: actions/checkout@592cf69
     - name: Set up Python ${{ matrix.python-version }}
@@ -22,8 +24,8 @@ jobs:
       run:  pip install poetry tox codecov tox-gh-actions
     - name: Run tox environments
       run: tox
-    - name: Run codecov
-      if: matrix.python-version == '3.7'
-      uses: codecov/codecov-action@v1
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@07127fd
       with:
-        file: ./.coverage
+        file: coverage.xml
+        env_vars: PYTHON
