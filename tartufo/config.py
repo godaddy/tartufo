@@ -108,8 +108,10 @@ def load_rules_from_file(rules_file: TextIO) -> Dict[str, Pattern]:
     regexes = {}
     try:
         new_rules = json.load(rules_file)
-    except json.JSONDecodeError:
-        raise ValueError("Error loading rules from file: {}".format(rules_file.name))
+    except json.JSONDecodeError as exc:
+        raise ValueError(
+            "Error loading rules from file: {}".format(rules_file.name)
+        ) from exc
     for rule in new_rules:
         regexes[rule] = re.compile(new_rules[rule])
     return regexes

@@ -255,7 +255,7 @@ class ScanRepoTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.data_dir = pathlib.Path(__file__).parent / "data"
-        return super(ScanRepoTests, cls).setUpClass()
+        return super().setUpClass()
 
     @mock.patch("tartufo.scanner.find_strings", new=mock.MagicMock())
     @mock.patch("tartufo.scanner.toml")

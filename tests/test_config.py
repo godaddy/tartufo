@@ -104,12 +104,12 @@ class ConfigFileTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.data_dir = pathlib.Path(__file__).parent / "data"
-        return super(ConfigFileTests, cls).setUpClass()
+        return super().setUpClass()
 
     def setUp(self):
         self.ctx = click.Context(click.Command("foo"))
         self.param = click.Option(["--config"])
-        return super(ConfigFileTests, self).setUp()
+        return super().setUp()
 
     def test_pyproject_toml_gets_read_if_no_file_specified(self):
         cur_dir = pathlib.Path()
