@@ -23,7 +23,6 @@ from tartufo import util
 
 
 OptionTypes = Union[str, int, bool, None, TextIO, Tuple[TextIO, ...]]
-OptionsDict = Dict[str, OptionTypes]
 
 DEFAULT_REGEXES = truffleHogRegexes.regexChecks.regexes
 
@@ -50,7 +49,7 @@ def read_pyproject_toml(
         config = toml_file.get("tool", {}).get("tartufo", {})
     except (toml.TomlDecodeError, OSError) as exc:
         raise click.FileError(
-            filename=str(config_path),
+            filename=str(value),
             hint="Error reading configuration file: {}".format(exc),
         )
     if not config:
