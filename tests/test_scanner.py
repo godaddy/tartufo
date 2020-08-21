@@ -6,6 +6,9 @@ from collections import namedtuple
 from unittest import mock
 
 from tartufo import scanner, util
+from tartufo.types import GitOptions
+
+from .helpers import generate_options
 
 
 class EntropyTests(unittest.TestCase):
@@ -25,7 +28,8 @@ class EntropyTests(unittest.TestCase):
 class ScannerTests(unittest.TestCase):
     @mock.patch("tartufo.scanner.git.Repo")
     def test_find_strings_checks_out_branch_when_specified(self, mock_repo):
-        scanner.find_strings("test_repo", branch="testbranch")
+        options = generate_options(GitOptions, branch="testbranch")
+        scanner.find_strings("test_repo", options)
         mock_repo.return_value.remotes.origin.fetch.assert_called_once_with(
             "testbranch"
         )
@@ -47,40 +51,35 @@ class ScannerTests(unittest.TestCase):
             commit_3,
         ]
 
-        scanner.find_strings("/fake/repo")
+        options = generate_options(GitOptions)
+        scanner.find_strings("/fake/repo", options)
 
         call_1 = mock.call(
-            commit_2.diff.return_value,
-            None,
-            True,
-            False,
-            None,
-            None,
-            None,
-            commit_1,
-            master_branch.name,
+            diff=commit_2.diff.return_value,
+            options=options,
+            custom_regexes=None,
+            path_inclusions=None,
+            path_exclusions=None,
+            prev_commit=commit_1,
+            branch_name=master_branch.name,
         )
         call_2 = mock.call(
-            commit_3.diff.return_value,
-            None,
-            True,
-            False,
-            None,
-            None,
-            None,
-            commit_2,
-            master_branch.name,
+            diff=commit_3.diff.return_value,
+            options=options,
+            custom_regexes=None,
+            path_inclusions=None,
+            path_exclusions=None,
+            prev_commit=commit_2,
+            branch_name=master_branch.name,
         )
         call_3 = mock.call(
-            commit_3.diff.return_value,
-            None,
-            True,
-            False,
-            None,
-            None,
-            None,
-            commit_3,
-            master_branch.name,
+            diff=commit_3.diff.return_value,
+            options=options,
+            custom_regexes=None,
+            path_inclusions=None,
+            path_exclusions=None,
+            prev_commit=commit_3,
+            branch_name=master_branch.name,
         )
         mock_worker.assert_has_calls((call_1, call_2, call_3), any_order=True)
 
@@ -103,7 +102,13 @@ class ScannerTests(unittest.TestCase):
         # We have to clone tartufo mostly because TravisCI only does a shallow clone
         repo_path = util.clone_git_repo("https://github.com/godaddy/tartufo.git")
         try:
-            issues = scanner.find_strings(repo_path, since_commit=since_commit,)
+            options = generate_options(
+                GitOptions,
+                entropy=True,
+                since_commit=since_commit,
+                exclude_signatures=(),
+            )
+            issues = scanner.find_strings(repo_path, options)
             filtered_results = [
                 result for result in issues if result.commit_hash == commit_w_secret
             ]
@@ -256,20 +261,11 @@ class ScanRepoTests(unittest.TestCase):
     @mock.patch("tartufo.scanner.toml")
     def test_pyproject_toml_gets_loaded_from_scanned_repo(self, mock_toml):
         scanner.scan_repo(
-            str(self.data_dir),
-            {},
-            [],
-            [],
-            (),
-            {
-                "config": None,
-                "since_commit": None,
-                "max_depth": None,
-                "json": False,
-                "regex": False,
-                "entropy": False,
-                "branch": None,
-            },
+            repo_path=str(self.data_dir),
+            regexes=None,
+            path_inclusions=[],
+            path_exclusions=[],
+            options=generate_options(GitOptions),
         )
         mock_toml.load.assert_called_once_with(str(self.data_dir / "pyproject.toml"))
 
@@ -277,20 +273,11 @@ class ScanRepoTests(unittest.TestCase):
     @mock.patch("tartufo.scanner.toml")
     def test_tartufo_toml_gets_loaded_from_scanned_repo(self, mock_toml):
         scanner.scan_repo(
-            str(self.data_dir / "config"),
-            {},
-            [],
-            [],
-            (),
-            {
-                "config": None,
-                "since_commit": None,
-                "max_depth": None,
-                "json": False,
-                "regex": False,
-                "entropy": False,
-                "branch": None,
-            },
+            repo_path=str(self.data_dir / "config"),
+            regexes=None,
+            path_inclusions=[],
+            path_exclusions=[],
+            options=generate_options(GitOptions),
         )
         mock_toml.load.assert_called_once_with(
             str(self.data_dir / "config" / "tartufo.toml")
@@ -300,20 +287,13 @@ class ScanRepoTests(unittest.TestCase):
     @mock.patch("tartufo.scanner.toml")
     def test_config_file_not_loaded_if_read_from_cli(self, mock_toml):
         scanner.scan_repo(
-            str(self.data_dir),
-            {},
-            [],
-            [],
-            (),
-            {
-                "config": str(self.data_dir / "pyproject.toml"),
-                "since_commit": None,
-                "max_depth": None,
-                "json": False,
-                "regex": False,
-                "entropy": False,
-                "branch": None,
-            },
+            repo_path=str(self.data_dir),
+            regexes=None,
+            path_inclusions=[],
+            path_exclusions=[],
+            options=generate_options(
+                GitOptions, config=str(self.data_dir / "pyproject.toml")
+            ),
         )
         mock_toml.load.assert_not_called()
 
@@ -323,33 +303,20 @@ class ScanRepoTests(unittest.TestCase):
         mock_toml.load.return_value = {
             "tool": {"tartufo": {"include-paths": str(self.data_dir / "include-files")}}
         }
+        options = generate_options(GitOptions)
         scanner.scan_repo(
-            str(self.data_dir),
-            {},
-            [],
-            [],
-            (),
-            {
-                "config": None,
-                "since_commit": None,
-                "max_depth": None,
-                "json": False,
-                "regex": False,
-                "entropy": False,
-                "branch": None,
-            },
+            repo_path=str(self.data_dir),
+            regexes=None,
+            path_inclusions=[],
+            path_exclusions=[],
+            options=options,
         )
         mock_find_strings.assert_called_once_with(
-            str(self.data_dir),
-            since_commit=None,
-            max_depth=None,
-            do_regex=False,
-            do_entropy=False,
-            custom_regexes={},
-            branch=None,
+            repo_path=str(self.data_dir),
+            options=options,
+            custom_regexes=None,
             path_inclusions=[re.compile("tartufo/"), re.compile("scripts/")],
             path_exclusions=[],
-            excluded_signatures=(),
         )
 
     @mock.patch("tartufo.scanner.find_strings")
@@ -358,37 +325,24 @@ class ScanRepoTests(unittest.TestCase):
         mock_toml.load.return_value = {
             "tool": {"tartufo": {"exclude-paths": str(self.data_dir / "exclude-files")}}
         }
+        options = generate_options(GitOptions)
         scanner.scan_repo(
-            str(self.data_dir),
-            {},
-            [],
-            [],
-            (),
-            {
-                "config": None,
-                "since_commit": None,
-                "max_depth": None,
-                "json": False,
-                "regex": False,
-                "entropy": False,
-                "branch": None,
-            },
+            repo_path=str(self.data_dir),
+            regexes=None,
+            path_inclusions=[],
+            path_exclusions=[],
+            options=options,
         )
         mock_find_strings.assert_called_once_with(
-            str(self.data_dir),
-            since_commit=None,
-            max_depth=None,
-            do_regex=False,
-            do_entropy=False,
-            custom_regexes={},
-            branch=None,
+            repo_path=str(self.data_dir),
+            options=options,
+            custom_regexes=None,
             path_inclusions=[],
             path_exclusions=[
                 re.compile("tests/"),
                 re.compile(r"\.venv/"),
                 re.compile(r".*\.egg-info/"),
             ],
-            excluded_signatures=(),
         )
 
 
@@ -408,9 +362,10 @@ class DiffWorkerTests(unittest.TestCase):
         mock_paths.return_value = True
         mock_diff = mock.MagicMock()
         mock_diff.diff.decode.return_value = "blah"
-        issues = scanner.diff_worker(
-            [mock_diff], None, True, True, None, None, ["foo"], None, None
+        options = generate_options(
+            GitOptions, entropy=True, regex=True, exclude_signatures=["foo"]
         )
+        issues = scanner.diff_worker([mock_diff], options, None, None, None, None, None)
         self.assertEqual(issues, [regex_issue])
 
 
