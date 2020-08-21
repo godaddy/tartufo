@@ -37,6 +37,7 @@ tartufo = "tartufo.cli:main"
 GitPython = ">= 2.1.1, <4.0.0"
 click = "^7"
 colorama = {version = "*", markers = "sys_platform == 'win32'"}
+dataclasses = {version = "*", python = "< 3.7"}
 python = "^3.6"
 recommonmark = {version = "^0.6", optional = true}
 sphinx = {version = "^2.3", optional = true}
@@ -135,7 +136,7 @@ exclude = '''
     | dist
 )/
 '''
-target-version = ['py35', 'py36', 'py37', 'py38']
+target-version = ['py36', 'py37', 'py38']
 
 [tool.pytest]
 # Not yet supported, see https://github.com/pytest-dev/pytest/issues/1556
