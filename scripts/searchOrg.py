@@ -7,6 +7,7 @@ DEPRECATED:
     work toward v2.0. This functionality will probably be introduced into the
     primary codebase at some point.
 """
+# pylint: skip-file
 import re
 from json import loads, dumps
 
