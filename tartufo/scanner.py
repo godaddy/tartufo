@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import datetime
-import enum
 import hashlib
 import math
 import pathlib
@@ -11,16 +10,12 @@ import git
 import toml
 
 from tartufo import config
+from tartufo.types import GitOptions, IssueType
 from tartufo.util import generate_signature, style_ok, style_warning
 
 
 BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
 HEX_CHARS = "1234567890abcdefABCDEF"
-
-
-class IssueType(enum.Enum):
-    Entropy = "High Entropy"
-    RegEx = "Regular Expression Match"
 
 
 class Issue:
@@ -193,17 +188,13 @@ def find_regex(
 
 def diff_worker(
     diff: git.DiffIndex,
+    options: GitOptions,
     custom_regexes: Optional[Dict[str, Pattern]],
-    do_entropy: bool,
-    do_regex: bool,
     path_inclusions: Optional[Iterable[Pattern]],
     path_exclusions: Optional[Iterable[Pattern]],
-    excluded_signatures: Optional[Iterable[str]],
     prev_commit: Optional[git.Commit] = None,
     branch_name: Optional[str] = None,
 ) -> List[Issue]:
-    if excluded_signatures is None:
-        excluded_signatures = []
     issues: List[Issue] = []
     for blob in diff:
         printable_diff = blob.diff.decode("utf-8", errors="replace")
@@ -212,9 +203,9 @@ def diff_worker(
         if not path_included(blob, path_inclusions, path_exclusions):
             continue
         found_issues: List[Issue] = []
-        if do_entropy:
+        if options.entropy:
             found_issues += find_entropy(printable_diff)
-        if do_regex:
+        if options.regex:
             found_issues += find_regex(printable_diff, custom_regexes)
         for finding in found_issues:
             finding.diff = blob
@@ -222,7 +213,7 @@ def diff_worker(
             finding.branch_name = branch_name
         issues += found_issues
     issues = list(
-        filter(lambda x: x.signature not in excluded_signatures, issues)  # type: ignore
+        filter(lambda x: x.signature not in options.exclude_signatures, issues)
     )
     return issues
 
@@ -259,22 +250,17 @@ def path_included(
 
 def find_strings(
     repo_path: str,
-    since_commit: Optional[str] = None,
-    max_depth: int = 1000000,
-    do_regex: bool = False,
-    do_entropy: bool = True,
+    options: GitOptions,
     custom_regexes: Optional[Dict[str, Pattern]] = None,
-    branch: Optional[str] = None,
     path_inclusions: Optional[Iterable[Pattern]] = None,
     path_exclusions: Optional[Iterable[Pattern]] = None,
-    excluded_signatures: Optional[Iterable[str]] = None,
 ) -> List[Issue]:
     repo = git.Repo(repo_path)
     already_searched: Set[bytes] = set()
     all_issues: List[Issue] = []
 
-    if branch:
-        branches = repo.remotes.origin.fetch(branch)
+    if options.branch:
+        branches = repo.remotes.origin.fetch(options.branch)
     else:
         branches = repo.remotes.origin.fetch()
 
@@ -284,11 +270,11 @@ def find_strings(
         prev_commit = None
         curr_commit = None
         commit_hash = None
-        for curr_commit in repo.iter_commits(branch_name, max_count=max_depth):
+        for curr_commit in repo.iter_commits(branch_name, max_count=options.max_depth):
             commit_hash = curr_commit.hexsha
-            if commit_hash == since_commit:
+            if commit_hash == options.since_commit:
                 since_commit_reached = True
-            if since_commit and since_commit_reached:
+            if options.since_commit and since_commit_reached:
                 prev_commit = curr_commit
                 continue
             # if not prev_commit, then curr_commit is the newest commit. And we have nothing to diff with.
@@ -304,30 +290,26 @@ def find_strings(
             # avoid searching the same diffs
             already_searched.add(diff_hash)
             found_issues = diff_worker(
-                diff,
-                custom_regexes,
-                do_entropy,
-                do_regex,
-                path_inclusions,
-                path_exclusions,
-                excluded_signatures,
-                prev_commit,
-                branch_name,
+                diff=diff,
+                options=options,
+                custom_regexes=custom_regexes,
+                path_inclusions=path_inclusions,
+                path_exclusions=path_exclusions,
+                prev_commit=prev_commit,
+                branch_name=branch_name,
             )
             all_issues.extend(found_issues)
             prev_commit = curr_commit
         # Handling the first commit
         diff = curr_commit.diff(git.NULL_TREE, create_patch=True)
         found_issues = diff_worker(
-            diff,
-            custom_regexes,
-            do_entropy,
-            do_regex,
-            path_inclusions,
-            path_exclusions,
-            excluded_signatures,
-            prev_commit,
-            branch_name,
+            diff=diff,
+            options=options,
+            custom_regexes=custom_regexes,
+            path_inclusions=path_inclusions,
+            path_exclusions=path_exclusions,
+            prev_commit=prev_commit,
+            branch_name=branch_name,
         )
         all_issues.extend(found_issues)
     return all_issues
@@ -338,8 +320,7 @@ def scan_repo(
     regexes: Optional[Dict[str, Pattern]],
     path_inclusions: List[Pattern],
     path_exclusions: List[Pattern],
-    excluded_signatures: Iterable[str],
-    options: Dict[str, config.OptionTypes],
+    options: GitOptions,
 ) -> List[Issue]:
     # Check the repo for any local configs
     repo_config: Dict[str, config.OptionTypes] = {}
@@ -347,7 +328,7 @@ def scan_repo(
     config_file = path / "pyproject.toml"
     if not config_file.is_file():
         config_file = path / "tartufo.toml"
-    if config_file.is_file() and str(config_file.resolve()) != str(options["config"]):
+    if config_file.is_file() and str(config_file.resolve()) != str(options.config):
         toml_file = toml.load(str(config_file))
         repo_config = toml_file.get("tool", {}).get("tartufo", {})
     if repo_config:
@@ -372,27 +353,20 @@ def scan_repo(
                     )
 
     return find_strings(
-        repo_path,
-        since_commit=cast(str, options["since_commit"]),
-        max_depth=cast(int, options["max_depth"]),
-        do_regex=cast(bool, options["regex"]),
-        do_entropy=cast(bool, options["entropy"]),
+        repo_path=repo_path,
+        options=options,
         custom_regexes=regexes,
-        branch=cast(str, options["branch"]),
         path_inclusions=path_inclusions,
         path_exclusions=path_exclusions,
-        excluded_signatures=excluded_signatures,
     )
 
 
 def find_staged(
     project_path: str,
-    do_regex: bool = False,
-    do_entropy: bool = True,
+    options: GitOptions,
     custom_regexes: Optional[Dict[str, Pattern]] = None,
     path_inclusions: Optional[Iterable[Pattern]] = None,
     path_exclusions: Optional[Iterable[Pattern]] = None,
-    excluded_signatures: Optional[Iterable[str]] = None,
 ) -> List[Issue]:
     repo = git.Repo(project_path, search_parent_directories=True)
     # using "create_patch=True" below causes output list to be empty
@@ -400,11 +374,9 @@ def find_staged(
     # https://github.com/gitpython-developers/GitPython/issues/852
     diff = repo.index.diff(repo.head.commit, create_patch=True, R=True)
     return diff_worker(
-        diff,
-        custom_regexes,
-        do_entropy,
-        do_regex,
-        path_inclusions,
-        path_exclusions,
-        excluded_signatures,
+        diff=diff,
+        custom_regexes=custom_regexes,
+        path_inclusions=path_inclusions,
+        path_exclusions=path_exclusions,
+        options=options,
     )

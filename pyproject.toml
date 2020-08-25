@@ -37,6 +37,7 @@ tartufo = "tartufo.cli:main"
 GitPython = ">= 2.1.1, <4.0.0"
 click = "^7"
 colorama = {version = "*", markers = "sys_platform == 'win32'"}
+dataclasses = {version = "*", python = "< 3.7"}
 python = "^3.6"
 recommonmark = {version = "^0.6", optional = true}
 sphinx = {version = "^2.3", optional = true}
@@ -116,6 +117,7 @@ exclude-signatures = [
   "2a3cb329b81351e357b09f1b97323ff726e72bd5ff8427c9295e6ef68226e1d1",
   "586f9df1870fcfafd3070dc553e97db25b3fce82c9144602567d69a86597c06f",
   "842533f44cf32fb3d93a7f56227977aa4f16caafe82ace8f5f4de27d750c1ec1",
+  "d039c652f27c4d42026c5b5c9be31bfe368b283b24248e98d92f131272580053",
 ]
 json = false
 regex = true
@@ -135,7 +137,7 @@ exclude = '''
     | dist
 )/
 '''
-target-version = ['py35', 'py36', 'py37', 'py38']
+target-version = ['py36', 'py37', 'py38']
 
 [tool.pytest]
 # Not yet supported, see https://github.com/pytest-dev/pytest/issues/1556
