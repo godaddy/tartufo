@@ -35,3 +35,9 @@ class GitOptions(GlobalOptions):
 class IssueType(enum.Enum):
     Entropy = "High Entropy"
     RegEx = "Regular Expression Match"
+
+
+@dataclass
+class Chunk:
+    contents: str
+    file_path: str

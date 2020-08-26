@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 
+import abc
 import datetime
 import hashlib
 import math
 import pathlib
-from typing import cast, Dict, Iterable, List, Optional, Pattern, Set
+from typing import cast, Dict, Generator, Iterable, List, Optional, Pattern, Set, Tuple
 
 import git
 import toml
 
 from tartufo import config
-from tartufo.types import GitOptions, IssueType
+from tartufo.types import GitOptions, GlobalOptions, IssueType, Chunk
 from tartufo.util import generate_signature, style_ok, style_warning
 
 
@@ -117,6 +118,146 @@ class Issue:
         output.append(diff_body)
         output.append(self.OUTPUT_SEPARATOR)
         return "\n".join(output)
+
+
+class ScannerBase(abc.ABC):
+    _issues: List[Issue]
+    _included_paths: Optional[List[Pattern]] = None
+    _excluded_paths: Optional[List[Pattern]] = None
+    options: GlobalOptions
+
+    def __init__(self, options: GlobalOptions) -> None:
+        self.options = options
+
+    @property
+    def issues(self) -> List[Issue]:
+        if not self._issues:
+            self._issues = self.scan()
+        return self._issues
+
+    @property
+    def included_paths(self) -> List[Pattern]:
+        if self._included_paths is None:
+            if self.options.include_paths:
+                self._included_paths = config.compile_path_rules(
+                    self.options.include_paths.readlines()
+                )
+            else:
+                self._included_paths = []
+        return self._included_paths
+
+    @property
+    def excluded_paths(self) -> List[Pattern]:
+        if self._excluded_paths is None:
+            if self.options.exclude_paths:
+                self._excluded_paths = config.compile_path_rules(
+                    self.options.exclude_paths.readlines()
+                )
+            else:
+                self._excluded_paths = []
+        return self._excluded_paths
+
+    def scan(self) -> List[Issue]:
+        issues: List[Issue] = []
+        for chunk in self.chunks:
+            if self.options.entropy:
+                issues += self.scan_entropy(chunk)
+            if self.options.regex:
+                issues += self.scan_regex(chunk, {})
+        return issues
+
+    def scan_entropy(self, data: Chunk) -> List[Issue]:
+        pass
+
+    def scan_regex(self, data: Chunk, regex_list: Dict[str, Pattern]) -> List[Issue]:
+        pass
+
+    @abc.abstractproperty
+    def chunks(self) -> Generator[Chunk, None, None]:
+        """Yield "chunks" of data to be scanned.
+
+        Examples of "chunks" would be individual git commit diffs, or the
+        contents of individual files.
+        """
+
+
+class GitRepoScanner(ScannerBase):
+    __repo: git.Repo
+    options: GitOptions
+
+    def __init__(  # pylint: disable=super-init-not-called
+        self, options: GitOptions, repo_path: str
+    ) -> None:
+        self.options = options
+        self.repo_path = repo_path
+        self.load_repo(self.repo_path)
+
+    def load_repo(self, repo_path: str):
+        self.__repo = git.Repo(repo_path)
+
+    def _iter_diff_index(
+        self, diff_index: git.DiffIndex
+    ) -> Generator[git.Diff, None, None]:
+        diff: git.Diff
+        for diff in diff_index:
+            printable_diff: str = diff.diff.decode("utf-8", errors="replace")
+            if printable_diff.startswith("Binary files"):
+                continue
+            # TODO: Check path inclusions/exclusions
+            yield diff
+
+    def _iter_branch_commits(
+        self, repo: git.Repo, branch: git.FetchInfo
+    ) -> Generator[Tuple[git.DiffIndex, bytes], None, None]:
+        since_commit_reached: bool = False
+        prev_commit: git.Commit = None
+        curr_commit: git.Commit = None
+
+        for curr_commit in repo.iter_commits(
+            branch.name, max_count=self.options.max_depth
+        ):
+            commit_hash = curr_commit.hexsha
+            if self.options.since_commit:
+                if commit_hash == self.options.since_commit:
+                    since_commit_reached = True
+                if since_commit_reached:
+                    prev_commit = curr_commit
+                    continue
+            if not prev_commit:
+                prev_commit = curr_commit
+                continue
+            diff_index: git.DiffIndex = curr_commit.diff(prev_commit, create_patch=True)
+            diff_hash: bytes = hashlib.md5(
+                (str(prev_commit) + str(curr_commit)).encode("utf-8")
+            ).digest()
+            yield (diff_index, diff_hash)
+
+    @property
+    def chunks(self) -> Generator[Chunk, None, None]:
+        already_searched: Set[bytes] = set()
+
+        if self.options.branch:
+            branches = self.__repo.remotes.origin.fetch(self.options.branch)
+        else:
+            branches = self.__repo.remotes.origin.fetch()
+
+        for remote_branch in branches:
+            diff_index: git.DiffIndex = None
+            diff_hash: bytes
+
+            for diff_index, diff_hash in self._iter_branch_commits(
+                self.__repo, remote_branch
+            ):
+                if diff_hash in already_searched:
+                    continue
+                already_searched.add(diff_hash)
+                for blob in self._iter_diff_index(diff_index):
+                    yield blob
+
+            # Finally, yield the first commit to the branch
+            diff = diff_index.diff(git.NULL_TREE, create_patch=True)
+            for blob in self._iter_diff_index(diff):
+                yield blob
 
 
 def shannon_entropy(data: str, iterator: Iterable[str]) -> float:
