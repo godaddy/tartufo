@@ -125,6 +125,7 @@ class ScannerBase(abc.ABC):
     _issues: List[Issue]
     _included_paths: Optional[List[Pattern]] = None
     _excluded_paths: Optional[List[Pattern]] = None
+    _rules_regexes: Optional[Dict[str, Pattern]] = None
     options: GlobalOptions
 
     def __init__(self, options: GlobalOptions) -> None:
@@ -158,6 +159,17 @@ class ScannerBase(abc.ABC):
                 self._excluded_paths = []
         return self._excluded_paths
 
+    @property
+    def rules_regexes(self):
+        if self._rules_regexes is None:
+            self._rules_regexes = config.configure_regexes(
+                self.options.default_regexes,
+                self.options.rules,
+                self.options.git_rules_repo,
+                self.options.git_rules_files,
+            )
+        return self._rules_regexes
+
     @lru_cache()
     def should_scan(self, file_path):
         """Check if the a file path should included in analysis.
@@ -189,14 +201,21 @@ class ScannerBase(abc.ABC):
             if self.options.entropy:
                 issues += self.scan_entropy(chunk)
             if self.options.regex:
-                issues += self.scan_regex(chunk, {})
+                issues += self.scan_regex(chunk)
         return issues
 
     def scan_entropy(self, data: Chunk) -> List[Issue]:
         pass
 
-    def scan_regex(self, data: Chunk, regex_list: Dict[str, Pattern]) -> List[Issue]:
-        pass
+    def scan_regex(self, data: Chunk) -> List[Issue]:
+        issues: List[Issue] = []
+        for key, pattern in self.rules_regexes:
+            found_strings = pattern.findall(data.contents)
+            for match in found_strings:
+                issue = Issue(IssueType.RegEx, match)
+                issue.issue_detail = key
+                issues.append(issue)
+        return issues
 
     @abc.abstractproperty
     def chunks(self) -> Generator[Chunk, None, None]:
@@ -223,7 +242,7 @@ class GitRepoScanner(ScannerBase):
 
     def _iter_diff_index(
         self, diff_index: git.DiffIndex
-    ) -> Generator[git.Diff, None, None]:
+    ) -> Generator[Tuple[str, str], None, None]:
         diff: git.Diff
         for diff in diff_index:
             printable_diff: str = diff.diff.decode("utf-8", errors="replace")
@@ -231,7 +250,7 @@ class GitRepoScanner(ScannerBase):
                 continue
             file_path = diff.b_path if diff.b_path else diff.a_path
             if self.should_scan(file_path):
-                yield diff
+                yield (printable_diff, file_path)
 
     def _iter_branch_commits(
         self, repo: git.Repo, branch: git.FetchInfo
@@ -278,13 +297,13 @@ class GitRepoScanner(ScannerBase):
                 if diff_hash in already_searched:
                     continue
                 already_searched.add(diff_hash)
-                for blob in self._iter_diff_index(diff_index):
-                    yield blob
+                for blob, file_path in self._iter_diff_index(diff_index):
+                    yield Chunk(blob, file_path)
 
             # Finally, yield the first commit to the branch
             diff = diff_index.diff(git.NULL_TREE, create_patch=True)
-            for blob in self._iter_diff_index(diff):
-                yield blob
+            for blob, file_path in self._iter_diff_index(diff):
+                yield Chunk(blob, file_path)
 
 
 def shannon_entropy(data: str, iterator: Iterable[str]) -> float:
