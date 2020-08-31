@@ -5,6 +5,7 @@ import datetime
 import hashlib
 import math
 import pathlib
+from functools import lru_cache
 from typing import cast, Dict, Generator, Iterable, List, Optional, Pattern, Set, Tuple
 
 import git
@@ -157,6 +158,31 @@ class ScannerBase(abc.ABC):
                 self._excluded_paths = []
         return self._excluded_paths
 
+    @lru_cache()
+    def should_scan(self, file_path):
+        """Check if the a file path should included in analysis.
+
+        If non-empty, `self.included_paths` has precedence over
+        `self.excluded_paths`, such that a file path that is not matched by any
+        of the defined `self.included_paths` will be excluded, even when it is
+        not matched by any of the defined `self.excluded_paths`. If either
+        `self.included_pats` or `self.excluded_paths` are undefined or empty,
+        they will have no effect, respectively. All file paths are included by
+        this function when no inclusions or exclusions exist.
+
+        :param file_path: The file path to check for inclusion
+        :return: False if the file path is _not_ matched by `self.indluded_paths`
+            (when non-empty) or if it is matched by `self.excluded_paths` (when
+            non-empty), otherwise returns True
+        """
+        if self.included_paths and not any(
+            p.match(file_path) for p in self.included_paths
+        ):
+            return False
+        if self.excluded_paths and any(p.match(file_path) for p in self.excluded_paths):
+            return False
+        return True
+
     def scan(self) -> List[Issue]:
         issues: List[Issue] = []
         for chunk in self.chunks:
@@ -203,8 +229,9 @@ class GitRepoScanner(ScannerBase):
             printable_diff: str = diff.diff.decode("utf-8", errors="replace")
             if printable_diff.startswith("Binary files"):
                 continue
-            # TODO: Check path inclusions/exclusions
-            yield diff
+            file_path = diff.b_path if diff.b_path else diff.a_path
+            if self.should_scan(file_path):
+                yield diff
 
     def _iter_branch_commits(
         self, repo: git.Repo, branch: git.FetchInfo
