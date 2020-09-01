@@ -11,9 +11,8 @@ from typing import cast, Dict, Generator, Iterable, List, Optional, Pattern, Set
 import git
 import toml
 
-from tartufo import config
+from tartufo import config, util
 from tartufo.types import GitOptions, GlobalOptions, IssueType, Chunk
-from tartufo.util import generate_signature, style_ok, style_warning
 
 
 BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
@@ -92,29 +91,29 @@ class Issue:
     @property
     def signature(self) -> Optional[str]:
         if self.file_path:
-            return generate_signature(self.matched_string, self.file_path)
+            return util.generate_signature(self.matched_string, self.file_path)
         return None
 
     def __str__(self) -> str:
         output = []
         diff_body = self.printable_diff
         diff_body = diff_body.replace(
-            self.matched_string, style_warning(self.matched_string)
+            self.matched_string, util.style_warning(self.matched_string)
         )
         output.append(self.OUTPUT_SEPARATOR)
-        output.append(style_ok("Reason: {}".format(self.issue_type.value)))  # type: ignore
+        output.append(util.style_ok("Reason: {}".format(self.issue_type.value)))  # type: ignore
         if self.issue_detail:
-            output.append(style_ok("Detail: {}".format(self.issue_detail)))
+            output.append(util.style_ok("Detail: {}".format(self.issue_detail)))
         if self.file_path:
-            output.append(style_ok("Filepath: {}".format(self.file_path)))
+            output.append(util.style_ok("Filepath: {}".format(self.file_path)))
         if self.signature:
-            output.append(style_ok("Signature: {}".format(self.signature)))
+            output.append(util.style_ok("Signature: {}".format(self.signature)))
         if self.branch_name:
-            output.append(style_ok("Branch: {}".format(self.branch_name)))
+            output.append(util.style_ok("Branch: {}".format(self.branch_name)))
         if self.commit:
-            output.append(style_ok("Date: {}".format(self.commit_time)))
-            output.append(style_ok("Hash: {}".format(self.commit_hash)))
-            output.append(style_ok("Commit: {}".format(self.commit_message)))
+            output.append(util.style_ok("Date: {}".format(self.commit_time)))
+            output.append(util.style_ok("Hash: {}".format(self.commit_hash)))
+            output.append(util.style_ok("Commit: {}".format(self.commit_message)))
 
         output.append(diff_body)
         output.append(self.OUTPUT_SEPARATOR)
@@ -254,7 +253,7 @@ class GitRepoScanner(ScannerBase):
 
     def _iter_branch_commits(
         self, repo: git.Repo, branch: git.FetchInfo
-    ) -> Generator[Tuple[git.DiffIndex, bytes], None, None]:
+    ) -> Generator[Tuple[git.Commit, git.Commit], None, None]:
         since_commit_reached: bool = False
         prev_commit: git.Commit = None
         curr_commit: git.Commit = None
@@ -272,11 +271,7 @@ class GitRepoScanner(ScannerBase):
             if not prev_commit:
                 prev_commit = curr_commit
                 continue
-            diff_index: git.DiffIndex = curr_commit.diff(prev_commit, create_patch=True)
-            diff_hash: bytes = hashlib.md5(
-                (str(prev_commit) + str(curr_commit)).encode("utf-8")
-            ).digest()
-            yield (diff_index, diff_hash)
+            yield (curr_commit, prev_commit)
 
     @property
     def chunks(self) -> Generator[Chunk, None, None]:
@@ -290,20 +285,36 @@ class GitRepoScanner(ScannerBase):
         for remote_branch in branches:
             diff_index: git.DiffIndex = None
             diff_hash: bytes
+            curr_commit: git.Commit = None
+            prev_commit: git.Commit = None
 
-            for diff_index, diff_hash in self._iter_branch_commits(
+            for curr_commit, prev_commit in self._iter_branch_commits(
                 self.__repo, remote_branch
             ):
+                diff_index = curr_commit.diff(prev_commit, create_patch=True)
+                diff_hash = hashlib.md5(
+                    (str(prev_commit) + str(curr_commit)).encode("utf-8")
+                ).digest()
                 if diff_hash in already_searched:
                     continue
                 already_searched.add(diff_hash)
                 for blob, file_path in self._iter_diff_index(diff_index):
-                    yield Chunk(blob, file_path)
+                    yield Chunk(
+                        blob,
+                        file_path,
+                        util.extract_commit_metadata(
+                            curr_commit, prev_commit, remote_branch
+                        ),
+                    )
 
             # Finally, yield the first commit to the branch
             diff = diff_index.diff(git.NULL_TREE, create_patch=True)
             for blob, file_path in self._iter_diff_index(diff):
-                yield Chunk(blob, file_path)
+                yield Chunk(
+                    blob,
+                    file_path,
+                    util.extract_commit_metadata(diff, prev_commit, remote_branch),
+                )
 
 
 def shannon_entropy(data: str, iterator: Iterable[str]) -> float:

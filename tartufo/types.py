@@ -1,7 +1,7 @@
 # pylint: disable=too-many-instance-attributes
 import enum
-from dataclasses import dataclass
-from typing import Optional, TextIO, Tuple
+from dataclasses import dataclass, field
+from typing import Any, Dict, Optional, TextIO, Tuple
 
 from click import Path
 
@@ -41,3 +41,4 @@ class IssueType(enum.Enum):
 class Chunk:
     contents: str
     file_path: str
+    metadata: Dict[str, Any] = field(default_factory=dict)
