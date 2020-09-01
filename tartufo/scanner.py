@@ -194,6 +194,25 @@ class ScannerBase(abc.ABC):
             return False
         return True
 
+    def signature_is_excluded(self, blob: str, file_path: str) -> bool:
+        return (
+            util.generate_signature(blob, file_path) in self.options.exclude_signatures
+        )
+
+    @lru_cache()
+    def calculate_entropy(self, data: str, char_set: str) -> float:
+        """
+        Borrowed from http://blog.dkbza.org/2007/05/scanning-data-for-entropy-anomalies.html
+        """
+        if not data:
+            return 0.0
+        entropy = 0.0
+        for char in char_set:
+            prob_x = float(data.count(char)) / len(data)
+            if prob_x > 0:
+                entropy += -prob_x * math.log2(prob_x)
+        return entropy
+
     def scan(self) -> List[Issue]:
         issues: List[Issue] = []
         for chunk in self.chunks:
@@ -203,19 +222,33 @@ class ScannerBase(abc.ABC):
                 issues += self.scan_regex(chunk)
         return issues
 
-    def scan_entropy(self, data: Chunk) -> List[Issue]:
-        pass
+    def scan_entropy(self, chunk: Chunk) -> List[Issue]:
+        issues: List[Issue] = []
+        for line in chunk.contents.split("\n"):
+            for word in line.split():
+                b64_strings = util.get_strings_of_set(word, BASE64_CHARS)
+                hex_strings = util.get_strings_of_set(word, HEX_CHARS)
 
-    def scan_regex(self, data: Chunk) -> List[Issue]:
+                for string in b64_strings:
+                    if not self.signature_is_excluded(string, chunk.file_path):
+                        b64_entropy = self.calculate_entropy(string, BASE64_CHARS)
+                        if b64_entropy > 4.5:
+                            issues.append(Issue(IssueType.Entropy, string))
+
+                for string in hex_strings:
+                    if not self.signature_is_excluded(string, chunk.file_path):
+                        hex_entropy = self.calculate_entropy(string, HEX_CHARS)
+                        if hex_entropy > 3:
+                            issues.append(Issue(IssueType.Entropy, string))
+        return issues
+
+    def scan_regex(self, chunk: Chunk) -> List[Issue]:
         issues: List[Issue] = []
         for key, pattern in self.rules_regexes:
-            found_strings = pattern.findall(data.contents)
+            found_strings = pattern.findall(chunk.contents)
             for match in found_strings:
                 # Filter out any explicitly "allowed" match signatures
-                if (
-                    util.generate_signature(match, data.file_path)
-                    not in self.options.exclude_signatures
-                ):
+                if self.signature_is_excluded(match, chunk.file_path):
                     issue = Issue(IssueType.RegEx, match)
                     issue.issue_detail = key
                     issues.append(issue)

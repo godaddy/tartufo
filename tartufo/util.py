@@ -10,7 +10,7 @@ import tempfile
 import uuid
 from functools import lru_cache, partial
 from hashlib import blake2s
-from typing import Any, Callable, Dict, List, TYPE_CHECKING
+from typing import Any, Callable, Dict, Iterable, List, TYPE_CHECKING
 
 import click
 import git
@@ -89,3 +89,30 @@ def extract_commit_metadata(
         "commit_hash": commit.hexsha,
         "branch": branch.name,
     }
+
+
+def get_strings_of_set(
+    word: str, char_set: Iterable[str], threshold: int = 20
+) -> List[str]:
+    """Split a "word" into a set of "strings", based on a given character set.
+
+    The returned strings must have a length, at minimum, equal to `threshold`.
+    This is meant for extracting long strings which are likely to be things like
+    auto-generated passwords, tokens, hashes, etc.
+    """
+    count: int = 0
+    letters: str = ""
+    strings: List[str] = []
+
+    for char in word:
+        if char in char_set:
+            letters += char
+            count += 1
+        else:
+            if count > threshold:
+                strings.append(letters)
+            letters = ""
+            count = 0
+    if count > threshold:
+        strings.append(letters)
+    return strings
