@@ -244,11 +244,11 @@ class ScannerBase(abc.ABC):
 
     def scan_regex(self, chunk: Chunk) -> List[Issue]:
         issues: List[Issue] = []
-        for key, pattern in self.rules_regexes:
+        for key, pattern in self.rules_regexes.items():
             found_strings = pattern.findall(chunk.contents)
             for match in found_strings:
                 # Filter out any explicitly "allowed" match signatures
-                if self.signature_is_excluded(match, chunk.file_path):
+                if not self.signature_is_excluded(match, chunk.file_path):
                     issue = Issue(IssueType.RegEx, match)
                     issue.issue_detail = key
                     issues.append(issue)
@@ -345,7 +345,7 @@ class GitRepoScanner(ScannerBase):
                     )
 
             # Finally, yield the first commit to the branch
-            diff = diff_index.diff(git.NULL_TREE, create_patch=True)
+            diff = curr_commit.diff(git.NULL_TREE, create_patch=True)
             for blob, file_path in self._iter_diff_index(diff):
                 yield Chunk(
                     blob,
