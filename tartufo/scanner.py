@@ -211,9 +211,14 @@ class ScannerBase(abc.ABC):
         for key, pattern in self.rules_regexes:
             found_strings = pattern.findall(data.contents)
             for match in found_strings:
-                issue = Issue(IssueType.RegEx, match)
-                issue.issue_detail = key
-                issues.append(issue)
+                # Filter out any explicitly "allowed" match signatures
+                if (
+                    util.generate_signature(match, data.file_path)
+                    not in self.options.exclude_signatures
+                ):
+                    issue = Issue(IssueType.RegEx, match)
+                    issue.issue_detail = key
+                    issues.append(issue)
         return issues
 
     @abc.abstractproperty
@@ -272,6 +277,7 @@ class GitRepoScanner(ScannerBase):
                 prev_commit = curr_commit
                 continue
             yield (curr_commit, prev_commit)
+            prev_commit = curr_commit
 
     @property
     def chunks(self) -> Generator[Chunk, None, None]:
@@ -302,9 +308,7 @@ class GitRepoScanner(ScannerBase):
                     yield Chunk(
                         blob,
                         file_path,
-                        util.extract_commit_metadata(
-                            curr_commit, prev_commit, remote_branch
-                        ),
+                        util.extract_commit_metadata(prev_commit, remote_branch),
                     )
 
             # Finally, yield the first commit to the branch
@@ -313,7 +317,7 @@ class GitRepoScanner(ScannerBase):
                 yield Chunk(
                     blob,
                     file_path,
-                    util.extract_commit_metadata(diff, prev_commit, remote_branch),
+                    util.extract_commit_metadata(prev_commit, remote_branch),
                 )
 
 

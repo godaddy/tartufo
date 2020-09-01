@@ -81,12 +81,11 @@ def generate_signature(snippet: str, filename: str) -> str:
 
 
 def extract_commit_metadata(
-    curr_commit: git.Commit, prev_commit: git.Commit, branch: git.FetchInfo
+    commit: git.Commit, branch: git.FetchInfo
 ) -> Dict[str, Any]:
     return {
-        "diff": curr_commit.diff.decode("utf-8", errors="replace"),
-        "commit_time": datetime.datetime.fromtimestamp(prev_commit.committed_date),
-        "commit_message": prev_commit.message,
-        "commit_hash": prev_commit.hexsha,
+        "commit_time": datetime.datetime.fromtimestamp(commit.committed_date),
+        "commit_message": commit.message,
+        "commit_hash": commit.hexsha,
         "branch": branch.name,
     }
