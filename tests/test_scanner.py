@@ -350,7 +350,7 @@ class DiffWorkerTests(unittest.TestCase):
     @mock.patch("tartufo.scanner.path_included")
     @mock.patch("tartufo.scanner.find_entropy")
     @mock.patch("tartufo.scanner.find_regex")
-    @mock.patch("tartufo.scanner.generate_signature")
+    @mock.patch("tartufo.util.generate_signature")
     def test_excluded_signatures_are_filtered_out(
         self, mock_signature, mock_regex, mock_entropy, mock_paths
     ):

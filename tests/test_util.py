@@ -17,7 +17,7 @@ class GitTests(unittest.TestCase):
          should only ever rely on the code which is being directly tested.
     """
 
-    @mock.patch("tartufo.util.Repo.clone_from")
+    @mock.patch("git.Repo.clone_from")
     @mock.patch("tartufo.util.tempfile.mkdtemp")
     def test_tartufo_clones_git_repo_into_temp_dir(self, mock_mkdtemp, mock_clone):
         util.clone_git_repo("https://github.com/godaddy/tartufo.git")
@@ -25,7 +25,7 @@ class GitTests(unittest.TestCase):
             "https://github.com/godaddy/tartufo.git", mock_mkdtemp.return_value
         )
 
-    @mock.patch("tartufo.util.Repo.clone_from", new=mock.MagicMock())
+    @mock.patch("git.Repo.clone_from", new=mock.MagicMock())
     @mock.patch("tartufo.util.tempfile.mkdtemp")
     def test_clone_git_repo_returns_path_to_clone(self, mock_mkdtemp):
         repo_path = util.clone_git_repo("https://github.com/godaddy/tartufo.git")
