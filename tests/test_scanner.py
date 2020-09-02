@@ -426,6 +426,44 @@ class ScannerBaseTests(unittest.TestCase):
         test_scanner.issues  # pylint: disable=pointless-statement
         mock_scan.assert_not_called()
 
+    @mock.patch("tartufo.config.compile_path_rules")
+    def test_populated_included_paths_list_does_not_recompute(self, mock_compile):
+        test_scanner = TestScanner(self.options)
+        test_scanner._included_paths = []  # pylint: disable=protected-access
+        test_scanner.included_paths  # pylint: disable=pointless-statement
+        mock_compile.assert_not_called()
+
+    def test_included_paths_is_empty_if_not_specified(self):
+        test_scanner = TestScanner(self.options)
+        self.assertEqual(test_scanner.included_paths, [])
+
+    @mock.patch("tartufo.config.compile_path_rules")
+    def test_include_paths_are_calculated_if_specified(self, mock_compile):
+        mock_include = mock.MagicMock()
+        self.options.include_paths = mock_include
+        test_scanner = TestScanner(self.options)
+        test_scanner.included_paths  # pylint: disable=pointless-statement
+        mock_compile.assert_called_once_with(mock_include.readlines.return_value)
+
+    @mock.patch("tartufo.config.compile_path_rules")
+    def test_populated_excluded_paths_list_does_not_recompute(self, mock_compile):
+        test_scanner = TestScanner(self.options)
+        test_scanner._excluded_paths = []  # pylint: disable=protected-access
+        test_scanner.excluded_paths  # pylint: disable=pointless-statement
+        mock_compile.assert_not_called()
+
+    def test_excluded_paths_is_empty_if_not_specified(self):
+        test_scanner = TestScanner(self.options)
+        self.assertEqual(test_scanner.excluded_paths, [])
+
+    @mock.patch("tartufo.config.compile_path_rules")
+    def test_exclude_paths_are_calculated_if_specified(self, mock_compile):
+        mock_exclude = mock.MagicMock()
+        self.options.exclude_paths = mock_exclude
+        test_scanner = TestScanner(self.options)
+        test_scanner.excluded_paths  # pylint: disable=pointless-statement
+        mock_compile.assert_called_once_with(mock_exclude.readlines.return_value)
+
 
 class GitRepoScannerTests(unittest.TestCase):
     pass
