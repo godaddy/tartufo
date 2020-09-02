@@ -6,7 +6,7 @@ from collections import namedtuple
 from unittest import mock
 
 from tartufo import scanner, util
-from tartufo.types import GitOptions
+from tartufo.types import GitOptions, GlobalOptions
 
 from .helpers import generate_options
 
@@ -367,6 +367,68 @@ class DiffWorkerTests(unittest.TestCase):
         )
         issues = scanner.diff_worker([mock_diff], options, None, None, None, None, None)
         self.assertEqual(issues, [regex_issue])
+
+
+class TestScanner(scanner.ScannerBase):
+    """A simple scanner subclass for testing purposes.
+
+    Since `chunks` is an abstract property, we cannot directly instantiate the
+    `ScannerBase` class."""
+
+    @property
+    def chunks(self):
+        return ("foo", "bar", "baz")
+
+
+class ScannerBaseTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.options = generate_options(GlobalOptions)
+
+    def test_scan_iterates_through_all_chunks(self):
+        # Make sure we do at least one type of scan
+        self.options.entropy = True
+        test_scanner = TestScanner(self.options)
+        mock_entropy = mock.MagicMock()
+        test_scanner.scan_entropy = mock_entropy
+        test_scanner.scan()
+        mock_entropy.assert_has_calls(
+            (mock.call("foo"), mock.call("bar"), mock.call("baz")), any_order=True
+        )
+
+    def test_scan_checks_entropy_if_specified(self):
+        self.options.entropy = True
+        test_scanner = TestScanner(self.options)
+        mock_entropy = mock.MagicMock()
+        test_scanner.scan_entropy = mock_entropy
+        test_scanner.scan()
+        mock_entropy.assert_called()
+
+    def test_scan_checks_regex_if_specified(self):
+        self.options.regex = True
+        test_scanner = TestScanner(self.options)
+        mock_regex = mock.MagicMock()
+        test_scanner.scan_regex = mock_regex
+        test_scanner.scan()
+        mock_regex.assert_called()
+
+    def test_empty_issue_list_causes_scan(self):
+        test_scanner = TestScanner(self.options)
+        mock_scan = mock.MagicMock()
+        test_scanner.scan = mock_scan
+        test_scanner.issues  # pylint: disable=pointless-statement
+        mock_scan.assert_called()
+
+    def test_populated_issues_list_does_not_rescan(self):
+        test_scanner = TestScanner(self.options)
+        mock_scan = mock.MagicMock()
+        test_scanner.scan = mock_scan
+        test_scanner._issues = ["foo"]  # pylint: disable=protected-access
+        test_scanner.issues  # pylint: disable=pointless-statement
+        mock_scan.assert_not_called()
+
+
+class GitRepoScannerTests(unittest.TestCase):
+    pass
 
 
 if __name__ == "__main__":
