@@ -121,7 +121,7 @@ class Issue:
 
 
 class ScannerBase(abc.ABC):
-    _issues: List[Issue]
+    _issues: Optional[List[Issue]] = None
     _included_paths: Optional[List[Pattern]] = None
     _excluded_paths: Optional[List[Pattern]] = None
     _rules_regexes: Optional[Dict[str, Pattern]] = None
@@ -132,7 +132,7 @@ class ScannerBase(abc.ABC):
 
     @property
     def issues(self) -> List[Issue]:
-        if not self._issues:
+        if self._issues is None:
             self._issues = self.scan()
         return self._issues
 
@@ -220,7 +220,8 @@ class ScannerBase(abc.ABC):
                 issues += self.scan_entropy(chunk)
             if self.options.regex:
                 issues += self.scan_regex(chunk)
-        return issues
+        self._issues = issues
+        return self._issues
 
     def scan_entropy(self, chunk: Chunk) -> List[Issue]:
         issues: List[Issue] = []
@@ -267,12 +268,10 @@ class GitRepoScanner(ScannerBase):
     __repo: git.Repo
     options: GitOptions
 
-    def __init__(  # pylint: disable=super-init-not-called
-        self, options: GitOptions, repo_path: str
-    ) -> None:
-        self.options = options
+    def __init__(self, options: GitOptions, repo_path: str) -> None:
         self.repo_path = repo_path
         self.load_repo(self.repo_path)
+        super().__init__(options)
 
     def load_repo(self, repo_path: str):
         self.__repo = git.Repo(repo_path)
