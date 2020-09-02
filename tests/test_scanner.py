@@ -6,7 +6,7 @@ from collections import namedtuple
 from unittest import mock
 
 from tartufo import scanner, util
-from tartufo.types import GitOptions, GlobalOptions
+from tartufo.types import GitOptions
 
 from .helpers import generate_options
 
@@ -367,102 +367,6 @@ class DiffWorkerTests(unittest.TestCase):
         )
         issues = scanner.diff_worker([mock_diff], options, None, None, None, None, None)
         self.assertEqual(issues, [regex_issue])
-
-
-class TestScanner(scanner.ScannerBase):
-    """A simple scanner subclass for testing purposes.
-
-    Since `chunks` is an abstract property, we cannot directly instantiate the
-    `ScannerBase` class."""
-
-    @property
-    def chunks(self):
-        return ("foo", "bar", "baz")
-
-
-class ScannerBaseTests(unittest.TestCase):
-    def setUp(self) -> None:
-        self.options = generate_options(GlobalOptions)
-
-    def test_scan_iterates_through_all_chunks(self):
-        # Make sure we do at least one type of scan
-        self.options.entropy = True
-        test_scanner = TestScanner(self.options)
-        mock_entropy = mock.MagicMock()
-        test_scanner.scan_entropy = mock_entropy
-        test_scanner.scan()
-        mock_entropy.assert_has_calls(
-            (mock.call("foo"), mock.call("bar"), mock.call("baz")), any_order=True
-        )
-
-    def test_scan_checks_entropy_if_specified(self):
-        self.options.entropy = True
-        test_scanner = TestScanner(self.options)
-        mock_entropy = mock.MagicMock()
-        test_scanner.scan_entropy = mock_entropy
-        test_scanner.scan()
-        mock_entropy.assert_called()
-
-    def test_scan_checks_regex_if_specified(self):
-        self.options.regex = True
-        test_scanner = TestScanner(self.options)
-        mock_regex = mock.MagicMock()
-        test_scanner.scan_regex = mock_regex
-        test_scanner.scan()
-        mock_regex.assert_called()
-
-    def test_empty_issue_list_causes_scan(self):
-        test_scanner = TestScanner(self.options)
-        mock_scan = mock.MagicMock()
-        test_scanner.scan = mock_scan
-        test_scanner.issues  # pylint: disable=pointless-statement
-        mock_scan.assert_called()
-
-    def test_populated_issues_list_does_not_rescan(self):
-        test_scanner = TestScanner(self.options)
-        mock_scan = mock.MagicMock()
-        test_scanner.scan = mock_scan
-        test_scanner._issues = ["foo"]  # pylint: disable=protected-access
-        test_scanner.issues  # pylint: disable=pointless-statement
-        mock_scan.assert_not_called()
-
-    @mock.patch("tartufo.config.compile_path_rules")
-    def test_populated_included_paths_list_does_not_recompute(self, mock_compile):
-        test_scanner = TestScanner(self.options)
-        test_scanner._included_paths = []  # pylint: disable=protected-access
-        test_scanner.included_paths  # pylint: disable=pointless-statement
-        mock_compile.assert_not_called()
-
-    def test_included_paths_is_empty_if_not_specified(self):
-        test_scanner = TestScanner(self.options)
-        self.assertEqual(test_scanner.included_paths, [])
-
-    @mock.patch("tartufo.config.compile_path_rules")
-    def test_include_paths_are_calculated_if_specified(self, mock_compile):
-        mock_include = mock.MagicMock()
-        self.options.include_paths = mock_include
-        test_scanner = TestScanner(self.options)
-        test_scanner.included_paths  # pylint: disable=pointless-statement
-        mock_compile.assert_called_once_with(mock_include.readlines.return_value)
-
-    @mock.patch("tartufo.config.compile_path_rules")
-    def test_populated_excluded_paths_list_does_not_recompute(self, mock_compile):
-        test_scanner = TestScanner(self.options)
-        test_scanner._excluded_paths = []  # pylint: disable=protected-access
-        test_scanner.excluded_paths  # pylint: disable=pointless-statement
-        mock_compile.assert_not_called()
-
-    def test_excluded_paths_is_empty_if_not_specified(self):
-        test_scanner = TestScanner(self.options)
-        self.assertEqual(test_scanner.excluded_paths, [])
-
-    @mock.patch("tartufo.config.compile_path_rules")
-    def test_exclude_paths_are_calculated_if_specified(self, mock_compile):
-        mock_exclude = mock.MagicMock()
-        self.options.exclude_paths = mock_exclude
-        test_scanner = TestScanner(self.options)
-        test_scanner.excluded_paths  # pylint: disable=pointless-statement
-        mock_compile.assert_called_once_with(mock_exclude.readlines.return_value)
 
 
 class GitRepoScannerTests(unittest.TestCase):

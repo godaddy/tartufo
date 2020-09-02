@@ -1,0 +1,187 @@
+import re
+import unittest
+from unittest import mock
+
+from tartufo import scanner
+from tartufo.types import GlobalOptions
+
+from tests.helpers import generate_options
+
+
+class TestScanner(scanner.ScannerBase):
+    """A simple scanner subclass for testing purposes.
+
+    Since `chunks` is an abstract property, we cannot directly instantiate the
+    `ScannerBase` class."""
+
+    @property
+    def chunks(self):
+        return ("foo", "bar", "baz")
+
+
+class ScannerTestCase(unittest.TestCase):
+    def setUp(self) -> None:
+        self.options = generate_options(GlobalOptions)
+
+
+class ScanTests(ScannerTestCase):
+    def test_scan_iterates_through_all_chunks(self):
+        # Make sure we do at least one type of scan
+        self.options.entropy = True
+        test_scanner = TestScanner(self.options)
+        mock_entropy = mock.MagicMock()
+        test_scanner.scan_entropy = mock_entropy
+        test_scanner.scan()
+        mock_entropy.assert_has_calls(
+            (mock.call("foo"), mock.call("bar"), mock.call("baz")), any_order=True
+        )
+
+    def test_scan_checks_entropy_if_specified(self):
+        self.options.entropy = True
+        test_scanner = TestScanner(self.options)
+        mock_entropy = mock.MagicMock()
+        test_scanner.scan_entropy = mock_entropy
+        test_scanner.scan()
+        mock_entropy.assert_called()
+
+    def test_scan_checks_regex_if_specified(self):
+        self.options.regex = True
+        test_scanner = TestScanner(self.options)
+        mock_regex = mock.MagicMock()
+        test_scanner.scan_regex = mock_regex
+        test_scanner.scan()
+        mock_regex.assert_called()
+
+
+class IssuesTests(ScannerTestCase):
+    def test_empty_issue_list_causes_scan(self):
+        test_scanner = TestScanner(self.options)
+        mock_scan = mock.MagicMock()
+        test_scanner.scan = mock_scan
+        test_scanner.issues  # pylint: disable=pointless-statement
+        mock_scan.assert_called()
+
+    def test_populated_issues_list_does_not_rescan(self):
+        test_scanner = TestScanner(self.options)
+        mock_scan = mock.MagicMock()
+        test_scanner.scan = mock_scan
+        test_scanner._issues = ["foo"]  # pylint: disable=protected-access
+        test_scanner.issues  # pylint: disable=pointless-statement
+        mock_scan.assert_not_called()
+
+
+class IncludeExcludePathsTests(ScannerTestCase):
+    @mock.patch("tartufo.config.compile_path_rules")
+    def test_populated_included_paths_list_does_not_recompute(
+        self, mock_compile: mock.MagicMock
+    ):
+        test_scanner = TestScanner(self.options)
+        test_scanner._included_paths = []  # pylint: disable=protected-access
+        test_scanner.included_paths  # pylint: disable=pointless-statement
+        mock_compile.assert_not_called()
+
+    def test_included_paths_is_empty_if_not_specified(self):
+        test_scanner = TestScanner(self.options)
+        self.assertEqual(test_scanner.included_paths, [])
+
+    @mock.patch("tartufo.config.compile_path_rules")
+    def test_include_paths_are_calculated_if_specified(
+        self, mock_compile: mock.MagicMock
+    ):
+        mock_include = mock.MagicMock()
+        self.options.include_paths = mock_include
+        test_scanner = TestScanner(self.options)
+        test_scanner.included_paths  # pylint: disable=pointless-statement
+        mock_compile.assert_called_once_with(mock_include.readlines.return_value)
+
+    @mock.patch("tartufo.config.compile_path_rules")
+    def test_populated_excluded_paths_list_does_not_recompute(
+        self, mock_compile: mock.MagicMock
+    ):
+        test_scanner = TestScanner(self.options)
+        test_scanner._excluded_paths = []  # pylint: disable=protected-access
+        test_scanner.excluded_paths  # pylint: disable=pointless-statement
+        mock_compile.assert_not_called()
+
+    def test_excluded_paths_is_empty_if_not_specified(self):
+        test_scanner = TestScanner(self.options)
+        self.assertEqual(test_scanner.excluded_paths, [])
+
+    @mock.patch("tartufo.config.compile_path_rules")
+    def test_exclude_paths_are_calculated_if_specified(
+        self, mock_compile: mock.MagicMock
+    ):
+        mock_exclude = mock.MagicMock()
+        self.options.exclude_paths = mock_exclude
+        test_scanner = TestScanner(self.options)
+        test_scanner.excluded_paths  # pylint: disable=pointless-statement
+        mock_compile.assert_called_once_with(mock_exclude.readlines.return_value)
+
+    def test_should_scan_treats_included_paths_as_exclusive(self):
+        test_scanner = TestScanner(self.options)
+        test_scanner._included_paths = [  # pylint: disable=protected-access
+            re.compile(r"foo\/(.*)")
+        ]
+        self.assertFalse(test_scanner.should_scan("bar.txt"))
+
+    def test_should_scan_includes_files_in_matched_paths(self):
+        test_scanner = TestScanner(self.options)
+        test_scanner._included_paths = [  # pylint: disable=protected-access
+            re.compile(r"foo\/(.*)")
+        ]
+        self.assertTrue(test_scanner.should_scan("foo/bar.txt"))
+
+    def test_should_scan_allows_files_which_are_not_excluded(self):
+        test_scanner = TestScanner(self.options)
+        test_scanner._excluded_paths = [  # pylint: disable=protected-access
+            re.compile(r"foo\/(.*)")
+        ]
+        self.assertTrue(test_scanner.should_scan("bar.txt"))
+
+    def test_should_scan_excludes_files_in_matched_paths(self):
+        test_scanner = TestScanner(self.options)
+        test_scanner._excluded_paths = [  # pylint: disable=protected-access
+            re.compile(r"foo\/(.*)")
+        ]
+        self.assertFalse(test_scanner.should_scan("foo/bar.txt"))
+
+
+class RegexRulesTests(ScannerTestCase):
+    @mock.patch("tartufo.config.configure_regexes")
+    def test_populated_regex_list_does_not_recompute(
+        self, mock_configure: mock.MagicMock
+    ):
+        test_scanner = TestScanner(self.options)
+        test_scanner._rules_regexes = {}  # pylint: disable=protected-access
+        test_scanner.rules_regexes  # pylint: disable=pointless-statement
+        mock_configure.assert_not_called()
+
+    @mock.patch("tartufo.config.configure_regexes")
+    def test_regex_rules_are_computed_when_first_accessed(
+        self, mock_configure: mock.MagicMock
+    ):
+        self.options.default_regexes = True
+        self.options.rules = "foo"  # type: ignore
+        self.options.git_rules_repo = "bar"
+        self.options.git_rules_files = "baz"  # type: ignore
+        test_scanner = TestScanner(self.options)
+        test_scanner.rules_regexes  # pylint: disable=pointless-statement
+        mock_configure.assert_called_once_with(True, "foo", "bar", "baz")
+
+
+class SignatureTests(ScannerTestCase):
+    @mock.patch("tartufo.util.generate_signature")
+    def test_matched_signatures_are_excluded(self, mock_signature: mock.MagicMock):
+        self.options.exclude_signatures = ("foo",)
+        mock_signature.return_value = "foo"
+        test_scanner = TestScanner(self.options)
+        self.assertTrue(test_scanner.signature_is_excluded("bar", "blah"))
+
+    @mock.patch("tartufo.util.generate_signature")
+    def test_unmatched_signatures_are_not_excluded(
+        self, mock_signature: mock.MagicMock
+    ):
+        self.options.exclude_signatures = ("foo",)
+        mock_signature.return_value = "bar"
+        test_scanner = TestScanner(self.options)
+        self.assertFalse(test_scanner.signature_is_excluded("blah", "stuff"))
