@@ -367,33 +367,13 @@ def shannon_entropy(data: str, iterator: Iterable[str]) -> float:
     return entropy
 
 
-def get_strings_of_set(
-    word: str, char_set: Iterable[str], threshold: int = 20
-) -> List[str]:
-    count = 0
-    letters = ""
-    strings = []
-    for char in word:
-        if char in char_set:
-            letters += char
-            count += 1
-        else:
-            if count > threshold:
-                strings.append(letters)
-            letters = ""
-            count = 0
-    if count > threshold:
-        strings.append(letters)
-    return strings
-
-
 def find_entropy(printable_diff: str) -> List[Issue]:
     issues = []
     lines = printable_diff.split("\n")
     for line in lines:
         for word in line.split():
-            base64_strings = get_strings_of_set(word, BASE64_CHARS)
-            hex_strings = get_strings_of_set(word, HEX_CHARS)
+            base64_strings = util.get_strings_of_set(word, BASE64_CHARS)
+            hex_strings = util.get_strings_of_set(word, HEX_CHARS)
             for string in base64_strings:
                 b64_entropy = shannon_entropy(string, BASE64_CHARS)
                 if b64_entropy > 4.5:
