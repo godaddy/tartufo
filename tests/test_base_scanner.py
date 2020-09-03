@@ -2,13 +2,13 @@ import re
 import unittest
 from unittest import mock
 
-from tartufo import scanner
+from tartufo import scanner, types
 from tartufo.types import GlobalOptions
 
 from tests.helpers import generate_options
 
 
-class TestScanner(scanner.ScannerBase):
+class TestScanner(scanner.ScannerBase):  # pylint: disable=too-many-instance-attributes
     """A simple scanner subclass for testing purposes.
 
     Since `chunks` is an abstract property, we cannot directly instantiate the
@@ -185,3 +185,54 @@ class SignatureTests(ScannerTestCase):
         mock_signature.return_value = "bar"
         test_scanner = TestScanner(self.options)
         self.assertFalse(test_scanner.signature_is_excluded("blah", "stuff"))
+
+
+class RegexScanTests(ScannerTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.options.regex = True
+        self.options.default_regexes = True
+
+    def test_all_regex_rules_are_checked(self):
+        rule_1 = mock.MagicMock()
+        rule_1.findall.return_value = []
+        rule_2 = mock.MagicMock()
+        rule_2.findall.return_value = []
+        test_scanner = TestScanner(self.options)
+        test_scanner._rules_regexes = {  # pylint: disable=protected-access
+            "foo": rule_1,
+            "bar": rule_2,
+        }
+        chunk = types.Chunk("foo", "bar")
+        test_scanner.scan_regex(chunk)
+        rule_1.findall.assert_called_once_with("foo")
+        rule_2.findall.assert_called_once_with("foo")
+
+    def test_issue_is_not_created_if_signature_is_excluded(self):
+        mock_signature = mock.MagicMock()
+        mock_signature.return_value = True
+        test_scanner = TestScanner(self.options)
+        test_scanner._rules_regexes = {  # pylint: disable=protected-access
+            "foo": re.compile("foo")
+        }
+        test_scanner.signature_is_excluded = mock_signature
+        chunk = types.Chunk("foo", "bar")
+        issues = test_scanner.scan_regex(chunk)
+        mock_signature.assert_called_once_with("foo", "bar")
+        self.assertEqual(issues, [])
+
+    def test_issue_is_returned_if_signature_is_not_excluded(self):
+        mock_signature = mock.MagicMock()
+        mock_signature.return_value = False
+        test_scanner = TestScanner(self.options)
+        test_scanner._rules_regexes = {  # pylint: disable=protected-access
+            "foo": re.compile("foo")
+        }
+        test_scanner.signature_is_excluded = mock_signature
+        chunk = types.Chunk("foo", "bar")
+        issues = test_scanner.scan_regex(chunk)
+        mock_signature.assert_called_once_with("foo", "bar")
+        self.assertEqual(len(issues), 1)
+        self.assertEqual(issues[0].issue_detail, "foo")
+        self.assertEqual(issues[0].issue_type, types.IssueType.RegEx)
+        self.assertEqual(issues[0].matched_string, "foo")
