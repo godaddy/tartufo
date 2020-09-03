@@ -372,3 +372,7 @@ class EntropyTests(ScannerTestCase):
         self.scanner.calculate_entropy = mock_calculate
         issues = self.scanner.scan_entropy(self.chunk)
         self.assertEqual(len(issues), 0)
+
+
+if __name__ == "__main__":
+    unittest.main()
