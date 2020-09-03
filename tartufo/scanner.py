@@ -344,13 +344,14 @@ class GitRepoScanner(ScannerBase):
                     )
 
             # Finally, yield the first commit to the branch
-            diff = curr_commit.diff(git.NULL_TREE, create_patch=True)
-            for blob, file_path in self._iter_diff_index(diff):
-                yield Chunk(
-                    blob,
-                    file_path,
-                    util.extract_commit_metadata(prev_commit, remote_branch),
-                )
+            if curr_commit:
+                diff = curr_commit.diff(git.NULL_TREE, create_patch=True)
+                for blob, file_path in self._iter_diff_index(diff):
+                    yield Chunk(
+                        blob,
+                        file_path,
+                        util.extract_commit_metadata(prev_commit, remote_branch),
+                    )
 
 
 def shannon_entropy(data: str, iterator: Iterable[str]) -> float:
