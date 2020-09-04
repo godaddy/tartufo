@@ -135,5 +135,45 @@ class ChunkGeneratorTests(ScannerTestCase):
         )
 
 
+class IterDiffIndexTests(ScannerTestCase):
+    @mock.patch("git.Repo", new=mock.MagicMock())
+    def test_binary_files_are_skipped(self):
+        mock_diff = mock.MagicMock()
+        mock_diff.diff.decode.return_value = "Binary files\n101010"
+        test_scanner = scanner.GitRepoScanner(self.options, ".")
+        diffs = list(test_scanner._iter_diff_index([mock_diff]))
+        self.assertEqual(diffs, [])
+
+    @mock.patch("git.Repo", new=mock.MagicMock())
+    @mock.patch("tartufo.scanner.ScannerBase.should_scan")
+    def test_excluded_files_are_not_scanned(self, mock_should: mock.MagicMock):
+        mock_should.return_value = False
+        mock_diff = mock.MagicMock()
+        mock_diff.diff.decode.return_value = "+ Ford Prefect"
+        test_scanner = scanner.GitRepoScanner(self.options, ".")
+        diffs = list(test_scanner._iter_diff_index([mock_diff]))
+        self.assertEqual(diffs, [])
+        mock_should.assert_called_once()
+
+    @mock.patch("git.Repo", new=mock.MagicMock())
+    @mock.patch("tartufo.scanner.ScannerBase.should_scan")
+    def test_all_files_are_yielded(self, mock_should: mock.MagicMock):
+        mock_should.return_value = True
+        mock_diff_1 = mock.MagicMock()
+        mock_diff_1.diff.decode.return_value = "+ Ford Prefect"
+        mock_diff_2 = mock.MagicMock()
+        mock_diff_2.diff.decode.return_value = "- Marvin"
+        test_scanner = scanner.GitRepoScanner(self.options, ".")
+        diffs = list(test_scanner._iter_diff_index([mock_diff_1, mock_diff_2]))
+        self.assertEqual(
+            diffs,
+            [("+ Ford Prefect", mock_diff_1.b_path), ("- Marvin", mock_diff_2.b_path)],
+        )
+
+
+class IterBranchCommitsTests(ScannerTestCase):
+    pass
+
+
 if __name__ == "__main__":
     unittest.main()
