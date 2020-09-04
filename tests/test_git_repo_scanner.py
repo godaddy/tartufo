@@ -50,17 +50,14 @@ class ChunkGeneratorTests(ScannerTestCase):
             pass
         mock_fetch.assert_called_once_with()
 
+    @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
     @mock.patch("git.Repo")
-    def test_all_branches_are_scanned_for_commits(self, mock_repo: mock.MagicMock):
-        mock_fetch = mock.MagicMock()
-        mock_fetch.return_value = ["foo", "bar"]
-        mock_repo.return_value.remotes.origin.fetch = mock_fetch
+    def test_all_branches_are_scanned_for_commits(
+        self, mock_repo: mock.MagicMock, mock_iter_commits: mock.MagicMock
+    ):
+        mock_repo.return_value.remotes.origin.fetch.return_value = ["foo", "bar"]
         test_scanner = scanner.GitRepoScanner(self.options, ".")
-        mock_iter_commits = mock.MagicMock()
         mock_iter_commits.return_value = []
-        test_scanner._iter_branch_commits = (  # type: ignore
-            mock_iter_commits
-        )
         for _ in test_scanner.chunks:
             pass
         mock_iter_commits.assert_has_calls(
@@ -70,13 +67,17 @@ class ChunkGeneratorTests(ScannerTestCase):
             )
         )
 
+    @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
+    @mock.patch("tartufo.scanner.GitRepoScanner._iter_diff_index")
     @mock.patch("git.Repo")
-    def test_all_commits_are_scanned_for_files(self, mock_repo: mock.MagicMock):
-        mock_fetch = mock.MagicMock()
-        mock_fetch.return_value = ["foo"]
-        mock_repo.return_value.remotes.origin.fetch = mock_fetch
+    def test_all_commits_are_scanned_for_files(
+        self,
+        mock_repo: mock.MagicMock,
+        mock_iter_diff: mock.MagicMock,
+        mock_iter_commits: mock.MagicMock,
+    ):
+        mock_repo.return_value.remotes.origin.fetch.return_value = ["foo"]
         test_scanner = scanner.GitRepoScanner(self.options, ".")
-        mock_iter_commits = mock.MagicMock()
         mock_commit_1 = mock.MagicMock()
         mock_commit_2 = mock.MagicMock()
         mock_commit_3 = mock.MagicMock()
@@ -84,10 +85,7 @@ class ChunkGeneratorTests(ScannerTestCase):
             (mock_commit_2, mock_commit_3),
             (mock_commit_1, mock_commit_2),
         ]
-        test_scanner._iter_branch_commits = mock_iter_commits  # type: ignore
-        mock_iter_diff = mock.MagicMock()
         mock_iter_diff.return_value = []
-        test_scanner._iter_diff_index = mock_iter_diff  # type: ignore
         for _ in test_scanner.chunks:
             pass
         mock_commit_2.diff.assert_called_once_with(mock_commit_3, create_patch=True)
@@ -105,23 +103,23 @@ class ChunkGeneratorTests(ScannerTestCase):
             )
         )
 
+    @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
+    @mock.patch("tartufo.scanner.GitRepoScanner._iter_diff_index")
     @mock.patch("tartufo.util.extract_commit_metadata")
     @mock.patch("git.Repo")
     def test_all_files_are_yielded_as_chunks(
-        self, mock_repo: mock.MagicMock, mock_extract: mock.MagicMock
+        self,
+        mock_repo: mock.MagicMock,
+        mock_extract: mock.MagicMock,
+        mock_iter_diff: mock.MagicMock,
+        mock_iter_commits: mock.MagicMock,
     ):
-        mock_fetch = mock.MagicMock()
-        mock_fetch.return_value = ["foo"]
-        mock_repo.return_value.remotes.origin.fetch = mock_fetch
+        mock_repo.return_value.remotes.origin.fetch.return_value = ["foo"]
         test_scanner = scanner.GitRepoScanner(self.options, ".")
-        mock_iter_commits = mock.MagicMock()
         mock_commit_1 = mock.MagicMock()
         mock_commit_2 = mock.MagicMock()
         mock_iter_commits.return_value = [(mock_commit_1, mock_commit_2)]
-        test_scanner._iter_branch_commits = mock_iter_commits  # type: ignore
-        mock_iter_diff = mock.MagicMock()
         mock_iter_diff.return_value = [("foo", "bar.py"), ("baz", "blah.py")]
-        test_scanner._iter_diff_index = mock_iter_diff  # type: ignore
         chunks = list(test_scanner.chunks)
         # These get duplicated in this test, because `_iter_diff_index` is called
         # both in the normal branch/commit iteration, and then once more afterward
