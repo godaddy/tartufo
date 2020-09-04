@@ -255,7 +255,8 @@ class ScannerBase(abc.ABC):
                     issues.append(issue)
         return issues
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def chunks(self) -> Generator[Chunk, None, None]:
         """Yield "chunks" of data to be scanned.
 
