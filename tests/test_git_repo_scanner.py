@@ -172,7 +172,53 @@ class IterDiffIndexTests(ScannerTestCase):
 
 
 class IterBranchCommitsTests(ScannerTestCase):
-    pass
+    @mock.patch("git.Repo", new=mock.MagicMock())
+    def test_all_commits_get_yielded_in_pairs(self):
+        test_scanner = scanner.GitRepoScanner(self.options, ".")
+        mock_repo = mock.MagicMock()
+        mock_branch = mock.MagicMock(name="foo")
+        mock_commit_1 = mock.MagicMock()
+        mock_commit_2 = mock.MagicMock()
+        mock_commit_3 = mock.MagicMock()
+        mock_commit_4 = mock.MagicMock()
+        mock_repo.iter_commits.return_value = [
+            mock_commit_1,
+            mock_commit_2,
+            mock_commit_3,
+            mock_commit_4,
+        ]
+        commits = list(test_scanner._iter_branch_commits(mock_repo, mock_branch))
+        self.assertEqual(
+            commits,
+            [
+                (mock_commit_2, mock_commit_1),
+                (mock_commit_3, mock_commit_2),
+                (mock_commit_4, mock_commit_3),
+            ],
+        )
+
+    @mock.patch("git.Repo", new=mock.MagicMock())
+    def test_iteration_stops_when_since_commit_is_reached(self):
+        self.options.since_commit = "42"
+        test_scanner = scanner.GitRepoScanner(self.options, ".")
+        mock_repo = mock.MagicMock()
+        mock_branch = mock.MagicMock(name="foo")
+        mock_commit_1 = mock.MagicMock()
+        mock_commit_2 = mock.MagicMock()
+        mock_commit_3 = mock.MagicMock()
+        mock_commit_3.hexsha = "42"
+        mock_commit_4 = mock.MagicMock()
+        mock_repo.iter_commits.return_value = [
+            mock_commit_1,
+            mock_commit_2,
+            mock_commit_3,
+            mock_commit_4,
+        ]
+        commits = list(test_scanner._iter_branch_commits(mock_repo, mock_branch))
+        # Because "since commit" is exclusive, only the 2 commits before it are ever yielded
+        self.assertEqual(
+            commits, [(mock_commit_2, mock_commit_1)],
+        )
 
 
 if __name__ == "__main__":
