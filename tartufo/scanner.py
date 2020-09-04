@@ -171,13 +171,13 @@ class ScannerBase(abc.ABC):
 
     @lru_cache()
     def should_scan(self, file_path):
-        """Check if the a file path should included in analysis.
+        """Check if the a file path should be included in analysis.
 
         If non-empty, `self.included_paths` has precedence over
         `self.excluded_paths`, such that a file path that is not matched by any
         of the defined `self.included_paths` will be excluded, even when it is
         not matched by any of the defined `self.excluded_paths`. If either
-        `self.included_pats` or `self.excluded_paths` are undefined or empty,
+        `self.included_paths` or `self.excluded_paths` are undefined or empty,
         they will have no effect, respectively. All file paths are included by
         this function when no inclusions or exclusions exist.
 
