@@ -14,6 +14,8 @@ class TestScanner(scanner.ScannerBase):  # pylint: disable=too-many-instance-att
     Since `chunks` is an abstract property, we cannot directly instantiate the
     `ScannerBase` class."""
 
+    __test__ = False
+
     @property
     def chunks(self):
         return ("foo", "bar", "baz")
