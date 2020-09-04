@@ -304,7 +304,7 @@ class GitRepoScanner(ScannerBase):
                     since_commit_reached = True
                 if since_commit_reached:
                     prev_commit = curr_commit
-                    continue
+                    break
             if not prev_commit:
                 prev_commit = curr_commit
                 continue
