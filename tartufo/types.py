@@ -1,7 +1,7 @@
 # pylint: disable=too-many-instance-attributes
 import enum
-from dataclasses import dataclass
-from typing import Optional, TextIO, Tuple
+from dataclasses import dataclass, field
+from typing import Any, Dict, Optional, TextIO, Tuple
 
 from click import Path
 
@@ -35,3 +35,10 @@ class GitOptions(GlobalOptions):
 class IssueType(enum.Enum):
     Entropy = "High Entropy"
     RegEx = "Regular Expression Match"
+
+
+@dataclass
+class Chunk:
+    contents: str
+    file_path: str
+    metadata: Dict[str, Any] = field(default_factory=dict)
