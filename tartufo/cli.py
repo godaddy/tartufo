@@ -1,17 +1,13 @@
 # -*- coding: utf-8 -*-
 
+import pathlib
 import shutil
-from functools import partial
-from typing import cast, List, Optional, Pattern, TextIO, Tuple
+from tempfile import mkdtemp
+from typing import Dict, List, Pattern
 
 import click
 
-from tartufo import config, scanner, util
-
-
-err = partial(  # pylint: disable=invalid-name
-    click.secho, fg="red", bold=True, err=True
-)
+from tartufo import config, scanner, types, util
 
 
 @click.command(
@@ -74,6 +70,16 @@ err = partial(  # pylint: disable=invalid-name
     "unless effectively excluded via the --include-paths option.",
 )
 @click.option(
+    "-e",
+    "--exclude-signatures",
+    multiple=True,
+    help="Specify signatures of matches that you explicitly want to exclude "
+    "from the scan, and mark as okay. These signatures are generated during "
+    "the scan process, and reported out with each individual match. This "
+    "option can be specified multiple times, to exclude as many signatures as "
+    "you would like.",
+)
+@click.option(
     "--repo-path",
     type=click.Path(exists=True, file_okay=False, resolve_path=True, allow_dash=False),
     help="Path to local repo clone. If provided, git_url will not be used.",
@@ -127,72 +133,74 @@ def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
     also be made to work in pre-commit mode, for scanning blobs of text as a
     pre-commit hook.
     """
-    if not any((kwargs["entropy"], kwargs["regex"])):
-        err("No analysis requested.")
-        ctx.exit(1)
-    if not any((kwargs["pre_commit"], kwargs["repo_path"], kwargs["git_url"])):
-        err("You must specify one of --pre-commit, --repo-path, or git_url.")
-        ctx.exit(1)
-    if kwargs["regex"]:
+    options = types.GitOptions(**kwargs)  # type: ignore
+    if not any((options.entropy, options.regex)):
+        util.fail("No analysis requested.", ctx)
+    if not any((options.pre_commit, options.repo_path, options.git_url)):
+        util.fail("You must specify one of --pre-commit, --repo-path, or git_url.", ctx)
+
+    rules_regexes: Dict[str, Pattern] = {}
+    if options.regex:
         try:
             rules_regexes = config.configure_regexes(
-                cast(bool, kwargs["default_regexes"]),
-                cast(Tuple[TextIO, ...], kwargs["rules"]),
-                cast(Optional[str], kwargs["git_rules_repo"]),
-                cast(Tuple[str, ...], kwargs["git_rules_files"]),
+                options.default_regexes,
+                options.rules,
+                options.git_rules_repo,
+                options.git_rules_files,
             )
         except ValueError as exc:
-            err(str(exc))
-            ctx.exit(1)
+            util.fail(str(exc), ctx)
         if not rules_regexes:
-            err("Regex checks requested, but no regexes found.")
-            ctx.exit(1)
-    else:
-        rules_regexes = {}
+            util.fail("Regex checks requested, but no regexes found.", ctx)
 
     # read & compile path inclusion/exclusion patterns
-    path_inclusions = []  # type: List[Pattern]
-    path_exclusions = []  # type: List[Pattern]
-    paths_file = cast(TextIO, kwargs["include_paths"])
-    if paths_file:
-        path_inclusions = config.compile_path_rules(paths_file.readlines())
-    paths_file = cast(TextIO, kwargs["exclude_paths"])
-    if paths_file:
-        path_exclusions = config.compile_path_rules(paths_file.readlines())
+    path_inclusions: List[Pattern] = []
+    path_exclusions: List[Pattern] = []
+    if options.include_paths:
+        path_inclusions = config.compile_path_rules(options.include_paths.readlines())
+    if options.exclude_paths:
+        path_exclusions = config.compile_path_rules(options.exclude_paths.readlines())
 
-    if kwargs["pre_commit"]:
-        output = scanner.find_staged(
-            cast(str, kwargs["repo_path"]),
-            cast(bool, kwargs["json"]),
-            cast(bool, kwargs["regex"]),
-            cast(bool, kwargs["entropy"]),
+    found_issues: List[scanner.Issue] = []
+    remove_repo = False
+    repo_path = str(options.repo_path)
+    if options.pre_commit:
+        found_issues = scanner.find_staged(
+            project_path=str(options.repo_path),
+            options=options,
             custom_regexes=rules_regexes,
-            suppress_output=False,
             path_inclusions=path_inclusions,
             path_exclusions=path_exclusions,
         )
     else:
-        remove_repo = False
-        if kwargs["git_url"]:
-            repo_path = util.clone_git_repo(cast(str, kwargs["git_url"]))
+        if options.git_url:
+            repo_path = util.clone_git_repo(options.git_url)
             remove_repo = True
-        else:
-            repo_path = cast(str, kwargs["repo_path"])
 
-        output = scanner.scan_repo(
-            repo_path, rules_regexes, path_inclusions, path_exclusions, kwargs
+        found_issues = scanner.scan_repo(
+            repo_path=repo_path,
+            regexes=rules_regexes,
+            path_inclusions=path_inclusions,
+            path_exclusions=path_exclusions,
+            options=options,
         )
 
-        if remove_repo:
-            shutil.rmtree(repo_path, onerror=util.del_rw)
-
-    if kwargs["cleanup"]:
-        util.clean_outputs(output)
+    if found_issues:
+        output_dir = pathlib.Path(mkdtemp())
+        util.write_outputs(found_issues, output_dir)
     else:
-        issues_path = output.get("issues_path", None)
-        if issues_path:
-            print("Results have been saved in {}".format(issues_path))
+        output_dir = None  # type: ignore
+    util.echo_issues(found_issues, options.json, repo_path, output_dir)
 
-    if output.get("found_issues", False):
+    if options.cleanup:
+        util.clean_outputs(output_dir)
+    else:
+        if output_dir and not options.json:
+            click.echo("Results have been saved in {}".format(output_dir))
+
+    if remove_repo:
+        shutil.rmtree(repo_path, onerror=util.del_rw)
+
+    if found_issues:
         ctx.exit(1)
     ctx.exit(0)

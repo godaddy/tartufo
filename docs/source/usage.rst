@@ -86,7 +86,7 @@ pre-commit hook by using ``git commit --no-verify``.
 If you would like to automate these hooks, you can use either the ``Python`` or ``Docker`` approach to setting up tartufo as a pre-commit hook
 
 Python pre-commit hook
-+++++++++++++++++++++
+++++++++++++++++++++++
 
 Add a ``.pre-commit-config.yaml`` file to your repository. You can copy and paste the following to get you started:
 
@@ -118,6 +118,7 @@ Use the docker image as pre-commit hook by adding the docker run command to ``.g
     docker run -t --rm -v "$PWD:/git" godaddy/tartufo --pre-commit
     EOF
 
+
 Temporary File Cleanup
 ----------------------
 
@@ -128,3 +129,6 @@ these files when tartufo completes, specify the ``--cleanup`` flag:
 .. code-block:: sh
 
    tartufo --cleanup
+
+
+Would you like to know more? See :doc:`examplecleanup`.

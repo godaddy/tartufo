@@ -1,51 +1,39 @@
 # -*- coding: utf-8 -*-
 
 import datetime
-import enum
 import hashlib
-import json
 import math
-import os
 import pathlib
-import tempfile
-import uuid
-from typing import cast, Dict, Iterable, List, Optional, Pattern, Set, Union
+from typing import cast, Dict, Iterable, List, Optional, Pattern, Set
 
-import click
 import git
 import toml
+
 from tartufo import config
-from tartufo.util import style_ok, style_warning
+from tartufo.types import GitOptions, IssueType
+from tartufo.util import generate_signature, style_ok, style_warning
 
 
 BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
 HEX_CHARS = "1234567890abcdefABCDEF"
 
-# FIXME: This should be replaced with a dataclass to better track the attributes
-IssueDict = Dict[str, Union[str, List[str]]]
-
-
-class IssueType(enum.Enum):
-    Entropy = "High Entropy"
-    RegEx = "Regular Expression Match"
-
 
 class Issue:
     """Represents an issue found while scanning the code."""
 
-    OUTPUT_SEPARATOR = "~~~~~~~~~~~~~~~~~~~~~"  # type: str
-    DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"  # type: str
+    OUTPUT_SEPARATOR: str = "~~~~~~~~~~~~~~~~~~~~~"
+    DATETIME_FORMAT: str = "%Y-%m-%d %H:%M:%S"
 
-    issue_type = None  # type: Optional[IssueType]
-    issue_detail = None  # type: Optional[str]
-    diff = None  # type: Optional[git.Diff]
-    strings_found = None  # type: Optional[List[str]]
-    commit = None  # type: Optional[git.Commit]
-    branch_name = None  # type: Optional[str]
+    issue_type: Optional[IssueType] = None
+    issue_detail: Optional[str] = None
+    diff: Optional[git.Diff] = None
+    matched_string: str = ""
+    commit: Optional[git.Commit] = None
+    branch_name: Optional[str] = None
 
-    def __init__(self, issue_type: IssueType, strings_found: List[str]) -> None:
+    def __init__(self, issue_type: IssueType, matched_string: str) -> None:
         self.issue_type = issue_type
-        self.strings_found = strings_found
+        self.matched_string = matched_string
 
     def as_dict(self) -> Dict[str, Optional[str]]:
         """Return a dictionary representation of an issue.
@@ -56,7 +44,8 @@ class Issue:
             "issue_type": self.issue_type.value,  # type: ignore
             "issue_detail": self.issue_detail,
             "diff": self.printable_diff,
-            "strings_found": self.strings_found,
+            "matched_string": self.matched_string,
+            "signature": self.signature,
             "commit_time": self.commit_time,
             "commit_message": self.commit_message,
             "commit_hash": self.commit_hash,
@@ -98,17 +87,26 @@ class Issue:
             return self.diff.b_path
         return self.diff.a_path
 
+    @property
+    def signature(self) -> Optional[str]:
+        if self.file_path:
+            return generate_signature(self.matched_string, self.file_path)
+        return None
+
     def __str__(self) -> str:
         output = []
         diff_body = self.printable_diff
-        for bad_str in self.strings_found:  # type: ignore
-            diff_body = diff_body.replace(bad_str, style_warning(bad_str))
+        diff_body = diff_body.replace(
+            self.matched_string, style_warning(self.matched_string)
+        )
         output.append(self.OUTPUT_SEPARATOR)
         output.append(style_ok("Reason: {}".format(self.issue_type.value)))  # type: ignore
         if self.issue_detail:
             output.append(style_ok("Detail: {}".format(self.issue_detail)))
-        if self.diff:
+        if self.file_path:
             output.append(style_ok("Filepath: {}".format(self.file_path)))
+        if self.signature:
+            output.append(style_ok("Signature: {}".format(self.signature)))
         if self.branch_name:
             output.append(style_ok("Branch: {}".format(self.branch_name)))
         if self.commit:
@@ -155,8 +153,8 @@ def get_strings_of_set(
     return strings
 
 
-def find_entropy(printable_diff: str) -> Optional[Issue]:
-    strings_found = []
+def find_entropy(printable_diff: str) -> List[Issue]:
+    issues = []
     lines = printable_diff.split("\n")
     for line in lines:
         for word in line.split():
@@ -165,14 +163,12 @@ def find_entropy(printable_diff: str) -> Optional[Issue]:
             for string in base64_strings:
                 b64_entropy = shannon_entropy(string, BASE64_CHARS)
                 if b64_entropy > 4.5:
-                    strings_found.append(string)
+                    issues.append(Issue(IssueType.Entropy, string))
             for string in hex_strings:
                 hex_entropy = shannon_entropy(string, HEX_CHARS)
                 if hex_entropy > 3:
-                    strings_found.append(string)
-    if strings_found:
-        return Issue(IssueType.Entropy, strings_found)
-    return None
+                    issues.append(Issue(IssueType.Entropy, string))
+    return issues
 
 
 def find_regex(
@@ -183,8 +179,8 @@ def find_regex(
     regex_matches = []
     for key in regex_list:
         found_strings = regex_list[key].findall(printable_diff)
-        if found_strings:
-            issue = Issue(IssueType.RegEx, found_strings)
+        for found in found_strings:
+            issue = Issue(IssueType.RegEx, found)
             issue.issue_detail = key
             regex_matches.append(issue)
     return regex_matches
@@ -192,52 +188,34 @@ def find_regex(
 
 def diff_worker(
     diff: git.DiffIndex,
+    options: GitOptions,
     custom_regexes: Optional[Dict[str, Pattern]],
-    do_entropy: bool,
-    do_regex: bool,
-    print_json: bool,
-    suppress_output: bool,
     path_inclusions: Optional[Iterable[Pattern]],
     path_exclusions: Optional[Iterable[Pattern]],
     prev_commit: Optional[git.Commit] = None,
     branch_name: Optional[str] = None,
 ) -> List[Issue]:
-    issues = []  # type: List[Issue]
+    issues: List[Issue] = []
     for blob in diff:
         printable_diff = blob.diff.decode("utf-8", errors="replace")
         if printable_diff.startswith("Binary files"):
             continue
         if not path_included(blob, path_inclusions, path_exclusions):
             continue
-        found_issues = []  # type: List[Issue]
-        if do_entropy:
-            entropy_issue = find_entropy(printable_diff)
-            if entropy_issue:
-                found_issues.append(entropy_issue)
-        if do_regex:
+        found_issues: List[Issue] = []
+        if options.entropy:
+            found_issues += find_entropy(printable_diff)
+        if options.regex:
             found_issues += find_regex(printable_diff, custom_regexes)
         for finding in found_issues:
             finding.diff = blob
             finding.commit = prev_commit
             finding.branch_name = branch_name
-            if not suppress_output:
-                if print_json:
-                    click.echo(json.dumps(finding.as_dict()))
-                else:
-                    click.echo(finding)
         issues += found_issues
+    issues = list(
+        filter(lambda x: x.signature not in options.exclude_signatures, issues)
+    )
     return issues
-
-
-def handle_results(
-    output: IssueDict, output_dir: str, found_issues: List[Issue]
-) -> IssueDict:
-    for found_issue in found_issues:
-        result_path = os.path.join(output_dir, str(uuid.uuid4()))
-        with open(result_path, "w+") as result_file:
-            result_file.write(json.dumps(found_issue.as_dict()))
-        output["found_issues"].append(result_path)  # type: ignore
-    return output
 
 
 def path_included(
@@ -272,24 +250,17 @@ def path_included(
 
 def find_strings(
     repo_path: str,
-    since_commit: Optional[str] = None,
-    max_depth: int = 1000000,
-    print_json: bool = False,
-    do_regex: bool = False,
-    do_entropy: bool = True,
-    suppress_output: bool = True,
+    options: GitOptions,
     custom_regexes: Optional[Dict[str, Pattern]] = None,
-    branch: Optional[str] = None,
     path_inclusions: Optional[Iterable[Pattern]] = None,
     path_exclusions: Optional[Iterable[Pattern]] = None,
-) -> IssueDict:
-    output = {"found_issues": []}  # type: IssueDict
+) -> List[Issue]:
     repo = git.Repo(repo_path)
-    already_searched = set()  # type: Set[bytes]
-    output_dir = tempfile.mkdtemp()
+    already_searched: Set[bytes] = set()
+    all_issues: List[Issue] = []
 
-    if branch:
-        branches = repo.remotes.origin.fetch(branch)
+    if options.branch:
+        branches = repo.remotes.origin.fetch(options.branch)
     else:
         branches = repo.remotes.origin.fetch()
 
@@ -299,11 +270,11 @@ def find_strings(
         prev_commit = None
         curr_commit = None
         commit_hash = None
-        for curr_commit in repo.iter_commits(branch_name, max_count=max_depth):
+        for curr_commit in repo.iter_commits(branch_name, max_count=options.max_depth):
             commit_hash = curr_commit.hexsha
-            if commit_hash == since_commit:
+            if commit_hash == options.since_commit:
                 since_commit_reached = True
-            if since_commit and since_commit_reached:
+            if options.since_commit and since_commit_reached:
                 prev_commit = curr_commit
                 continue
             # if not prev_commit, then curr_commit is the newest commit. And we have nothing to diff with.
@@ -319,37 +290,29 @@ def find_strings(
             # avoid searching the same diffs
             already_searched.add(diff_hash)
             found_issues = diff_worker(
-                diff,
-                custom_regexes,
-                do_entropy,
-                do_regex,
-                print_json,
-                suppress_output,
-                path_inclusions,
-                path_exclusions,
-                prev_commit,
-                branch_name,
+                diff=diff,
+                options=options,
+                custom_regexes=custom_regexes,
+                path_inclusions=path_inclusions,
+                path_exclusions=path_exclusions,
+                prev_commit=prev_commit,
+                branch_name=branch_name,
             )
-            output = handle_results(output, output_dir, found_issues)
+            all_issues.extend(found_issues)
             prev_commit = curr_commit
         # Handling the first commit
         diff = curr_commit.diff(git.NULL_TREE, create_patch=True)
         found_issues = diff_worker(
-            diff,
-            custom_regexes,
-            do_entropy,
-            do_regex,
-            print_json,
-            suppress_output,
-            path_inclusions,
-            path_exclusions,
-            prev_commit,
-            branch_name,
+            diff=diff,
+            options=options,
+            custom_regexes=custom_regexes,
+            path_inclusions=path_inclusions,
+            path_exclusions=path_exclusions,
+            prev_commit=prev_commit,
+            branch_name=branch_name,
         )
-        output = handle_results(output, output_dir, found_issues)
-    output["project_path"] = repo_path
-    output["issues_path"] = output_dir
-    return output
+        all_issues.extend(found_issues)
+    return all_issues
 
 
 def scan_repo(
@@ -357,15 +320,15 @@ def scan_repo(
     regexes: Optional[Dict[str, Pattern]],
     path_inclusions: List[Pattern],
     path_exclusions: List[Pattern],
-    options: Dict[str, config.OptionTypes],
-) -> IssueDict:
+    options: GitOptions,
+) -> List[Issue]:
     # Check the repo for any local configs
-    repo_config = {}  # type: Dict[str, config.OptionTypes]
+    repo_config: Dict[str, config.OptionTypes] = {}
     path = pathlib.Path(repo_path)
     config_file = path / "pyproject.toml"
     if not config_file.is_file():
         config_file = path / "tartufo.toml"
-    if config_file.is_file() and str(config_file.resolve()) != str(options["config"]):
+    if config_file.is_file() and str(config_file.resolve()) != str(options.config):
         toml_file = toml.load(str(config_file))
         repo_config = toml_file.get("tool", {}).get("tartufo", {})
     if repo_config:
@@ -389,51 +352,31 @@ def scan_repo(
                         config.compile_path_rules(paths_file.readlines())
                     )
 
-    output = find_strings(
-        repo_path,
-        since_commit=cast(str, options["since_commit"]),
-        max_depth=cast(int, options["max_depth"]),
-        print_json=cast(bool, options["json"]),
-        do_regex=cast(bool, options["regex"]),
-        do_entropy=cast(bool, options["entropy"]),
+    return find_strings(
+        repo_path=repo_path,
+        options=options,
         custom_regexes=regexes,
-        suppress_output=False,
-        branch=cast(str, options["branch"]),
         path_inclusions=path_inclusions,
         path_exclusions=path_exclusions,
     )
-    return output
 
 
 def find_staged(
     project_path: str,
-    print_json: bool = False,
-    do_regex: bool = False,
-    do_entropy: bool = True,
-    suppress_output: bool = True,
+    options: GitOptions,
     custom_regexes: Optional[Dict[str, Pattern]] = None,
     path_inclusions: Optional[Iterable[Pattern]] = None,
     path_exclusions: Optional[Iterable[Pattern]] = None,
-) -> IssueDict:
-    output = {"found_issues": []}  # type: IssueDict
-    output_dir = tempfile.mkdtemp()
+) -> List[Issue]:
     repo = git.Repo(project_path, search_parent_directories=True)
     # using "create_patch=True" below causes output list to be empty
     # unless "R=True" also is specified. See GitPython issue 852:
     # https://github.com/gitpython-developers/GitPython/issues/852
     diff = repo.index.diff(repo.head.commit, create_patch=True, R=True)
-    found_issues = diff_worker(
-        diff,
-        custom_regexes,
-        do_entropy,
-        do_regex,
-        print_json,
-        suppress_output,
-        path_inclusions,
-        path_exclusions,
+    return diff_worker(
+        diff=diff,
+        custom_regexes=custom_regexes,
+        path_inclusions=path_inclusions,
+        path_exclusions=path_exclusions,
+        options=options,
     )
-
-    output = handle_results(output, output_dir, found_issues)
-    output["project_path"] = project_path
-    output["issues_path"] = output_dir
-    return output

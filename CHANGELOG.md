@@ -1,3 +1,32 @@
+V2.0.0 - XX YY ZZ
+-----------------
+
+* Issues found during the scan are now represented by a class, instead of some
+  amorphous dictionary (#29)
+  * Further, since a single `Issue` is instantiated per match, the output key
+    for the matches has changed from `strings_found` to `matched_string`.
+* #25 - Set up full documentation on Read The Docs (via #38)
+* #30 - Support for Python 2 has been dropped (via #31)
+* #58 - CI is now handled by GitHub Actions (via #59)
+* #2 - Verified/approved exclusions are now handled by way of hash signatures.
+  * These hashes are created on a combination of the matched string and filename
+    where the match was found. They are generated using the `BLAKE2` hashing
+    algorithm.
+
+v1.1.2 - 21 April 2020
+----------------------
+
+* #48 (Backport of #45 & #46)
+  * Documented Docker usage
+  * Small fixes to Docker to allow SSH clones and avoid scanning tartufo itself
+* Docs have been backported from the `master` branch.
+
+v1.1.1 - 13 December 2019
+-------------------------
+
+* Fix the docs and pre-commit hook to use hyphens in CLI arguments, as opposed
+  to underscores.
+
 v1.1.0 - 27 November 2019
 -------------------------
 

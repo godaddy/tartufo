@@ -3,7 +3,6 @@ import json
 import pathlib
 import re
 import shutil
-from functools import partial
 from typing import (  # pylint: disable=unused-import
     Any,
     Dict,
@@ -23,11 +22,7 @@ import truffleHogRegexes.regexChecks
 from tartufo import util
 
 
-err = partial(  # pylint: disable=invalid-name
-    click.secho, fg="red", bold=True, err=True
-)
 OptionTypes = Union[str, int, bool, None, TextIO, Tuple[TextIO, ...]]
-OptionsDict = Dict[str, OptionTypes]
 
 DEFAULT_REGEXES = truffleHogRegexes.regexChecks.regexes
 
@@ -54,7 +49,7 @@ def read_pyproject_toml(
         config = toml_file.get("tool", {}).get("tartufo", {})
     except (toml.TomlDecodeError, OSError) as exc:
         raise click.FileError(
-            filename=str(config_path),
+            filename=str(value),
             hint="Error reading configuration file: {}".format(exc),
         )
     if not config:
@@ -79,7 +74,7 @@ def configure_regexes(
         rules = {}
 
     if rules_files:
-        all_files = list(rules_files)  # type: List[IO[Any]]
+        all_files: List[IO[Any]] = list(rules_files)
     else:
         all_files = []
     try:
@@ -113,8 +108,10 @@ def load_rules_from_file(rules_file: TextIO) -> Dict[str, Pattern]:
     regexes = {}
     try:
         new_rules = json.load(rules_file)
-    except json.JSONDecodeError:
-        raise ValueError("Error loading rules from file: {}".format(rules_file.name))
+    except json.JSONDecodeError as exc:
+        raise ValueError(
+            "Error loading rules from file: {}".format(rules_file.name)
+        ) from exc
     for rule in new_rules:
         regexes[rule] = re.compile(new_rules[rule])
     return regexes
