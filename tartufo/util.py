@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import datetime
 import json
 import os
 import pathlib
@@ -9,10 +10,10 @@ import tempfile
 import uuid
 from functools import lru_cache, partial
 from hashlib import blake2s
-from typing import Callable, List, TYPE_CHECKING
+from typing import Any, Callable, Dict, Iterable, List, TYPE_CHECKING
 
 import click
-from git import Repo
+import git
 
 if TYPE_CHECKING:
     from tartufo.scanner import Issue  # pylint: disable=cyclic-import
@@ -55,7 +56,7 @@ def clean_outputs(output_dir: pathlib.Path) -> None:
 
 def clone_git_repo(git_url: str) -> str:
     project_path = tempfile.mkdtemp()
-    Repo.clone_from(git_url, project_path)
+    git.Repo.clone_from(git_url, project_path)
     return project_path
 
 
@@ -77,3 +78,41 @@ def generate_signature(snippet: str, filename: str) -> str:
     These signatures are used for configuring excluded/approved issues,
     such as secrets intentionally embedded in tests."""
     return blake2s("{}$${}".format(snippet, filename).encode("utf-8")).hexdigest()
+
+
+def extract_commit_metadata(
+    commit: git.Commit, branch: git.FetchInfo
+) -> Dict[str, Any]:
+    return {
+        "commit_time": datetime.datetime.fromtimestamp(commit.committed_date),
+        "commit_message": commit.message,
+        "commit_hash": commit.hexsha,
+        "branch": branch.name,
+    }
+
+
+def get_strings_of_set(
+    word: str, char_set: Iterable[str], threshold: int = 20
+) -> List[str]:
+    """Split a "word" into a set of "strings", based on a given character set.
+
+    The returned strings must have a length, at minimum, equal to `threshold`.
+    This is meant for extracting long strings which are likely to be things like
+    auto-generated passwords, tokens, hashes, etc.
+    """
+    count: int = 0
+    letters: str = ""
+    strings: List[str] = []
+
+    for char in word:
+        if char in char_set:
+            letters += char
+            count += 1
+        else:
+            if count > threshold:
+                strings.append(letters)
+            letters = ""
+            count = 0
+    if count > threshold:
+        strings.append(letters)
+    return strings
