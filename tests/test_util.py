@@ -1,4 +1,5 @@
 import unittest
+from pathlib import Path
 from unittest import mock
 
 from tartufo import scanner, util
@@ -50,6 +51,45 @@ class OutputTests(unittest.TestCase):
             {
                 "project_path": "/repo",
                 "issues_path": "/output",
+                "found_issues": [
+                    {
+                        "issue_type": "High Entropy",
+                        "issue_detail": None,
+                        "diff": "No diff available.",
+                        "matched_string": "foo",
+                        "signature": None,
+                        "commit_time": None,
+                        "commit_message": None,
+                        "commit_hash": None,
+                        "file_path": None,
+                        "branch": None,
+                    },
+                    {
+                        "issue_type": "Regular Expression Match",
+                        "issue_detail": None,
+                        "diff": "No diff available.",
+                        "matched_string": "bar",
+                        "signature": None,
+                        "commit_time": None,
+                        "commit_message": None,
+                        "commit_hash": None,
+                        "file_path": None,
+                        "branch": None,
+                    },
+                ],
+            }
+        )
+
+    @mock.patch("tartufo.util.click", new=mock.MagicMock())
+    @mock.patch("tartufo.util.json")
+    def test_echo_issues_outputs_proper_json_when_requested_pathtype(self, mock_json):
+        issue_1 = scanner.Issue(scanner.IssueType.Entropy, "foo")
+        issue_2 = scanner.Issue(scanner.IssueType.RegEx, "bar")
+        util.echo_issues([issue_1, issue_2], True, "/repo", Path("/tmp"))
+        mock_json.dumps.assert_called_once_with(
+            {
+                "project_path": "/repo",
+                "issues_path": "/tmp",
                 "found_issues": [
                     {
                         "issue_type": "High Entropy",
