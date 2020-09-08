@@ -42,3 +42,7 @@ class Chunk:
     contents: str
     file_path: str
     metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+class TartufoScanException(Exception):
+    pass
