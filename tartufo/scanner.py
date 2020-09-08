@@ -49,6 +49,7 @@ class Issue:
             "file_path": str(self.chunk.file_path),
             "matched_string": self.matched_string,
             "diff": self.chunk.contents,
+            "signature": self.signature,
             **self.chunk.metadata,
         }
 
