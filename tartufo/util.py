@@ -19,6 +19,9 @@ if TYPE_CHECKING:
     from tartufo.scanner import Issue  # pylint: disable=cyclic-import
 
 
+DATETIME_FORMAT: str = "%Y-%m-%d %H:%M:%S"
+
+
 def del_rw(_func: Callable, name: str, _exc: Exception) -> None:
     os.chmod(name, stat.S_IWRITE)
     os.remove(name)
@@ -84,7 +87,9 @@ def extract_commit_metadata(
     commit: git.Commit, branch: git.FetchInfo
 ) -> Dict[str, Any]:
     return {
-        "commit_time": datetime.datetime.fromtimestamp(commit.committed_date),
+        "commit_time": datetime.datetime.fromtimestamp(commit.committed_date).strftime(
+            DATETIME_FORMAT
+        ),
         "commit_message": commit.message,
         "commit_hash": commit.hexsha,
         "branch": branch.name,

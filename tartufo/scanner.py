@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import abc
-import datetime
 import hashlib
 import math
 import re
@@ -28,80 +27,38 @@ class Issue:
     """Represents an issue found while scanning the code."""
 
     OUTPUT_SEPARATOR: str = "~~~~~~~~~~~~~~~~~~~~~"
-    DATETIME_FORMAT: str = "%Y-%m-%d %H:%M:%S"
 
+    chunk: Chunk
     issue_type: Optional[IssueType] = None
     issue_detail: Optional[str] = None
-    diff: Optional[git.Diff] = None
     matched_string: str = ""
-    commit: Optional[git.Commit] = None
-    branch_name: Optional[str] = None
 
-    def __init__(self, issue_type: IssueType, matched_string: str) -> None:
+    def __init__(
+        self, issue_type: IssueType, matched_string: str, chunk: Chunk
+    ) -> None:
         self.issue_type = issue_type
         self.matched_string = matched_string
+        self.chunk = chunk
 
     def as_dict(self) -> Dict[str, Optional[str]]:
         """Return a dictionary representation of an issue.
 
         This is primarily meant to aid in JSON serialization.
         """
-        output = {
-            "issue_type": self.issue_type.value,  # type: ignore
-            "issue_detail": self.issue_detail,
-            "diff": self.printable_diff,
+        return {
+            "file_path": str(self.chunk.file_path),
             "matched_string": self.matched_string,
-            "signature": self.signature,
-            "commit_time": self.commit_time,
-            "commit_message": self.commit_message,
-            "commit_hash": self.commit_hash,
-            "file_path": self.file_path,
-            "branch": self.branch_name,
+            "diff": self.chunk.contents,
+            **self.chunk.metadata,
         }
-        return output
 
     @property
-    def printable_diff(self) -> str:
-        if not self.diff:
-            return "No diff available."
-        return self.diff.diff.decode("utf-8", errors="replace")
-
-    @property
-    def commit_time(self) -> Optional[str]:
-        if not self.commit:
-            return None
-        commit_time = datetime.datetime.fromtimestamp(self.commit.committed_date)
-        return commit_time.strftime(self.DATETIME_FORMAT)
-
-    @property
-    def commit_message(self) -> Optional[str]:
-        if not self.commit:
-            return None
-        return self.commit.message
-
-    @property
-    def commit_hash(self) -> Optional[str]:
-        if not self.commit:
-            return None
-        return self.commit.hexsha
-
-    @property
-    def file_path(self) -> Optional[str]:
-        if not self.diff:
-            return None
-        if self.diff.b_path:
-            return self.diff.b_path
-        return self.diff.a_path
-
-    @property
-    def signature(self) -> Optional[str]:
-        if self.file_path:
-            return util.generate_signature(self.matched_string, self.file_path)
-        return None
+    def signature(self) -> str:
+        return util.generate_signature(self.matched_string, self.chunk.file_path)
 
     def __str__(self) -> str:
         output = []
-        diff_body = self.printable_diff
+        diff_body = self.chunk.contents
         diff_body = diff_body.replace(
             self.matched_string, util.style_warning(self.matched_string)
         )
@@ -109,16 +66,12 @@ class Issue:
         output.append(util.style_ok("Reason: {}".format(self.issue_type.value)))  # type: ignore
         if self.issue_detail:
             output.append(util.style_ok("Detail: {}".format(self.issue_detail)))
-        if self.file_path:
-            output.append(util.style_ok("Filepath: {}".format(self.file_path)))
-        if self.signature:
-            output.append(util.style_ok("Signature: {}".format(self.signature)))
-        if self.branch_name:
-            output.append(util.style_ok("Branch: {}".format(self.branch_name)))
-        if self.commit:
-            output.append(util.style_ok("Date: {}".format(self.commit_time)))
-            output.append(util.style_ok("Hash: {}".format(self.commit_hash)))
-            output.append(util.style_ok("Commit: {}".format(self.commit_message)))
+        output.append(util.style_ok("Filepath: {}".format(self.chunk.file_path)))
+        output.append(util.style_ok("Signature: {}".format(self.signature)))
+        output += [
+            util.style_ok("{}: {}".format(k.replace("_", " ").capitalize(), v))
+            for k, v in self.chunk.metadata.items()
+        ]
 
         output.append(diff_body)
         output.append(self.OUTPUT_SEPARATOR)
@@ -247,13 +200,13 @@ class ScannerBase(abc.ABC):
                     if not self.signature_is_excluded(string, chunk.file_path):
                         b64_entropy = self.calculate_entropy(string, BASE64_CHARS)
                         if b64_entropy > 4.5:
-                            issues.append(Issue(IssueType.Entropy, string))
+                            issues.append(Issue(IssueType.Entropy, string, chunk))
 
                 for string in hex_strings:
                     if not self.signature_is_excluded(string, chunk.file_path):
                         hex_entropy = self.calculate_entropy(string, HEX_CHARS)
                         if hex_entropy > 3:
-                            issues.append(Issue(IssueType.Entropy, string))
+                            issues.append(Issue(IssueType.Entropy, string, chunk))
         return issues
 
     def scan_regex(self, chunk: Chunk) -> List[Issue]:
@@ -263,7 +216,7 @@ class ScannerBase(abc.ABC):
             for match in found_strings:
                 # Filter out any explicitly "allowed" match signatures
                 if not self.signature_is_excluded(match, chunk.file_path):
-                    issue = Issue(IssueType.RegEx, match)
+                    issue = Issue(IssueType.RegEx, match, chunk)
                     issue.issue_detail = key
                     issues.append(issue)
         return issues
