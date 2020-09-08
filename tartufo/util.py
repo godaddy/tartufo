@@ -30,7 +30,7 @@ def echo_issues(
     if as_json:
         output = {
             "project_path": repo_path,
-            "issues_path": output_dir,
+            "issues_path": str(output_dir),
             "found_issues": [issue.as_dict() for issue in issues],
         }
         click.echo(json.dumps(output))
