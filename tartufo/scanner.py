@@ -29,7 +29,7 @@ class Issue:
     OUTPUT_SEPARATOR: str = "~~~~~~~~~~~~~~~~~~~~~"
 
     chunk: Chunk
-    issue_type: Optional[IssueType] = None
+    issue_type: IssueType
     issue_detail: Optional[str] = None
     matched_string: str = ""
 
@@ -50,6 +50,8 @@ class Issue:
             "matched_string": self.matched_string,
             "diff": self.chunk.contents,
             "signature": self.signature,
+            "issue_type": self.issue_type.value,
+            "issue_detail": self.issue_detail,
             **self.chunk.metadata,
         }
 
