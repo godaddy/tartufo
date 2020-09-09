@@ -131,8 +131,6 @@ class ScannerBase(abc.ABC):
                 )
             except (ValueError, re.error) as exc:
                 raise TartufoScanException(str(exc)) from exc
-        if not self._rules_regexes:
-            raise TartufoScanException("Regex checks requested, but no regexes found.")
         return self._rules_regexes
 
     @lru_cache()
@@ -183,6 +181,9 @@ class ScannerBase(abc.ABC):
         issues: List[Issue] = []
         if not any((self.options.entropy, self.options.regex)):
             raise TartufoScanException("No analysis requested.")
+        if self.options.regex and not self.rules_regexes:
+            raise TartufoScanException("Regex checks requested, but no regexes found.")
+
         for chunk in self.chunks:
             # Run regex scans first to trigger a potential fast fail for bad config
             if self.options.regex and self.rules_regexes:
