@@ -2,7 +2,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from tartufo import scanner, util
+from tartufo import scanner, types, util
 
 
 class GitTests(unittest.TestCase):
@@ -44,8 +44,12 @@ class OutputTests(unittest.TestCase):
     @mock.patch("tartufo.util.click", new=mock.MagicMock())
     @mock.patch("tartufo.util.json")
     def test_echo_issues_outputs_proper_json_when_requested(self, mock_json):
-        issue_1 = scanner.Issue(scanner.IssueType.Entropy, "foo")
-        issue_2 = scanner.Issue(scanner.IssueType.RegEx, "bar")
+        issue_1 = scanner.Issue(
+            scanner.IssueType.Entropy, "foo", types.Chunk("foo", "/bar")
+        )
+        issue_2 = scanner.Issue(
+            scanner.IssueType.RegEx, "bar", types.Chunk("foo", "/bar")
+        )
         util.echo_issues([issue_1, issue_2], True, "/repo", "/output")
         mock_json.dumps.assert_called_once_with(
             {
@@ -55,26 +59,18 @@ class OutputTests(unittest.TestCase):
                     {
                         "issue_type": "High Entropy",
                         "issue_detail": None,
-                        "diff": "No diff available.",
+                        "diff": "foo",
                         "matched_string": "foo",
-                        "signature": None,
-                        "commit_time": None,
-                        "commit_message": None,
-                        "commit_hash": None,
-                        "file_path": None,
-                        "branch": None,
+                        "signature": "4db0024275a64ac2bf5e7d061e130e283b0b37a44167b605643e06e33177f74e",
+                        "file_path": "/bar",
                     },
                     {
                         "issue_type": "Regular Expression Match",
                         "issue_detail": None,
-                        "diff": "No diff available.",
+                        "diff": "foo",
                         "matched_string": "bar",
-                        "signature": None,
-                        "commit_time": None,
-                        "commit_message": None,
-                        "commit_hash": None,
-                        "file_path": None,
-                        "branch": None,
+                        "signature": "1516f2c3395943be40811573bb63ed1e2b8fe3a0e6dcc8dbb43351ca90ba6822",
+                        "file_path": "/bar",
                     },
                 ],
             }
@@ -83,8 +79,12 @@ class OutputTests(unittest.TestCase):
     @mock.patch("tartufo.util.click", new=mock.MagicMock())
     @mock.patch("tartufo.util.json")
     def test_echo_issues_outputs_proper_json_when_requested_pathtype(self, mock_json):
-        issue_1 = scanner.Issue(scanner.IssueType.Entropy, "foo")
-        issue_2 = scanner.Issue(scanner.IssueType.RegEx, "bar")
+        issue_1 = scanner.Issue(
+            scanner.IssueType.Entropy, "foo", types.Chunk("foo", "/bar")
+        )
+        issue_2 = scanner.Issue(
+            scanner.IssueType.RegEx, "bar", types.Chunk("foo", "/bar")
+        )
         util.echo_issues([issue_1, issue_2], True, "/repo", Path("/tmp"))
         mock_json.dumps.assert_called_once_with(
             {
@@ -94,26 +94,18 @@ class OutputTests(unittest.TestCase):
                     {
                         "issue_type": "High Entropy",
                         "issue_detail": None,
-                        "diff": "No diff available.",
+                        "diff": "foo",
                         "matched_string": "foo",
-                        "signature": None,
-                        "commit_time": None,
-                        "commit_message": None,
-                        "commit_hash": None,
-                        "file_path": None,
-                        "branch": None,
+                        "signature": "4db0024275a64ac2bf5e7d061e130e283b0b37a44167b605643e06e33177f74e",
+                        "file_path": "/bar",
                     },
                     {
                         "issue_type": "Regular Expression Match",
                         "issue_detail": None,
-                        "diff": "No diff available.",
+                        "diff": "foo",
                         "matched_string": "bar",
-                        "signature": None,
-                        "commit_time": None,
-                        "commit_message": None,
-                        "commit_hash": None,
-                        "file_path": None,
-                        "branch": None,
+                        "signature": "1516f2c3395943be40811573bb63ed1e2b8fe3a0e6dcc8dbb43351ca90ba6822",
+                        "file_path": "/bar",
                     },
                 ],
             }
