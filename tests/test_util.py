@@ -145,3 +145,11 @@ class GeneralUtilTests(unittest.TestCase):
     def test_signature_is_generated_with_snippet_and_filename(self, mock_hash):
         util.generate_signature("foo", "bar")
         mock_hash.assert_called_once_with(b"foo$$bar")
+
+    def test_get_strings_of_set_splits_string_by_chars_outside_charset(self):
+        strings = util.get_strings_of_set("asdf.qwer", "asdfqwer", 1)
+        self.assertEqual(strings, ["asdf", "qwer"])
+
+    def test_get_strings_of_set_will_not_return_strings_below_threshold_length(self):
+        strings = util.get_strings_of_set("w.asdf.q", "asdfqwer", 3)
+        self.assertEqual(strings, ["asdf"])
