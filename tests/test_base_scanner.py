@@ -47,6 +47,7 @@ class ScanTests(ScannerTestCase):
     @mock.patch("tartufo.scanner.ScannerBase.scan_regex")
     def test_scan_checks_regex_if_specified(self, mock_regex: mock.MagicMock):
         self.options.regex = True
+        self.options.default_regexes = True
         test_scanner = TestScanner(self.options)
         test_scanner.scan()
         mock_regex.assert_called()
@@ -63,7 +64,7 @@ class IssuesTests(ScannerTestCase):
     def test_populated_issues_list_does_not_rescan(self, mock_scan: mock.MagicMock):
         test_scanner = TestScanner(self.options)
         test_scanner._issues = [  # pylint: disable=protected-access
-            scanner.Issue(types.IssueType.RegEx, "foo")
+            scanner.Issue(types.IssueType.RegEx, "foo", types.Chunk("foo", "bar"))
         ]
         test_scanner.issues  # pylint: disable=pointless-statement
         mock_scan.assert_not_called()
