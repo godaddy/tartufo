@@ -15,6 +15,9 @@ An End-to-End example walkthrough of a tartufo scan and the process of purging t
    .. code-block:: console
 
       git clone git@github.com:godaddy/tartufo.git
+      # use a virtual environment!
+      python3.7 -m venv .venv
+      . .venv/bin/activate
       
 
    Next: [Install Poetry]  
