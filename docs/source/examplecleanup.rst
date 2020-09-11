@@ -147,11 +147,5 @@ An End-to-End example walkthrough of a tartufo scan and the process of purging t
       # should have very little (if any) output. check the newly outputed results in the given tmp folder
       ls /tmp/tmp_4i4c978 | wc -l
 
-.. toctree::
-   :maxdepth: 1
-   :caption: More information
-
-   CONTRIBUTING
-   features
 
 .. _Poetry: https://python-poetry.org/
