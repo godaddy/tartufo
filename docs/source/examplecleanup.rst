@@ -7,7 +7,7 @@ End-to-End Example
 An End-to-End example walkthrough of a tartufo scan and the process of purging the dirty evil passwords that somehow ended up in your code commits. We will use an additional tool: ``BFG`` (https://rtyley.github.io/bfg-repo-cleaner/, more on this later!). 
 
 
-#. Setup poetry if you want to use the most recent build
+#. OPTIONAL Development only: Setup poetry if you want to use the most recent non-released build from github (may not be stable)
 
    This project uses [Poetry] to manage its dependencies and do a lot of the heavy lifting. So you'll need to clone the tartufo repo and setup poetry!
 
@@ -15,14 +15,8 @@ An End-to-End example walkthrough of a tartufo scan and the process of purging t
    .. code-block:: console
 
       git clone git@github.com:godaddy/tartufo.git
-      # use a virtual environment!
-      python3.7 -m venv .venv
-      . .venv/bin/activate
       
-
-   Next: [Install Poetry]  
-
-   Finally: Run ``poetry install``
+   Development Use Only Poetry Setup: https://tartufo.readthedocs.io/en/master/CONTRIBUTING.html#setting-up-a-development-environment
 
 
 #. Clone your repo!
@@ -45,7 +39,7 @@ An End-to-End example walkthrough of a tartufo scan and the process of purging t
    .. code-block:: console
 
       # Run Tartufo on your repo and create a list of high entropy items to remove:
-      poetry run tartufo --regex --json --cleanup ${GITHUBREPO} | jq -r '.found_issues[].matched_string' | sort -u > remove.txt
+      tartufo --regex --json --cleanup ${GITHUBREPO} | jq -r '.found_issues[].matched_string' | sort -u > remove.txt
 
    Now you have a "bad password" file! Take a look through it, see if anything is wrong. This file will be used by ``BFG`` and replace these flagged "bad password" entries with ``***REMOVED***``. It is important that you read through this file to make sure there are not exceptions that you want to remove and exclude with tartufo!
 
@@ -60,7 +54,6 @@ An End-to-End example walkthrough of a tartufo scan and the process of purging t
       wget https://repo1.maven.org/maven2/com/madgag/bfg/1.13.0/bfg-1.13.0.jar
       # Make a backup
       cp -r ${GITHUBREPO} backup_${GITHUBREPO}
-
       java -jar bfg-1.13.0.jar --replace-text remove.txt ${GITHUBREPO}
 
 
@@ -82,7 +75,7 @@ An End-to-End example walkthrough of a tartufo scan and the process of purging t
    .. code-block:: console
 
       #run tartufo again to check for icky code straglers in active code
-      leftovers=`poetry run tartufo --regex --no-cleanup ${GITHUBREPO}`
+      leftovers=`tartufo --regex --no-cleanup ${GITHUBREPO}`
       tmppath=`echo -e "$leftovers" | tail -n1 | awk '{print $6}'`
       #look through the remaining strings, if there's anything that looks like it shouldn't be there, dig into it and clear it out
       cat ${tmppath}/* | jq '. | " \(.file_path) \(.matched_string) \(.signature)"' | sort -u
