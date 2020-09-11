@@ -9,14 +9,14 @@ An End-to-End example walkthrough of a tartufo scan and the process of purging t
 
 #. OPTIONAL Development only: Setup poetry if you want to use the most recent non-released build from github (may not be stable)
 
-   This project uses [Poetry] to manage its dependencies and do a lot of the heavy lifting. So you'll need to clone the tartufo repo and setup poetry!
+   This project uses `Poetry`_ to manage its dependencies and do a lot of the heavy lifting. So you'll need to clone the tartufo repo and setup poetry!
 
 
    .. code-block:: console
 
       git clone git@github.com:godaddy/tartufo.git
       
-   Development Use Only Poetry Setup: https://tartufo.readthedocs.io/en/master/CONTRIBUTING.html#setting-up-a-development-environment
+   Development Use Only Poetry Setup: :doc:`CONTRIBUTING` setting-up-a-development-environment
 
 
 #. Clone your repo!
@@ -41,7 +41,7 @@ An End-to-End example walkthrough of a tartufo scan and the process of purging t
       # Run Tartufo on your repo and create a list of high entropy items to remove:
       tartufo --regex --json --cleanup ${GITHUBREPO} | jq -r '.found_issues[].matched_string' | sort -u > remove.txt
 
-   Now you have a "bad password" file! Take a look through it, see if anything is wrong. This file will be used by ``BFG`` and replace these flagged "bad password" entries with ``***REMOVED***``. It is important that you read through this file to make sure there are not exceptions that you want to remove and exclude with tartufo!
+   Now you have a "bad password" file! Take a look through it, see if anything is wrong. This file will be used by ``BFG`` and replace these flagged "bad password" entries with ``***REMOVED***``. It is important that you read through this file to make sure there are not exceptions that you want to remove and exclude with tartufo! :doc:`features`
 
 
 #. Cleanup repo using ``BFG`` and the above remove.txt file
@@ -147,10 +147,11 @@ An End-to-End example walkthrough of a tartufo scan and the process of purging t
       # should have very little (if any) output. check the newly outputed results in the given tmp folder
       ls /tmp/tmp_4i4c978 | wc -l
 
+.. toctree::
+   :maxdepth: 1
+   :caption: More information
 
-Additional Resources
-------------------
+   CONTRIBUTING
+   features
 
-[Install Poetry]: https://python-poetry.org/docs/#installation
-
-[Poetry]: https://python-poetry.org/
+.. _Poetry: https://python-poetry.org/
