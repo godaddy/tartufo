@@ -81,6 +81,25 @@ An End-to-End example walkthrough of a tartufo scan and the process of purging t
       cat ${tmppath}/* | jq '. | " \(.file_path) \(.matched_string) \(.signature)"' | sort -u
 
 
+#. Take a good look at the output of the above, make sure there are no secrets or other sensitive data remaining.
+
+   Now you are going to exclude the signatures for the remaining items (which you have verified are non-risk)
+
+   .. code-block:: console
+
+      # now you're ready to ignore those webhook urls:
+      cat ${tmppath}/* | jq -r '.signature' | sort -u > allsignatures.txt 
+      sed -i -e 's/$/\",/g' -e 's/^/  \"/g' allsignatures.txt
+      linestr=`grep -n 'exclude-signatures = \[' pyproject.toml`
+      line=`echo $linestr | cut -d ":" -f 1`
+      line=$(($line+1))
+      { head -n $(($line-1)) pyproject.toml; cat allsignatures.txt; tail -n +$line pyproject.toml; } > pyproject.toml_new
+      mv pyproject.toml pyproject.toml_bak
+      mv pyproject.toml_new pyproject.toml
+      # one final run to make sure your signatures are all set
+      poetry run tartufo ${gitrepo} --regex --no-cleanup
+
+
 #. Once you are happy with the data that is being stored, time to commit the changes back up!
 
    Note: This does a force push
