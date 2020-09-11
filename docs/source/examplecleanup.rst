@@ -61,7 +61,7 @@ An End-to-End example walkthrough of a tartufo scan and the process of purging t
       # Make a backup
       cp -r ${GITHUBREPO} backup_${GITHUBREPO}
 
-      do java -jar bfg-1.13.0.jar --replace-text remove.txt ${GITHUBREPO}
+      java -jar bfg-1.13.0.jar --replace-text remove.txt ${GITHUBREPO}
 
 
 #. Uh Oh!
