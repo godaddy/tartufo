@@ -5,25 +5,28 @@ from unittest import mock
 import git
 
 from tartufo import scanner, types
-from tartufo.types import GitOptions
+from tartufo.types import GlobalOptions, GitOptions
 
 from tests.helpers import generate_options
 
 
 class ScannerTestCase(unittest.TestCase):
     def setUp(self) -> None:
-        self.options = generate_options(GitOptions)
+        self.global_options = generate_options(GlobalOptions)
+        self.git_options = generate_options(GitOptions)
 
 
 class RepoLoadTests(ScannerTestCase):
     @mock.patch("git.Repo")
     def test_repo_is_loaded_on_init(self, mock_repo: mock.MagicMock):
-        scanner.GitRepoScanner(self.options, ".")
+        scanner.GitRepoScanner(self.global_options, self.git_options, ".")
         mock_repo.assert_called_once_with(".")
 
     @mock.patch("git.Repo")
     def test_load_repo_loads_new_repo(self, mock_repo: mock.MagicMock):
-        test_scanner = scanner.GitRepoScanner(self.options, ".")
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
         test_scanner.load_repo("../tartufo")
         mock_repo.assert_has_calls((mock.call("."), mock.call("../tartufo")))
 
@@ -31,11 +34,13 @@ class RepoLoadTests(ScannerTestCase):
 class ChunkGeneratorTests(ScannerTestCase):
     @mock.patch("git.Repo")
     def test_single_branch_is_loaded_if_specified(self, mock_repo: mock.MagicMock):
-        self.options.branch = "foo"
+        self.git_options.branch = "foo"
         mock_fetch = mock.MagicMock()
         mock_fetch.return_value = []
         mock_repo.return_value.remotes.origin.fetch = mock_fetch
-        test_scanner = scanner.GitRepoScanner(self.options, ".")
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
         for _ in test_scanner.chunks:
             pass
         mock_fetch.assert_called_once_with("foo")
@@ -45,7 +50,9 @@ class ChunkGeneratorTests(ScannerTestCase):
         mock_fetch = mock.MagicMock()
         mock_fetch.return_value = []
         mock_repo.return_value.remotes.origin.fetch = mock_fetch
-        test_scanner = scanner.GitRepoScanner(self.options, ".")
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
         for _ in test_scanner.chunks:
             pass
         mock_fetch.assert_called_once_with()
@@ -56,7 +63,9 @@ class ChunkGeneratorTests(ScannerTestCase):
         self, mock_repo: mock.MagicMock, mock_iter_commits: mock.MagicMock
     ):
         mock_repo.return_value.remotes.origin.fetch.return_value = ["foo", "bar"]
-        test_scanner = scanner.GitRepoScanner(self.options, ".")
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
         mock_iter_commits.return_value = []
         for _ in test_scanner.chunks:
             pass
@@ -77,7 +86,9 @@ class ChunkGeneratorTests(ScannerTestCase):
         mock_iter_commits: mock.MagicMock,
     ):
         mock_repo.return_value.remotes.origin.fetch.return_value = ["foo"]
-        test_scanner = scanner.GitRepoScanner(self.options, ".")
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
         mock_commit_1 = mock.MagicMock()
         mock_commit_2 = mock.MagicMock()
         mock_commit_3 = mock.MagicMock()
@@ -115,7 +126,9 @@ class ChunkGeneratorTests(ScannerTestCase):
         mock_iter_commits: mock.MagicMock,
     ):
         mock_repo.return_value.remotes.origin.fetch.return_value = ["foo"]
-        test_scanner = scanner.GitRepoScanner(self.options, ".")
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
         mock_commit_1 = mock.MagicMock()
         mock_commit_2 = mock.MagicMock()
         mock_iter_commits.return_value = [(mock_commit_1, mock_commit_2)]
@@ -140,7 +153,9 @@ class IterDiffIndexTests(ScannerTestCase):
     def test_binary_files_are_skipped(self):
         mock_diff = mock.MagicMock()
         mock_diff.diff.decode.return_value = "Binary files\n101010"
-        test_scanner = scanner.GitRepoScanner(self.options, ".")
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
         diffs = list(test_scanner._iter_diff_index([mock_diff]))
         self.assertEqual(diffs, [])
 
@@ -150,7 +165,9 @@ class IterDiffIndexTests(ScannerTestCase):
         mock_should.return_value = False
         mock_diff = mock.MagicMock()
         mock_diff.diff.decode.return_value = "+ Ford Prefect"
-        test_scanner = scanner.GitRepoScanner(self.options, ".")
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
         diffs = list(test_scanner._iter_diff_index([mock_diff]))
         self.assertEqual(diffs, [])
         mock_should.assert_called_once()
@@ -163,7 +180,9 @@ class IterDiffIndexTests(ScannerTestCase):
         mock_diff_1.diff.decode.return_value = "+ Ford Prefect"
         mock_diff_2 = mock.MagicMock()
         mock_diff_2.diff.decode.return_value = "- Marvin"
-        test_scanner = scanner.GitRepoScanner(self.options, ".")
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
         diffs = list(test_scanner._iter_diff_index([mock_diff_1, mock_diff_2]))
         self.assertEqual(
             diffs,
@@ -174,7 +193,9 @@ class IterDiffIndexTests(ScannerTestCase):
 class IterBranchCommitsTests(ScannerTestCase):
     @mock.patch("git.Repo", new=mock.MagicMock())
     def test_all_commits_get_yielded_in_pairs(self):
-        test_scanner = scanner.GitRepoScanner(self.options, ".")
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
         mock_repo = mock.MagicMock()
         mock_branch = mock.MagicMock(name="foo")
         mock_commit_1 = mock.MagicMock()
@@ -199,8 +220,10 @@ class IterBranchCommitsTests(ScannerTestCase):
 
     @mock.patch("git.Repo", new=mock.MagicMock())
     def test_iteration_stops_when_since_commit_is_reached(self):
-        self.options.since_commit = "42"
-        test_scanner = scanner.GitRepoScanner(self.options, ".")
+        self.git_options.since_commit = "42"
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
         mock_repo = mock.MagicMock()
         mock_branch = mock.MagicMock(name="foo")
         mock_commit_1 = mock.MagicMock()
