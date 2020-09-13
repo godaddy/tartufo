@@ -3,8 +3,6 @@ import enum
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional, TextIO, Tuple
 
-from click import Path
-
 
 @dataclass
 class GlobalOptions:
@@ -23,13 +21,10 @@ class GlobalOptions:
 
 
 @dataclass
-class GitOptions(GlobalOptions):
+class GitOptions:
     since_commit: Optional[str]
     max_depth: int
     branch: Optional[str]
-    repo_path: Optional[Path]
-    pre_commit: bool
-    git_url: Optional[str]
 
 
 class IssueType(enum.Enum):

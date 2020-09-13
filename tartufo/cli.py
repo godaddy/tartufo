@@ -1,17 +1,37 @@
 # -*- coding: utf-8 -*-
 
 import pathlib
-import shutil
 from tempfile import mkdtemp
-from typing import List
+from typing import Any, Dict, List, Tuple
 
 import click
 
 from tartufo import config, scanner, types, util
 
 
+PLUGIN_DIR = pathlib.Path(__file__).parent / "commands"
+
+
+class TartufoCLI(click.MultiCommand):
+    def list_commands(self, ctx: click.Context) -> List[str]:
+        return [
+            fpath.name[:-3].replace("_", "-")
+            for fpath in PLUGIN_DIR.glob("*.py")
+            if fpath.name != "__init__.py"
+        ]
+
+    def get_command(self, ctx: click.Context, cmd_name: str) -> click.Command:
+        exec_ns: Dict[str, Any] = {}
+        cmd_file = PLUGIN_DIR / "{}.py".format(cmd_name.replace("-", "_"))
+        with cmd_file.open() as handle:
+            cmd_code = compile(handle.read(), cmd_file.name, "exec")
+            eval(cmd_code, exec_ns, exec_ns)  # pylint: disable=eval-used
+        return exec_ns["main"]
+
+
 @click.command(
-    name="tartufo",  # noqa: C901
+    cls=TartufoCLI,
+    name="tartufo",
     context_settings=dict(help_option_names=["-h", "--help"]),
 )
 @click.option("--json/--no-json", help="Output in JSON format.", is_flag=True)
@@ -41,14 +61,6 @@ from tartufo import config, scanner, types, util
     default=False,
     help="Enable high signal regexes checks. [default: False]",
 )
-@click.option("--since-commit", help="Only scan from a given commit hash.")
-@click.option(
-    "--max-depth",
-    default=1000000,
-    help="The max commit depth to go back when searching for secrets."
-    " [default: 1000000]",
-)
-@click.option("--branch", help="Specify a branch name to scan only that branch.")
 @click.option(
     "-i",
     "--include-paths",
@@ -80,21 +92,10 @@ from tartufo import config, scanner, types, util
     "you would like.",
 )
 @click.option(
-    "--repo-path",
-    type=click.Path(exists=True, file_okay=False, resolve_path=True, allow_dash=False),
-    help="Path to local repo clone. If provided, git_url will not be used.",
-)
-@click.option(
     "--cleanup/--no-cleanup",
     is_flag=True,
     default=False,
     help="Clean up all temporary result files. [default: False]",
-)
-@click.option(
-    "--pre-commit",
-    is_flag=True,
-    default=False,
-    help="Scan staged files in local repo clone.",
 )
 @click.option(
     "--git-rules-repo",
@@ -123,7 +124,7 @@ from tartufo import config, scanner, types, util
     callback=config.read_pyproject_toml,
     help="Read configuration from specified file. [default: pyproject.toml]",
 )
-@click.argument("git_url", required=False)
+# @click.argument("git_url", required=False)
 @click.pass_context
 def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
     """Find secrets hidden in the depths of git.
@@ -133,37 +134,25 @@ def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
     also be made to work in pre-commit mode, for scanning blobs of text as a
     pre-commit hook.
     """
-    options = types.GitOptions(**kwargs)  # type: ignore
+    options = types.GlobalOptions(**kwargs)  # type: ignore
+    ctx.obj = options
 
-    if not any((options.pre_commit, options.repo_path, options.git_url)):
-        util.fail("You must specify one of --pre-commit, --repo-path, or git_url.", ctx)
 
-    found_issues: List[scanner.Issue] = []
-    remove_repo = False
-    repo_path = str(options.repo_path)
-    repo_scanner: scanner.ScannerBase
-
-    try:
-        if options.pre_commit:
-            repo_scanner = scanner.GitPreCommitScanner(options, repo_path)
-        else:
-            if options.git_url:
-                repo_path = util.clone_git_repo(options.git_url)
-                remove_repo = True
-            repo_scanner = scanner.GitRepoScanner(options, repo_path)
-        found_issues = repo_scanner.scan()
-    except types.TartufoScanException as exc:
-        util.fail(str(exc), ctx)
-    finally:
-        if remove_repo:
-            shutil.rmtree(repo_path, onerror=util.del_rw)
-
-    if found_issues:
+@main.resultcallback()  # type: ignore
+@click.pass_context
+def process_issues(
+    ctx: click.Context,
+    result: Tuple[str, List[scanner.Issue]],
+    **kwargs: config.OptionTypes,
+):
+    repo_path, issues = result
+    options = types.GlobalOptions(**kwargs)  # type: ignore
+    if issues:
         output_dir = pathlib.Path(mkdtemp())
-        util.write_outputs(found_issues, output_dir)
+        util.write_outputs(issues, output_dir)
     else:
         output_dir = None  # type: ignore
-    util.echo_issues(found_issues, options.json, repo_path, output_dir)
+    util.echo_issues(issues, options.json, repo_path, output_dir)
 
     if options.cleanup:
         util.clean_outputs(output_dir)
@@ -171,6 +160,6 @@ def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
         if output_dir and not options.json:
             click.echo("Results have been saved in {}".format(output_dir))
 
-    if found_issues:
+    if issues:
         ctx.exit(1)
     ctx.exit(0)
