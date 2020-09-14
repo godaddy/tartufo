@@ -7,7 +7,7 @@ End-to-End Example
 An End-to-End example walkthrough of a tartufo scan and the process of purging the dirty evil passwords that somehow ended up in your code commits. We will use an additional tool: ``BFG`` (https://rtyley.github.io/bfg-repo-cleaner/, more on this later!). 
 
 
-#. OPTIONAL Development only: Setup poetry if you want to use the most recent non-released build from github (may not be stable)
+.. note:: OPTIONAL Development only: Setup poetry if you want to use the most recent non-released build from github (may not be stable)
 
    This project uses `Poetry`_ to manage its dependencies and do a lot of the heavy lifting. So you'll need to clone the tartufo repo and setup poetry!
 
@@ -34,14 +34,14 @@ An End-to-End example walkthrough of a tartufo scan and the process of purging t
 
 #. Use ``tartufo`` to scan your repository and find any secrets in its history!
 
-   Use what you've learned to scan your repo!
+   Scan your repo!
 
    .. code-block:: console
 
       # Run Tartufo on your repo and create a list of high entropy items to remove:
       tartufo --regex --json --cleanup ${GITHUBREPO} | jq -r '.found_issues[].matched_string' | sort -u > remove.txt
 
-   Now you have a "bad password" file! Take a look through it, see if anything is wrong. This file will be used by ``BFG`` and replace these flagged "bad password" entries with ``***REMOVED***``. It is important that you read through this file to make sure there are not exceptions that you want to remove and exclude with tartufo! :doc:`features`
+   Now you have a "bad password" file! Take a look through it, see if anything is wrong. This file will be used by ``BFG`` and replace these flagged "bad password" entries with ``***REMOVED***``. It is important that you read through this file to make sure there are not exceptions that you want to remove and exclude with tartufo! Read more about configuring exclusions here: :doc:`features`
 
 
 #. Cleanup repo using ``BFG`` and the above remove.txt file
@@ -87,7 +87,7 @@ An End-to-End example walkthrough of a tartufo scan and the process of purging t
 
    .. code-block:: console
 
-      # now you're ready to ignore those webhook urls:
+      # now you are ready to ignore those webhook urls:
       cat ${tmppath}/* | jq -r '.signature' | sort -u > allsignatures.txt 
       sed -i -e 's/$/\",/g' -e 's/^/  \"/g' allsignatures.txt
       linestr=`grep -n 'exclude-signatures = \[' pyproject.toml`
@@ -139,7 +139,7 @@ An End-to-End example walkthrough of a tartufo scan and the process of purging t
       (.venv) you@LTDV-you:~/tartufo/yourrepo.git$
 
 
-   If you get the above error; It might actually be ok, re-run tartufo from master. Only if there are results that are not clean continue. Please note, this solution will remove PR history (but not commit history):
+   If you get the above error; It might actually be ok, simply re-run tartufo from master. Only continue with the below steps if there are results that are not clean. Please note, this solution will remove PR history (but not commit history):
 
    .. code-block:: console
 
