@@ -27,6 +27,36 @@ class ScannerTestCase(unittest.TestCase):
 
 
 class ScanTests(ScannerTestCase):
+    def test_scan_aborts_when_no_entropy_or_regex(self):
+        self.options.entropy = False
+        self.options.regex = False
+        test_scanner = TestScanner(self.options)
+        with self.assertRaisesRegex(
+            types.TartufoScanException, "No analysis requested."
+        ):
+            test_scanner.scan()
+
+    def test_scan_aborts_when_regex_requested_but_none_found(self):
+        self.options.regex = True
+        self.options.default_regexes = False
+        test_scanner = TestScanner(self.options)
+        with self.assertRaisesRegex(
+            types.TartufoScanException, "Regex checks requested, but no regexes found."
+        ):
+            test_scanner.scan()
+
+    @mock.patch("tartufo.config.configure_regexes")
+    def test_scan_aborts_due_to_invalid_regex(self, mock_config: mock.MagicMock):
+        self.options.regex = True
+        test_scanner = TestScanner(self.options)
+        mock_config.side_effect = re.error(  # type: ignore
+            msg="Invalid regular expression", pattern="42"
+        )
+        with self.assertRaisesRegex(
+            types.TartufoScanException, "Invalid regular expression"
+        ):
+            test_scanner.scan()
+
     @mock.patch("tartufo.scanner.ScannerBase.scan_entropy")
     def test_scan_iterates_through_all_chunks(self, mock_entropy: mock.MagicMock):
         # Make sure we do at least one type of scan
