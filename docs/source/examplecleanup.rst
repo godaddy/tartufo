@@ -16,7 +16,7 @@ An End-to-End example walkthrough of a tartufo scan and the process of purging t
 
       git clone git@github.com:godaddy/tartufo.git
       
-   Development Use Only Poetry Setup: :doc:`CONTRIBUTING` setting-up-a-development-environment
+   Development Use Only Poetry Setup: `Setting up a development environment <CONTRIBUTING.html#setting-up-a-development-environment>`_
 
 
 #. Clone your repo!

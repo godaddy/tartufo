@@ -110,8 +110,8 @@ to get used to the basic usage.
 Now, setting up a development environment is super simple! Additional info if you run into trouble: [Poetry Environments]
 
 Step 1: [Install Poetry]  
-Step 2: Run ``poetry install``
-Step 3: Optionally Run ``poetry shell``
+Step 2: Run ``poetry install``  
+Step 3: Optionally Run ``poetry shell``  
 
 Done!
 
