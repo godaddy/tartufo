@@ -11,8 +11,8 @@ from tartufo.scanner import GitRepoScanner, Issue
 @click.option(
     "--max-depth",
     default=1000000,
-    help="The max commit depth to go back when searching for secrets."
-    " [default: 1000000]",
+    show_default=True,
+    help="The max commit depth to go back when searching for secrets.",
 )
 @click.option("--branch", help="Specify a branch name to scan only that branch.")
 @click.argument(

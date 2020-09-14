@@ -45,21 +45,23 @@ class TartufoCLI(click.MultiCommand):
     "--default-regexes/--no-default-regexes",
     is_flag=True,
     default=True,
+    show_default=True,
     help="Whether to include the default regex list when configuring"
-    " search patterns. Only applicable if --rules is also specified."
-    " [default: --default-regexes]",
+    " search patterns. Only applicable if --rules is also specified.",
 )
 @click.option(
     "--entropy/--no-entropy",
     is_flag=True,
     default=True,
-    help="Enable entropy checks. [default: True]",
+    show_default=True,
+    help="Enable entropy checks.",
 )
 @click.option(
     "--regex/--no-regex",
     is_flag=True,
     default=False,
-    help="Enable high signal regexes checks. [default: False]",
+    show_default=True,
+    help="Enable high signal regexes checks.",
 )
 @click.option(
     "-i",
@@ -95,7 +97,8 @@ class TartufoCLI(click.MultiCommand):
     "--cleanup/--no-cleanup",
     is_flag=True,
     default=False,
-    help="Clean up all temporary result files. [default: False]",
+    show_default=True,
+    help="Clean up all temporary result files.",
 )
 @click.option(
     "--git-rules-repo",
