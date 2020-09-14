@@ -124,7 +124,6 @@ class TartufoCLI(click.MultiCommand):
     callback=config.read_pyproject_toml,
     help="Read configuration from specified file. [default: pyproject.toml]",
 )
-# @click.argument("git_url", required=False)
 @click.pass_context
 def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
     """Find secrets hidden in the depths of git.
