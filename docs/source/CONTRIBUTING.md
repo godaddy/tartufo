@@ -107,10 +107,11 @@ lifting. This includes managing development environments! If you are not
 familiar with this tool, we highly recommend checking out [their docs][poetry docs]
 to get used to the basic usage.
 
-Now, setting up a development environment is super simple!
+Now, setting up a development environment is super simple! Additional info if you run into trouble: [Poetry Environments]
 
 Step 1: [Install Poetry]  
-Step 2: Run ``poetry install``
+Step 2: Run ``poetry install``  
+Step 3: Optionally Run ``poetry shell``  
 
 Done!
 
@@ -185,6 +186,7 @@ pylint...................................................................Passed
 [black-editors]: https://github.com/psf/black#editor-integration
 [issues]: https://github.com/godaddy/tartufo/issues
 [Install Poetry]: https://python-poetry.org/docs/#installation
+[Poetry Environments]: https://python-poetry.org/docs/managing-environments/
 [our security policy]: https://github.com/godaddy/tartufo/security/policy
 [PEP 8]: https://www.python.org/dev/peps/pep-0008/
 [Poetry]: https://python-poetry.org/
