@@ -1,6 +1,7 @@
 from typing import List, Optional, Tuple
 
 import click
+from git.exc import InvalidGitRepositoryError
 
 from tartufo import types, util
 from tartufo.scanner import GitRepoScanner, Issue
@@ -37,6 +38,8 @@ def main(
     try:
         scanner = GitRepoScanner(options, git_options, str(repo_path))
         issues = scanner.scan()
+    except InvalidGitRepositoryError as exc:
+        util.fail(f"{exc} is not a valid git repository.", ctx)
     except types.TartufoScanException as exc:
         util.fail(str(exc), ctx)
     return (str(repo_path), issues)
