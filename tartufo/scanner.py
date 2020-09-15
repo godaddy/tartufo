@@ -86,10 +86,10 @@ class ScannerBase(abc.ABC):
     _included_paths: Optional[List[Pattern]] = None
     _excluded_paths: Optional[List[Pattern]] = None
     _rules_regexes: Optional[Dict[str, Pattern]] = None
-    options: GlobalOptions
+    global_options: GlobalOptions
 
     def __init__(self, options: GlobalOptions) -> None:
-        self.options = options
+        self.global_options = options
 
     @property
     def issues(self) -> List[Issue]:
@@ -100,9 +100,9 @@ class ScannerBase(abc.ABC):
     @property
     def included_paths(self) -> List[Pattern]:
         if self._included_paths is None:
-            if self.options.include_paths:
+            if self.global_options.include_paths:
                 self._included_paths = config.compile_path_rules(
-                    self.options.include_paths.readlines()
+                    self.global_options.include_paths.readlines()
                 )
             else:
                 self._included_paths = []
@@ -111,9 +111,9 @@ class ScannerBase(abc.ABC):
     @property
     def excluded_paths(self) -> List[Pattern]:
         if self._excluded_paths is None:
-            if self.options.exclude_paths:
+            if self.global_options.exclude_paths:
                 self._excluded_paths = config.compile_path_rules(
-                    self.options.exclude_paths.readlines()
+                    self.global_options.exclude_paths.readlines()
                 )
             else:
                 self._excluded_paths = []
@@ -124,10 +124,10 @@ class ScannerBase(abc.ABC):
         if self._rules_regexes is None:
             try:
                 self._rules_regexes = config.configure_regexes(
-                    self.options.default_regexes,
-                    self.options.rules,
-                    self.options.git_rules_repo,
-                    self.options.git_rules_files,
+                    self.global_options.default_regexes,
+                    self.global_options.rules,
+                    self.global_options.git_rules_repo,
+                    self.global_options.git_rules_files,
                 )
             except (ValueError, re.error) as exc:
                 raise TartufoScanException(str(exc)) from exc
@@ -160,7 +160,8 @@ class ScannerBase(abc.ABC):
 
     def signature_is_excluded(self, blob: str, file_path: str) -> bool:
         return (
-            util.generate_signature(blob, file_path) in self.options.exclude_signatures
+            util.generate_signature(blob, file_path)
+            in self.global_options.exclude_signatures
         )
 
     @lru_cache()
@@ -179,16 +180,16 @@ class ScannerBase(abc.ABC):
 
     def scan(self) -> List[Issue]:
         issues: List[Issue] = []
-        if not any((self.options.entropy, self.options.regex)):
+        if not any((self.global_options.entropy, self.global_options.regex)):
             raise TartufoScanException("No analysis requested.")
-        if self.options.regex and not self.rules_regexes:
+        if self.global_options.regex and not self.rules_regexes:
             raise TartufoScanException("Regex checks requested, but no regexes found.")
 
         for chunk in self.chunks:
             # Run regex scans first to trigger a potential fast fail for bad config
-            if self.options.regex and self.rules_regexes:
+            if self.global_options.regex and self.rules_regexes:
                 issues += self.scan_regex(chunk)
-            if self.options.entropy:
+            if self.global_options.entropy:
                 issues += self.scan_entropy(chunk)
         self._issues = issues
         return self._issues
@@ -237,12 +238,11 @@ class ScannerBase(abc.ABC):
 
 class GitScanner(ScannerBase, abc.ABC):
     _repo: git.Repo
-    options: GitOptions
 
-    def __init__(self, options: GitOptions, repo_path: str) -> None:
+    def __init__(self, global_options: GlobalOptions, repo_path: str) -> None:
         self.repo_path = repo_path
         self._repo = self.load_repo(self.repo_path)
-        super().__init__(options)
+        super().__init__(global_options)
 
     def _iter_diff_index(
         self, diff_index: git.DiffIndex
@@ -262,6 +262,14 @@ class GitScanner(ScannerBase, abc.ABC):
 
 
 class GitRepoScanner(GitScanner):
+    git_options: GitOptions
+
+    def __init__(
+        self, global_options: GlobalOptions, git_options: GitOptions, repo_path: str
+    ) -> None:
+        self.git_options = git_options
+        super().__init__(global_options, repo_path)
+
     def load_repo(self, repo_path: str):
         return git.Repo(repo_path)
 
@@ -273,11 +281,11 @@ class GitRepoScanner(GitScanner):
         curr_commit: git.Commit = None
 
         for curr_commit in repo.iter_commits(
-            branch.name, max_count=self.options.max_depth
+            branch.name, max_count=self.git_options.max_depth
         ):
             commit_hash = curr_commit.hexsha
-            if self.options.since_commit:
-                if commit_hash == self.options.since_commit:
+            if self.git_options.since_commit:
+                if commit_hash == self.git_options.since_commit:
                     since_commit_reached = True
                 if since_commit_reached:
                     prev_commit = curr_commit
@@ -292,8 +300,8 @@ class GitRepoScanner(GitScanner):
     def chunks(self) -> Generator[Chunk, None, None]:
         already_searched: Set[bytes] = set()
 
-        if self.options.branch:
-            branches = self._repo.remotes.origin.fetch(self.options.branch)
+        if self.git_options.branch:
+            branches = self._repo.remotes.origin.fetch(self.git_options.branch)
         else:
             branches = self._repo.remotes.origin.fetch()
 

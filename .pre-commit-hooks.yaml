@@ -1,7 +1,7 @@
 - id: tartufo
   name: Tartufo
   description: '`tartufo` is a tool for scanning git repositories for secrets/passwords/high-entropy data'
-  entry: tartufo --pre-commit
+  entry: tartufo
   language: python
-  args: [--cleanup]
+  args: [--cleanup, pre-commit]
   pass_filenames: false
