@@ -172,12 +172,6 @@ ignore = "docs/"
 [tool.coverage.run]
 branch = true
 source = ["tartufo"]
-omit = [
-    # The commands are all dynamically loaded and executed so they don't
-    #   get captured and measured by coverage. They will have to be covered
-    #   on the honor system. Luckily they have almost nothing to them.
-    "tartufo/commands/*"
-]
 
 [tool.coverage.report]
 exclude_lines = [
