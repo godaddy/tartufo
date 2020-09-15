@@ -1,5 +1,5 @@
-import pathlib
-import shutil
+from pathlib import Path
+from shutil import rmtree
 from typing import List, Optional, Tuple
 
 import click
@@ -44,6 +44,6 @@ def main(
     except types.TartufoScanException as exc:
         util.fail(str(exc), ctx)
     finally:
-        if repo_path and pathlib.Path(repo_path).exists():
-            shutil.rmtree(repo_path, onerror=util.del_rw)
+        if repo_path and Path(repo_path).exists():
+            rmtree(repo_path, onerror=util.del_rw)
     return (git_url, issues)
