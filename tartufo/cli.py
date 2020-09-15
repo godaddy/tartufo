@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import importlib
 import pathlib
 from tempfile import mkdtemp
-from typing import Any, Dict, List, Tuple
+from typing import List, Tuple
 
 import click
 
@@ -10,6 +11,7 @@ from tartufo import config, scanner, types, util
 
 
 PLUGIN_DIR = pathlib.Path(__file__).parent / "commands"
+PLUGIN_MODULE = "tartufo.commands"
 
 
 class TartufoCLI(click.MultiCommand):
@@ -21,12 +23,10 @@ class TartufoCLI(click.MultiCommand):
         ]
 
     def get_command(self, ctx: click.Context, cmd_name: str) -> click.Command:
-        exec_ns: Dict[str, Any] = {}
-        cmd_file = PLUGIN_DIR / "{}.py".format(cmd_name.replace("-", "_"))
-        with cmd_file.open() as handle:
-            cmd_code = compile(handle.read(), cmd_file.name, "exec")
-            eval(cmd_code, exec_ns, exec_ns)  # pylint: disable=eval-used
-        return exec_ns["main"]
+        module = importlib.import_module(
+            f".{cmd_name.replace('-', '_')}", PLUGIN_MODULE
+        )
+        return module.main  # type: ignore
 
 
 @click.command(

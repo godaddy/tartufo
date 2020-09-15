@@ -53,7 +53,7 @@ class ListCommandTests(unittest.TestCase):
 
 class ProcessIssuesTest(unittest.TestCase):
     @mock.patch("tartufo.util.clean_outputs")
-    @mock.patch("tartufo.scanner.GitRepoScanner")
+    @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
     def test_output_is_cleaned_when_requested(
         self, mock_scanner: mock.MagicMock, mock_clean: mock.MagicMock
     ):
@@ -64,7 +64,7 @@ class ProcessIssuesTest(unittest.TestCase):
         mock_clean.assert_called_once_with(None)
 
     @mock.patch("tartufo.cli.mkdtemp")
-    @mock.patch("tartufo.scanner.GitRepoScanner")
+    @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
     @mock.patch("tartufo.util.echo_issues", new=mock.MagicMock())
     @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
     def test_issues_path_is_called_out(
@@ -80,7 +80,7 @@ class ProcessIssuesTest(unittest.TestCase):
         self.assertEqual(result.output, "Results have been saved in /foo\n")
 
     @mock.patch("tartufo.cli.mkdtemp")
-    @mock.patch("tartufo.scanner.GitRepoScanner")
+    @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
     @mock.patch("tartufo.util.echo_issues", new=mock.MagicMock())
     @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
     def test_issues_path_is_not_called_out_when_outputting_json(
@@ -100,7 +100,7 @@ class ProcessIssuesTest(unittest.TestCase):
     @mock.patch("tartufo.cli.mkdtemp", new=mock.MagicMock())
     @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
     @mock.patch("tartufo.util.echo_issues", new=mock.MagicMock())
-    @mock.patch("tartufo.scanner.GitRepoScanner")
+    @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
     def test_command_exits_with_positive_return_code_when_issues_are_found(
         self, mock_scanner: mock.MagicMock
     ):
