@@ -12,8 +12,6 @@ from tartufo.scanner import GitPreCommitScanner, Issue
 @click.pass_context
 def main(ctx: click.Context, options: types.GlobalOptions) -> Tuple[str, List[Issue]]:
     """Scan staged changes in a pre-commit hook."""
-    print("*** SCANNING PRE-COMMIT")
-    print("*** OBJECT:", options)
     # Assume that the current working directory is the appropriate git repo
     repo_path = pathlib.Path.cwd()
     issues: List[Issue] = []

@@ -348,6 +348,5 @@ class GitPreCommitScanner(GitScanner):
         diff_index = self._repo.index.diff(
             self._repo.head.commit, create_patch=True, R=True
         )
-        print("*** WORKING ON DIFF INDEX:", diff_index)
         for blob, file_path in self._iter_diff_index(diff_index):
             yield Chunk(blob, file_path)
