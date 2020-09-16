@@ -2,8 +2,6 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from click.testing import CliRunner
-
 from tartufo import scanner, types, util
 
 
@@ -39,26 +37,17 @@ class GitTests(unittest.TestCase):
         self.assertEqual(repo_path, Path("/foo"))
 
     @mock.patch("git.Repo.clone_from")
-    def test_clone_git_repo_clones_into_subdir_of_target(
-        self, mock_clone: mock.MagicMock
+    @mock.patch("tartufo.util.tempfile.mkdtemp")
+    def test_clone_git_repo_clones_into_target_dir(
+        self, mock_temp: mock.MagicMock, mock_clone: mock.MagicMock
     ):
-        runner = CliRunner()
-        with runner.isolated_filesystem() as dirname:
-            workdir = Path(dirname)
-            util.clone_git_repo("https://github.com/godaddy/tartufo.git", workdir)
-            mock_clone.assert_called_once_with(
-                "https://github.com/godaddy/tartufo.git", str(workdir / "tartufo.git"),
-            )
-
-    @mock.patch("git.Repo.clone_from", new=mock.MagicMock())
-    def test_clone_git_repo_returns_subdir_of_target(self):
-        runner = CliRunner()
-        with runner.isolated_filesystem() as dirname:
-            workdir = Path(dirname)
-            repo_path = util.clone_git_repo(
-                "https://github.com/godaddy/tartufo.git", workdir
-            )
-            self.assertEqual(repo_path, workdir / "tartufo.git")
+        util.clone_git_repo(
+            "https://github.com/godaddy/tartufo.git", Path("/foo/tartufo.git")
+        )
+        mock_temp.assert_not_called()
+        mock_clone.assert_called_once_with(
+            "https://github.com/godaddy/tartufo.git", "/foo/tartufo.git"
+        )
 
 
 class OutputTests(unittest.TestCase):

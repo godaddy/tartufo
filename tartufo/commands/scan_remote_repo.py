@@ -1,6 +1,7 @@
 from pathlib import Path
 from shutil import rmtree
 from typing import List, Optional, Tuple
+from urllib.parse import urlparse
 
 import click
 from git.exc import GitCommandError
@@ -50,7 +51,11 @@ def main(
     )
     repo_path: Optional[Path] = None
     if work_dir:
-        repo_path = Path(work_dir)
+        # Make sure we clone into a sub-directory of the working directory
+        #   so that we don't inadvertently delete the working directory
+        repo_name = urlparse(git_url).path.split("/")[-1]
+        repo_path = Path(work_dir) / repo_name
+        repo_path.mkdir(parents=True)
     issues: List[Issue] = []
     try:
         repo_path = util.clone_git_repo(git_url, repo_path)

@@ -98,7 +98,7 @@ class ScanRemoteRepoTests(unittest.TestCase):
     @mock.patch("tartufo.commands.scan_remote_repo.util.clone_git_repo")
     @mock.patch("tartufo.commands.scan_remote_repo.GitRepoScanner")
     @mock.patch("tartufo.commands.scan_remote_repo.rmtree", new=mock.MagicMock())
-    def test_work_dir_is_passed_to_clone_repo(
+    def test_subdir_of_work_dir_is_passed_to_clone_repo(
         self, mock_scanner: mock.MagicMock, mock_clone: mock.MagicMock
     ):
         mock_scanner.return_value.scan.return_value = []
@@ -115,5 +115,5 @@ class ScanRemoteRepoTests(unittest.TestCase):
                 ],
             )
             mock_clone.assert_called_once_with(
-                "git@github.com:godaddy/tartufo.git", Path(dirname)
+                "git@github.com:godaddy/tartufo.git", Path(dirname) / "tartufo.git"
             )

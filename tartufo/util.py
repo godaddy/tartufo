@@ -11,7 +11,6 @@ import uuid
 from functools import lru_cache, partial
 from hashlib import blake2s
 from typing import Any, Callable, Dict, Iterable, List, Optional, TYPE_CHECKING
-from urllib.parse import urlparse
 
 import click
 import git
@@ -64,8 +63,7 @@ def clone_git_repo(
     if not target_dir:
         project_path = tempfile.mkdtemp()
     else:
-        repo_name = urlparse(git_url).path.split("/")[-1]
-        project_path = str(target_dir / repo_name)
+        project_path = str(target_dir)
 
     git.Repo.clone_from(git_url, project_path)
     return pathlib.Path(project_path)
