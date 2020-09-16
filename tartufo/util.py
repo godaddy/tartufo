@@ -4,7 +4,6 @@ import datetime
 import json
 import os
 import pathlib
-import shutil
 import stat
 import tempfile
 import uuid
@@ -28,13 +27,16 @@ def del_rw(_func: Callable, name: str, _exc: Exception) -> None:
 
 
 def echo_issues(
-    issues: "List[Issue]", as_json: bool, repo_path: str, output_dir: pathlib.Path
+    issues: "List[Issue]",
+    as_json: bool,
+    repo_path: str,
+    output_dir: Optional[pathlib.Path],
 ) -> None:
     """Print all found issues out to the console, optionally as JSON."""
     if as_json:
         output = {
             "project_path": repo_path,
-            "issues_path": str(output_dir),
+            "output_dir": str(output_dir) if output_dir else None,
             "found_issues": [issue.as_dict() for issue in issues],
         }
         click.echo(json.dumps(output))
@@ -46,15 +48,10 @@ def echo_issues(
 def write_outputs(found_issues: "List[Issue]", output_dir: pathlib.Path) -> List[str]:
     result_files = []
     for issue in found_issues:
-        result_file = output_dir / str(uuid.uuid4())
+        result_file = output_dir / f"{uuid.uuid4()}.json"
         result_file.write_text(json.dumps(issue.as_dict()))
         result_files.append(str(result_file))
     return result_files
-
-
-def clean_outputs(output_dir: pathlib.Path) -> None:
-    if output_dir and output_dir.is_dir():
-        shutil.rmtree(output_dir)
 
 
 def clone_git_repo(

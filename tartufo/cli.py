@@ -2,7 +2,6 @@
 
 import importlib
 import pathlib
-from tempfile import mkdtemp
 from typing import List, Tuple
 
 import click
@@ -94,11 +93,18 @@ class TartufoCLI(click.MultiCommand):
     "you would like.",
 )
 @click.option(
-    "--cleanup/--no-cleanup",
-    is_flag=True,
-    default=False,
-    show_default=True,
-    help="Clean up all temporary result files.",
+    "-od",
+    "--output-dir",
+    type=click.Path(
+        exists=False,
+        file_okay=False,
+        dir_okay=True,
+        writable=True,
+        resolve_path=True,
+        allow_dash=False,
+    ),
+    help="If specified, all issues will be written out as individual JSON files "
+    "in this directory.",
 )
 @click.option(
     "--git-rules-repo",
@@ -151,19 +157,16 @@ def process_issues(
 ):
     repo_path, issues = result
     options = types.GlobalOptions(**kwargs)  # type: ignore
-    if issues:
-        output_dir = pathlib.Path(mkdtemp())
-        util.write_outputs(issues, output_dir)
-    else:
-        output_dir = None  # type: ignore
-    util.echo_issues(issues, options.json, repo_path, output_dir)
-
-    if options.cleanup:
-        util.clean_outputs(output_dir)
-    else:
-        if output_dir and not options.json:
-            click.echo("Results have been saved in {}".format(output_dir))
+    output_dir = None
+    if options.output_dir:
+        output_dir = pathlib.Path(options.output_dir)
 
     if issues:
+        util.echo_issues(issues, options.json, repo_path, output_dir)
+        if output_dir:
+            util.write_outputs(issues, output_dir)
+            if not options.json:
+                click.echo(f"Results have been saved in {output_dir}")
         ctx.exit(1)
+
     ctx.exit(0)

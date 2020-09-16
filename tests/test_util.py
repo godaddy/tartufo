@@ -71,7 +71,7 @@ class OutputTests(unittest.TestCase):
         mock_json.dumps.assert_called_once_with(
             {
                 "project_path": "/repo",
-                "issues_path": "/output",
+                "output_dir": "/output",
                 "found_issues": [
                     {
                         "issue_type": "High Entropy",
@@ -106,7 +106,7 @@ class OutputTests(unittest.TestCase):
         mock_json.dumps.assert_called_once_with(
             {
                 "project_path": "/repo",
-                "issues_path": "/tmp",
+                "output_dir": "/tmp",
                 "found_issues": [
                     {
                         "issue_type": "High Entropy",
@@ -127,21 +127,6 @@ class OutputTests(unittest.TestCase):
                 ],
             }
         )
-
-    @mock.patch("tartufo.util.shutil")
-    def test_clean_outputs_deletes_output_directory_if_it_exists(self, mock_shutil):
-        class ExistingDir:
-            def is_dir(self):
-                return True
-
-        output = ExistingDir()
-        util.clean_outputs(output)
-        mock_shutil.rmtree.assert_called_once_with(output)
-
-    @mock.patch("tartufo.util.shutil")
-    def test_clean_outputs_does_nothing_if_output_dir_doesnt_exist(self, mock_shutil):
-        util.clean_outputs(None)
-        mock_shutil.rmtree.assert_not_called()
 
 
 class GeneralUtilTests(unittest.TestCase):

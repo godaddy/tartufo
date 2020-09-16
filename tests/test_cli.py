@@ -52,52 +52,38 @@ class ListCommandTests(unittest.TestCase):
 
 
 class ProcessIssuesTest(unittest.TestCase):
-    @mock.patch("tartufo.util.clean_outputs")
-    @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
-    def test_output_is_cleaned_when_requested(
-        self, mock_scanner: mock.MagicMock, mock_clean: mock.MagicMock
-    ):
-        mock_scanner.return_value.scan.return_value = []
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            runner.invoke(cli.main, ["--cleanup", "scan-local-repo", "."])
-        mock_clean.assert_called_once_with(None)
-
-    @mock.patch("tartufo.cli.mkdtemp")
     @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
     @mock.patch("tartufo.util.echo_issues", new=mock.MagicMock())
     @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
-    def test_issues_path_is_called_out(
-        self, mock_scanner: mock.MagicMock, mock_temp: mock.MagicMock
-    ):
+    def test_output_dir_is_called_out(self, mock_scanner: mock.MagicMock):
         mock_scanner.return_value.scan.return_value = [
             scanner.Issue(types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar"))
         ]
-        mock_temp.return_value = "/foo"
         runner = CliRunner()
         with runner.isolated_filesystem():
-            result = runner.invoke(cli.main, ["scan-local-repo", "."])
+            result = runner.invoke(
+                cli.main, ["--output-dir", "/foo", "scan-local-repo", "."]
+            )
         self.assertEqual(result.output, "Results have been saved in /foo\n")
 
-    @mock.patch("tartufo.cli.mkdtemp")
     @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
     @mock.patch("tartufo.util.echo_issues", new=mock.MagicMock())
     @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
-    def test_issues_path_is_not_called_out_when_outputting_json(
-        self, mock_scanner: mock.MagicMock, mock_temp: mock.MagicMock
+    def test_output_dir_is_not_called_out_when_outputting_json(
+        self, mock_scanner: mock.MagicMock
     ):
         mock_scanner.return_value.scan.return_value = [
             scanner.Issue(types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar"))
         ]
-        mock_temp.return_value = "/foo"
         runner = CliRunner()
         with runner.isolated_filesystem():
-            result = runner.invoke(cli.main, ["--json", "scan-local-repo", "."])
+            result = runner.invoke(
+                cli.main, ["--output-dir", "/foo", "--json", "scan-local-repo", "."]
+            )
         # All other outputs are mocked, so this is ensuring that the
         #   "Results have been saved in ..." message is not output.
         self.assertEqual(result.output, "")
 
-    @mock.patch("tartufo.cli.mkdtemp", new=mock.MagicMock())
     @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
     @mock.patch("tartufo.util.echo_issues", new=mock.MagicMock())
     @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
