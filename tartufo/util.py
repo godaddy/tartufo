@@ -10,7 +10,8 @@ import tempfile
 import uuid
 from functools import lru_cache, partial
 from hashlib import blake2s
-from typing import Any, Callable, Dict, Iterable, List, TYPE_CHECKING
+from typing import Any, Callable, Dict, Iterable, List, Optional, TYPE_CHECKING
+from urllib.parse import urlparse
 
 import click
 import git
@@ -57,10 +58,17 @@ def clean_outputs(output_dir: pathlib.Path) -> None:
         shutil.rmtree(output_dir)
 
 
-def clone_git_repo(git_url: str) -> str:
-    project_path = tempfile.mkdtemp()
+def clone_git_repo(
+    git_url: str, target_dir: Optional[pathlib.Path] = None
+) -> pathlib.Path:
+    if not target_dir:
+        project_path = tempfile.mkdtemp()
+    else:
+        repo_name = urlparse(git_url).path.split("/")[-1]
+        project_path = str(target_dir / repo_name)
+
     git.Repo.clone_from(git_url, project_path)
-    return project_path
+    return pathlib.Path(project_path)
 
 
 style_ok = partial(click.style, fg="bright_green")  # pylint: disable=invalid-name

@@ -1,4 +1,5 @@
 import unittest
+from pathlib import Path
 from unittest import mock
 
 from git.exc import GitCommandError
@@ -20,7 +21,7 @@ class ScanRemoteRepoTests(unittest.TestCase):
             runner.invoke(
                 cli.main, ["scan-remote-repo", "git@github.com:godaddy/tartufo.git"]
             )
-        mock_clone.assert_called_once_with("git@github.com:godaddy/tartufo.git")
+        mock_clone.assert_called_once_with("git@github.com:godaddy/tartufo.git", None)
 
     @mock.patch("tartufo.commands.scan_remote_repo.util.clone_git_repo")
     @mock.patch("tartufo.commands.scan_remote_repo.GitRepoScanner")
@@ -48,15 +49,15 @@ class ScanRemoteRepoTests(unittest.TestCase):
         mock_scanner: mock.MagicMock,
         mock_clone: mock.MagicMock,
     ):
-        mock_clone.return_value = "/foo"
         mock_scanner.return_value.scan.return_value = []
         mock_path.return_value.exists.return_value = True
         runner = CliRunner()
-        with runner.isolated_filesystem():
+        with runner.isolated_filesystem() as dirname:
+            mock_clone.return_value = Path(dirname)
             runner.invoke(
                 cli.main, ["scan-remote-repo", "git@github.com:godaddy/tartufo.git"]
             )
-        self.assertEqual(mock_rmtree.call_args[0][0], "/foo")
+            self.assertEqual(mock_rmtree.call_args[0][0], dirname)
 
     @mock.patch("tartufo.commands.scan_remote_repo.util.clone_git_repo")
     @mock.patch("tartufo.commands.scan_remote_repo.GitRepoScanner")
@@ -93,3 +94,26 @@ class ScanRemoteRepoTests(unittest.TestCase):
                 cli.main, ["scan-remote-repo", "git@github.com:godaddy/tartufo.git"]
             )
         self.assertEqual(result.output, "Scan failed!\n")
+
+    @mock.patch("tartufo.commands.scan_remote_repo.util.clone_git_repo")
+    @mock.patch("tartufo.commands.scan_remote_repo.GitRepoScanner")
+    @mock.patch("tartufo.commands.scan_remote_repo.rmtree", new=mock.MagicMock())
+    def test_work_dir_is_passed_to_clone_repo(
+        self, mock_scanner: mock.MagicMock, mock_clone: mock.MagicMock
+    ):
+        mock_scanner.return_value.scan.return_value = []
+        runner = CliRunner()
+        with runner.isolated_filesystem() as dirname:
+            mock_clone.return_value = Path("/foo")
+            runner.invoke(
+                cli.main,
+                [
+                    "scan-remote-repo",
+                    "--work-dir",
+                    dirname,
+                    "git@github.com:godaddy/tartufo.git",
+                ],
+            )
+            mock_clone.assert_called_once_with(
+                "git@github.com:godaddy/tartufo.git", Path(dirname)
+            )

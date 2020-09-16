@@ -2,6 +2,8 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+from click.testing import CliRunner
+
 from tartufo import scanner, types, util
 
 
@@ -20,17 +22,43 @@ class GitTests(unittest.TestCase):
 
     @mock.patch("git.Repo.clone_from")
     @mock.patch("tartufo.util.tempfile.mkdtemp")
-    def test_tartufo_clones_git_repo_into_temp_dir(self, mock_mkdtemp, mock_clone):
+    def test_tartufo_clones_git_repo_into_temp_dir(
+        self, mock_mkdtemp: mock.MagicMock, mock_clone: mock.MagicMock
+    ):
+        mock_mkdtemp.return_value = "/foo"
         util.clone_git_repo("https://github.com/godaddy/tartufo.git")
         mock_clone.assert_called_once_with(
-            "https://github.com/godaddy/tartufo.git", mock_mkdtemp.return_value
+            "https://github.com/godaddy/tartufo.git", "/foo"
         )
 
     @mock.patch("git.Repo.clone_from", new=mock.MagicMock())
     @mock.patch("tartufo.util.tempfile.mkdtemp")
-    def test_clone_git_repo_returns_path_to_clone(self, mock_mkdtemp):
+    def test_clone_git_repo_returns_path_to_clone(self, mock_mkdtemp: mock.MagicMock):
+        mock_mkdtemp.return_value = "/foo"
         repo_path = util.clone_git_repo("https://github.com/godaddy/tartufo.git")
-        self.assertEqual(repo_path, mock_mkdtemp.return_value)
+        self.assertEqual(repo_path, Path("/foo"))
+
+    @mock.patch("git.Repo.clone_from")
+    def test_clone_git_repo_clones_into_subdir_of_target(
+        self, mock_clone: mock.MagicMock
+    ):
+        runner = CliRunner()
+        with runner.isolated_filesystem() as dirname:
+            workdir = Path(dirname)
+            util.clone_git_repo("https://github.com/godaddy/tartufo.git", workdir)
+            mock_clone.assert_called_once_with(
+                "https://github.com/godaddy/tartufo.git", str(workdir / "tartufo.git"),
+            )
+
+    @mock.patch("git.Repo.clone_from", new=mock.MagicMock())
+    def test_clone_git_repo_returns_subdir_of_target(self):
+        runner = CliRunner()
+        with runner.isolated_filesystem() as dirname:
+            workdir = Path(dirname)
+            repo_path = util.clone_git_repo(
+                "https://github.com/godaddy/tartufo.git", workdir
+            )
+            self.assertEqual(repo_path, workdir / "tartufo.git")
 
 
 class OutputTests(unittest.TestCase):

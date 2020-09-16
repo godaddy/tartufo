@@ -18,6 +18,20 @@ from tartufo.scanner import GitRepoScanner, Issue
     help="The max commit depth to go back when searching for secrets.",
 )
 @click.option("--branch", help="Specify a branch name to scan only that branch.")
+@click.option(
+    "-wd",
+    "--work-dir",
+    type=click.Path(
+        exists=True,
+        file_okay=False,
+        dir_okay=True,
+        writable=True,
+        allow_dash=False,
+        resolve_path=True,
+    ),
+    help="Specify a working directory; this is where the repository will be cloned "
+    "to before scanning.",
+)
 @click.argument("git-url")
 @click.pass_obj
 @click.pass_context
@@ -28,15 +42,18 @@ def main(
     since_commit: Optional[str],
     max_depth: int,
     branch: Optional[str],
+    work_dir: click.Path,
 ) -> Tuple[str, List[Issue]]:
     """Automatically clone and scan a remote git repository."""
     git_options = types.GitOptions(
         since_commit=since_commit, max_depth=max_depth, branch=branch
     )
-    repo_path = None
+    repo_path: Optional[Path] = None
+    if work_dir:
+        repo_path = Path(str(work_dir))
     issues: List[Issue] = []
     try:
-        repo_path = util.clone_git_repo(git_url)
+        repo_path = util.clone_git_repo(git_url, repo_path)
         scanner = GitRepoScanner(options, git_options, str(repo_path))
         issues = scanner.scan()
     except GitCommandError as exc:
@@ -44,6 +61,6 @@ def main(
     except types.TartufoScanException as exc:
         util.fail(str(exc), ctx)
     finally:
-        if repo_path and Path(repo_path).exists():
-            rmtree(repo_path, onerror=util.del_rw)
+        if repo_path and repo_path.exists():
+            rmtree(str(repo_path), onerror=util.del_rw)
     return (git_url, issues)
