@@ -42,7 +42,7 @@ def main(
     since_commit: Optional[str],
     max_depth: int,
     branch: Optional[str],
-    work_dir: click.Path,
+    work_dir: Optional[str],
 ) -> Tuple[str, List[Issue]]:
     """Automatically clone and scan a remote git repository."""
     git_options = types.GitOptions(
@@ -50,7 +50,7 @@ def main(
     )
     repo_path: Optional[Path] = None
     if work_dir:
-        repo_path = Path(str(work_dir))
+        repo_path = Path(work_dir)
     issues: List[Issue] = []
     try:
         repo_path = util.clone_git_repo(git_url, repo_path)
