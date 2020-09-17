@@ -1,5 +1,6 @@
 import unittest
 from collections import namedtuple
+from pathlib import Path
 from unittest import mock
 
 from click.testing import CliRunner
@@ -83,6 +84,22 @@ class ProcessIssuesTest(unittest.TestCase):
         # All other outputs are mocked, so this is ensuring that the
         #   "Results have been saved in ..." message is not output.
         self.assertEqual(result.output, "")
+
+    @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
+    @mock.patch("tartufo.util.echo_issues", new=mock.MagicMock())
+    @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
+    def test_output_dir_is_created_if_it_does_not_exist(
+        self, mock_scanner: mock.MagicMock
+    ):
+        mock_scanner.return_value.scan.return_value = [
+            scanner.Issue(types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar"))
+        ]
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            runner.invoke(
+                cli.main, ["--output-dir", "./foo", "--json", "scan-local-repo", "."]
+            )
+            self.assertTrue(Path("./foo").exists())
 
     @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
     @mock.patch("tartufo.util.echo_issues", new=mock.MagicMock())

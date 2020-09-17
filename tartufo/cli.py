@@ -160,6 +160,8 @@ def process_issues(
     output_dir = None
     if options.output_dir:
         output_dir = pathlib.Path(options.output_dir)
+        if not output_dir.exists():
+            output_dir.mkdir(parents=True)
 
     if issues:
         util.echo_issues(issues, options.json, repo_path, output_dir)
