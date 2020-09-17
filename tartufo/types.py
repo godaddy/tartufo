@@ -14,7 +14,7 @@ class GlobalOptions:
     include_paths: Optional[TextIO]
     exclude_paths: Optional[TextIO]
     exclude_signatures: Tuple[str, ...]
-    cleanup: bool
+    output_dir: Optional[str]
     git_rules_repo: Optional[str]
     git_rules_files: Tuple[str, ...]
     config: Optional[TextIO]
