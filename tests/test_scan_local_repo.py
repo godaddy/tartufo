@@ -19,3 +19,11 @@ class ScanLocalRepoTests(unittest.TestCase):
             result = runner.invoke(cli.main, ["scan-local-repo", "."])
         self.assertGreater(result.exit_code, 0)
         self.assertEqual(result.output, "Scan failed!\n")
+
+    def test_scan_exits_gracefully_when_target_is_not_git_repo(self):
+        runner = CliRunner()
+        with runner.isolated_filesystem() as dirname:
+            result = runner.invoke(cli.main, ["scan-local-repo", "."])
+            self.assertEqual(
+                result.output, f"{dirname} is not a valid git repository.\n"
+            )
