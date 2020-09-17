@@ -53,19 +53,26 @@ class ListCommandTests(unittest.TestCase):
 
 
 class ProcessIssuesTest(unittest.TestCase):
+    @mock.patch("tartufo.cli.datetime")
     @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
     @mock.patch("tartufo.util.echo_issues", new=mock.MagicMock())
     @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
-    def test_output_dir_is_called_out(self, mock_scanner: mock.MagicMock):
+    def test_output_dir_is_called_out(
+        self, mock_scanner: mock.MagicMock, mock_dt: mock.MagicMock
+    ):
         mock_scanner.return_value.scan.return_value = [
             scanner.Issue(types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar"))
         ]
+        mock_dt.now.return_value.isoformat.return_value = "nownownow"
         runner = CliRunner()
-        with runner.isolated_filesystem():
+        with runner.isolated_filesystem() as dirname:
             result = runner.invoke(
-                cli.main, ["--output-dir", "/foo", "scan-local-repo", "."]
+                cli.main, ["--output-dir", "./foo", "scan-local-repo", "."]
             )
-        self.assertEqual(result.output, "Results have been saved in /foo\n")
+        self.assertEqual(
+            result.output,
+            f"Results have been saved in {dirname}/foo/tartufo-scan-results-nownownow\n",
+        )
 
     @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
     @mock.patch("tartufo.util.echo_issues", new=mock.MagicMock())
@@ -79,7 +86,7 @@ class ProcessIssuesTest(unittest.TestCase):
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(
-                cli.main, ["--output-dir", "/foo", "--json", "scan-local-repo", "."]
+                cli.main, ["--output-dir", "./foo", "--json", "scan-local-repo", "."]
             )
         # All other outputs are mocked, so this is ensuring that the
         #   "Results have been saved in ..." message is not output.

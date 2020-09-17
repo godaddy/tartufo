@@ -2,6 +2,7 @@
 
 import importlib
 import pathlib
+from datetime import datetime
 from typing import List, Tuple
 
 import click
@@ -104,7 +105,8 @@ class TartufoCLI(click.MultiCommand):
         allow_dash=False,
     ),
     help="If specified, all issues will be written out as individual JSON files "
-    "in this directory.",
+    "to a uniquely named directory under this one. This will help with keeping "
+    "the results of individual runs of tartufo separated.",
 )
 @click.option(
     "--git-rules-repo",
@@ -159,9 +161,9 @@ def process_issues(
     options = types.GlobalOptions(**kwargs)  # type: ignore
     output_dir = None
     if options.output_dir:
-        output_dir = pathlib.Path(options.output_dir)
-        if not output_dir.exists():
-            output_dir.mkdir(parents=True)
+        now = datetime.now().isoformat("T", "microseconds")
+        output_dir = pathlib.Path(options.output_dir) / f"tartufo-scan-results-{now}"
+        output_dir.mkdir(parents=True)
 
     if issues:
         util.echo_issues(issues, options.json, repo_path, output_dir)
