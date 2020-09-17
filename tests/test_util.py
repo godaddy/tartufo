@@ -20,17 +20,34 @@ class GitTests(unittest.TestCase):
 
     @mock.patch("git.Repo.clone_from")
     @mock.patch("tartufo.util.tempfile.mkdtemp")
-    def test_tartufo_clones_git_repo_into_temp_dir(self, mock_mkdtemp, mock_clone):
+    def test_tartufo_clones_git_repo_into_temp_dir(
+        self, mock_mkdtemp: mock.MagicMock, mock_clone: mock.MagicMock
+    ):
+        mock_mkdtemp.return_value = "/foo"
         util.clone_git_repo("https://github.com/godaddy/tartufo.git")
         mock_clone.assert_called_once_with(
-            "https://github.com/godaddy/tartufo.git", mock_mkdtemp.return_value
+            "https://github.com/godaddy/tartufo.git", "/foo"
         )
 
     @mock.patch("git.Repo.clone_from", new=mock.MagicMock())
     @mock.patch("tartufo.util.tempfile.mkdtemp")
-    def test_clone_git_repo_returns_path_to_clone(self, mock_mkdtemp):
+    def test_clone_git_repo_returns_path_to_clone(self, mock_mkdtemp: mock.MagicMock):
+        mock_mkdtemp.return_value = "/foo"
         repo_path = util.clone_git_repo("https://github.com/godaddy/tartufo.git")
-        self.assertEqual(repo_path, mock_mkdtemp.return_value)
+        self.assertEqual(repo_path, Path("/foo"))
+
+    @mock.patch("git.Repo.clone_from")
+    @mock.patch("tartufo.util.tempfile.mkdtemp")
+    def test_clone_git_repo_clones_into_target_dir(
+        self, mock_temp: mock.MagicMock, mock_clone: mock.MagicMock
+    ):
+        util.clone_git_repo(
+            "https://github.com/godaddy/tartufo.git", Path("/foo/tartufo.git")
+        )
+        mock_temp.assert_not_called()
+        mock_clone.assert_called_once_with(
+            "https://github.com/godaddy/tartufo.git", "/foo/tartufo.git"
+        )
 
 
 class OutputTests(unittest.TestCase):
