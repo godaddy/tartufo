@@ -1,17 +1,46 @@
-V2.0.0 - XX YY ZZ
------------------
+v2.0.0a1 - 18 November 2020
+---------------------------
+
+This is a whole brand new tartufo! It's been entirely restructured, rewritten,
+retested, rebuilt, and remade! It's now more extensible, readable, testable,
+and usable.
+
+New features include:
+
+* #2 - Verified/approved exclusions are now handled by way of hash signatures.
+  * These hashes are created on a combination of the matched string and filename
+    where the match was found. They are generated using the `BLAKE2` hashing
+    algorithm. (via #61)
+* #7 - A working directory can now be specified to clone to when scanning a
+  remote repository. (via #81)
+* #11 - Removed the `--cleanup` option and added a `--output-dir` in its place.
+  Issues are now written to disk only when specifically requested by providing
+  an output directory. (via #82)
+* #39 - The functionality is now split into sub-commands (via #78) Available
+  sub-commands are, for now:
+  * pre-commit
+  * scan-local-repo
+  * scan-remote-repo
+* The entire library has been refactored and nearly all logic has been put
+  into its most appropriate place. It should now be possible to use this whole
+  tool as a library, and not just a CLI application. (via #29, #65, #67, #70)
+
+Bug fixes include:
+
+* #55 - The tests no longer iterate over this repository's history; everything
+  has been sufficiently split out to make it more testable without needing to
+  look at an actual git history. (via #70)
+* #72 - Specifying a non-git path no longer causes an error (via #80)
+
+Other changes:
 
 * Issues found during the scan are now represented by a class, instead of some
-  amorphous dictionary (#29)
+  amorphous dictionary (via #29)
   * Further, since a single `Issue` is instantiated per match, the output key
     for the matches has changed from `strings_found` to `matched_string`.
 * #25 - Set up full documentation on Read The Docs (via #38)
 * #30 - Support for Python 2 has been dropped (via #31)
 * #58 - CI is now handled by GitHub Actions (via #59)
-* #2 - Verified/approved exclusions are now handled by way of hash signatures.
-  * These hashes are created on a combination of the matched string and filename
-    where the match was found. They are generated using the `BLAKE2` hashing
-    algorithm.
 
 v1.1.2 - 21 April 2020
 ----------------------
