@@ -24,7 +24,7 @@ HEX_CHARS = "1234567890abcdefABCDEF"
 
 
 class Issue:
-    """Represents an issue found while scanning a target."""
+    """Represent an issue found while scanning a target."""
 
     OUTPUT_SEPARATOR: str = "~~~~~~~~~~~~~~~~~~~~~"
 
@@ -36,8 +36,7 @@ class Issue:
     def __init__(
         self, issue_type: IssueType, matched_string: str, chunk: Chunk
     ) -> None:
-        """Represents a single issue found during a scan of a target.
-
+        """
         :param issue_type: What type of scan identified this issue
         :param matched_string: The string that was identified as a potential issue
         :param chunk: The chunk of data where the match was found
@@ -65,7 +64,10 @@ class Issue:
 
     @property
     def signature(self) -> str:
-        """Generate a stable hash-based signature uniquely identifying this issue."""
+        """Generate a stable hash-based signature uniquely identifying this issue.
+
+        :rtype: str
+        """
         return util.generate_signature(self.matched_string, self.chunk.file_path)
 
     def __str__(self) -> str:
@@ -99,8 +101,6 @@ class ScannerBase(abc.ABC):
     this reason, the `chunks` property is left abstract. It is up to the various
     scanners to implement this property, in the form of a generator, to yield
     all the individual pieces of content to be scanned.
-
-    :var GlobalOptions global_options: The options used to dictate the behavior of the scanner
     """
 
     _issues: Optional[List[Issue]] = None
@@ -110,10 +110,6 @@ class ScannerBase(abc.ABC):
     global_options: GlobalOptions
 
     def __init__(self, options: GlobalOptions) -> None:
-        """Create a new scanner instance.
-
-        :param options: The options provided to the top-level tartufo command
-        """
         self.global_options = options
 
     @property
@@ -123,6 +119,7 @@ class ScannerBase(abc.ABC):
         If a scan has not yet been run, run it.
 
         :return: Any issues found during the scan.
+        :rtype: List[Issue]
         """
         if self._issues is None:
             self._issues = self.scan()
@@ -130,7 +127,10 @@ class ScannerBase(abc.ABC):
 
     @property
     def included_paths(self) -> List[Pattern]:
-        """Get a list of regexes used as an exclusive list of paths to scan."""
+        """Get a list of regexes used as an exclusive list of paths to scan.
+
+        :rtype: List[Pattern]
+        """
         if self._included_paths is None:
             if self.global_options.include_paths:
                 self._included_paths = config.compile_path_rules(
@@ -142,7 +142,10 @@ class ScannerBase(abc.ABC):
 
     @property
     def excluded_paths(self) -> List[Pattern]:
-        """Get a list of regexes used to match paths to exclude from the scan."""
+        """Get a list of regexes used to match paths to exclude from the scan.
+
+        :rtype: List[Pattern]
+        """
         if self._excluded_paths is None:
             if self.global_options.exclude_paths:
                 self._excluded_paths = config.compile_path_rules(
@@ -157,6 +160,7 @@ class ScannerBase(abc.ABC):
         """Get a dictionary of regular expressions to scan the code for.
 
         :raises TartufoScanException: If there was a problem compiling the rules
+        :rtype: Dict[str, Pattern]
         """
         if self._rules_regexes is None:
             try:
@@ -298,6 +302,8 @@ class ScannerBase(abc.ABC):
 
         Examples of "chunks" would be individual git commit diffs, or the
         contents of individual files.
+
+        :rtype: Generator[Chunk, None, None]
         """
 
 
@@ -306,16 +312,13 @@ class GitScanner(ScannerBase, abc.ABC):
 
     This is a lightweight base class to provide some basic functionality needed
     across all scanner that are interacting with git history.
-
-    :var str repo_path: The local filesystem path pointing to the repository
     """
 
     _repo: git.Repo
     repo_path: str
 
     def __init__(self, global_options: GlobalOptions, repo_path: str) -> None:
-        """Create a new git scanner instance.
-
+        """
         :param global_options: The options provided to the top-level tartufo command
         :param repo_path: The local filesystem path pointing to the repository
         """
@@ -349,27 +352,39 @@ class GitScanner(ScannerBase, abc.ABC):
 
     @abc.abstractmethod
     def load_repo(self, repo_path: str) -> git.Repo:
-        """Load and return the repo to be scanned.
+        """Load and return the repository to be scanned.
 
         :param repo_path: The local filesystem path pointing to the repository
         """
 
 
 class GitRepoScanner(GitScanner):
+
     git_options: GitOptions
 
     def __init__(
         self, global_options: GlobalOptions, git_options: GitOptions, repo_path: str
     ) -> None:
+        """Used for scanning a full clone of a git repository.
+
+        :param global_options: The options provided to the top-level tartufo command
+        :param git_options: The options specific to interacting with a git repository
+        :param repo_path: The local filesystem path pointing to the repository
+        """
         self.git_options = git_options
         super().__init__(global_options, repo_path)
 
-    def load_repo(self, repo_path: str):
+    def load_repo(self, repo_path: str) -> git.Repo:
         return git.Repo(repo_path)
 
     def _iter_branch_commits(
         self, repo: git.Repo, branch: git.FetchInfo
     ) -> Generator[Tuple[git.Commit, git.Commit], None, None]:
+        """Iterate over and yield the commits on a branch.
+
+        :param repo: The repository from which to extract the branch and commits
+        :param branch: The branch to iterate over
+        """
         since_commit_reached: bool = False
         prev_commit: git.Commit = None
         curr_commit: git.Commit = None
@@ -392,6 +407,10 @@ class GitRepoScanner(GitScanner):
 
     @property
     def chunks(self) -> Generator[Chunk, None, None]:
+        """Yield individual diffs from the repository's history.
+
+        :rtype: Generator[Chunk, None, None]
+        """
         already_searched: Set[bytes] = set()
 
         if self.git_options.branch:
@@ -434,11 +453,17 @@ class GitRepoScanner(GitScanner):
 
 
 class GitPreCommitScanner(GitScanner):
+    """For use in a git pre-commit hook."""
+
     def load_repo(self, repo_path: str) -> git.Repo:
         return git.Repo(repo_path, search_parent_directories=True)
 
     @property
     def chunks(self):
+        """Yield the individual file changes currently staged for commit.
+
+        :rtype: Generator[Chunk, None, None]
+        """
         diff_index = self._repo.index.diff(
             self._repo.head.commit, create_patch=True, R=True
         )
