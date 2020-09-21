@@ -110,6 +110,10 @@ class ScannerBase(abc.ABC):
     global_options: GlobalOptions
 
     def __init__(self, options: GlobalOptions) -> None:
+        """Create a new scanner instance.
+
+        :param options: The options provided to the top-level tartufo command
+        """
         self.global_options = options
 
     @property
@@ -298,9 +302,23 @@ class ScannerBase(abc.ABC):
 
 
 class GitScanner(ScannerBase, abc.ABC):
+    """A base class for scanners looking at git history.
+
+    This is a lightweight base class to provide some basic functionality needed
+    across all scanner that are interacting with git history.
+
+    :var str repo_path: The local filesystem path pointing to the repository
+    """
+
     _repo: git.Repo
+    repo_path: str
 
     def __init__(self, global_options: GlobalOptions, repo_path: str) -> None:
+        """Create a new git scanner instance.
+
+        :param global_options: The options provided to the top-level tartufo command
+        :param repo_path: The local filesystem path pointing to the repository
+        """
         self.repo_path = repo_path
         self._repo = self.load_repo(self.repo_path)
         super().__init__(global_options)
@@ -308,6 +326,18 @@ class GitScanner(ScannerBase, abc.ABC):
     def _iter_diff_index(
         self, diff_index: git.DiffIndex
     ) -> Generator[Tuple[str, str], None, None]:
+        """Iterate over a "diff index", yielding the individual file changes.
+
+        A "diff index" is essentially analogous to a single commit in the git
+        history. So what this does is iterate over a single commit, and yield
+        the changes to each individual file in that commit, along with its file
+        path. This will also check the file path and ensure that it has not been
+        excluded from the scan by configuration.
+
+        Note that binary files are wholly skipped.
+
+        :param diff_index: The diff index / commit to be iterated over
+        """
         diff: git.Diff
         for diff in diff_index:
             printable_diff: str = diff.diff.decode("utf-8", errors="replace")
@@ -319,7 +349,10 @@ class GitScanner(ScannerBase, abc.ABC):
 
     @abc.abstractmethod
     def load_repo(self, repo_path: str) -> git.Repo:
-        """Load and return the repo to be scanned."""
+        """Load and return the repo to be scanned.
+
+        :param repo_path: The local filesystem path pointing to the repository
+        """
 
 
 class GitRepoScanner(GitScanner):
