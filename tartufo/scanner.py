@@ -24,7 +24,7 @@ HEX_CHARS = "1234567890abcdefABCDEF"
 
 
 class Issue:
-    """Represents an issue found while scanning the code."""
+    """Represents an issue found while scanning a target."""
 
     OUTPUT_SEPARATOR: str = "~~~~~~~~~~~~~~~~~~~~~"
 
@@ -36,6 +36,12 @@ class Issue:
     def __init__(
         self, issue_type: IssueType, matched_string: str, chunk: Chunk
     ) -> None:
+        """Represents a single issue found during a scan of a target.
+
+        :param issue_type: What type of scan identified this issue
+        :param matched_string: The string that was identified as a potential issue
+        :param chunk: The chunk of data where the match was found
+        """
         self.issue_type = issue_type
         self.matched_string = matched_string
         self.chunk = chunk
@@ -44,6 +50,8 @@ class Issue:
         """Return a dictionary representation of an issue.
 
         This is primarily meant to aid in JSON serialization.
+
+        :return: A JSON serializable dictionary representation of this issue
         """
         return {
             "file_path": str(self.chunk.file_path),
@@ -57,6 +65,7 @@ class Issue:
 
     @property
     def signature(self) -> str:
+        """Generate a stable hash-based signature uniquely identifying this issue."""
         return util.generate_signature(self.matched_string, self.chunk.file_path)
 
     def __str__(self) -> str:
