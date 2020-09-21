@@ -82,6 +82,18 @@ class Issue:
 
 
 class ScannerBase(abc.ABC):
+    """Provide the base, generic functionality needed by all scanners.
+
+    In fact, this contains all of the actual scanning logic. This part of the
+    application should never differ; the part that differs, and the part that is
+    left abstract here, is what content is provided to the various scans. For
+    this reason, the `chunks` property is left abstract. It is up to the various
+    scanners to implement this property, in the form of a generator, to yield
+    all the individual pieces of content to be scanned.
+
+    :var GlobalOptions global_options: The options used to dictate the behavior of the scanner
+    """
+
     _issues: Optional[List[Issue]] = None
     _included_paths: Optional[List[Pattern]] = None
     _excluded_paths: Optional[List[Pattern]] = None
@@ -93,12 +105,19 @@ class ScannerBase(abc.ABC):
 
     @property
     def issues(self) -> List[Issue]:
+        """Get a list of issues found during the scan.
+
+        If a scan has not yet been run, run it.
+
+        :return: Any issues found during the scan.
+        """
         if self._issues is None:
             self._issues = self.scan()
         return self._issues
 
     @property
     def included_paths(self) -> List[Pattern]:
+        """Get a list of regexes used as an exclusive list of paths to scan."""
         if self._included_paths is None:
             if self.global_options.include_paths:
                 self._included_paths = config.compile_path_rules(
@@ -110,6 +129,7 @@ class ScannerBase(abc.ABC):
 
     @property
     def excluded_paths(self) -> List[Pattern]:
+        """Get a list of regexes used to match paths to exclude from the scan."""
         if self._excluded_paths is None:
             if self.global_options.exclude_paths:
                 self._excluded_paths = config.compile_path_rules(
@@ -120,7 +140,11 @@ class ScannerBase(abc.ABC):
         return self._excluded_paths
 
     @property
-    def rules_regexes(self):
+    def rules_regexes(self) -> Dict[str, Pattern]:
+        """Get a dictionary of regular expressions to scan the code for.
+
+        :raises TartufoScanException: If there was a problem compiling the rules
+        """
         if self._rules_regexes is None:
             try:
                 self._rules_regexes = config.configure_regexes(
@@ -134,7 +158,7 @@ class ScannerBase(abc.ABC):
         return self._rules_regexes
 
     @lru_cache()
-    def should_scan(self, file_path):
+    def should_scan(self, file_path: str):
         """Check if the a file path should be included in analysis.
 
         If non-empty, `self.included_paths` has precedence over
@@ -159,6 +183,11 @@ class ScannerBase(abc.ABC):
         return True
 
     def signature_is_excluded(self, blob: str, file_path: str) -> bool:
+        """Find whether the signature of some data has been excluded in configuration.
+
+        :param blob: The piece of data which is being scanned
+        :param file_path: The path and file name for the data being scanned
+        """
         return (
             util.generate_signature(blob, file_path)
             in self.global_options.exclude_signatures
@@ -166,8 +195,17 @@ class ScannerBase(abc.ABC):
 
     @lru_cache()
     def calculate_entropy(self, data: str, char_set: str) -> float:
-        """
+        """Calculate the Shannon entropy for a piece of data.
+
+        This essentially calculates the overall probability for each character
+        in `data` to be to be present, based on the characters in `char_set`.
+        By doing this, we can tell how random a string appears to be.
+
         Borrowed from http://blog.dkbza.org/2007/05/scanning-data-for-entropy-anomalies.html
+
+        :param data: The data to be scanned for its entropy
+        :param char_set: The character set used as a basis for the calculation
+        :return: The amount of entropy detected in the data.
         """
         if not data:
             return 0.0
@@ -179,6 +217,12 @@ class ScannerBase(abc.ABC):
         return entropy
 
     def scan(self) -> List[Issue]:
+        """Run the requested scans against the target data.
+
+        This will iterate through all chunks of data as provided by the scanner
+        implementation, and run all requested scans against it, as specified in
+        `self.global_options`.
+        """
         issues: List[Issue] = []
         if not any((self.global_options.entropy, self.global_options.regex)):
             raise TartufoScanException("No analysis requested.")
@@ -195,6 +239,10 @@ class ScannerBase(abc.ABC):
         return self._issues
 
     def scan_entropy(self, chunk: Chunk) -> List[Issue]:
+        """Scan a chunk of data for apparent high entropy.
+
+        :param chunk: The chunk of data to be scanned
+        """
         issues: List[Issue] = []
         for line in chunk.contents.split("\n"):
             for word in line.split():
@@ -215,6 +263,10 @@ class ScannerBase(abc.ABC):
         return issues
 
     def scan_regex(self, chunk: Chunk) -> List[Issue]:
+        """Scan a chunk of data for matches against the configured regexes.
+
+        :param chunk: The chunk of data to be scanned
+        """
         issues: List[Issue] = []
         for key, pattern in self.rules_regexes.items():
             found_strings = pattern.findall(chunk.contents)
