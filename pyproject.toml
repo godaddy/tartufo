@@ -57,6 +57,7 @@ pytest-cov = "^2.8.1"
 pytest-sugar = "^0.9.3"
 tox = "^3.14.6"
 vulture = "^1.4"
+wrapt = "^1.12.1"
 
 [tool.poetry.extras]
 docs = ["recommonmark", "sphinx", "sphinx-rtd-theme", "sphinx-autodoc-typehints"]
