@@ -51,6 +51,8 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
 ]
+autodoc_typehints = "description"  # show type hints in doc body instead of signature
+autoclass_content = "both"  # get docstring from class level and init simultaneously
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -87,3 +89,10 @@ html_use_modindex = False
 
 # If false, no index is generated.
 html_use_index = False
+
+# Set up linking to external Sphinx documetation
+intersphinx_mapping = {
+    "click": ("https://click.palletsprojects.com/en/7.x/", None),
+    "gitpython": ("https://gitpython.readthedocs.io/en/stable/", None),
+    "python": ("https://docs.python.org/3", None),
+}

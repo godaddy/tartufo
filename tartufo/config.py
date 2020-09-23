@@ -30,6 +30,12 @@ DEFAULT_REGEXES = truffleHogRegexes.regexChecks.regexes
 def read_pyproject_toml(
     ctx: click.Context, _param: click.Parameter, value: str
 ) -> Optional[str]:
+    """Read config values from a file and load them as defaults.
+
+    :param ctx: A context from a currently executing Click command
+    :param _param: The command parameter that triggered this callback
+    :param value: The value passed to the command parameter
+    """
     if not value:
         root_path = ctx.params.get("repo_path", None)
         if not root_path:
@@ -68,6 +74,13 @@ def configure_regexes(
     rules_repo: Optional[str] = None,
     rules_repo_files: Optional[Iterable[str]] = None,
 ) -> Dict[str, Pattern]:
+    """Build a set of regular expressions to be used during a regex scan.
+
+    :param include_default: Whether to include the built-in set of regexes
+    :param rules_files: A list of files to load rules from
+    :param rules_repo: A separate git repository to load rules from
+    :param rules_repo_files: A set of patterns used to find files in the rules repo
+    """
     if include_default:
         rules = copy.copy(DEFAULT_REGEXES)
     else:
@@ -105,6 +118,11 @@ def configure_regexes(
 
 
 def load_rules_from_file(rules_file: TextIO) -> Dict[str, Pattern]:
+    """Load a set of JSON rules from a file and return them as compiled patterns.
+
+    :param rules_file: An open file handle containing a JSON dictionary of regexes
+    :raises ValueError: If the rules contain invalid JSON
+    """
     regexes = {}
     try:
         new_rules = json.load(rules_file)
@@ -118,6 +136,12 @@ def load_rules_from_file(rules_file: TextIO) -> Dict[str, Pattern]:
 
 
 def compile_path_rules(patterns: Iterable[str]) -> List[Pattern]:
+    """Take a list of regex strings and compile them into patterns.
+
+    Any line starting with `#` will be ignored.
+
+    :param patterns: The list of patterns to be compiled
+    """
     return [
         re.compile(pattern.strip())
         for pattern in patterns

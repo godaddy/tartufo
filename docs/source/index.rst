@@ -28,13 +28,13 @@ Getting started is easy!
    using ``pip`` or using ``docker`` to pull the ``tartufo`` image from Docker Hub.
 
    Install using ``pip``:
-   
+
    .. code-block:: console
 
       $ pip install tartufo
 
-   Install using ``docker``: 
-   
+   Install using ``docker``:
+
    .. code-block:: console
 
       $ docker pull godaddy/tartufo
@@ -50,7 +50,7 @@ Getting started is easy!
 
       # Or, scan a local clone of a repo!
       $ tartufo --repo-path /path/to/your/git/repo
-      
+
    .. code-block:: console
 
       # Scan a remote repo using docker
@@ -58,9 +58,9 @@ Getting started is easy!
 
       # Mount a local clone of a repo and scan it using docker!
       $ docker run --rm -v "/path/to/your/git/repo:/git" godaddy/tartufo
-      
+
    For more detail on usage and options, see :doc:`usage`.
-      
+
 Attributions
 ------------
 
@@ -79,6 +79,7 @@ on the `truffleHog`_ project.
    SECURITY
    changelog
    examplecleanup
+   api
 
 
 .. _tartufo page on the Python Package Index: https://pypi.python.org/pypi/tartufo

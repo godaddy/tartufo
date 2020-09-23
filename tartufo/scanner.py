@@ -24,7 +24,7 @@ HEX_CHARS = "1234567890abcdefABCDEF"
 
 
 class Issue:
-    """Represents an issue found while scanning the code."""
+    """Represent an issue found while scanning a target."""
 
     OUTPUT_SEPARATOR: str = "~~~~~~~~~~~~~~~~~~~~~"
 
@@ -36,6 +36,11 @@ class Issue:
     def __init__(
         self, issue_type: IssueType, matched_string: str, chunk: Chunk
     ) -> None:
+        """
+        :param issue_type: What type of scan identified this issue
+        :param matched_string: The string that was identified as a potential issue
+        :param chunk: The chunk of data where the match was found
+        """
         self.issue_type = issue_type
         self.matched_string = matched_string
         self.chunk = chunk
@@ -44,6 +49,8 @@ class Issue:
         """Return a dictionary representation of an issue.
 
         This is primarily meant to aid in JSON serialization.
+
+        :return: A JSON serializable dictionary representation of this issue
         """
         return {
             "file_path": str(self.chunk.file_path),
@@ -57,6 +64,10 @@ class Issue:
 
     @property
     def signature(self) -> str:
+        """Generate a stable hash-based signature uniquely identifying this issue.
+
+        :rtype: str
+        """
         return util.generate_signature(self.matched_string, self.chunk.file_path)
 
     def __str__(self) -> str:
@@ -82,6 +93,16 @@ class Issue:
 
 
 class ScannerBase(abc.ABC):
+    """Provide the base, generic functionality needed by all scanners.
+
+    In fact, this contains all of the actual scanning logic. This part of the
+    application should never differ; the part that differs, and the part that is
+    left abstract here, is what content is provided to the various scans. For
+    this reason, the `chunks` property is left abstract. It is up to the various
+    scanners to implement this property, in the form of a generator, to yield
+    all the individual pieces of content to be scanned.
+    """
+
     _issues: Optional[List[Issue]] = None
     _included_paths: Optional[List[Pattern]] = None
     _excluded_paths: Optional[List[Pattern]] = None
@@ -93,12 +114,23 @@ class ScannerBase(abc.ABC):
 
     @property
     def issues(self) -> List[Issue]:
+        """Get a list of issues found during the scan.
+
+        If a scan has not yet been run, run it.
+
+        :return: Any issues found during the scan.
+        :rtype: List[Issue]
+        """
         if self._issues is None:
             self._issues = self.scan()
         return self._issues
 
     @property
     def included_paths(self) -> List[Pattern]:
+        """Get a list of regexes used as an exclusive list of paths to scan.
+
+        :rtype: List[Pattern]
+        """
         if self._included_paths is None:
             if self.global_options.include_paths:
                 self._included_paths = config.compile_path_rules(
@@ -110,6 +142,10 @@ class ScannerBase(abc.ABC):
 
     @property
     def excluded_paths(self) -> List[Pattern]:
+        """Get a list of regexes used to match paths to exclude from the scan.
+
+        :rtype: List[Pattern]
+        """
         if self._excluded_paths is None:
             if self.global_options.exclude_paths:
                 self._excluded_paths = config.compile_path_rules(
@@ -120,7 +156,12 @@ class ScannerBase(abc.ABC):
         return self._excluded_paths
 
     @property
-    def rules_regexes(self):
+    def rules_regexes(self) -> Dict[str, Pattern]:
+        """Get a dictionary of regular expressions to scan the code for.
+
+        :raises TartufoScanException: If there was a problem compiling the rules
+        :rtype: Dict[str, Pattern]
+        """
         if self._rules_regexes is None:
             try:
                 self._rules_regexes = config.configure_regexes(
@@ -134,7 +175,7 @@ class ScannerBase(abc.ABC):
         return self._rules_regexes
 
     @lru_cache()
-    def should_scan(self, file_path):
+    def should_scan(self, file_path: str):
         """Check if the a file path should be included in analysis.
 
         If non-empty, `self.included_paths` has precedence over
@@ -159,6 +200,11 @@ class ScannerBase(abc.ABC):
         return True
 
     def signature_is_excluded(self, blob: str, file_path: str) -> bool:
+        """Find whether the signature of some data has been excluded in configuration.
+
+        :param blob: The piece of data which is being scanned
+        :param file_path: The path and file name for the data being scanned
+        """
         return (
             util.generate_signature(blob, file_path)
             in self.global_options.exclude_signatures
@@ -166,8 +212,17 @@ class ScannerBase(abc.ABC):
 
     @lru_cache()
     def calculate_entropy(self, data: str, char_set: str) -> float:
-        """
+        """Calculate the Shannon entropy for a piece of data.
+
+        This essentially calculates the overall probability for each character
+        in `data` to be to be present, based on the characters in `char_set`.
+        By doing this, we can tell how random a string appears to be.
+
         Borrowed from http://blog.dkbza.org/2007/05/scanning-data-for-entropy-anomalies.html
+
+        :param data: The data to be scanned for its entropy
+        :param char_set: The character set used as a basis for the calculation
+        :return: The amount of entropy detected in the data.
         """
         if not data:
             return 0.0
@@ -179,6 +234,12 @@ class ScannerBase(abc.ABC):
         return entropy
 
     def scan(self) -> List[Issue]:
+        """Run the requested scans against the target data.
+
+        This will iterate through all chunks of data as provided by the scanner
+        implementation, and run all requested scans against it, as specified in
+        `self.global_options`.
+        """
         issues: List[Issue] = []
         if not any((self.global_options.entropy, self.global_options.regex)):
             raise TartufoScanException("No analysis requested.")
@@ -195,6 +256,10 @@ class ScannerBase(abc.ABC):
         return self._issues
 
     def scan_entropy(self, chunk: Chunk) -> List[Issue]:
+        """Scan a chunk of data for apparent high entropy.
+
+        :param chunk: The chunk of data to be scanned
+        """
         issues: List[Issue] = []
         for line in chunk.contents.split("\n"):
             for word in line.split():
@@ -215,6 +280,10 @@ class ScannerBase(abc.ABC):
         return issues
 
     def scan_regex(self, chunk: Chunk) -> List[Issue]:
+        """Scan a chunk of data for matches against the configured regexes.
+
+        :param chunk: The chunk of data to be scanned
+        """
         issues: List[Issue] = []
         for key, pattern in self.rules_regexes.items():
             found_strings = pattern.findall(chunk.contents)
@@ -233,13 +302,26 @@ class ScannerBase(abc.ABC):
 
         Examples of "chunks" would be individual git commit diffs, or the
         contents of individual files.
+
+        :rtype: Generator[Chunk, None, None]
         """
 
 
 class GitScanner(ScannerBase, abc.ABC):
+    """A base class for scanners looking at git history.
+
+    This is a lightweight base class to provide some basic functionality needed
+    across all scanner that are interacting with git history.
+    """
+
     _repo: git.Repo
+    repo_path: str
 
     def __init__(self, global_options: GlobalOptions, repo_path: str) -> None:
+        """
+        :param global_options: The options provided to the top-level tartufo command
+        :param repo_path: The local filesystem path pointing to the repository
+        """
         self.repo_path = repo_path
         self._repo = self.load_repo(self.repo_path)
         super().__init__(global_options)
@@ -247,6 +329,18 @@ class GitScanner(ScannerBase, abc.ABC):
     def _iter_diff_index(
         self, diff_index: git.DiffIndex
     ) -> Generator[Tuple[str, str], None, None]:
+        """Iterate over a "diff index", yielding the individual file changes.
+
+        A "diff index" is essentially analogous to a single commit in the git
+        history. So what this does is iterate over a single commit, and yield
+        the changes to each individual file in that commit, along with its file
+        path. This will also check the file path and ensure that it has not been
+        excluded from the scan by configuration.
+
+        Note that binary files are wholly skipped.
+
+        :param diff_index: The diff index / commit to be iterated over
+        """
         diff: git.Diff
         for diff in diff_index:
             printable_diff: str = diff.diff.decode("utf-8", errors="replace")
@@ -258,24 +352,39 @@ class GitScanner(ScannerBase, abc.ABC):
 
     @abc.abstractmethod
     def load_repo(self, repo_path: str) -> git.Repo:
-        """Load and return the repo to be scanned."""
+        """Load and return the repository to be scanned.
+
+        :param repo_path: The local filesystem path pointing to the repository
+        """
 
 
 class GitRepoScanner(GitScanner):
+
     git_options: GitOptions
 
     def __init__(
         self, global_options: GlobalOptions, git_options: GitOptions, repo_path: str
     ) -> None:
+        """Used for scanning a full clone of a git repository.
+
+        :param global_options: The options provided to the top-level tartufo command
+        :param git_options: The options specific to interacting with a git repository
+        :param repo_path: The local filesystem path pointing to the repository
+        """
         self.git_options = git_options
         super().__init__(global_options, repo_path)
 
-    def load_repo(self, repo_path: str):
+    def load_repo(self, repo_path: str) -> git.Repo:
         return git.Repo(repo_path)
 
     def _iter_branch_commits(
         self, repo: git.Repo, branch: git.FetchInfo
     ) -> Generator[Tuple[git.Commit, git.Commit], None, None]:
+        """Iterate over and yield the commits on a branch.
+
+        :param repo: The repository from which to extract the branch and commits
+        :param branch: The branch to iterate over
+        """
         since_commit_reached: bool = False
         prev_commit: git.Commit = None
         curr_commit: git.Commit = None
@@ -298,6 +407,10 @@ class GitRepoScanner(GitScanner):
 
     @property
     def chunks(self) -> Generator[Chunk, None, None]:
+        """Yield individual diffs from the repository's history.
+
+        :rtype: Generator[Chunk, None, None]
+        """
         already_searched: Set[bytes] = set()
 
         if self.git_options.branch:
@@ -340,11 +453,17 @@ class GitRepoScanner(GitScanner):
 
 
 class GitPreCommitScanner(GitScanner):
+    """For use in a git pre-commit hook."""
+
     def load_repo(self, repo_path: str) -> git.Repo:
         return git.Repo(repo_path, search_parent_directories=True)
 
     @property
     def chunks(self):
+        """Yield the individual file changes currently staged for commit.
+
+        :rtype: Generator[Chunk, None, None]
+        """
         diff_index = self._repo.index.diff(
             self._repo.head.commit, create_patch=True, R=True
         )
