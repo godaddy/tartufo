@@ -351,6 +351,7 @@ class GitScanner(ScannerBase, abc.ABC):
         """Load and return the repository to be scanned.
 
         :param repo_path: The local filesystem path pointing to the repository
+        :raises types.GitLocalException: If there was a problem loading the repository
         """
 
 
@@ -374,7 +375,10 @@ class GitRepoScanner(GitScanner):
         super().__init__(global_options, repo_path)
 
     def load_repo(self, repo_path: str) -> git.Repo:
-        return git.Repo(repo_path)
+        try:
+            return git.Repo(repo_path)
+        except git.GitError as exc:
+            raise types.GitLocalException(str(exc)) from exc
 
     def _iter_branch_commits(
         self, repo: git.Repo, branch: git.FetchInfo
