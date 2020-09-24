@@ -14,6 +14,8 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, TYPE_CHECKING
 import click
 import git
 
+from tartufo import types
+
 if TYPE_CHECKING:
     from tartufo.scanner import Issue  # pylint: disable=cyclic-import
 
@@ -80,13 +82,17 @@ def clone_git_repo(
 
     :param git_url: The URL of the git repository to be cloned
     :param target_dir: Where to clone the repository to
+    :raises types.GitRemoteException: If there was an error cloning the repository
     """
     if not target_dir:
         project_path = tempfile.mkdtemp()
     else:
         project_path = str(target_dir)
 
-    git.Repo.clone_from(git_url, project_path)
+    try:
+        git.Repo.clone_from(git_url, project_path)
+    except git.GitCommandError as exc:
+        raise types.GitRemoteException(exc.stderr.strip()) from exc
     return pathlib.Path(project_path)
 
 
