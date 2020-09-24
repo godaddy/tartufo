@@ -31,9 +31,7 @@ class ScanTests(ScannerTestCase):
         self.options.entropy = False
         self.options.regex = False
         test_scanner = TestScanner(self.options)
-        with self.assertRaisesRegex(
-            types.TartufoScanException, "No analysis requested."
-        ):
+        with self.assertRaisesRegex(types.ConfigException, "No analysis requested."):
             test_scanner.scan()
 
     def test_scan_aborts_when_regex_requested_but_none_found(self):
@@ -41,7 +39,7 @@ class ScanTests(ScannerTestCase):
         self.options.default_regexes = False
         test_scanner = TestScanner(self.options)
         with self.assertRaisesRegex(
-            types.TartufoScanException, "Regex checks requested, but no regexes found."
+            types.ConfigException, "Regex checks requested, but no regexes found."
         ):
             test_scanner.scan()
 
@@ -53,7 +51,7 @@ class ScanTests(ScannerTestCase):
             msg="Invalid regular expression", pattern="42"
         )
         with self.assertRaisesRegex(
-            types.TartufoScanException, "Invalid regular expression"
+            types.ConfigException, "Invalid regular expression"
         ):
             test_scanner.scan()
 

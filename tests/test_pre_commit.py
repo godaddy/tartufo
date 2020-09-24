@@ -19,9 +19,7 @@ class PreCommitTests(unittest.TestCase):
 
     @mock.patch("tartufo.commands.pre_commit.GitPreCommitScanner")
     def test_scan_fails_on_scan_exception(self, mock_scanner: mock.MagicMock):
-        mock_scanner.return_value.scan.side_effect = types.TartufoScanException(
-            "Scan failed!"
-        )
+        mock_scanner.return_value.scan.side_effect = types.ScanException("Scan failed!")
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(cli.main, ["pre-commit"])

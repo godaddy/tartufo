@@ -57,6 +57,22 @@ class ChunkGeneratorTests(ScannerTestCase):
             pass
         mock_fetch.assert_called_once_with()
 
+    @mock.patch("git.Repo")
+    def test_explicit_exception_is_raised_if_fetch_fails(
+        self, mock_repo: mock.MagicMock
+    ):
+        mock_repo.return_value.remotes.origin.fetch.side_effect = git.GitCommandError(
+            command="git fetch -v origin", status=42, stderr="Fetch failed!"
+        )
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        with self.assertRaisesRegex(
+            types.GitRemoteException, "stderr: 'Fetch failed!'"
+        ):
+            for _ in test_scanner.chunks:
+                pass
+
     @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
     @mock.patch("git.Repo")
     def test_all_branches_are_scanned_for_commits(

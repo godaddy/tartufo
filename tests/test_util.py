@@ -2,6 +2,8 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+import git
+
 from tartufo import scanner, types, util
 
 
@@ -49,6 +51,19 @@ class GitTests(unittest.TestCase):
             "https://github.com/godaddy/tartufo.git", "/foo/tartufo.git"
         )
 
+    @mock.patch("git.Repo.clone_from")
+    @mock.patch("tartufo.util.tempfile.mkdtemp", new=mock.MagicMock())
+    def test_clone_git_repo_raises_explicit_exception_on_clone_fail(
+        self, mock_clone: mock.MagicMock
+    ):
+        mock_clone.side_effect = git.GitCommandError(
+            command="git clone foo.git", status=42, stderr="Error cloning repo!"
+        )
+        with self.assertRaisesRegex(
+            types.GitRemoteException, "stderr: 'Error cloning repo!'"
+        ):
+            util.clone_git_repo("https://github.com/godaddy/tartufo.git")
+
 
 class OutputTests(unittest.TestCase):
     @mock.patch("tartufo.util.click")
@@ -62,10 +77,10 @@ class OutputTests(unittest.TestCase):
     @mock.patch("tartufo.util.json")
     def test_echo_issues_outputs_proper_json_when_requested(self, mock_json):
         issue_1 = scanner.Issue(
-            scanner.IssueType.Entropy, "foo", types.Chunk("foo", "/bar")
+            types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar")
         )
         issue_2 = scanner.Issue(
-            scanner.IssueType.RegEx, "bar", types.Chunk("foo", "/bar")
+            types.IssueType.RegEx, "bar", types.Chunk("foo", "/bar")
         )
         util.echo_issues([issue_1, issue_2], True, "/repo", "/output")
         mock_json.dumps.assert_called_once_with(
@@ -97,10 +112,10 @@ class OutputTests(unittest.TestCase):
     @mock.patch("tartufo.util.json")
     def test_echo_issues_outputs_proper_json_when_requested_pathtype(self, mock_json):
         issue_1 = scanner.Issue(
-            scanner.IssueType.Entropy, "foo", types.Chunk("foo", "/bar")
+            types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar")
         )
         issue_2 = scanner.Issue(
-            scanner.IssueType.RegEx, "bar", types.Chunk("foo", "/bar")
+            types.IssueType.RegEx, "bar", types.Chunk("foo", "/bar")
         )
         util.echo_issues([issue_1, issue_2], True, "/repo", Path("/tmp"))
         mock_json.dumps.assert_called_once_with(
