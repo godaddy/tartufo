@@ -1,4 +1,5 @@
 import unittest
+from pathlib import Path
 from unittest import mock
 
 from click.testing import CliRunner
@@ -23,7 +24,8 @@ class ScanLocalRepoTests(unittest.TestCase):
         with runner.isolated_filesystem() as dirname:
             result = runner.invoke(cli.main, ["scan-local-repo", "."])
             self.assertEqual(
-                result.output, f"{dirname} is not a valid git repository.\n"
+                result.output,
+                f"{Path(dirname).resolve()} is not a valid git repository.\n",
             )
 
     @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
