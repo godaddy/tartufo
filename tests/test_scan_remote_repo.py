@@ -115,5 +115,6 @@ class ScanRemoteRepoTests(unittest.TestCase):
                 ],
             )
             mock_clone.assert_called_once_with(
-                "git@github.com:godaddy/tartufo.git", Path(dirname) / "tartufo.git"
+                "git@github.com:godaddy/tartufo.git",
+                Path(dirname).resolve() / "tartufo.git",
             )

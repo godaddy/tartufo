@@ -71,7 +71,7 @@ class ProcessIssuesTest(unittest.TestCase):
             )
         self.assertEqual(
             result.output,
-            f"Results have been saved in {dirname}/foo/tartufo-scan-results-nownownow\n",
+            f"Results have been saved in {Path(dirname).resolve()}/foo/tartufo-scan-results-nownownow\n",
         )
 
     @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
