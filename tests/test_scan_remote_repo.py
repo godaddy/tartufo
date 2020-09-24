@@ -2,7 +2,6 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from git.exc import GitCommandError
 from click.testing import CliRunner
 
 from tartufo import cli, types
@@ -65,9 +64,7 @@ class ScanRemoteRepoTests(unittest.TestCase):
     def test_command_fails_on_clone_error(
         self, mock_scanner: mock.MagicMock, mock_clone: mock.MagicMock
     ):
-        mock_clone.side_effect = GitCommandError(
-            command="git clone", status=42, stderr="Bad repo. Bad."
-        )
+        mock_clone.side_effect = types.GitException("stderr: 'Bad repo. Bad.'")
         mock_scanner.return_value.scan.return_value = []
         runner = CliRunner()
         with runner.isolated_filesystem():

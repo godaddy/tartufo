@@ -40,6 +40,6 @@ def main(
         issues = scanner.scan()
     except InvalidGitRepositoryError as exc:
         util.fail(f"{exc} is not a valid git repository.", ctx)
-    except types.TartufoScanException as exc:
+    except types.TartufoException as exc:
         util.fail(str(exc), ctx)
     return (str(repo_path), issues)

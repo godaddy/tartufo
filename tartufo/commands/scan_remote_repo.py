@@ -62,7 +62,7 @@ def main(
         issues = scanner.scan()
     except types.GitException as exc:
         util.fail(f"Error cloning remote repo: {exc}", ctx)
-    except types.ScanException as exc:
+    except types.TartufoException as exc:
         util.fail(str(exc), ctx)
     finally:
         if repo_path and repo_path.exists():
