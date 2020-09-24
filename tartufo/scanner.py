@@ -9,14 +9,7 @@ from typing import Dict, Generator, List, Optional, Pattern, Set, Tuple
 
 import git
 
-from tartufo import config, util
-from tartufo.types import (
-    Chunk,
-    GitOptions,
-    GlobalOptions,
-    IssueType,
-    TartufoScanException,
-)
+from tartufo import config, types, util
 
 
 BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
@@ -28,13 +21,13 @@ class Issue:
 
     OUTPUT_SEPARATOR: str = "~~~~~~~~~~~~~~~~~~~~~"
 
-    chunk: Chunk
-    issue_type: IssueType
+    chunk: types.Chunk
+    issue_type: types.IssueType
     issue_detail: Optional[str] = None
     matched_string: str = ""
 
     def __init__(
-        self, issue_type: IssueType, matched_string: str, chunk: Chunk
+        self, issue_type: types.IssueType, matched_string: str, chunk: types.Chunk
     ) -> None:
         """
         :param issue_type: What type of scan identified this issue
@@ -107,9 +100,9 @@ class ScannerBase(abc.ABC):
     _included_paths: Optional[List[Pattern]] = None
     _excluded_paths: Optional[List[Pattern]] = None
     _rules_regexes: Optional[Dict[str, Pattern]] = None
-    global_options: GlobalOptions
+    global_options: types.GlobalOptions
 
-    def __init__(self, options: GlobalOptions) -> None:
+    def __init__(self, options: types.GlobalOptions) -> None:
         self.global_options = options
 
     @property
@@ -159,7 +152,7 @@ class ScannerBase(abc.ABC):
     def rules_regexes(self) -> Dict[str, Pattern]:
         """Get a dictionary of regular expressions to scan the code for.
 
-        :raises TartufoScanException: If there was a problem compiling the rules
+        :raises types.TartufoConfigException: If there was a problem compiling the rules
         :rtype: Dict[str, Pattern]
         """
         if self._rules_regexes is None:
@@ -171,7 +164,7 @@ class ScannerBase(abc.ABC):
                     self.global_options.git_rules_files,
                 )
             except (ValueError, re.error) as exc:
-                raise TartufoScanException(str(exc)) from exc
+                raise types.TartufoConfigException(str(exc)) from exc
         return self._rules_regexes
 
     @lru_cache()
@@ -239,12 +232,17 @@ class ScannerBase(abc.ABC):
         This will iterate through all chunks of data as provided by the scanner
         implementation, and run all requested scans against it, as specified in
         `self.global_options`.
+
+        :raises types.TartufoConfigException: If there were problems with the
+          scanner's configuration
         """
         issues: List[Issue] = []
         if not any((self.global_options.entropy, self.global_options.regex)):
-            raise TartufoScanException("No analysis requested.")
+            raise types.TartufoConfigException("No analysis requested.")
         if self.global_options.regex and not self.rules_regexes:
-            raise TartufoScanException("Regex checks requested, but no regexes found.")
+            raise types.TartufoConfigException(
+                "Regex checks requested, but no regexes found."
+            )
 
         for chunk in self.chunks:
             # Run regex scans first to trigger a potential fast fail for bad config
@@ -255,7 +253,7 @@ class ScannerBase(abc.ABC):
         self._issues = issues
         return self._issues
 
-    def scan_entropy(self, chunk: Chunk) -> List[Issue]:
+    def scan_entropy(self, chunk: types.Chunk) -> List[Issue]:
         """Scan a chunk of data for apparent high entropy.
 
         :param chunk: The chunk of data to be scanned
@@ -270,16 +268,16 @@ class ScannerBase(abc.ABC):
                     if not self.signature_is_excluded(string, chunk.file_path):
                         b64_entropy = self.calculate_entropy(string, BASE64_CHARS)
                         if b64_entropy > 4.5:
-                            issues.append(Issue(IssueType.Entropy, string, chunk))
+                            issues.append(Issue(types.IssueType.Entropy, string, chunk))
 
                 for string in hex_strings:
                     if not self.signature_is_excluded(string, chunk.file_path):
                         hex_entropy = self.calculate_entropy(string, HEX_CHARS)
                         if hex_entropy > 3:
-                            issues.append(Issue(IssueType.Entropy, string, chunk))
+                            issues.append(Issue(types.IssueType.Entropy, string, chunk))
         return issues
 
-    def scan_regex(self, chunk: Chunk) -> List[Issue]:
+    def scan_regex(self, chunk: types.Chunk) -> List[Issue]:
         """Scan a chunk of data for matches against the configured regexes.
 
         :param chunk: The chunk of data to be scanned
@@ -290,14 +288,14 @@ class ScannerBase(abc.ABC):
             for match in found_strings:
                 # Filter out any explicitly "allowed" match signatures
                 if not self.signature_is_excluded(match, chunk.file_path):
-                    issue = Issue(IssueType.RegEx, match, chunk)
+                    issue = Issue(types.IssueType.RegEx, match, chunk)
                     issue.issue_detail = key
                     issues.append(issue)
         return issues
 
     @property
     @abc.abstractmethod
-    def chunks(self) -> Generator[Chunk, None, None]:
+    def chunks(self) -> Generator[types.Chunk, None, None]:
         """Yield "chunks" of data to be scanned.
 
         Examples of "chunks" would be individual git commit diffs, or the
@@ -317,7 +315,7 @@ class GitScanner(ScannerBase, abc.ABC):
     _repo: git.Repo
     repo_path: str
 
-    def __init__(self, global_options: GlobalOptions, repo_path: str) -> None:
+    def __init__(self, global_options: types.GlobalOptions, repo_path: str) -> None:
         """
         :param global_options: The options provided to the top-level tartufo command
         :param repo_path: The local filesystem path pointing to the repository
@@ -360,10 +358,13 @@ class GitScanner(ScannerBase, abc.ABC):
 
 class GitRepoScanner(GitScanner):
 
-    git_options: GitOptions
+    git_options: types.GitOptions
 
     def __init__(
-        self, global_options: GlobalOptions, git_options: GitOptions, repo_path: str
+        self,
+        global_options: types.GlobalOptions,
+        git_options: types.GitOptions,
+        repo_path: str,
     ) -> None:
         """Used for scanning a full clone of a git repository.
 
@@ -406,7 +407,7 @@ class GitRepoScanner(GitScanner):
             prev_commit = curr_commit
 
     @property
-    def chunks(self) -> Generator[Chunk, None, None]:
+    def chunks(self) -> Generator[types.Chunk, None, None]:
         """Yield individual diffs from the repository's history.
 
         :rtype: Generator[Chunk, None, None]
@@ -435,7 +436,7 @@ class GitRepoScanner(GitScanner):
                     continue
                 already_searched.add(diff_hash)
                 for blob, file_path in self._iter_diff_index(diff_index):
-                    yield Chunk(
+                    yield types.Chunk(
                         blob,
                         file_path,
                         util.extract_commit_metadata(prev_commit, remote_branch),
@@ -445,7 +446,7 @@ class GitRepoScanner(GitScanner):
             if curr_commit:
                 diff = curr_commit.diff(git.NULL_TREE, create_patch=True)
                 for blob, file_path in self._iter_diff_index(diff):
-                    yield Chunk(
+                    yield types.Chunk(
                         blob,
                         file_path,
                         util.extract_commit_metadata(prev_commit, remote_branch),
@@ -468,4 +469,4 @@ class GitPreCommitScanner(GitScanner):
             self._repo.head.commit, create_patch=True, R=True
         )
         for blob, file_path in self._iter_diff_index(diff_index):
-            yield Chunk(blob, file_path)
+            yield types.Chunk(blob, file_path)

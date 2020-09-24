@@ -39,5 +39,17 @@ class Chunk:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
-class TartufoScanException(Exception):
-    pass
+class TartufoException(Exception):
+    """Base class for all package exceptions"""
+
+
+class TartufoConfigException(Exception):
+    """Raised if there is a problem with the configuration"""
+
+
+class TartufoGitException(TartufoException):
+    """Raised if there is a problem interacting with git"""
+
+
+class TartufoScanException(TartufoException):
+    """Raised if there is a problem encountered during a scan"""
