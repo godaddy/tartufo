@@ -11,6 +11,12 @@ What kind of change does this PR introduce?
 [ ] Tests
 [ ] Other
 ```
+## Breaking Change?
+```
+[ ] Yes
+[ ] No
+```
+
 ## Issue Linking
 <!--
     KEYWORD #ISSUE-NUMBER
