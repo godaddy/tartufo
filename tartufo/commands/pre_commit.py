@@ -18,6 +18,6 @@ def main(ctx: click.Context, options: types.GlobalOptions) -> Tuple[str, List[Is
     try:
         scanner = GitPreCommitScanner(options, str(repo_path))
         issues = scanner.scan()
-    except types.TartufoScanException as exc:
+    except types.ScanException as exc:
         util.fail(str(exc), ctx)
     return (str(repo_path), issues)

@@ -164,7 +164,7 @@ class ScannerBase(abc.ABC):
                     self.global_options.git_rules_files,
                 )
             except (ValueError, re.error) as exc:
-                raise types.TartufoConfigException(str(exc)) from exc
+                raise types.ConfigException(str(exc)) from exc
         return self._rules_regexes
 
     @lru_cache()
@@ -238,11 +238,9 @@ class ScannerBase(abc.ABC):
         """
         issues: List[Issue] = []
         if not any((self.global_options.entropy, self.global_options.regex)):
-            raise types.TartufoConfigException("No analysis requested.")
+            raise types.ConfigException("No analysis requested.")
         if self.global_options.regex and not self.rules_regexes:
-            raise types.TartufoConfigException(
-                "Regex checks requested, but no regexes found."
-            )
+            raise types.ConfigException("Regex checks requested, but no regexes found.")
 
         for chunk in self.chunks:
             # Run regex scans first to trigger a potential fast fail for bad config

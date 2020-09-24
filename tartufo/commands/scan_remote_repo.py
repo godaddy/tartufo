@@ -4,7 +4,6 @@ from typing import List, Optional, Tuple
 from urllib.parse import urlparse
 
 import click
-from git.exc import GitCommandError
 
 from tartufo import types, util
 from tartufo.scanner import GitRepoScanner, Issue
@@ -61,9 +60,9 @@ def main(
         repo_path = util.clone_git_repo(git_url, repo_path)
         scanner = GitRepoScanner(options, git_options, str(repo_path))
         issues = scanner.scan()
-    except GitCommandError as exc:
-        util.fail("Error cloning remote repo: {}".format(exc.stderr.strip()), ctx)
-    except types.TartufoScanException as exc:
+    except types.GitException as exc:
+        util.fail(f"Error cloning remote repo: {exc}", ctx)
+    except types.ScanException as exc:
         util.fail(str(exc), ctx)
     finally:
         if repo_path and repo_path.exists():

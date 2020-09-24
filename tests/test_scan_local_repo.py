@@ -11,9 +11,7 @@ class ScanLocalRepoTests(unittest.TestCase):
     def test_scan_exits_gracefully_on_scan_exception(
         self, mock_scanner: mock.MagicMock
     ):
-        mock_scanner.return_value.scan.side_effect = types.TartufoScanException(
-            "Scan failed!"
-        )
+        mock_scanner.return_value.scan.side_effect = types.ScanException("Scan failed!")
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(cli.main, ["scan-local-repo", "."])

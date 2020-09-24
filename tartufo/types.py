@@ -43,13 +43,13 @@ class TartufoException(Exception):
     """Base class for all package exceptions"""
 
 
-class TartufoConfigException(Exception):
+class ConfigException(TartufoException):
     """Raised if there is a problem with the configuration"""
 
 
-class TartufoGitException(TartufoException):
+class GitException(TartufoException):
     """Raised if there is a problem interacting with git"""
 
 
-class TartufoScanException(TartufoException):
+class ScanException(TartufoException):
     """Raised if there is a problem encountered during a scan"""
