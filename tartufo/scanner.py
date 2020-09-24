@@ -413,13 +413,17 @@ class GitRepoScanner(GitScanner):
         """Yield individual diffs from the repository's history.
 
         :rtype: Generator[Chunk, None, None]
+        :raises types.GitRemoteException: If there was an error fetching branches
         """
         already_searched: Set[bytes] = set()
 
-        if self.git_options.branch:
-            branches = self._repo.remotes.origin.fetch(self.git_options.branch)
-        else:
-            branches = self._repo.remotes.origin.fetch()
+        try:
+            if self.git_options.branch:
+                branches = self._repo.remotes.origin.fetch(self.git_options.branch)
+            else:
+                branches = self._repo.remotes.origin.fetch()
+        except git.GitCommandError as exc:
+            raise types.GitRemoteException(exc.stderr.strip()) from exc
 
         for remote_branch in branches:
             diff_index: git.DiffIndex = None
