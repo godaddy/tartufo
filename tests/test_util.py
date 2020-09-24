@@ -2,6 +2,8 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+import git
+
 from tartufo import scanner, types, util
 
 
@@ -48,6 +50,19 @@ class GitTests(unittest.TestCase):
         mock_clone.assert_called_once_with(
             "https://github.com/godaddy/tartufo.git", "/foo/tartufo.git"
         )
+
+    @mock.patch("git.Repo.clone_from")
+    @mock.patch("tartufo.util.tempfile.mkdtemp", new=mock.MagicMock())
+    def test_clone_git_repo_raises_explicit_exception_on_clone_fail(
+        self, mock_clone: mock.MagicMock
+    ):
+        mock_clone.side_effect = git.GitCommandError(
+            command="git clone foo.git", status=42, stderr="Error cloning repo!"
+        )
+        with self.assertRaisesRegex(
+            types.GitRemoteException, "stderr: 'Error cloning repo!'"
+        ):
+            util.clone_git_repo("https://github.com/godaddy/tartufo.git")
 
 
 class OutputTests(unittest.TestCase):
