@@ -1,7 +1,6 @@
 from typing import List, Optional, Tuple
 
 import click
-from git.exc import InvalidGitRepositoryError
 
 from tartufo import types, util
 from tartufo.scanner import GitRepoScanner, Issue
@@ -25,7 +24,7 @@ from tartufo.scanner import GitRepoScanner, Issue
 def main(
     ctx: click.Context,
     options: types.GlobalOptions,
-    repo_path: click.Path,
+    repo_path: str,
     since_commit: Optional[str],
     max_depth: int,
     branch: Optional[str],
@@ -38,8 +37,10 @@ def main(
     try:
         scanner = GitRepoScanner(options, git_options, str(repo_path))
         issues = scanner.scan()
-    except InvalidGitRepositoryError as exc:
-        util.fail(f"{exc} is not a valid git repository.", ctx)
-    except types.TartufoScanException as exc:
+    except types.GitLocalException as exc:
+        util.fail(f"{repo_path} is not a valid git repository.", ctx)
+    except types.GitRemoteException as exc:
+        util.fail(f"There was an error fetching from the remote repository: {exc}", ctx)
+    except types.TartufoException as exc:
         util.fail(str(exc), ctx)
     return (str(repo_path), issues)

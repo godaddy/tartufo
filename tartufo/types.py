@@ -39,5 +39,25 @@ class Chunk:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
-class TartufoScanException(Exception):
-    pass
+class TartufoException(Exception):
+    """Base class for all package exceptions"""
+
+
+class ConfigException(TartufoException):
+    """Raised if there is a problem with the configuration"""
+
+
+class ScanException(TartufoException):
+    """Raised if there is a problem encountered during a scan"""
+
+
+class GitException(TartufoException):
+    """Raised if there is a problem interacting with git"""
+
+
+class GitLocalException(GitException):
+    """Raised if there is an error interacting with a local git repository"""
+
+
+class GitRemoteException(GitException):
+    """Raised if there is an error interacting with a remote git repository"""
