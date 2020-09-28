@@ -125,6 +125,13 @@ class ConfigFileTests(unittest.TestCase):
         os.chdir(str(cur_dir))
         self.assertEqual(self.ctx.default_map, {"regex": True})
 
+    def test_prefer_tartufo_toml_config_if_both_are_present(self):
+        cur_dir = pathlib.Path()
+        os.chdir(str(self.data_dir / "multiConfig"))
+        config.read_pyproject_toml(self.ctx, self.param, "")
+        os.chdir(str(cur_dir))
+        self.assertEqual(self.ctx.default_map, {"regex": True})
+
     def test_specified_file_gets_read(self):
         runner = CliRunner()
         with runner.isolated_filesystem():

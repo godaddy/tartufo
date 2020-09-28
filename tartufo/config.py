@@ -41,11 +41,11 @@ def read_pyproject_toml(
         if not root_path:
             root_path = "."
         root_path = pathlib.Path(root_path).resolve()
-        config_path = root_path / "pyproject.toml"
+        config_path = root_path / "tartufo.toml"
         if config_path.is_file():
             value = str(config_path)
         else:
-            config_path = root_path / "tartufo.toml"
+            config_path = root_path / "pyproject.toml"
             if config_path.is_file():
                 value = str(config_path)
             else:
