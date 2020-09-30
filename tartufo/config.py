@@ -34,6 +34,9 @@ def load_config_from_path(
 ) -> Tuple[pathlib.Path, MutableMapping[str, Any]]:
     """Scan a path for a configuration file, and return its contents.
 
+    All key names are normalized to remove leading "-"/"--" and replace "-"
+    with "_". For example, "--repo-path" becomes "repo_path".
+
     In addition to checking the specified path, if ``traverse`` is ``True``,
     this will traverse up through the directory structure, looking for a
     configuration file in parent directories. For example, given this directory
@@ -93,7 +96,7 @@ def load_config_from_path(
         return load_config_from_path(config_path.parent, filename, traverse)
     if not config:
         raise FileNotFoundError(f"Could not find config file in {config_path}.")
-    return (full_path, config)  # type: ignore
+    return (full_path, {k.replace("--", "").replace("-", "_"): v for k, v in config.items()})  # type: ignore
 
 
 def read_pyproject_toml(
@@ -139,9 +142,7 @@ def read_pyproject_toml(
         return None
     if ctx.default_map is None:
         ctx.default_map = {}
-    ctx.default_map.update(  # type: ignore
-        {k.replace("--", "").replace("-", "_"): v for k, v in config.items()}
-    )
+    ctx.default_map.update(config)  # type: ignore
     return str(config_file)
 
 

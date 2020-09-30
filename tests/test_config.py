@@ -145,6 +145,12 @@ class LoadConfigFromPathTests(unittest.TestCase):
                 self.data_dir / "config", "pyproject.toml", False
             )
 
+    @mock.patch("toml.load")
+    def test_config_keys_are_normalized(self, mock_load: mock.MagicMock):
+        mock_load.return_value = {"tool": {"tartufo": {"--repo-path": "."}}}
+        (_, data) = config.load_config_from_path(self.data_dir)
+        self.assertEqual(data, {"repo_path": "."})
+
 
 class ReadPyprojectTomlTests(unittest.TestCase):
     def setUp(self):
