@@ -30,7 +30,7 @@ DEFAULT_REGEXES = truffleHogRegexes.regexChecks.regexes
 
 
 def load_config_from_path(
-    config_path: pathlib.Path, filename: Optional[str], traverse: bool = True
+    config_path: pathlib.Path, filename: Optional[str] = None, traverse: bool = True
 ) -> Tuple[pathlib.Path, MutableMapping[str, Any]]:
     """Scan a path for a configuration file, and return its contents.
 
@@ -92,7 +92,7 @@ def load_config_from_path(
     if not config and traverse and config_path.parent != config_path:
         return load_config_from_path(config_path.parent, filename, traverse)
     if not config:
-        raise FileNotFoundError(f"Could not file config file in {config_path}.")
+        raise FileNotFoundError(f"Could not find config file in {config_path}.")
     return (full_path, config)  # type: ignore
 
 
