@@ -240,7 +240,7 @@ class ScannerBase(abc.ABC):
         this function when no inclusions or exclusions exist.
 
         :param file_path: The file path to check for inclusion
-        :return: False if the file path is _not_ matched by `self.indluded_paths`
+        :return: False if the file path is _not_ matched by `self.included_paths`
             (when non-empty) or if it is matched by `self.excluded_paths` (when
             non-empty), otherwise returns True
         """
@@ -680,3 +680,52 @@ class GitPreCommitScanner(GitScanner):
         )
         for blob, file_path in self._iter_diff_index(diff_index):
             yield types.Chunk(blob, file_path, {})
+
+
+class FolderScanner(ScannerBase):
+    """Used to scan a folder."""
+
+    folder_options: types.FolderOptions
+    folder_path: str
+
+    def __init__(
+        self,
+        global_options: types.GlobalOptions,
+        folder_options: types.FolderOptions,
+        folder_path: str,
+    ) -> None:
+        """Used for scanning a folder.
+
+        :param global_options: The options provided to the top-level tartufo command
+        :param folder_options: The options specific to interacting with a folder
+        :param folder_path: The local filesystem path to scan
+        """
+        self.folder_options = folder_options
+        self.folder_path = folder_path
+        super().__init__(global_options)
+
+    @property
+    def chunks(self):
+        """Yield the individual file changes currently staged for commit.
+
+        :rtype: Generator[Chunk, None, None]
+        """
+
+        for blob, file_path in self._iter_folder():
+            if self.should_scan(file_path):
+                yield types.Chunk(blob, file_path, {})
+
+    def _iter_folder(self):
+        folder_path = pathlib.Path(self.folder_path)
+        for file_path in folder_path.glob(self.folder_options.pattern):
+            if file_path.is_file():
+                with open(file_path, "rb") as fhd:
+                    data = fhd.read()
+
+                try:
+                    blob = data.decode("utf-8")
+                except UnicodeDecodeError:
+                    # binary file, continue
+                    continue
+
+                yield blob, str(file_path)

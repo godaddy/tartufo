@@ -58,6 +58,11 @@ class GitOptions:
     include_submodules: bool
 
 
+@dataclass
+class FolderOptions:
+    pattern: Optional[str] = "*"
+
+
 class IssueType(enum.Enum):
     Entropy = "High Entropy"  # pylint: disable=invalid-name
     RegEx = "Regular Expression Match"  # pylint: disable=invalid-name
