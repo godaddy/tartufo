@@ -84,7 +84,9 @@ class RepoLoadTests(ScannerTestCase):
             self.global_options, self.git_options, str(self.data_dir)
         )
         test_scanner.load_repo("../tartufo")
-        self.assertEqual(test_scanner.global_options.exclude_signatures, ("foo", "bar"))
+        self.assertEqual(
+            sorted(test_scanner.global_options.exclude_signatures), ["bar", "foo"]
+        )
 
 
 class ChunkGeneratorTests(ScannerTestCase):
