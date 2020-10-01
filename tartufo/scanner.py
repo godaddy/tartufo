@@ -3,9 +3,20 @@
 import abc
 import hashlib
 import math
+import pathlib
 import re
 from functools import lru_cache
-from typing import Dict, Generator, List, Optional, Pattern, Set, Tuple
+from typing import (
+    Any,
+    Dict,
+    Generator,
+    List,
+    MutableMapping,
+    Optional,
+    Pattern,
+    Set,
+    Tuple,
+)
 
 import git
 
@@ -129,6 +140,7 @@ class ScannerBase(abc.ABC):
                 self._included_paths = config.compile_path_rules(
                     self.global_options.include_paths.readlines()
                 )
+                self.global_options.include_paths.close()
             else:
                 self._included_paths = []
         return self._included_paths
@@ -144,6 +156,7 @@ class ScannerBase(abc.ABC):
                 self._excluded_paths = config.compile_path_rules(
                     self.global_options.exclude_paths.readlines()
                 )
+                self.global_options.exclude_paths.close()
             else:
                 self._excluded_paths = []
         return self._excluded_paths
@@ -319,8 +332,8 @@ class GitScanner(ScannerBase, abc.ABC):
         :param repo_path: The local filesystem path pointing to the repository
         """
         self.repo_path = repo_path
-        self._repo = self.load_repo(self.repo_path)
         super().__init__(global_options)
+        self._repo = self.load_repo(self.repo_path)
 
     def _iter_diff_index(
         self, diff_index: git.DiffIndex
@@ -375,6 +388,31 @@ class GitRepoScanner(GitScanner):
         super().__init__(global_options, repo_path)
 
     def load_repo(self, repo_path: str) -> git.Repo:
+        config_file: Optional[pathlib.Path] = None
+        data: MutableMapping[str, Any] = {}
+        try:
+            (config_file, data) = config.load_config_from_path(
+                pathlib.Path(repo_path), traverse=False
+            )
+        except (FileNotFoundError, types.ConfigException) as exc:
+            config_file = None
+        if config_file and config_file != self.global_options.config:
+            extras_path = data.get("include_paths", None)
+            if extras_path:
+                extras_file = pathlib.Path(repo_path, extras_path)
+                if extras_file.exists():
+                    includes = self.included_paths
+                    with extras_file.open() as handle:
+                        includes += config.compile_path_rules(handle.readlines())
+                    self._included_paths = includes
+            extras_path = data.get("exclude_paths", None)
+            if extras_path:
+                extras_file = pathlib.Path(repo_path, extras_path)
+                if extras_file.exists():
+                    excludes = self.excluded_paths
+                    with extras_file.open() as handle:
+                        excludes += config.compile_path_rules(handle.readlines())
+                    self._excluded_paths = excludes
         try:
             return git.Repo(repo_path)
         except git.GitError as exc:
