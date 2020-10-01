@@ -72,6 +72,20 @@ class RepoLoadTests(ScannerTestCase):
             ],
         )
 
+    @mock.patch("git.Repo", new=mock.MagicMock())
+    @mock.patch("tartufo.config.load_config_from_path")
+    def test_extra_signatures_get_added(self, mock_load: mock.MagicMock):
+        self.global_options.exclude_signatures = ()
+        mock_load.return_value = (
+            self.data_dir / "pyproject.toml",
+            {"exclude_signatures": ["foo", "bar"]},
+        )
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, str(self.data_dir)
+        )
+        test_scanner.load_repo("../tartufo")
+        self.assertEqual(test_scanner.global_options.exclude_signatures, ("foo", "bar"))
+
 
 class ChunkGeneratorTests(ScannerTestCase):
     @mock.patch("git.Repo")

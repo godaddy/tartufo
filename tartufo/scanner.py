@@ -397,6 +397,11 @@ class GitRepoScanner(GitScanner):
         except (FileNotFoundError, types.ConfigException) as exc:
             config_file = None
         if config_file and config_file != self.global_options.config:
+            signatures = data.get("exclude_signatures", None)
+            if signatures:
+                self.global_options.exclude_signatures = tuple(
+                    set(self.global_options.exclude_signatures + tuple(signatures))
+                )
             extras_path = data.get("include_paths", None)
             if extras_path:
                 extras_file = pathlib.Path(repo_path, extras_path)
