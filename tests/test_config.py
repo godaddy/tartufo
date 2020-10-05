@@ -6,9 +6,10 @@ import unittest
 from unittest import mock
 
 import click
+import toml
 from click.testing import CliRunner
 
-from tartufo import config
+from tartufo import config, types
 
 
 class ConfigureRegexTests(unittest.TestCase):
@@ -100,44 +101,113 @@ class ConfigureRegexTests(unittest.TestCase):
             repo_path.glob.assert_called_once_with("tartufo.json")
 
 
-class ConfigFileTests(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.data_dir = pathlib.Path(__file__).parent / "data"
-        return super().setUpClass()
-
+class LoadConfigFromPathTests(unittest.TestCase):
     def setUp(self):
+        self.data_dir = pathlib.Path(__file__).parent / "data"
         self.ctx = click.Context(click.Command("foo"))
         self.param = click.Option(["--config"])
         return super().setUp()
 
-    def test_pyproject_toml_gets_read_if_no_file_specified(self):
-        cur_dir = pathlib.Path()
-        os.chdir(str(self.data_dir))
-        config.read_pyproject_toml(self.ctx, self.param, "")
-        os.chdir(str(cur_dir))
-        self.assertEqual(self.ctx.default_map, {"json": True})
+    def test_pyproject_toml_is_discovered_if_present(self):
+        (config_path, _) = config.load_config_from_path(self.data_dir)
+        self.assertEqual(config_path, self.data_dir / "pyproject.toml")
 
-    def test_tartufo_toml_gets_read_if_no_pyproject_toml(self):
-        cur_dir = pathlib.Path()
-        os.chdir(str(self.data_dir / "config"))
-        config.read_pyproject_toml(self.ctx, self.param, "")
-        os.chdir(str(cur_dir))
-        self.assertEqual(self.ctx.default_map, {"regex": True})
+    def test_tartufo_toml_is_discovered_if_present(self):
+        (config_path, _) = config.load_config_from_path(self.data_dir / "config")
+        self.assertEqual(config_path, self.data_dir / "config" / "tartufo.toml")
 
     def test_prefer_tartufo_toml_config_if_both_are_present(self):
-        cur_dir = pathlib.Path()
-        os.chdir(str(self.data_dir / "multiConfig"))
-        config.read_pyproject_toml(self.ctx, self.param, "")
-        os.chdir(str(cur_dir))
-        self.assertEqual(self.ctx.default_map, {"regex": True})
+        (config_path, _) = config.load_config_from_path(self.data_dir / "multiConfig")
+        self.assertEqual(config_path, self.data_dir / "multiConfig" / "tartufo.toml")
 
     def test_specified_file_gets_read(self):
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            toml_file = self.data_dir / "config" / "tartufo.toml"
-            config.read_pyproject_toml(self.ctx, self.param, str(toml_file))
-        self.assertEqual(self.ctx.default_map, {"regex": True})
+        (config_path, _) = config.load_config_from_path(
+            self.data_dir / "config", "other_config.toml"
+        )
+        self.assertEqual(config_path, self.data_dir / "config" / "other_config.toml")
+
+    @mock.patch("toml.load")
+    def test_config_exception_is_raised_if_trouble_reading_file(
+        self, mock_toml: mock.MagicMock
+    ):
+        mock_toml.side_effect = toml.TomlDecodeError("Bad TOML!", "foo", 42)
+        with self.assertRaisesRegex(
+            types.ConfigException, "Error reading configuration file: Bad TOML!"
+        ):
+            config.load_config_from_path(self.data_dir)
+
+    def test_parent_directory_not_checked_if_traverse_is_false(self):
+        with self.assertRaisesRegex(
+            FileNotFoundError,
+            f"Could not find config file in {self.data_dir / 'config'}.",
+        ):
+            config.load_config_from_path(
+                self.data_dir / "config", "pyproject.toml", False
+            )
+
+    @mock.patch("toml.load")
+    def test_config_keys_are_normalized(self, mock_load: mock.MagicMock):
+        mock_load.return_value = {"tool": {"tartufo": {"--repo-path": "."}}}
+        (_, data) = config.load_config_from_path(self.data_dir)
+        self.assertEqual(data, {"repo_path": "."})
+
+
+class ReadPyprojectTomlTests(unittest.TestCase):
+    def setUp(self):
+        self.data_dir = pathlib.Path(__file__).parent / "data"
+        self.ctx = click.Context(click.Command("foo"))
+        self.param = click.Option(["--config"])
+        return super().setUp()
+
+    @mock.patch("tartufo.config.load_config_from_path")
+    def test_scan_target_is_searched_for_config_if_found(
+        self, mock_load: mock.MagicMock
+    ):
+        mock_load.return_value = (self.data_dir / "config" / "tartufo.toml", {})
+        self.ctx.params["repo_path"] = str(self.data_dir / "config")
+        config.read_pyproject_toml(self.ctx, self.param, "")
+        mock_load.assert_called_once_with(self.data_dir / "config", "")
+
+    @mock.patch("tartufo.config.load_config_from_path")
+    def test_file_error_is_raised_if_specified_file_not_found(
+        self, mock_load: mock.MagicMock
+    ):
+        mock_load.side_effect = FileNotFoundError("No file for you!")
+        with self.assertRaisesRegex(click.FileError, "No file for you!"):
+            config.read_pyproject_toml(self.ctx, self.param, "foobar.toml")
+
+    @mock.patch("tartufo.config.load_config_from_path")
+    def test_none_is_returned_if_file_not_found_and_none_specified(
+        self, mock_load: mock.MagicMock
+    ):
+        mock_load.side_effect = FileNotFoundError("No file for you!")
+        self.assertIsNone(config.read_pyproject_toml(self.ctx, self.param, ""))
+
+    @mock.patch("tartufo.config.load_config_from_path")
+    def test_file_error_is_raised_if_specified_config_file_cant_be_read(
+        self, mock_load: mock.MagicMock
+    ):
+        cur_dir = pathlib.Path()
+        os.chdir(str(self.data_dir))
+        mock_load.side_effect = types.ConfigException("Bad TOML!")
+        with self.assertRaisesRegex(click.FileError, "Bad TOML!") as exc:
+            config.read_pyproject_toml(self.ctx, self.param, "foobar.toml")
+            self.assertEqual(exc.exception.filename, str(self.data_dir / "foobar.toml"))
+        os.chdir(str(cur_dir))
+
+    @mock.patch("tartufo.config.load_config_from_path")
+    def test_file_error_is_raised_if_non_specified_config_file_cant_be_read(
+        self, mock_load: mock.MagicMock
+    ):
+        cur_dir = pathlib.Path()
+        os.chdir(str(self.data_dir))
+        mock_load.side_effect = types.ConfigException("Bad TOML!")
+        with self.assertRaisesRegex(click.FileError, "Bad TOML!") as exc:
+            config.read_pyproject_toml(self.ctx, self.param, "")
+            self.assertEqual(
+                exc.exception.filename, str(self.data_dir / "tartufo.toml")
+            )
+        os.chdir(str(cur_dir))
 
     def test_fully_resolved_filename_is_returned(self):
         cur_dir = pathlib.Path()
