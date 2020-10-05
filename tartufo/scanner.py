@@ -236,20 +236,25 @@ class ScannerBase(abc.ABC):
         :raises types.TartufoConfigException: If there were problems with the
           scanner's configuration
         """
-        issues: List[Issue] = []
         if not any((self.global_options.entropy, self.global_options.regex)):
             raise types.ConfigException("No analysis requested.")
         if self.global_options.regex and not self.rules_regexes:
             raise types.ConfigException("Regex checks requested, but no regexes found.")
 
+        self._issues = []
+
         for chunk in self.chunks:
             # Run regex scans first to trigger a potential fast fail for bad config
             if self.global_options.regex and self.rules_regexes:
-                issues += self.scan_regex(chunk)
+                issues = self.scan_regex(chunk)
+            else:
+                issues = []
             if self.global_options.entropy:
                 issues += self.scan_entropy(chunk)
-        self._issues = issues
-        return self._issues
+
+            self._issues += issues
+
+            yield from issues
 
     def scan_entropy(self, chunk: types.Chunk) -> List[Issue]:
         """Scan a chunk of data for apparent high entropy.

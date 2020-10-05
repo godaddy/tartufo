@@ -32,7 +32,7 @@ class ScanTests(ScannerTestCase):
         self.options.regex = False
         test_scanner = TestScanner(self.options)
         with self.assertRaisesRegex(types.ConfigException, "No analysis requested."):
-            test_scanner.scan()
+            list(test_scanner.scan())
 
     def test_scan_aborts_when_regex_requested_but_none_found(self):
         self.options.regex = True
@@ -41,7 +41,7 @@ class ScanTests(ScannerTestCase):
         with self.assertRaisesRegex(
             types.ConfigException, "Regex checks requested, but no regexes found."
         ):
-            test_scanner.scan()
+            list(test_scanner.scan())
 
     @mock.patch("tartufo.config.configure_regexes")
     def test_scan_aborts_due_to_invalid_regex(self, mock_config: mock.MagicMock):
@@ -53,14 +53,14 @@ class ScanTests(ScannerTestCase):
         with self.assertRaisesRegex(
             types.ConfigException, "Invalid regular expression"
         ):
-            test_scanner.scan()
+            list(test_scanner.scan())
 
     @mock.patch("tartufo.scanner.ScannerBase.scan_entropy")
     def test_scan_iterates_through_all_chunks(self, mock_entropy: mock.MagicMock):
         # Make sure we do at least one type of scan
         self.options.entropy = True
         test_scanner = TestScanner(self.options)
-        test_scanner.scan()
+        list(test_scanner.scan())
         mock_entropy.assert_has_calls(
             (mock.call("foo"), mock.call("bar"), mock.call("baz")), any_order=True
         )
@@ -69,7 +69,7 @@ class ScanTests(ScannerTestCase):
     def test_scan_checks_entropy_if_specified(self, mock_entropy: mock.MagicMock):
         self.options.entropy = True
         test_scanner = TestScanner(self.options)
-        test_scanner.scan()
+        list(test_scanner.scan())
         mock_entropy.assert_called()
 
     @mock.patch("tartufo.scanner.ScannerBase.scan_regex")
@@ -77,7 +77,7 @@ class ScanTests(ScannerTestCase):
         self.options.regex = True
         self.options.default_regexes = True
         test_scanner = TestScanner(self.options)
-        test_scanner.scan()
+        list(test_scanner.scan())
         mock_regex.assert_called()
 
 
