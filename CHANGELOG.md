@@ -1,3 +1,21 @@
+v2.0.0a2 - 05 October 2020
+--------------------------
+
+This bugfix release is to take care of a handful of issues discovered during the
+initial alpha release for 2.0.
+
+* #68 - Added consistent documentation through the codebase for classes,
+  methods, and all other API elements (via #92)
+* #90 - Presenting a friendlier error message when there is an error interacting
+  with git (via #93)
+* #94 - Fix tests that were failing on MacOS (via #97)
+* #86 - Treat `tartufo.toml` preferentially over `pyproject.toml` when loading
+  config (via #101)
+* #91 - Load config from scanned repositories. This functionality previously
+  existed in 1.x, but was missed during the rebuild for v2.0. This also resulted
+  in a bit of an overall rewrite of config file discovery to eliminate some
+  duplicated logic. (via #103)
+
 v2.0.0a1 - 18 November 2020
 ---------------------------
 
