@@ -1,6 +1,6 @@
 from pathlib import Path
 from shutil import rmtree
-from typing import List, Optional, Tuple, Generator
+from typing import Optional, Tuple, Generator
 from urllib.parse import urlparse
 
 import click

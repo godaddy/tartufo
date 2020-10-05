@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple, Generator
+from typing import Optional, Tuple, Generator
 
 import click
 

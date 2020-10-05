@@ -1,5 +1,5 @@
 import pathlib
-from typing import List, Tuple, Generator
+from typing import Tuple, Generator
 
 import click
 
@@ -10,7 +10,9 @@ from tartufo.scanner import GitPreCommitScanner, Issue
 @click.command("pre-commit")
 @click.pass_obj
 @click.pass_context
-def main(ctx: click.Context, options: types.GlobalOptions) -> Tuple[str, Generator[Issue, None, None]]:
+def main(
+    ctx: click.Context, options: types.GlobalOptions
+) -> Tuple[str, Generator[Issue, None, None]]:
     """Scan staged changes in a pre-commit hook."""
     # Assume that the current working directory is the appropriate git repo
     repo_path = pathlib.Path.cwd()
