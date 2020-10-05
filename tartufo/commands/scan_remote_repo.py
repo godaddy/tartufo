@@ -1,6 +1,6 @@
 from pathlib import Path
 from shutil import rmtree
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Generator
 from urllib.parse import urlparse
 
 import click
@@ -43,7 +43,7 @@ def main(
     max_depth: int,
     branch: Optional[str],
     work_dir: Optional[str],
-) -> Tuple[str, List[Issue]]:
+) -> Tuple[str, Generator[Issue, None, None]]:
     """Automatically clone and scan a remote git repository."""
     git_options = types.GitOptions(
         since_commit=since_commit, max_depth=max_depth, branch=branch
@@ -55,7 +55,7 @@ def main(
         repo_name = urlparse(git_url).path.split("/")[-1]
         repo_path = Path(work_dir) / repo_name
         repo_path.mkdir(parents=True)
-    issues: List[Issue] = []
+    issues: Generator[Issue, None, None] = (_ for _ in ())
     try:
         repo_path = util.clone_git_repo(git_url, repo_path)
         scanner = GitRepoScanner(options, git_options, str(repo_path))

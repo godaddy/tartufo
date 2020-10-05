@@ -115,7 +115,7 @@ class ScannerBase(abc.ABC):
         :rtype: List[Issue]
         """
         if self._issues is None:
-            self._issues = self.scan()
+            self._issues = list(self.scan())
         return self._issues
 
     @property
@@ -226,7 +226,7 @@ class ScannerBase(abc.ABC):
                 entropy += -prob_x * math.log2(prob_x)
         return entropy
 
-    def scan(self) -> List[Issue]:
+    def scan(self) -> Generator[Issue, None, None]:
         """Run the requested scans against the target data.
 
         This will iterate through all chunks of data as provided by the scanner

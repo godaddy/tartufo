@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Generator
 
 import click
 
@@ -28,12 +28,12 @@ def main(
     since_commit: Optional[str],
     max_depth: int,
     branch: Optional[str],
-) -> Tuple[str, List[Issue]]:
+) -> Tuple[str, Generator[Issue, None, None]]:
     """Scan a repository already cloned to your local system."""
     git_options = types.GitOptions(
         since_commit=since_commit, max_depth=max_depth, branch=branch
     )
-    issues: List[Issue] = []
+    issues: Generator[Issue, None, None] = (_ for _ in ())
     try:
         scanner = GitRepoScanner(options, git_options, str(repo_path))
         issues = scanner.scan()
