@@ -1,4 +1,6 @@
 # pylint: disable=protected-access
+import pathlib
+import re
 import unittest
 from unittest import mock
 
@@ -17,6 +19,10 @@ class ScannerTestCase(unittest.TestCase):
 
 
 class RepoLoadTests(ScannerTestCase):
+    def setUp(self):
+        self.data_dir = pathlib.Path(__file__).parent / "data"
+        super().setUp()
+
     @mock.patch("git.Repo")
     def test_repo_is_loaded_on_init(self, mock_repo: mock.MagicMock):
         scanner.GitRepoScanner(self.global_options, self.git_options, ".")
@@ -29,6 +35,58 @@ class RepoLoadTests(ScannerTestCase):
         )
         test_scanner.load_repo("../tartufo")
         mock_repo.assert_has_calls((mock.call("."), mock.call("../tartufo")))
+
+    @mock.patch("git.Repo", new=mock.MagicMock())
+    @mock.patch("tartufo.config.load_config_from_path")
+    def test_extra_inclusions_get_added(self, mock_load: mock.MagicMock):
+        mock_load.return_value = (
+            self.data_dir / "pyproject.toml",
+            {"include_paths": "include-files"},
+        )
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, str(self.data_dir)
+        )
+        test_scanner.load_repo("../tartufo")
+        self.assertEqual(
+            test_scanner.included_paths,
+            [re.compile("tartufo/"), re.compile("scripts/")],
+        )
+
+    @mock.patch("git.Repo", new=mock.MagicMock())
+    @mock.patch("tartufo.config.load_config_from_path")
+    def test_extra_exclusions_get_added(self, mock_load: mock.MagicMock):
+        mock_load.return_value = (
+            self.data_dir / "pyproject.toml",
+            {"exclude_paths": "exclude-files"},
+        )
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, str(self.data_dir)
+        )
+        test_scanner.load_repo("../tartufo")
+        self.assertEqual(
+            test_scanner.excluded_paths,
+            [
+                re.compile("tests/"),
+                re.compile(r"\.venv/"),
+                re.compile(r".*\.egg-info/"),
+            ],
+        )
+
+    @mock.patch("git.Repo", new=mock.MagicMock())
+    @mock.patch("tartufo.config.load_config_from_path")
+    def test_extra_signatures_get_added(self, mock_load: mock.MagicMock):
+        self.global_options.exclude_signatures = ()
+        mock_load.return_value = (
+            self.data_dir / "pyproject.toml",
+            {"exclude_signatures": ["foo", "bar"]},
+        )
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, str(self.data_dir)
+        )
+        test_scanner.load_repo("../tartufo")
+        self.assertEqual(
+            sorted(test_scanner.global_options.exclude_signatures), ["bar", "foo"]
+        )
 
 
 class ChunkGeneratorTests(ScannerTestCase):
