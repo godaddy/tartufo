@@ -46,18 +46,18 @@ Getting started is easy!
    .. code-block:: console
 
       # You can scan a remote git repo
-      $ tartufo git@github.com:my_user/my_repo.git
+      $ tartufo scan-remote-repo git@github.com:my_user/my_repo.git
 
       # Or, scan a local clone of a repo!
-      $ tartufo --repo-path /path/to/your/git/repo
+      $ tartufo scan-local-repo /path/to/your/git/repo
 
    .. code-block:: console
 
       # Scan a remote repo using docker
-      $ docker run --rm godaddy/tartufo git@github.com:my_user/my_repo.git
+      $ docker run --rm godaddy/tartufo scan-remote-repo https://github.com/my_user/my_repo.git
 
       # Mount a local clone of a repo and scan it using docker!
-      $ docker run --rm -v "/path/to/your/git/repo:/git" godaddy/tartufo
+      $ docker run --rm -v "/path/to/your/git/repo:/git" godaddy/tartufo scan-local-repo /git
 
    For more detail on usage and options, see :doc:`usage`.
 
@@ -69,11 +69,11 @@ on the `truffleHog`_ project.
 
 .. toctree::
    :maxdepth: 1
-   :caption: More information
+   :caption: Table of Contents
 
    installation
-   features
    usage
+   features
    configuration
    CONTRIBUTING
    SECURITY
