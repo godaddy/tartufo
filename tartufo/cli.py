@@ -62,6 +62,13 @@ class TartufoCLI(click.MultiCommand):
     " search patterns. Only applicable if --rules is also specified.",
 )
 @click.option(
+    "--compact/--no-compact",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Enable reduced output.",
+)
+@click.option(
     "--entropy/--no-entropy",
     is_flag=True,
     default=True,
