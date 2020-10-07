@@ -57,7 +57,7 @@ More on this later!)
    .. note::
 
       It is important that you read through this file to make sure there are not
-      exceptions that you want to remove and exclude with tartufo! Read mor
+      exceptions that you want to remove and exclude with tartufo! Read more
       about configuring exclusions here: :ref:`configuring-exclusions`
 
 #. Cleanup repo using ``BFG`` and the above remove.txt file
@@ -165,7 +165,7 @@ More on this later!)
       (.venv) you@LTDV-you:~/tartufo/yourrepo.git$
 
 
-   If you get the above error, it might actually be ok; simply re-run ``tartufo``
+   If you get the above error, it might actually be okay; simply re-run ``tartufo``
    from your main branch. Only continue with the below steps if there are
    results that are not clean. Please note, this solution will remove PR history
    (but not commit history):

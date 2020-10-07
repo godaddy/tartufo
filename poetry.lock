@@ -231,7 +231,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 name = "importlib-metadata"
 version = "1.7.0"
 description = "Read metadata from Python packages"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
 
@@ -414,6 +414,14 @@ description = "library with cross-python path, ini-parsing, io, code, log facili
 category = "dev"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+
+[[package]]
+name = "pyenchant"
+version = "3.1.1"
+description = "Python bindings for the Enchant spellchecking system"
+category = "main"
+optional = true
+python-versions = ">=3.5"
 
 [[package]]
 name = "pygments"
@@ -705,6 +713,24 @@ lint = ["flake8", "mypy", "docutils-stubs"]
 test = ["pytest"]
 
 [[package]]
+name = "sphinxcontrib-spelling"
+version = "5.4.0"
+description = "Sphinx spelling extension"
+category = "main"
+optional = true
+python-versions = ">=3.5"
+
+[package.dependencies]
+importlib-metadata = {version = ">=1.7.0", markers = "python_version < \"3.8\""}
+PyEnchant = ">=3.1.1"
+Sphinx = ">=3.0.0"
+
+[package.extras]
+docs = ["reno"]
+linter = ["flake8 (3.8.2)"]
+test = ["pytest", "pytest-cov", "fixtures (>=3.0.0)", "coverage (>=4.0,<4.4 || >4.4)"]
+
+[[package]]
 name = "termcolor"
 version = "1.1.0"
 description = "ANSII Color formatting for output in terminal."
@@ -828,7 +854,7 @@ python-versions = "*"
 name = "zipp"
 version = "3.3.0"
 description = "Backport of pathlib-compatible object wrapper for zip files"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6"
 
@@ -837,12 +863,12 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pytest (>=3.5,<3.7.3 || >3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pytest-cov", "jaraco.test (>=3.2.0)", "jaraco.itertools", "func-timeout", "pytest-black (>=0.3.7)", "pytest-mypy"]
 
 [extras]
-docs = ["recommonmark", "sphinx", "sphinx-click", "sphinx-rtd-theme"]
+docs = ["recommonmark", "sphinx", "sphinx-click", "sphinx-rtd-theme", "sphinxcontrib-spelling"]
 
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "1b0a710178aace0846f4e7deceb6a77519f7b3f8296a421f249401a12d52d848"
+content-hash = "fd4e815bd7bc73fd4713f43701f9d1517f9bcaa1f53f33dbd6a7f038c7a411c2"
 
 [metadata.files]
 alabaster = [
@@ -1099,6 +1125,12 @@ py = [
     {file = "py-1.9.0-py2.py3-none-any.whl", hash = "sha256:366389d1db726cd2fcfc79732e75410e5fe4d31db13692115529d34069a043c2"},
     {file = "py-1.9.0.tar.gz", hash = "sha256:9ca6883ce56b4e8da7e79ac18787889fa5206c79dcc67fb065376cd2fe03f342"},
 ]
+pyenchant = [
+    {file = "pyenchant-3.1.1-py3-none-any.whl", hash = "sha256:8ca419921e79022b344581ef7baf2e23af5c20b3e56b2f3d5a0448bd5bf2662e"},
+    {file = "pyenchant-3.1.1-py3-none-win32.whl", hash = "sha256:997465ab1f0dc9900b3bde0a1998c62ac08e64cc9a0870865d50de1e7d4b5afa"},
+    {file = "pyenchant-3.1.1-py3-none-win_amd64.whl", hash = "sha256:fd490efd7ce46e461cbd905bf6e2fdd540d85f43973b296a743b4591bfbcca60"},
+    {file = "pyenchant-3.1.1.tar.gz", hash = "sha256:ce0915d7acd771fde6e8c2dce8ad0cb0e6f7c4fa8430cc96e3e7134e99aeb12f"},
+]
 pygments = [
     {file = "Pygments-2.7.1-py3-none-any.whl", hash = "sha256:307543fe65c0947b126e83dd5a61bd8acbd84abec11f43caebaf5534cbc17998"},
     {file = "Pygments-2.7.1.tar.gz", hash = "sha256:926c3f319eda178d1bd90851e4317e6d8cdb5e292a3386aac9bd75eca29cf9c7"},
@@ -1223,6 +1255,10 @@ sphinxcontrib-qthelp = [
 sphinxcontrib-serializinghtml = [
     {file = "sphinxcontrib-serializinghtml-1.1.4.tar.gz", hash = "sha256:eaa0eccc86e982a9b939b2b82d12cc5d013385ba5eadcc7e4fed23f4405f77bc"},
     {file = "sphinxcontrib_serializinghtml-1.1.4-py2.py3-none-any.whl", hash = "sha256:f242a81d423f59617a8e5cf16f5d4d74e28ee9a66f9e5b637a18082991db5a9a"},
+]
+sphinxcontrib-spelling = [
+    {file = "sphinxcontrib-spelling-5.4.0.tar.gz", hash = "sha256:3e832c2b863f0f71df04a98e5976cf4da005ee6e9c03be41b3618d95a5fbfeb4"},
+    {file = "sphinxcontrib_spelling-5.4.0-py3-none-any.whl", hash = "sha256:bc076508b66d78c079889be367423fdaceeb6c14d137e05eb013cf14627a921b"},
 ]
 termcolor = [
     {file = "termcolor-1.1.0.tar.gz", hash = "sha256:1d6d69ce66211143803fbc56652b41d73b4a400a2891d7bf7a1cdf4c02de613b"},
