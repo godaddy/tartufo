@@ -2,15 +2,23 @@
 Would you like to know more?
 ============================
 
+If the other documentation left you wondering what to do with the results of
+your scans, and unsure how to get rid of those pesky leaked secrets, then look
+no further!
+
 End-to-End Example
 ------------------
 
-An End-to-End example walkthrough of a tartufo scan and the process of purging the dirty evil passwords that somehow ended up in your code commits. We will use an additional tool: ``BFG`` (https://rtyley.github.io/bfg-repo-cleaner/, more on this later!).
+An End-to-End example walkthrough of a ``tartufo`` scan and the process of
+purging the dirty evil passwords that somehow ended up in your code commits. We
+will use an additional tool: ``BFG`` (https://rtyley.github.io/bfg-repo-cleaner/.
+More on this later!)
 
+.. note:: OPTIONAL Development only: Setup poetry if you want to use the most
+   recent non-released build from github (may not be stable)
 
-.. note:: OPTIONAL Development only: Setup poetry if you want to use the most recent non-released build from github (may not be stable)
-
-   This project uses `Poetry`_ to manage its dependencies and do a lot of the heavy lifting. So you'll need to clone the tartufo repo and setup poetry!
+   This project uses `Poetry`_ to manage its dependencies and do a lot of the
+   heavy lifting. So you'll need to clone the tartufo repo and setup poetry!
 
 
    .. code-block:: console
@@ -18,7 +26,6 @@ An End-to-End example walkthrough of a tartufo scan and the process of purging t
       git clone git@github.com:godaddy/tartufo.git
 
    Development Use Only Poetry Setup: `Setting up a development environment <CONTRIBUTING.html#setting-up-a-development-environment>`_
-
 
 #. Clone your repo!
 
@@ -32,7 +39,6 @@ An End-to-End example walkthrough of a tartufo scan and the process of purging t
       GITHUBADDRESS="github.com"
       git clone --mirror git@${GITHUBADDRESS}:${GITHUBPROJECT}/${GITHUBREPO}
 
-
 #. Use ``tartufo`` to scan your repository and find any secrets in its history!
 
    Scan your repo!
@@ -40,14 +46,28 @@ An End-to-End example walkthrough of a tartufo scan and the process of purging t
    .. code-block:: console
 
       # Run Tartufo on your repo and create a list of high entropy items to remove:
-      tartufo --regex --json --cleanup ${GITHUBREPO} | jq -r '.found_issues[].matched_string' | sort -u > remove.txt
+      tartufo --regex --json scan-local-repo ${GITHUBREPO} | \
+          jq -r '.found_issues[].matched_string' | \
+          sort -u > remove.txt
 
-   Now you have a "bad password" file! Take a look through it, see if anything is wrong. This file will be used by ``BFG`` and replace these flagged "bad password" entries with ``***REMOVED***``. It is important that you read through this file to make sure there are not exceptions that you want to remove and exclude with tartufo! Read more about configuring exclusions here: :doc:`features`
+   Now you have a "bad password" file! Take a look through it, see if anything
+   is wrong. This file will be used by ``BFG`` to replace these flagged "bad
+   password" entries with ``***REMOVED***``.
 
+   .. note::
+
+      It is important that you read through this file to make sure there are not
+      exceptions that you want to remove and exclude with tartufo! Read mor
+      about configuring exclusions here: :ref:`configuring-exclusions`
 
 #. Cleanup repo using ``BFG`` and the above remove.txt file
 
-   There's a very slick tool designed to cleanup git commit history called ``BFG``: https://rtyley.github.io/bfg-repo-cleaner/. By default ``BFG`` doesn't modify the contents of your latest commit on your master (or 'HEAD') branch, even though it will clean all the commits before it. This of course means if you have active code with "bad passwords" tartufo will still fail, but let's take the bulk of the old entries out first.
+   There's a very slick tool designed to clean up git commit history called
+   `BFG`_. By default, ``BFG`` doesn't modify the contents of your latest commit
+   on your master (or 'HEAD') branch, even though it will clean all the commits
+   before it. This of course means if you have active code with "bad passwords",
+   ``tartufo`` will still fail. But let's take the bulk of the old entries out
+   first.
 
    .. code-block:: console
 
@@ -57,10 +77,10 @@ An End-to-End example walkthrough of a tartufo scan and the process of purging t
       cp -r ${GITHUBREPO} backup_${GITHUBREPO}
       java -jar bfg-1.13.0.jar --replace-text remove.txt ${GITHUBREPO}
 
-
 #. Uh Oh!
 
-   Occasionally the results will be to big to process all at once. If that happens simply split up the results and loop through them.
+   Occasionally the results will be to big to process all at once. If that
+   happens, simply split up the results and loop through them.
 
    .. code-block:: console
 
@@ -68,42 +88,47 @@ An End-to-End example walkthrough of a tartufo scan and the process of purging t
       split -l 200 remove.txt
       for f in x*; do java -jar bfg-1.13.0.jar --replace-text $f ${GITHUBREPO}; done
 
-
 #. Proceed with cleanup/audit
 
-   Now you have removed the low hanging fruit, it's time to look at the tough stuff
+   Now you have removed the low hanging fruit, it's time to look at the tough
+   stuff
 
    .. code-block:: console
 
-      #run tartufo again to check for icky code straglers in active code
-      leftovers=`tartufo --regex --no-cleanup ${GITHUBREPO}`
+      # run tartufo again to check for icky code straglers in active code
+      leftovers=`tartufo --regex -od ~/temp scan-local-repo ${GITHUBREPO}`
       tmppath=`echo -e "$leftovers" | tail -n1 | awk '{print $6}'`
-      #look through the remaining strings, if there's anything that looks like it shouldn't be there, dig into it and clear it out
+      # look through the remaining strings
+      # if there's anything that looks like it shouldn't be there, dig into it and clear it out
       cat ${tmppath}/* | jq '. | " \(.file_path) \(.matched_string) \(.signature)"' | sort -u
 
+#. Take a good look at the output of the above, make sure there are no secrets
+   or other sensitive data remaining.
 
-#. Take a good look at the output of the above, make sure there are no secrets or other sensitive data remaining.
-
-   Now you are going to exclude the signatures for the remaining items (which you have verified are non-risk)
+   Now you are going to exclude the signatures for the remaining items (which
+   you have verified are non-risk)
 
    .. code-block:: console
 
       # now you are ready to ignore those webhook urls:
       cat ${tmppath}/* | jq -r '.signature' | sort -u > allsignatures.txt
       sed -i -e 's/$/\",/g' -e 's/^/  \"/g' allsignatures.txt
-      linestr=`grep -n 'exclude-signatures = \[' pyproject.toml`
+      linestr=`grep -n 'exclude-signatures = \[' tartufo.toml`
       line=`echo $linestr | cut -d ":" -f 1`
       line=$(($line+1))
-      { head -n $(($line-1)) pyproject.toml; cat allsignatures.txt; tail -n +$line pyproject.toml; } > pyproject.toml_new
-      mv pyproject.toml pyproject.toml_bak
-      mv pyproject.toml_new pyproject.toml
+      { head -n $(($line-1)) tartufo.toml; cat allsignatures.txt; tail -n +$line tartufo.toml; } > tartufo.toml_new
+      mv tartufo.toml tartufo.toml_bak
+      mv tartufo.toml_new tartufo.toml
       # one final run to make sure your signatures are all set
-      poetry run tartufo ${gitrepo} --regex --no-cleanup
+      tartufo --regex scan-local-repo ${gitrepo}
 
+#. Once you are happy with the data that is being stored, time to commit the
+   changes back up!
 
-#. Once you are happy with the data that is being stored, time to commit the changes back up!
+   .. note::
 
-   Note: This does a force push
+      This does a force push, effectively rewriting the history of your git
+      repository!
 
    .. code-block:: console
 
@@ -114,7 +139,7 @@ An End-to-End example walkthrough of a tartufo scan and the process of purging t
 
 #. Danger Will Robinson, Danger!
 
-   You MAY get an error (example error below), if so keep reading!
+   You MAY get an error (example error below). If so, keep reading!
 
    .. code-block:: console
 
@@ -140,12 +165,15 @@ An End-to-End example walkthrough of a tartufo scan and the process of purging t
       (.venv) you@LTDV-you:~/tartufo/yourrepo.git$
 
 
-   If you get the above error; It might actually be ok, simply re-run tartufo from master. Only continue with the below steps if there are results that are not clean. Please note, this solution will remove PR history (but not commit history):
+   If you get the above error, it might actually be ok; simply re-run ``tartufo``
+   from your main branch. Only continue with the below steps if there are
+   results that are not clean. Please note, this solution will remove PR history
+   (but not commit history):
 
    .. code-block:: console
 
       # create a new blank repo, put the name below
-      NEWGITHUBREPO="aws-jenkins-tartufoized.git"
+      NEWGITHUBREPO="my-repo-tartufoized.git"
       cd ../
       rm -rf ${GITHUBREPO}
       # Create a bare clone of the repository.
@@ -163,9 +191,11 @@ An End-to-End example walkthrough of a tartufo scan and the process of purging t
       git reflog expire --expire=now --all && git gc --prune=now --aggressive
       git push
       # re-run tartufo on new repo
-      tartufo git@${GITHUBADDRESS}:${GITHUBPROJECT}/${NEWGITHUBREPO}
+      tartufo --regex -od ~/temp scan-remote-repo git@${GITHUBADDRESS}:${GITHUBPROJECT}/${NEWGITHUBREPO}
       # should have very little (if any) output. check the newly outputed results in the given tmp folder
-      ls /tmp/tmp_4i4c978 | wc -l
+      ls ~/temp/tartufo-scan-results-/ | wc -l
 
+**Done!**
 
+.. _BFG: https://rtyley.github.io/bfg-repo-cleaner/
 .. _Poetry: https://python-poetry.org/

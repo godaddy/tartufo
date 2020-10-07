@@ -215,6 +215,8 @@ pieces of data which look random, as these are likely to be things such as
 cryptographic keys. These scans are activated by usage of the ``--entropy``
 command line flag.
 
+.. _configuring-exclusions:
+
 Scan Limiting (Exclusions)
 --------------------------
 
