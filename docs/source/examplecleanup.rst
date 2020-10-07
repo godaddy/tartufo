@@ -79,7 +79,7 @@ More on this later!)
 
 #. Uh Oh!
 
-   Occasionally the results will be to big to process all at once. If that
+   Occasionally the results will be too big to process all at once. If that
    happens, simply split up the results and loop through them.
 
    .. code-block:: console
@@ -95,7 +95,7 @@ More on this later!)
 
    .. code-block:: console
 
-      # run tartufo again to check for icky code straglers in active code
+      # run tartufo again to check for icky code stragglers in active code
       leftovers=`tartufo --regex -od ~/temp scan-local-repo ${GITHUBREPO}`
       tmppath=`echo -e "$leftovers" | tail -n1 | awk '{print $6}'`
       # look through the remaining strings
@@ -125,10 +125,14 @@ More on this later!)
 #. Once you are happy with the data that is being stored, time to commit the
    changes back up!
 
-   .. note::
+   .. important::
 
       This does a force push, effectively rewriting the history of your git
       repository!
+
+      After doing this, you will want to be absolutely certain that
+      all users who have previously cloned this repository pull down a fresh
+      clone in order to prevent re-introducing the former bad history.
 
    .. code-block:: console
 
