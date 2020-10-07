@@ -1,10 +1,11 @@
+============================
 Would you like to know more?
 ============================
 
 End-to-End Example
 ------------------
 
-An End-to-End example walkthrough of a tartufo scan and the process of purging the dirty evil passwords that somehow ended up in your code commits. We will use an additional tool: ``BFG`` (https://rtyley.github.io/bfg-repo-cleaner/, more on this later!). 
+An End-to-End example walkthrough of a tartufo scan and the process of purging the dirty evil passwords that somehow ended up in your code commits. We will use an additional tool: ``BFG`` (https://rtyley.github.io/bfg-repo-cleaner/, more on this later!).
 
 
 .. note:: OPTIONAL Development only: Setup poetry if you want to use the most recent non-released build from github (may not be stable)
@@ -15,7 +16,7 @@ An End-to-End example walkthrough of a tartufo scan and the process of purging t
    .. code-block:: console
 
       git clone git@github.com:godaddy/tartufo.git
-      
+
    Development Use Only Poetry Setup: `Setting up a development environment <CONTRIBUTING.html#setting-up-a-development-environment>`_
 
 
@@ -88,7 +89,7 @@ An End-to-End example walkthrough of a tartufo scan and the process of purging t
    .. code-block:: console
 
       # now you are ready to ignore those webhook urls:
-      cat ${tmppath}/* | jq -r '.signature' | sort -u > allsignatures.txt 
+      cat ${tmppath}/* | jq -r '.signature' | sort -u > allsignatures.txt
       sed -i -e 's/$/\",/g' -e 's/^/  \"/g' allsignatures.txt
       linestr=`grep -n 'exclude-signatures = \[' pyproject.toml`
       line=`echo $linestr | cut -d ":" -f 1`
@@ -111,7 +112,7 @@ An End-to-End example walkthrough of a tartufo scan and the process of purging t
       git push
 
 
-#. Danger Will Robinson, Danger! 
+#. Danger Will Robinson, Danger!
 
    You MAY get an error (example error below), if so keep reading!
 
@@ -149,14 +150,14 @@ An End-to-End example walkthrough of a tartufo scan and the process of purging t
       rm -rf ${GITHUBREPO}
       # Create a bare clone of the repository.
       git clone --bare git@${GITHUBADDRESS}:${GITHUBPROJECT}/${GITHUBREPO}
-      # Mirror-push to the new temporary repository 
+      # Mirror-push to the new temporary repository
       cd ${GITHUBREPO}
       git push --mirror git@${GITHUBADDRESS}:${GITHUBPROJECT}/${NEWGITHUBREPO}
       cd ..
       rm -rf ${GITHUBREPO}
       # bare clones are missing data, it is easier to re-clone the repo now that it does not have PRs
       git clone git@${GITHUBADDRESS}:${GITHUBPROJECT}/${NEWGITHUBREPO}
-      # Now run bfg 
+      # Now run bfg
       java -jar bfg-1.13.0.jar --replace-text remove.txt ${NEWGITHUBREPO}
       cd ${NEWGITHUBREPO}
       git reflog expire --expire=now --all && git gc --prune=now --aggressive

@@ -1,3 +1,4 @@
+=======
 tartufo
 =======
 
@@ -39,7 +40,7 @@ Getting started is easy!
 
       $ docker pull godaddy/tartufo
 
-   For more detail, see :ref:`installation`.
+   For more detail, see :doc:`installation`.
 
 #. Use ``tartufo`` to scan your repository and find any secrets in its history!
 
@@ -59,7 +60,7 @@ Getting started is easy!
       # Mount a local clone of a repo and scan it using docker!
       $ docker run --rm -v "/path/to/your/git/repo:/git" godaddy/tartufo scan-local-repo /git
 
-   For more detail on usage and options, see :doc:`usage`.
+   For more detail on usage and options, see :doc:`usage` and :doc:`features`.
 
 Attributions
 ------------
