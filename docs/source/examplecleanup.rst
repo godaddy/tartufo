@@ -95,7 +95,7 @@ More on this later!)
 
    .. code-block:: console
 
-      # run tartufo again to check for icky code stragglers in active code
+      # run tartufo again to check for any remaining potential secrets
       leftovers=`tartufo --regex -od ~/temp scan-local-repo ${GITHUBREPO}`
       tmppath=`echo -e "$leftovers" | tail -n1 | awk '{print $6}'`
       # look through the remaining strings
