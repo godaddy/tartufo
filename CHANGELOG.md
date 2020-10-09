@@ -1,3 +1,9 @@
+v2.0.0 - 09 October 2020
+------------------------
+
+* #74, #75 - Rewrote and refreshed the documentation for the new 2.0 usage (via
+  #111)
+
 v2.0.0a2 - 05 October 2020
 --------------------------
 
