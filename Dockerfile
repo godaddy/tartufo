@@ -7,7 +7,7 @@ FROM base as builder
 ENV PIP_DEFAULT_TIMEOUT=100 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_NO_CACHE_DIR=1 \
-    POETRY_VERSION=1.0.5
+    POETRY_VERSION=1.1.2
 
 RUN apk add --no-cache gcc libffi-dev musl-dev openssl-dev
 RUN pip --no-cache-dir install "poetry==$POETRY_VERSION"
