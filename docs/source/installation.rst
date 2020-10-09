@@ -1,5 +1,4 @@
-.. _installation:
-
+============
 Installation
 ============
 
@@ -10,8 +9,8 @@ Installation with ``pip``:
    .. code-block:: console
 
       $ pip install tartufo
-      
-Installation with ``docker``: 
+
+Installation with ``docker``:
 
    .. code-block:: console
 
@@ -43,7 +42,7 @@ Checking the ``pip`` installation:
 
       $ tartufo --help
 
-Checking the ``docker`` installation: 
+Checking the ``docker`` installation:
 
    .. code-block:: console
 

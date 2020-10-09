@@ -133,7 +133,7 @@ class TartufoCLI(click.MultiCommand):
     ),
     is_eager=True,
     callback=config.read_pyproject_toml,
-    help="Read configuration from specified file. [default: pyproject.toml]",
+    help="Read configuration from specified file. [default: tartufo.toml]",
 )
 # The first positional argument here would be a hard-coded version, hence the `None`
 @click.version_option(None, "-V", "--version")

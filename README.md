@@ -35,7 +35,7 @@ Our main documentation site is hosted by Read The Docs, at
 ## Usage
 
 ```bash
-Usage: tartufo [OPTIONS] [GIT_URL]
+Usage: tartufo [OPTIONS] COMMAND [ARGS]...
 
   Find secrets hidden in the depths of git.
 
@@ -51,15 +51,12 @@ Options:
                                   Whether to include the default regex list
                                   when configuring search patterns. Only
                                   applicable if --rules is also specified.
-                                  [default: --default-regexes]
-  --entropy / --no-entropy        Enable entropy checks. [default: True]
-  --regex / --no-regex            Enable high signal regexes checks. [default:
-                                  False]
-  --since-commit TEXT             Only scan from a given commit hash.
-  --max-depth INTEGER             The max commit depth to go back when
-                                  searching for secrets. [default: 1000000]
-  --branch TEXT                   Specify a branch name to scan only that
-                                  branch.
+                                  [default: True]
+
+  --entropy / --no-entropy        Enable entropy checks.  [default: True]
+  --regex / --no-regex            Enable high signal regexes checks.
+                                  [default: False]
+
   -i, --include-paths FILENAME    File with regular expressions (one per
                                   line), at least one of which must match a
                                   Git object path in order for it to be
@@ -68,6 +65,7 @@ Options:
                                   provided (default), all Git object paths are
                                   included unless otherwise excluded via the
                                   --exclude-paths option.
+
   -x, --exclude-paths FILENAME    File with regular expressions (one per
                                   line), none of which may match a Git object
                                   path in order for it to be scanned; lines
@@ -76,11 +74,22 @@ Options:
                                   (default), no Git object paths are excluded
                                   unless effectively excluded via the
                                   --include-paths option.
-  --repo-path DIRECTORY           Path to local repo clone. If provided,
-                                  git_url will not be used.
-  --cleanup / --no-cleanup        Clean up all temporary result files.
-                                  [default: False]
-  --pre-commit                    Scan staged files in local repo clone.
+
+  -e, --exclude-signatures TEXT   Specify signatures of matches that you
+                                  explicitly want to exclude from the scan,
+                                  and mark as okay. These signatures are
+                                  generated during the scan process, and
+                                  reported out with each individual match.
+                                  This option can be specified multiple times,
+                                  to exclude as many signatures as you would
+                                  like.
+
+  -od, --output-dir DIRECTORY     If specified, all issues will be written out
+                                  as individual JSON files to a uniquely named
+                                  directory under this one. This will help
+                                  with keeping the results of individual runs
+                                  of tartufo separated.
+
   --git-rules-repo TEXT           A file path, or git URL, pointing to a git
                                   repository containing regex rules to be used
                                   for scanning. By default, all .json files
@@ -88,23 +97,35 @@ Options:
                                   repository. --git-rules-files can be used to
                                   override this behavior and load specific
                                   files.
+
   --git-rules-files TEXT          Used in conjunction with --git-rules-repo,
                                   specify glob-style patterns for files from
                                   which to load the regex rules. Can be
                                   specified multiple times.
+
   --config FILE                   Read configuration from specified file.
                                   [default: pyproject.toml]
+
+  -V, --version                   Show the version and exit.
   -h, --help                      Show this message and exit.
+
+Commands:
+  pre-commit        Scan staged changes in a pre-commit hook.
+  scan-remote-repo  Automatically clone and scan a remote git repository.
+  scan-local-repo   Scan a repository already cloned to your local system.
+
 ```
 
 ## Contributing
 
-Please see [CONTRIBUTING.md](./CONTRIBUTING.md).
+All contributors and contributions are welcome! Please see [our contributing
+docs] for more information.
 
 ## Attributions
 
 This project was inspired by and built off of the work done by Dylan Ayrey on
 the [truffleHog] project.
 
+[our contributing docs]: https://tartufo.readthedocs.io/en/latest/CONTRIBUTING.html
 [pre-commit]: https://pre-commit.com/
 [truffleHog]: https://github.com/dxa4481/truffleHog
