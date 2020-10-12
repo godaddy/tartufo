@@ -9,12 +9,13 @@ import tempfile
 import uuid
 from functools import lru_cache, partial
 from hashlib import blake2s
-from typing import Any, Callable, Dict, Iterable, List, Optional, TYPE_CHECKING
+from typing import Any, Callable, Dict, Iterable, List, Optional, TYPE_CHECKING, Pattern
 
 import click
 import git
 
 from tartufo import types
+from tartufo.types import Rule
 
 if TYPE_CHECKING:
     from tartufo.scanner import Issue  # pylint: disable=cyclic-import
@@ -34,6 +35,15 @@ def del_rw(_func: Callable, name: str, _exc: Exception) -> None:
     """
     os.chmod(name, stat.S_IWRITE)
     os.remove(name)
+
+
+def convert_regexes_to_rules(regexes: Dict[str, Pattern]) -> Dict[str, Rule]:
+    rules: Dict[str, Rule] = {}
+    for regex_name in regexes:
+        rules[regex_name] = Rule(
+            name=regex_name, pattern=regexes[regex_name], path_pattern=None
+        )
+    return rules
 
 
 def echo_issues(

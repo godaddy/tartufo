@@ -1,3 +1,4 @@
+import collections
 import copy
 import json
 import pathlib
@@ -22,11 +23,11 @@ import toml
 import truffleHogRegexes.regexChecks
 
 from tartufo import types, util
-
+from tartufo.types import Rule
 
 OptionTypes = Union[str, int, bool, None, TextIO, Tuple[TextIO, ...]]
 
-DEFAULT_REGEXES = truffleHogRegexes.regexChecks.regexes
+DEFAULT_REGEXES = util.convert_regexes_to_rules(truffleHogRegexes.regexChecks.regexes)
 
 
 def load_config_from_path(
@@ -151,7 +152,7 @@ def configure_regexes(
     rules_files: Optional[Iterable[TextIO]] = None,
     rules_repo: Optional[str] = None,
     rules_repo_files: Optional[Iterable[str]] = None,
-) -> Dict[str, Pattern]:
+) -> Dict[str, Rule]:
     """Build a set of regular expressions to be used during a regex scan.
 
     :param include_default: Whether to include the built-in set of regexes
@@ -195,22 +196,34 @@ def configure_regexes(
     return rules
 
 
-def load_rules_from_file(rules_file: TextIO) -> Dict[str, Pattern]:
+def load_rules_from_file(rules_file: TextIO) -> Dict[str, Rule]:
     """Load a set of JSON rules from a file and return them as compiled patterns.
 
     :param rules_file: An open file handle containing a JSON dictionary of regexes
     :raises ValueError: If the rules contain invalid JSON
     """
-    regexes = {}
+    rules: Dict[str, Rule] = {}
     try:
         new_rules = json.load(rules_file)
     except json.JSONDecodeError as exc:
         raise ValueError(
             "Error loading rules from file: {}".format(rules_file.name)
         ) from exc
-    for rule in new_rules:
-        regexes[rule] = re.compile(new_rules[rule])
-    return regexes
+    for rule_name in new_rules:
+        rule_definition = new_rules[rule_name]
+        if isinstance(rule_definition, collections.Mapping):
+            path_pattern = rule_definition.get("path_pattern", None)
+            rule = Rule(
+                name=rule_name,
+                pattern=re.compile(rule_definition["pattern"]),
+                path_pattern=re.compile(path_pattern) if path_pattern else None,
+            )
+        else:
+            rule = Rule(
+                name=rule_name, pattern=re.compile(rule_definition), path_pattern=None
+            )
+        rules[rule_name] = rule
+    return rules
 
 
 def compile_path_rules(patterns: Iterable[str]) -> List[Pattern]:

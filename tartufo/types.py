@@ -1,7 +1,7 @@
 # pylint: disable=too-many-instance-attributes
 import enum
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional, TextIO, Tuple
+from typing import Any, Dict, Optional, TextIO, Tuple, Pattern
 
 
 @dataclass
@@ -37,6 +37,13 @@ class Chunk:
     contents: str
     file_path: str
     metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class Rule:
+    name: Optional[str]
+    pattern: Pattern
+    path_pattern: Optional[Pattern]
 
 
 class TartufoException(Exception):

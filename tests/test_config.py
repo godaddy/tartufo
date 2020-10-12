@@ -10,6 +10,7 @@ import toml
 from click.testing import CliRunner
 
 from tartufo import config, types
+from tartufo.types import Rule
 
 
 class ConfigureRegexTests(unittest.TestCase):
@@ -17,7 +18,16 @@ class ConfigureRegexTests(unittest.TestCase):
         rules_path = pathlib.Path(__file__).parent / "data" / "testRules.json"
         rules_files = (rules_path.open(),)
         expected_regexes = {
-            "RSA private key 2": re.compile("-----BEGIN EC PRIVATE KEY-----")
+            "RSA private key 2": Rule(
+                name="RSA private key 2",
+                pattern=re.compile("-----BEGIN EC PRIVATE KEY-----"),
+                path_pattern=None,
+            ),
+            "Complex Rule": Rule(
+                name="Complex Rule",
+                pattern=re.compile("complex-rule"),
+                path_pattern=re.compile("/tmp/[a-z0-9A-Z]+\\.(py|js|json)"),
+            ),
         }
 
         actual_regexes = config.configure_regexes(
@@ -35,8 +45,15 @@ class ConfigureRegexTests(unittest.TestCase):
         rules_path = pathlib.Path(__file__).parent / "data" / "testRules.json"
         rules_files = (rules_path.open(),)
         expected_regexes = copy.copy(config.DEFAULT_REGEXES)
-        expected_regexes["RSA private key 2"] = re.compile(
-            "-----BEGIN EC PRIVATE KEY-----"
+        expected_regexes["RSA private key 2"] = Rule(
+            name="RSA private key 2",
+            pattern=re.compile("-----BEGIN EC PRIVATE KEY-----"),
+            path_pattern=None,
+        )
+        expected_regexes["Complex Rule"] = Rule(
+            name="Complex Rule",
+            pattern=re.compile("complex-rule"),
+            path_pattern=re.compile("/tmp/[a-z0-9A-Z]+\\.(py|js|json)"),
         )
 
         actual_regexes = config.configure_regexes(
