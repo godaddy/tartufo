@@ -93,6 +93,7 @@ class ChunkGeneratorTests(ScannerTestCase):
     @mock.patch("git.Repo")
     def test_single_branch_is_loaded_if_specified(self, mock_repo: mock.MagicMock):
         self.git_options.branch = "foo"
+        self.git_options.fetch = True
         mock_fetch = mock.MagicMock()
         mock_fetch.return_value = []
         mock_repo.return_value.remotes.origin.fetch = mock_fetch
@@ -108,6 +109,7 @@ class ChunkGeneratorTests(ScannerTestCase):
         mock_fetch = mock.MagicMock()
         mock_fetch.return_value = []
         mock_repo.return_value.remotes.origin.fetch = mock_fetch
+        self.git_options.fetch = True
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
@@ -119,6 +121,7 @@ class ChunkGeneratorTests(ScannerTestCase):
     def test_explicit_exception_is_raised_if_fetch_fails(
         self, mock_repo: mock.MagicMock
     ):
+        self.git_options.fetch = True
         mock_repo.return_value.remotes.origin.fetch.side_effect = git.GitCommandError(
             command="git fetch -v origin", status=42, stderr="Fetch failed!"
         )
@@ -136,6 +139,7 @@ class ChunkGeneratorTests(ScannerTestCase):
     def test_all_branches_are_scanned_for_commits(
         self, mock_repo: mock.MagicMock, mock_iter_commits: mock.MagicMock
     ):
+        self.git_options.fetch = True
         mock_repo.return_value.remotes.origin.fetch.return_value = ["foo", "bar"]
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
@@ -159,6 +163,7 @@ class ChunkGeneratorTests(ScannerTestCase):
         mock_iter_diff_index: mock.MagicMock,
         mock_iter_commits: mock.MagicMock,
     ):
+        self.git_options.fetch = True
         mock_repo.return_value.remotes.origin.fetch.return_value = ["foo"]
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
@@ -199,6 +204,7 @@ class ChunkGeneratorTests(ScannerTestCase):
         mock_iter_diff_index: mock.MagicMock,
         mock_iter_commits: mock.MagicMock,
     ):
+        self.git_options.fetch = True
         mock_repo.return_value.remotes.origin.fetch.return_value = ["foo"]
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
@@ -314,7 +320,8 @@ class IterBranchCommitsTests(ScannerTestCase):
         commits = list(test_scanner._iter_branch_commits(mock_repo, mock_branch))
         # Because "since commit" is exclusive, only the 2 commits before it are ever yielded
         self.assertEqual(
-            commits, [(mock_commit_2, mock_commit_1)],
+            commits,
+            [(mock_commit_2, mock_commit_1)],
         )
 
 

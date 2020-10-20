@@ -40,6 +40,7 @@ class GitOptions:
     since_commit: Optional[str]
     max_depth: int
     branch: Optional[str]
+    fetch: bool
 
 
 class IssueType(enum.Enum):
