@@ -21,7 +21,7 @@ from typing import (
 import git
 
 from tartufo import config, types, util
-
+from tartufo.types import Rule
 
 BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
 HEX_CHARS = "1234567890abcdefABCDEF"
@@ -110,7 +110,7 @@ class ScannerBase(abc.ABC):
     _issues: Optional[List[Issue]] = None
     _included_paths: Optional[List[Pattern]] = None
     _excluded_paths: Optional[List[Pattern]] = None
-    _rules_regexes: Optional[Dict[str, Pattern]] = None
+    _rules_regexes: Optional[Dict[str, Rule]] = None
     global_options: types.GlobalOptions
 
     def __init__(self, options: types.GlobalOptions) -> None:
@@ -162,7 +162,7 @@ class ScannerBase(abc.ABC):
         return self._excluded_paths
 
     @property
-    def rules_regexes(self) -> Dict[str, Pattern]:
+    def rules_regexes(self) -> Dict[str, Rule]:
         """Get a dictionary of regular expressions to scan the code for.
 
         :raises types.TartufoConfigException: If there was a problem compiling the rules
@@ -294,14 +294,15 @@ class ScannerBase(abc.ABC):
         :param chunk: The chunk of data to be scanned
         """
         issues: List[Issue] = []
-        for key, pattern in self.rules_regexes.items():
-            found_strings = pattern.findall(chunk.contents)
-            for match in found_strings:
-                # Filter out any explicitly "allowed" match signatures
-                if not self.signature_is_excluded(match, chunk.file_path):
-                    issue = Issue(types.IssueType.RegEx, match, chunk)
-                    issue.issue_detail = key
-                    issues.append(issue)
+        for key, rule in self.rules_regexes.items():
+            if rule.path_pattern is None or rule.path_pattern.match(chunk.file_path):
+                found_strings = rule.pattern.findall(chunk.contents)
+                for match in found_strings:
+                    # Filter out any explicitly "allowed" match signatures
+                    if not self.signature_is_excluded(match, chunk.file_path):
+                        issue = Issue(types.IssueType.RegEx, match, chunk)
+                        issue.issue_detail = key
+                        issues.append(issue)
         return issues
 
     @property
