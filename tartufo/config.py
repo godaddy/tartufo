@@ -181,7 +181,7 @@ def configure_regexes(
                 cloned_repo = True
             finally:
                 if cloned_repo:
-                    repo_path = pathlib.Path(util.clone_git_repo(rules_repo))
+                    repo_path = pathlib.Path(util.get_repository(rules_repo)[0])
             if not rules_repo_files:
                 rules_repo_files = ("*.json",)
             for repo_file in rules_repo_files:

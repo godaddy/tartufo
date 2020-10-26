@@ -83,7 +83,7 @@ class ConfigureRegexTests(unittest.TestCase):
             "The regexes dictionary should not have been changed when no rules files are specified",
         )
 
-    @mock.patch("tartufo.config.util.clone_git_repo")
+    @mock.patch("tartufo.config.util.get_repository")
     def test_configure_regexes_does_not_clone_if_local_rules_repo_defined(
         self, mock_clone
     ):
@@ -96,11 +96,11 @@ class ConfigureRegexTests(unittest.TestCase):
         helpers.WINDOWS,
         "Avoiding a race condition/permission error in Windows",
     )
-    @mock.patch("tartufo.config.util.clone_git_repo")
+    @mock.patch("tartufo.config.util.get_repository")
     def test_configure_regexes_clones_git_rules_repo(self, mock_clone):
         runner = CliRunner()
         with runner.isolated_filesystem():
-            mock_clone.return_value = pathlib.Path(".").resolve()
+            mock_clone.return_value = (pathlib.Path(".").resolve(), None)
             config.configure_regexes(rules_repo="git@github.com:godaddy/tartufo.git")
         mock_clone.assert_called_once_with("git@github.com:godaddy/tartufo.git")
 

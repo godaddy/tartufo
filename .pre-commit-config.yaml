@@ -22,7 +22,6 @@ repos:
   - id: pylint
     name: pylint
     entry: pylint
-    args: [--extension-pkg-whitelist=pygit2]
     language: system
     types: [python]
     exclude: ^docs/
