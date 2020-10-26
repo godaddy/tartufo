@@ -2,7 +2,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-import git
+import pygit2
 
 from tartufo import scanner, types, util
 

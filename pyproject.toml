@@ -37,7 +37,7 @@ version = "2.0.1"
 tartufo = "tartufo.cli:main"
 
 [tool.poetry.dependencies]
-GitPython = ">= 2.1.1, <4.0.0"
+pygit2 = ">= 1.3"
 click = "^7"
 colorama = {version = "*", markers = "sys_platform == 'win32'"}
 dataclasses = {version = "*", python = "< 3.7"}

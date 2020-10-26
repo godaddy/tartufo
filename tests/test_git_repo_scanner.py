@@ -4,7 +4,7 @@ import re
 import unittest
 from unittest import mock
 
-import git
+import pygit2
 
 from tartufo import scanner, types
 from tartufo.types import GlobalOptions, GitOptions

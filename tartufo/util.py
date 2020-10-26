@@ -12,7 +12,9 @@ from hashlib import blake2s
 from typing import Any, Callable, Dict, Iterable, List, Optional, TYPE_CHECKING, Pattern
 
 import click
-import git
+
+import pygit2
+from pygit2 import clone_repository, Commit, Branch, Repository
 
 from tartufo import types
 from tartufo.types import Rule
@@ -97,11 +99,46 @@ def clone_git_repo(
     else:
         project_path = str(target_dir)
 
-    try:
-        git.Repo.clone_from(git_url, project_path)
-    except git.GitCommandError as exc:
-        raise types.GitRemoteException(exc.stderr.strip()) from exc
+    if not git_url.strip().startswith("https://"):
+        # Assume git_url is ssh
+        # TODO: Support ssh credentials paths as command line option
+        find_ssh_credentials(git_url, project_path)
+    elif git_url.strip().startswith("ssh://") or git_url.strip().index("@"):
+        try:
+            # Assume git_url is https
+            # TODO: Support https credentials as command line option
+            clone_repository(git_url, project_path)
+        except pygit2.GitError as exc:  # pylint: disable=no-member
+            raise types.GitRemoteException(str(exc)) from exc
+    else:
+        raise types.GitRemoteException("Unknown remote URL type " + git_url)
+
     return pathlib.Path(project_path)
+
+
+def find_ssh_credentials(git_url: str, project_path: str) -> Repository:
+    path_tuples = [
+        ["~/.ssh/id_ed25519.pub", "~/.ssh/id_ed25519"],
+        ["~/.ssh/id_rsa.pub", "~/.ssh/id_rsa"],
+        ["~/.ssh/id_dsa.pub", "~/.ssh/id_dsa"],
+    ]
+
+    for path_tuple in path_tuples:
+        try:
+            pub_key = os.path.expanduser(path_tuple[0])
+            if not os.path.isfile(pub_key):
+                continue
+            priv_key = os.path.expanduser(path_tuple[1])
+            if not os.path.isfile(priv_key):
+                continue
+            keypair = pygit2.Keypair("git", pub_key, priv_key, "")
+            remote_callbacks = pygit2.RemoteCallbacks(credentials=keypair)
+            clone_repository(git_url, project_path, callbacks=remote_callbacks)
+            return Repository
+        except pygit2.GitError:  # pylint: disable=no-member
+            # TODO: differentiate credentials errors from other errors
+            continue
+    raise types.GitRemoteException("Could not locate working ssh credentials")
 
 
 style_ok = partial(click.style, fg="bright_green")  # pylint: disable=invalid-name
@@ -133,20 +170,18 @@ def generate_signature(snippet: str, filename: str) -> str:
     return blake2s("{}$${}".format(snippet, filename).encode("utf-8")).hexdigest()
 
 
-def extract_commit_metadata(
-    commit: git.Commit, branch: git.FetchInfo
-) -> Dict[str, Any]:
+def extract_commit_metadata(commit: Commit, branch: Branch) -> Dict[str, Any]:
     """Grab a consistent set of metadata from a git commit, for user output.
 
     :param commit: The commit to extract the data from
     :param branch: What branch the commit was found on
     """
     return {
-        "commit_time": datetime.datetime.fromtimestamp(commit.committed_date).strftime(
+        "commit_time": datetime.datetime.fromtimestamp(commit.commit_time).strftime(
             DATETIME_FORMAT
         ),
         "commit_message": commit.message,
-        "commit_hash": commit.hexsha,
+        "commit_hash": commit.hex,
         "branch": branch.name,
     }
 

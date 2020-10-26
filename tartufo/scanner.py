@@ -18,10 +18,22 @@ from typing import (
     Tuple,
 )
 
-import git
+import os
+
+import pygit2
+from pygit2 import (
+    Commit,
+    Repository,
+    Branch,
+    GIT_SORT_TOPOLOGICAL,
+    Diff,
+    Tree,
+    DiffDelta,
+)
 
 from tartufo import config, types, util
 from tartufo.types import Rule
+
 
 BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
 HEX_CHARS = "1234567890abcdefABCDEF"
@@ -324,7 +336,7 @@ class GitScanner(ScannerBase, abc.ABC):
     across all scanner that are interacting with git history.
     """
 
-    _repo: git.Repo
+    _repo: Repository
     repo_path: str
 
     def __init__(self, global_options: types.GlobalOptions, repo_path: str) -> None:
@@ -336,32 +348,8 @@ class GitScanner(ScannerBase, abc.ABC):
         super().__init__(global_options)
         self._repo = self.load_repo(self.repo_path)
 
-    def _iter_diff_index(
-        self, diff_index: git.DiffIndex
-    ) -> Generator[Tuple[str, str], None, None]:
-        """Iterate over a "diff index", yielding the individual file changes.
-
-        A "diff index" is essentially analogous to a single commit in the git
-        history. So what this does is iterate over a single commit, and yield
-        the changes to each individual file in that commit, along with its file
-        path. This will also check the file path and ensure that it has not been
-        excluded from the scan by configuration.
-
-        Note that binary files are wholly skipped.
-
-        :param diff_index: The diff index / commit to be iterated over
-        """
-        diff: git.Diff
-        for diff in diff_index:
-            printable_diff: str = diff.diff.decode("utf-8", errors="replace")
-            if printable_diff.startswith("Binary files"):
-                continue
-            file_path = diff.b_path if diff.b_path else diff.a_path
-            if self.should_scan(file_path):
-                yield (printable_diff, file_path)
-
     @abc.abstractmethod
-    def load_repo(self, repo_path: str) -> git.Repo:
+    def load_repo(self, repo_path: str) -> Repository:
         """Load and return the repository to be scanned.
 
         :param repo_path: The local filesystem path pointing to the repository
@@ -388,7 +376,7 @@ class GitRepoScanner(GitScanner):
         self.git_options = git_options
         super().__init__(global_options, repo_path)
 
-    def load_repo(self, repo_path: str) -> git.Repo:
+    def load_repo(self, repo_path: str) -> Repository:
         config_file: Optional[pathlib.Path] = None
         data: MutableMapping[str, Any] = {}
         try:
@@ -420,21 +408,21 @@ class GitRepoScanner(GitScanner):
                         excludes += config.compile_path_rules(handle.readlines())
                     self._excluded_paths = excludes
         try:
-            return git.Repo(repo_path)
-        except git.GitError as exc:
+            return Repository(repo_path)
+        except pygit2.GitError as exc:  # pylint: disable=no-member
             raise types.GitLocalException(str(exc)) from exc
 
     def _iter_branch_commits(
-        self, repo: git.Repo, branch: git.FetchInfo
-    ) -> Generator[Tuple[git.Commit, git.Commit], None, None]:
+        self, repo: Repository, branch: Branch
+    ) -> Generator[Tuple[Commit, Commit], None, None]:
         """Iterate over and yield the commits on a branch.
 
         :param repo: The repository from which to extract the branch and commits
         :param branch: The branch to iterate over
         """
         since_commit_reached: bool = False
-        prev_commit: git.Commit = None
-        curr_commit: git.Commit = None
+        prev_commit: Commit = None
+        curr_commit: Commit = None
 
         for curr_commit in repo.iter_commits(
             branch.name, max_count=self.git_options.max_depth
@@ -452,6 +440,31 @@ class GitRepoScanner(GitScanner):
             yield (curr_commit, prev_commit)
             prev_commit = curr_commit
 
+    def _iter_diff(self, diff: Diff) -> Generator[Tuple[str, str], None, None]:
+        """Iterate over a "diff index", yielding the individual file changes.
+
+        A "diff index" is essentially analogous to a single commit in the git
+        history. So what this does is iterate over a single commit, and yield
+        the changes to each individual file in that commit, along with its file
+        path. This will also check the file path and ensure that it has not been
+        excluded from the scan by configuration.
+
+        Note that binary files are wholly skipped.
+
+        :param diff_index: The diff index / commit to be iterated over
+        """
+
+        for patch in diff:
+            delta: DiffDelta = patch.delta
+            if delta.is_binary:
+                continue
+            printable_diff: str = patch.text
+            file_path = (
+                delta.new_file.path if delta.new_file.path else delta.old_file.path
+            )
+            if self.should_scan(file_path):
+                yield (printable_diff, file_path)
+
     @property
     def chunks(self) -> Generator[types.Chunk, None, None]:
         """Yield individual diffs from the repository's history.
@@ -460,45 +473,46 @@ class GitRepoScanner(GitScanner):
         :raises types.GitRemoteException: If there was an error fetching branches
         """
         already_searched: Set[bytes] = set()
+        try:
+            if self.git_options.local_only:
+                # TODO: Search for other key file types, and add parameter to specify
+                pub_key = os.path.expanduser("~/.ssh/id_rsa.pub")
+                priv_key = os.path.expanduser("~/.ssh/id_rsa")
+                keypair = pygit2.Keypair("git", str(pub_key), str(priv_key), "")
+                remote_callbacks = pygit2.RemoteCallbacks(credentials=keypair)
+                self._repo.remotes["origin"].fetch(callbacks=remote_callbacks)
 
-        if self.git_options.branch:
-            # Single branch only
-            unfiltered_branches = list(self._repo.branches)
-            branches = [
-                x for x in unfiltered_branches if x.name == self.git_options.branch
-            ]
-            try:
-                if self.git_options.fetch:
-                    print("Fetching remote origin/" + self.git_options.branch)
-                    self._repo.remotes.origin.fetch(self.git_options.branch)
-            except git.GitCommandError as exc:
-                raise types.GitRemoteException(exc.stderr.strip()) from exc
-        else:
-            # Everything
-            branches = self._repo.branches
-            try:
-                if self.git_options.fetch:
-                    print("Fetching remote origin (all branches)")
-                    self._repo.remotes.origin.fetch()
-            except git.GitCommandError as exc:
-                raise types.GitRemoteException(exc.stderr.strip()) from exc
+            if self.git_options.branch:
+                unfiltered_branches = list(self._repo.branches)
+                branches = [
+                    x for x in unfiltered_branches if x.name == self.git_options.branch
+                ]
+            else:
+                branches = list(self._repo.branches)
 
-        for branch in branches:
-            diff_index: git.DiffIndex = None
+        except pygit2.GitError as exc:  # pylint: disable=no-member
+            raise types.GitRemoteException(str(exc)) from exc
+
+        for branch_name in branches:
+            branch: Branch = self._repo.branches.get(branch_name)
             diff_hash: bytes
-            curr_commit: git.Commit = None
-            prev_commit: git.Commit = None
-            for curr_commit, prev_commit in self._iter_branch_commits(
-                self._repo, branch
+            curr_commit: Commit = None
+            prev_commit: Commit = None
+
+            for curr_commit in self._repo.walk(
+                branch.resolve().target, GIT_SORT_TOPOLOGICAL
             ):
-                diff_index = curr_commit.diff(prev_commit, create_patch=True)
+                if not curr_commit.parents:
+                    continue
+                prev_commit = curr_commit.parents[0]
+                diff: Diff = self._repo.diff(curr_commit, prev_commit)
                 diff_hash = hashlib.md5(
                     (str(prev_commit) + str(curr_commit)).encode("utf-8")
                 ).digest()
                 if diff_hash in already_searched:
                     continue
                 already_searched.add(diff_hash)
-                for blob, file_path in self._iter_diff_index(diff_index):
+                for blob, file_path in self._iter_diff(diff):
                     yield types.Chunk(
                         blob,
                         file_path,
@@ -507,20 +521,21 @@ class GitRepoScanner(GitScanner):
 
             # Finally, yield the first commit to the branch
             if curr_commit:
-                diff = curr_commit.diff(git.NULL_TREE, create_patch=True)
-                for blob, file_path in self._iter_diff_index(diff):
+                tree: Tree = self._repo.revparse_single(curr_commit.hex).tree
+                tree_diff: Diff = tree.diff_to_tree()
+                for blob, file_path in self._iter_diff(tree_diff):
                     yield types.Chunk(
                         blob,
                         file_path,
-                        util.extract_commit_metadata(prev_commit, branch),
+                        util.extract_commit_metadata(curr_commit, branch),
                     )
 
 
 class GitPreCommitScanner(GitScanner):
     """For use in a git pre-commit hook."""
 
-    def load_repo(self, repo_path: str) -> git.Repo:
-        return git.Repo(repo_path, search_parent_directories=True)
+    def load_repo(self, repo_path: str) -> Repository:
+        return Repository(repo_path, search_parent_directories=True)
 
     @property
     def chunks(self):
@@ -528,8 +543,9 @@ class GitPreCommitScanner(GitScanner):
 
         :rtype: Generator[Chunk, None, None]
         """
-        diff_index = self._repo.index.diff(
-            self._repo.head.commit, create_patch=True, R=True
-        )
-        for blob, file_path in self._iter_diff_index(diff_index):
+        diff = self._repo.index.diff(self._repo.head.commit, create_patch=True, R=True)
+        # For some reason, pylint doesn't agree that "protected" means
+        # "derived class access in same module"
+        # pylint: disable=protected-access
+        for blob, file_path in super._iter_diff(diff):
             yield types.Chunk(blob, file_path, {})
