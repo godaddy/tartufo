@@ -18,11 +18,13 @@ What kind of change does this PR introduce?
 [ ] Tests
 [ ] Other
 ```
-## Breaking Change?
-```
-[ ] Yes
-[ ] No
-```
+## Backward Compatibility
+
+Is this change backward compatible with the most recently released version? Does it introduce changes which might change the user experience in any way? Does it alter the API in any way?
+
+[ ] Yes (backward compatible)
+[ ] No (breaking changes)
+
 
 ## Issue Linking
 <!--
