@@ -171,7 +171,6 @@ max-args = "14"
 
 [tool.pylint.MASTER]
 ignore = "docs/"
-extension-pkg-whitelist = ["pygit2"]
 
 [tool.coverage.run]
 branch = true
