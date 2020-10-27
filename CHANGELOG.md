@@ -1,3 +1,7 @@
+v2.1.0 - 23 October 2020
+------------------------
+* #125 - Implement CODEOWNERS and auto-assignment to maintainers on PRs
+
 v2.0.1 - 09 October 2020
 ------------------------
 
