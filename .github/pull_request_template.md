@@ -22,8 +22,8 @@ What kind of change does this PR introduce?
 
 Is this change backward compatible with the most recently released version? Does it introduce changes which might change the user experience in any way? Does it alter the API in any way?
 
-[ ] Yes (backward compatible)
-[ ] No (breaking changes)
+* [ ] Yes (backward compatible)
+* [ ] No (breaking changes)
 
 
 ## Issue Linking
