@@ -1,15 +1,16 @@
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.3.0
-    hooks:
-    -   id: check-added-large-files
-    -   id: fix-byte-order-marker
-    -   id: check-merge-conflict
-    -   id: check-symlinks
-    -   id: check-toml
-    -   id: forbid-new-submodules
-    -   id: mixed-line-ending
-    -   id: trailing-whitespace
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v3.3.0
+  hooks:
+  - id: check-added-large-files
+  - id: fix-byte-order-marker
+  - id: check-merge-conflict
+  - id: check-symlinks
+  - id: check-toml
+  - id: forbid-new-submodules
+  - id: mixed-line-ending
+  - id: trailing-whitespace
+    exclude: .md
 - repo: local
   hooks:
   - id: tartufo
