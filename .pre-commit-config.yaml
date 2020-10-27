@@ -1,4 +1,17 @@
 repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.2.0
+    hooks:
+    -   id: check-added-large-files
+    -   id: check-byte-order-marker
+    -   id: check-merge-conflict
+    -   id: check-symlinks
+    -   id: check-toml
+    -   id: check-xml
+    -   id: detect-private-key
+    -   id: forbid-new-submodules
+    -   id: mixed-line-ending
+    -   id: trailing-whitespace
 - repo: local
   hooks:
   - id: tartufo
@@ -10,6 +23,7 @@ repos:
   - id: pylint
     name: pylint
     entry: pylint
+    args: [--extension-pkg-whitelist=pygit2]
     language: system
     types: [python]
     exclude: ^docs/
