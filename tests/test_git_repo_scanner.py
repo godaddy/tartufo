@@ -156,7 +156,7 @@ class ChunkGeneratorTests(ScannerTestCase):
     def test_all_commits_are_scanned_for_files(
         self,
         mock_repo: mock.MagicMock,
-        mock_iter_diff: mock.MagicMock,
+        mock_iter_diff_index: mock.MagicMock,
         mock_iter_commits: mock.MagicMock,
     ):
         mock_repo.return_value.remotes.origin.fetch.return_value = ["foo"]
@@ -170,7 +170,7 @@ class ChunkGeneratorTests(ScannerTestCase):
             (mock_commit_2, mock_commit_3),
             (mock_commit_1, mock_commit_2),
         ]
-        mock_iter_diff.return_value = []
+        mock_iter_diff_index.return_value = []
         for _ in test_scanner.chunks:
             pass
         mock_commit_2.diff.assert_called_once_with(mock_commit_3, create_patch=True)
@@ -180,7 +180,7 @@ class ChunkGeneratorTests(ScannerTestCase):
                 mock.call(git.NULL_TREE, create_patch=True),
             )
         )
-        mock_iter_diff.assert_has_calls(
+        mock_iter_diff_index.assert_has_calls(
             (
                 mock.call(mock_commit_2.diff.return_value),
                 mock.call(mock_commit_1.diff.return_value),
@@ -196,7 +196,7 @@ class ChunkGeneratorTests(ScannerTestCase):
         self,
         mock_repo: mock.MagicMock,
         mock_extract: mock.MagicMock,
-        mock_iter_diff: mock.MagicMock,
+        mock_iter_diff_index: mock.MagicMock,
         mock_iter_commits: mock.MagicMock,
     ):
         mock_repo.return_value.remotes.origin.fetch.return_value = ["foo"]
@@ -206,7 +206,7 @@ class ChunkGeneratorTests(ScannerTestCase):
         mock_commit_1 = mock.MagicMock()
         mock_commit_2 = mock.MagicMock()
         mock_iter_commits.return_value = [(mock_commit_1, mock_commit_2)]
-        mock_iter_diff.return_value = [("foo", "bar.py"), ("baz", "blah.py")]
+        mock_iter_diff_index.return_value = [("foo", "bar.py"), ("baz", "blah.py")]
         chunks = list(test_scanner.chunks)
         # These get duplicated in this test, because `_iter_diff_index` is called
         # both in the normal branch/commit iteration, and then once more afterward
