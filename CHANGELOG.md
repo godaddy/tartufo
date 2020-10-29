@@ -3,10 +3,12 @@ vX.Y.Z - TBD
 Features:
 
 * #125 - Implement CODEOWNERS and auto-assignment to maintainers on PRs
+
 =======
-Bug fixes:
+Bugfixes:
 
 * #117 - Ignore whitespace-only lines in exclusion files
+
 =======
 Other changes:
 
