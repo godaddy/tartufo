@@ -1,3 +1,8 @@
+v2.1.0 - 27 October 2020
+------------------------
+
+* Added references to Tartufo GoogleGroups mailing list to docs
+
 v2.0.1 - 09 October 2020
 ------------------------
 
