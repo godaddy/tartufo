@@ -1,3 +1,15 @@
+vX.Y.Z - TBD
+------------------------
+
+Bug fixes:
+
+* #117 - Ignore whitespace-only lines in exclusion files
+
+v2.0.1 - 09 October 2020
+------------------------
+
+* Fix the Docker build & deploy
+
 v2.0.0 - 09 October 2020
 ------------------------
 

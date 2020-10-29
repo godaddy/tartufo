@@ -223,5 +223,5 @@ def compile_path_rules(patterns: Iterable[str]) -> List[Pattern]:
     return [
         re.compile(pattern.strip())
         for pattern in patterns
-        if pattern and not pattern.startswith("#")
+        if pattern.strip() and not pattern.startswith("#")
     ]
