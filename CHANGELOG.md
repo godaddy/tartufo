@@ -13,6 +13,7 @@ Bugfixes:
 Other changes:
 
 * #130 - Added references to Tartufo GoogleGroups mailing list to docs
+* Fixed testing in Pypy3 and explicitly added Python 3.9 support
 
 v2.0.1 - 09 October 2020
 ------------------------
