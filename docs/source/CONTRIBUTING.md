@@ -10,7 +10,7 @@ expected of anyone who participates in the project by reading these Contribution
 Guidelines.
 
 **Please Note:** GitHub is for bug reports and contributions primarily - if you
-have a support question head over to [GoDaddy's Open Source Software Slack][slack] or the
+have a support question head over to [GoDaddy's Open Source Software Slack][slack], or the
 [Tartufo Mailing list].
 
 ## Answering Questions
