@@ -470,6 +470,7 @@ class GitRepoScanner(GitScanner):
             raise types.GitRemoteException(exc.stderr.strip()) from exc
 
         for remote_branch in branches:
+            diff_index: git.DiffIndex = None
             diff_hash: bytes
             curr_commit: git.Commit = None
             prev_commit: git.Commit = None
