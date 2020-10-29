@@ -1,7 +1,14 @@
-v2.1.0 - 27 October 2020
+vX.Y.Z - TBD
 ------------------------
 
+Bug fixes:
+
+* #117 - Ignore whitespace-only lines in exclusion files
+
+Other changes:
+
 * Added references to Tartufo GoogleGroups mailing list to docs
+
 
 v2.0.1 - 09 October 2020
 ------------------------
