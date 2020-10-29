@@ -38,12 +38,10 @@ def del_rw(_func: Callable, name: str, _exc: Exception) -> None:
 
 
 def convert_regexes_to_rules(regexes: Dict[str, Pattern]) -> Dict[str, Rule]:
-    rules: Dict[str, Rule] = {}
-    for regex_name in regexes:
-        rules[regex_name] = Rule(
-            name=regex_name, pattern=regexes[regex_name], path_pattern=None
-        )
-    return rules
+    return {
+        name: Rule(name=name, pattern=pattern, path_pattern=None)
+        for name, pattern in regexes.items()
+    }
 
 
 def echo_issues(
