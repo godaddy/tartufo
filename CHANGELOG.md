@@ -1,3 +1,7 @@
+v2.1.0 - 27 October 2020
+------------------------
+* #130 - Added references to Tartufo GoogleGroups mailing list to docs
+
 v2.1.0 - 23 October 2020
 ------------------------
 * #125 - Implement CODEOWNERS and auto-assignment to maintainers on PRs
