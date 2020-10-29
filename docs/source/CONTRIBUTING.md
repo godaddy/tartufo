@@ -16,7 +16,7 @@ have a support question head over to [GoDaddy's Open Source Software Slack][slac
 ## Answering Questions
 
 One of the most important and immediate ways you can support this project is to
-answer questions on [Slack][slack], [Github][issues] or the [Tartufo Mailing list].
+answer questions on [Slack][slack], [Github][issues], or the [Tartufo Mailing list].
 Whether you're helping a newcomer understand a feature or troubleshooting an edge case with a
 seasoned developer, your knowledge and experience with Python or security can go a long
 way to help others.
