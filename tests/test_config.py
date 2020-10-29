@@ -117,6 +117,31 @@ class ConfigureRegexTests(unittest.TestCase):
             config.configure_regexes(rules_repo=".", rules_repo_files=("tartufo.json",))
             repo_path.glob.assert_called_once_with("tartufo.json")
 
+    def test_configure_regexes_includes_rules_from_rules_repo(self):
+        rules_path = pathlib.Path(__file__).parent / "data"
+        actual_regexes = config.configure_regexes(
+            include_default=False, rules_repo=str(rules_path)
+        )
+        expected_regexes = {
+            "RSA private key 2": Rule(
+                name="RSA private key 2",
+                pattern=re.compile("-----BEGIN EC PRIVATE KEY-----"),
+                path_pattern=None,
+            ),
+            "Complex Rule": Rule(
+                name="Complex Rule",
+                pattern=re.compile("complex-rule"),
+                path_pattern=re.compile("/tmp/[a-z0-9A-Z]+\\.(py|js|json)"),
+            ),
+        }
+
+        self.assertEqual(
+            expected_regexes,
+            actual_regexes,
+            "The regexes dictionary should match the test rules "
+            "(expected: {}, actual: {})".format(expected_regexes, actual_regexes),
+        )
+
 
 class LoadConfigFromPathTests(unittest.TestCase):
     def setUp(self):
