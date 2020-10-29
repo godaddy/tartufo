@@ -48,9 +48,9 @@ toml = "^0.10"
 truffleHogRegexes = "^0.0.7"
 
 [tool.poetry.dev-dependencies]
-black = {version = "19.10b0", allow-prereleases = true}
+black = {version = "19.10b0", allow-prereleases = true, markers = "platform_python_implementation == 'CPython'"}
 coverage = {extras = ["toml"], version = "^5.1"}
-mypy = "^0.770"
+mypy = {version = "^0.770", markers = "platform_python_implementation == 'CPython'"}
 pre-commit = "*"
 pylint = "^2.5.2"
 pytest = "^5.4.1"
