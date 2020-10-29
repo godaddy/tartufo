@@ -234,5 +234,26 @@ class ReadPyprojectTomlTests(unittest.TestCase):
         self.assertEqual(result, str(self.data_dir / "config" / "tartufo.toml"))
 
 
+class CompilePathRulesTests(unittest.TestCase):
+    def test_commented_lines_are_ignored(self):
+        rules = config.compile_path_rules(["# Poetry lock file", r"poetry\.lock"])
+        self.assertEqual(rules, [re.compile(r"poetry\.lock")])
+
+    def test_whitespace_lines_are_ignored(self):
+        rules = config.compile_path_rules(
+            [
+                "# Poetry lock file",
+                r"poetry\.lock",
+                "",
+                "\t\n",
+                "# NPM files",
+                r"package-lock\.json",
+            ]
+        )
+        self.assertEqual(
+            rules, [re.compile(r"poetry\.lock"), re.compile(r"package-lock\.json")]
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
