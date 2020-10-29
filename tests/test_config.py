@@ -120,7 +120,9 @@ class ConfigureRegexTests(unittest.TestCase):
     def test_configure_regexes_includes_rules_from_rules_repo(self):
         rules_path = pathlib.Path(__file__).parent / "data"
         actual_regexes = config.configure_regexes(
-            include_default=False, rules_repo=str(rules_path)
+            include_default=False,
+            rules_repo=str(rules_path),
+            rules_repo_files=["testRules.json"],
         )
         expected_regexes = {
             "RSA private key 2": Rule(
