@@ -120,7 +120,7 @@ def fail(msg: str, ctx: click.Context, code: int = 1) -> None:
     ctx.exit(code)
 
 
-@lru_cache()
+@lru_cache(maxsize=None)
 def generate_signature(snippet: str, filename: str) -> str:
     """Generate a stable hash signature for an issue found in a commit.
 

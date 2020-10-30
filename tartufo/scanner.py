@@ -180,7 +180,7 @@ class ScannerBase(abc.ABC):
                 raise types.ConfigException(str(exc)) from exc
         return self._rules_regexes
 
-    @lru_cache()
+    @lru_cache(maxsize=None)
     def should_scan(self, file_path: str):
         """Check if the a file path should be included in analysis.
 
@@ -216,7 +216,7 @@ class ScannerBase(abc.ABC):
             in self.global_options.exclude_signatures
         )
 
-    @lru_cache()
+    @lru_cache(maxsize=None)
     def calculate_entropy(self, data: str, char_set: str) -> float:
         """Calculate the Shannon entropy for a piece of data.
 
