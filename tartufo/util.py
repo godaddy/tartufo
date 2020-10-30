@@ -103,15 +103,13 @@ def clone_git_repo(
         # Assume git_url is ssh
         # TODO: Support ssh credentials paths as command line option
         find_ssh_credentials(git_url, project_path)
-    elif git_url.strip().startswith("ssh://") or git_url.strip().index("@"):
+    else:
         try:
             # Assume git_url is https
             # TODO: Support https credentials as command line option
             clone_repository(git_url, project_path)
         except pygit2.GitError as exc:  # pylint: disable=no-member
             raise types.GitRemoteException(str(exc)) from exc
-    else:
-        raise types.GitRemoteException("Unknown remote URL type " + git_url)
 
     return pathlib.Path(project_path)
 
