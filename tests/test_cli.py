@@ -61,7 +61,9 @@ class ProcessIssuesTest(unittest.TestCase):
         self, mock_scanner: mock.MagicMock, mock_dt: mock.MagicMock
     ):
         mock_scanner.return_value.scan.return_value = [
-            scanner.Issue(types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar"))
+            scanner.Issue(
+                types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {})
+            )
         ]
         mock_dt.now.return_value.isoformat.return_value = "nownownow"
         runner = CliRunner()
@@ -81,7 +83,9 @@ class ProcessIssuesTest(unittest.TestCase):
         self, mock_scanner: mock.MagicMock
     ):
         mock_scanner.return_value.scan.return_value = [
-            scanner.Issue(types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar"))
+            scanner.Issue(
+                types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {})
+            )
         ]
         runner = CliRunner()
         with runner.isolated_filesystem():
@@ -99,7 +103,9 @@ class ProcessIssuesTest(unittest.TestCase):
         self, mock_scanner: mock.MagicMock
     ):
         mock_scanner.return_value.scan.return_value = [
-            scanner.Issue(types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar"))
+            scanner.Issue(
+                types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {})
+            )
         ]
         runner = CliRunner()
         with runner.isolated_filesystem():
@@ -115,7 +121,9 @@ class ProcessIssuesTest(unittest.TestCase):
         self, mock_scanner: mock.MagicMock
     ):
         mock_scanner.return_value.scan.return_value = [
-            scanner.Issue(types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar"))
+            scanner.Issue(
+                types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {})
+            )
         ]
         runner = CliRunner()
         with runner.isolated_filesystem():

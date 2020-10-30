@@ -519,4 +519,4 @@ class GitPreCommitScanner(GitScanner):
             self._repo.head.commit, create_patch=True, R=True
         )
         for blob, file_path in self._iter_diff_index(diff_index):
-            yield types.Chunk(blob, file_path)
+            yield types.Chunk(blob, file_path, {})
