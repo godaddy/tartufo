@@ -2,7 +2,7 @@ vX.Y.Z - TBD
 ------------------------
 
 Features:
-
+* #137 - Adding milestone document
 * #125 - Implement CODEOWNERS and auto-assignment to maintainers on PRs
 
 Bugfixes:
