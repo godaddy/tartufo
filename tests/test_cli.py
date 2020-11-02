@@ -6,8 +6,35 @@ from unittest import mock
 from click.testing import CliRunner
 from tartufo import cli, scanner, types
 
+from tests.commands import foo as command_foo
+
 
 FakeFile = namedtuple("FakeFile", ["name"])
+
+
+class GetCommandsTests(unittest.TestCase):
+    _original_plugin_dir: Path
+    _original_plugin_module: str
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls._original_plugin_dir = cli.PLUGIN_DIR
+        cls._original_plugin_module = cli.PLUGIN_MODULE
+        cli.PLUGIN_DIR = Path(__file__).parent / "commands"
+        cli.PLUGIN_MODULE = "tests.commands"
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cli.PLUGIN_DIR = cls._original_plugin_dir
+        cli.PLUGIN_MODULE = cls._original_plugin_module
+
+    def test_get_command_returns_main_attribute_from_command_modules(self):
+        command = cli.TartufoCLI().get_command(None, "foo")  # type: ignore
+        self.assertEqual(command, command_foo.main)
+
+    def test_get_command_fails_gracefully_on_invalid_commands(self):
+        command = cli.TartufoCLI().get_command(None, "bar")  # type: ignore
+        self.assertEqual(command, None)
 
 
 class ListCommandTests(unittest.TestCase):

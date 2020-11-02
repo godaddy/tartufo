@@ -3,6 +3,7 @@ vX.Y.Z - TBD
 
 Bug fixes:
 
+* #115 - Strange behavior can manifest with invalid sub-commands
 * #117 - Ignore whitespace-only lines in exclusion files
 
 v2.0.1 - 09 October 2020
