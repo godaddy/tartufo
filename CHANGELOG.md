@@ -7,6 +7,7 @@ Features:
 
 Bugfixes:
 
+* #115 - Strange behavior can manifest with invalid sub-commands
 * #117 - Ignore whitespace-only lines in exclusion files
 
 Other changes:
