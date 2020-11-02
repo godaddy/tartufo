@@ -3,7 +3,7 @@
 import importlib
 import pathlib
 from datetime import datetime
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import click
 
@@ -15,18 +15,28 @@ PLUGIN_MODULE = "tartufo.commands"
 
 
 class TartufoCLI(click.MultiCommand):
-    def list_commands(self, ctx: click.Context) -> List[str]:
-        return [
-            fpath.name[:-3].replace("_", "-")
-            for fpath in PLUGIN_DIR.glob("*.py")
-            if fpath.name != "__init__.py"
-        ]
+    _valid_commands: Optional[List[str]] = None
 
-    def get_command(self, ctx: click.Context, cmd_name: str) -> click.Command:
-        module = importlib.import_module(
-            f".{cmd_name.replace('-', '_')}", PLUGIN_MODULE
-        )
-        return module.main  # type: ignore
+    @property
+    def custom_commands(self):
+        if self._valid_commands is None:
+            self._valid_commands = [
+                fpath.name[:-3].replace("_", "-")
+                for fpath in PLUGIN_DIR.glob("*.py")
+                if fpath.name != "__init__.py"
+            ]
+        return self._valid_commands
+
+    def list_commands(self, ctx: click.Context) -> List[str]:
+        return self.custom_commands
+
+    def get_command(self, ctx: click.Context, cmd_name: str) -> Optional[click.Command]:
+        if cmd_name in self.custom_commands:
+            module = importlib.import_module(
+                f".{cmd_name.replace('-', '_')}", PLUGIN_MODULE
+            )
+            return module.main  # type: ignore
+        return None
 
 
 @click.command(

@@ -1,11 +1,25 @@
 # pylint: disable=too-many-instance-attributes
 import enum
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, Optional, TextIO, Tuple, Pattern
 
 
 @dataclass
 class GlobalOptions:
+    __slots__ = (
+        "json",
+        "rules",
+        "default_regexes",
+        "entropy",
+        "regex",
+        "include_paths",
+        "exclude_paths",
+        "exclude_signatures",
+        "output_dir",
+        "git_rules_repo",
+        "git_rules_files",
+        "config",
+    )
     json: bool
     rules: Tuple[TextIO, ...]
     default_regexes: bool
@@ -22,6 +36,7 @@ class GlobalOptions:
 
 @dataclass
 class GitOptions:
+    __slots__ = ("since_commit", "max_depth", "branch")
     since_commit: Optional[str]
     max_depth: int
     branch: Optional[str]
@@ -34,13 +49,15 @@ class IssueType(enum.Enum):
 
 @dataclass
 class Chunk:
+    __slots__ = ("contents", "file_path", "metadata")
     contents: str
     file_path: str
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: Dict[str, Any]
 
 
 @dataclass
 class Rule:
+    __slots__ = ("name", "pattern", "path_pattern")
     name: Optional[str]
     pattern: Pattern
     path_pattern: Optional[Pattern]

@@ -92,7 +92,7 @@ class IssuesTests(ScannerTestCase):
     def test_populated_issues_list_does_not_rescan(self, mock_scan: mock.MagicMock):
         test_scanner = TestScanner(self.options)
         test_scanner._issues = [  # pylint: disable=protected-access
-            scanner.Issue(types.IssueType.RegEx, "foo", types.Chunk("foo", "bar"))
+            scanner.Issue(types.IssueType.RegEx, "foo", types.Chunk("foo", "bar", {}))
         ]
         test_scanner.issues  # pylint: disable=pointless-statement
         mock_scan.assert_not_called()
@@ -237,7 +237,7 @@ class RegexScanTests(ScannerTestCase):
             "bar": Rule(name=None, pattern=rule_2, path_pattern=rule_2_path),
             "not-found": Rule(name=None, pattern=rule_3, path_pattern=rule_3_path),
         }
-        chunk = types.Chunk("foo", "/file/path")
+        chunk = types.Chunk("foo", "/file/path", {})
         test_scanner.scan_regex(chunk)
         rule_1.findall.assert_called_once_with("foo")
         rule_2.findall.assert_called_once_with("foo")
@@ -254,7 +254,7 @@ class RegexScanTests(ScannerTestCase):
         test_scanner._rules_regexes = {  # pylint: disable=protected-access
             "foo": Rule(name=None, pattern=re.compile("foo"), path_pattern=None)
         }
-        chunk = types.Chunk("foo", "bar")
+        chunk = types.Chunk("foo", "bar", {})
         issues = test_scanner.scan_regex(chunk)
         mock_signature.assert_called_once_with("foo", "bar")
         self.assertEqual(issues, [])
@@ -268,7 +268,7 @@ class RegexScanTests(ScannerTestCase):
         test_scanner._rules_regexes = {  # pylint: disable=protected-access
             "foo": Rule(name=None, pattern=re.compile("foo"), path_pattern=None)
         }
-        chunk = types.Chunk("foo", "bar")
+        chunk = types.Chunk("foo", "bar", {})
         issues = test_scanner.scan_regex(chunk)
         mock_signature.assert_called_once_with("foo", "bar")
         self.assertEqual(len(issues), 1)
@@ -287,6 +287,7 @@ class EntropyTests(ScannerTestCase):
         asdfqwer
         """,
             "foo.py",
+            {},
         )
         self.scanner = TestScanner(self.options)
 
