@@ -1,4 +1,3 @@
-import collections
 import copy
 import json
 import pathlib
@@ -209,16 +208,15 @@ def load_rules_from_file(rules_file: TextIO) -> Dict[str, Rule]:
         raise ValueError(
             "Error loading rules from file: {}".format(rules_file.name)
         ) from exc
-    for rule_name in new_rules:
-        rule_definition = new_rules[rule_name]
-        if isinstance(rule_definition, collections.Mapping):
+    for rule_name, rule_definition in new_rules.items():
+        try:
             path_pattern = rule_definition.get("path_pattern", None)
             rule = Rule(
                 name=rule_name,
                 pattern=re.compile(rule_definition["pattern"]),
                 path_pattern=re.compile(path_pattern) if path_pattern else None,
             )
-        else:
+        except AttributeError:
             rule = Rule(
                 name=rule_name, pattern=re.compile(rule_definition), path_pattern=None
             )
