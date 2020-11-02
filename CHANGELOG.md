@@ -1,14 +1,17 @@
 vX.Y.Z - TBD
 ------------------------
 
-Bug fixes:
+Features:
+
+* #125 - Implement CODEOWNERS and auto-assignment to maintainers on PRs
+
+Bugfixes:
 
 * #117 - Ignore whitespace-only lines in exclusion files
 
 Other changes:
 
-* Added references to Tartufo GoogleGroups mailing list to docs
-
+* #130 - Added references to Tartufo GoogleGroups mailing list to docs
 
 v2.0.1 - 09 October 2020
 ------------------------
