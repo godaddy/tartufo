@@ -232,7 +232,7 @@ class IterDiffIndexTests(ScannerTestCase):
     @mock.patch("pygit2.Repository", new=mock.MagicMock())
     def test_binary_files_are_skipped(self):
         mock_diff = mock.MagicMock()
-        mock_diff.diff.decode.return_value = "Binary files\n101010"
+        mock_diff.delta.is_binary = True
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
@@ -244,7 +244,7 @@ class IterDiffIndexTests(ScannerTestCase):
     def test_excluded_files_are_not_scanned(self, mock_should: mock.MagicMock):
         mock_should.return_value = False
         mock_diff = mock.MagicMock()
-        mock_diff.diff.decode.return_value = "+ Ford Prefect"
+        mock_diff.delta.is_binary = False
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
@@ -257,16 +257,19 @@ class IterDiffIndexTests(ScannerTestCase):
     def test_all_files_are_yielded(self, mock_should: mock.MagicMock):
         mock_should.return_value = True
         mock_diff_1 = mock.MagicMock()
-        mock_diff_1.diff.decode.return_value = "+ Ford Prefect"
+        mock_diff_1.delta.is_binary = False
+        mock_diff_1.text = "+ Ford Prefect"
+        mock_diff_1.delta.new_file.path = "/foo"
         mock_diff_2 = mock.MagicMock()
-        mock_diff_2.diff.decode.return_value = "- Marvin"
+        mock_diff_2.delta.is_binary = False
+        mock_diff_2.text = "- Marvin"
+        mock_diff_2.delta.new_file.path = "/bar"
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
         diffs = list(test_scanner._iter_diff([mock_diff_1, mock_diff_2]))
         self.assertEqual(
-            diffs,
-            [("+ Ford Prefect", mock_diff_1.b_path), ("- Marvin", mock_diff_2.b_path)],
+            diffs, [("+ Ford Prefect", "/foo"), ("- Marvin", "/bar"),],
         )
 
 
