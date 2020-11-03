@@ -462,25 +462,39 @@ class GitRepoScanner(GitScanner):
         :raises types.GitRemoteException: If there was an error fetching branches
         """
         already_searched: Set[bytes] = set()
-        try:
-            if self.git_options.local_only:
-                # TODO: Search for other key file types, and add parameter to specify
-                pub_key = pathlib.Path("~/.ssh/id_rsa.pub").expanduser()
-                priv_key = pathlib.Path("~/.ssh/id_rsa").expanduser()
-                keypair = pygit2.Keypair("git", str(pub_key), str(priv_key), "")
-                remote_callbacks = pygit2.RemoteCallbacks(credentials=keypair)
-                self._repo.remotes["origin"].fetch(callbacks=remote_callbacks)
 
-            if self.git_options.branch:
-                unfiltered_branches = list(self._repo.branches)
-                branches = [
-                    x for x in unfiltered_branches if x.name == self.git_options.branch
-                ]
-            else:
-                branches = list(self._repo.branches)
-
-        except pygit2.GitError as exc:
-            raise types.GitRemoteException(str(exc)) from exc
+        if self.git_options.branch:
+            # Single branch only
+            unfiltered_branches = list(self._repo.branches)
+            branches = [
+                x for x in unfiltered_branches if x.name == self.git_options.branch
+            ]
+            try:
+                if self.git_options.fetch:
+                    print("Fetching remote origin/" + self.git_options.branch)
+                    pub_key = pathlib.Path("~/.ssh/id_rsa.pub").expanduser()
+                    priv_key = pathlib.Path("~/.ssh/id_rsa").expanduser()
+                    keypair = pygit2.Keypair("git", str(pub_key), str(priv_key), "")
+                    remote_callbacks = pygit2.RemoteCallbacks(credentials=keypair)
+                    self._repo.remotes["origin"].fetch(
+                        self.git_options.branch, callbacks=remote_callbacks
+                    )
+            except pygit2.GitError as exc:
+                raise types.GitRemoteException(exc.stderr.strip()) from exc
+        else:
+            # Everything
+            branches = self._repo.branches
+            try:
+                if self.git_options.fetch:
+                    print("Fetching remote origin (all branches)")
+                    pub_key = pathlib.Path("~/.ssh/id_rsa.pub").expanduser()
+                    priv_key = pathlib.Path("~/.ssh/id_rsa").expanduser()
+                    keypair = pygit2.Keypair("git", str(pub_key), str(priv_key), "")
+                    remote_callbacks = pygit2.RemoteCallbacks(credentials=keypair)
+                    self._repo.remotes["origin"].fetch(callbacks=remote_callbacks)
+                    self._repo.remotes.origin.fetch()
+            except pygit2.GitError as exc:
+                raise types.GitRemoteException(exc.stderr.strip()) from exc
 
         for branch_name in branches:
             branch: pygit2.Branch = self._repo.branches.get(branch_name)
