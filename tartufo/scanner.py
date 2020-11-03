@@ -524,7 +524,7 @@ class GitPreCommitScanner(GitScanner):
     """For use in a git pre-commit hook."""
 
     def load_repo(self, repo_path: str) -> pygit2.Repository:
-        return pygit2.Repository(repo_path, search_parent_directories=True)
+        return pygit2.Repository(repo_path)
 
     @property
     def chunks(self):

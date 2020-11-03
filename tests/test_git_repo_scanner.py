@@ -14,7 +14,7 @@ from tests.helpers import generate_options
 
 class ScannerTestCase(unittest.TestCase):
     def setUp(self) -> None:
-        self.global_options = generate_options(GlobalOptions)
+        self.global_options = generate_options(GlobalOptions, exclude_signatures=())
         self.git_options = generate_options(GitOptions)
 
 
