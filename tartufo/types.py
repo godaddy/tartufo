@@ -36,7 +36,7 @@ class GlobalOptions:
 
 @dataclass
 class GitOptions:
-    __slots__ = ("since_commit", "max_depth", "branch", "local_only")
+    __slots__ = ("since_commit", "max_depth", "branch", "fetch")
     since_commit: Optional[str]
     max_depth: int
     branch: Optional[str]

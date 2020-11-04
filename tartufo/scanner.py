@@ -328,14 +328,24 @@ class GitScanner(ScannerBase, abc.ABC):
     _repo: pygit2.Repository
     repo_path: str
 
-    def __init__(self, global_options: types.GlobalOptions, repo_path: str) -> None:
+    def __init__(
+        self,
+        global_options: types.GlobalOptions,
+        repo_path: str,
+        repo: pygit2.Repository,
+    ) -> None:
         """
         :param global_options: The options provided to the top-level tartufo command
         :param repo_path: The local filesystem path pointing to the repository
         """
         self.repo_path = repo_path
         super().__init__(global_options)
-        self._repo = self.load_repo(self.repo_path)
+        if repo is None:
+            print("Loading repo from repo_path")
+            self._repo = self.load_repo(self.repo_path)
+        else:
+            print("Using existing repo object")
+            self._repo = repo
 
     @abc.abstractmethod
     def load_repo(self, repo_path: str) -> pygit2.Repository:
@@ -380,6 +390,7 @@ class GitRepoScanner(GitScanner):
         global_options: types.GlobalOptions,
         git_options: types.GitOptions,
         repo_path: str,
+        repo: pygit2.Repository,
     ) -> None:
         """Used for scanning a full clone of a git repository.
 
@@ -388,16 +399,16 @@ class GitRepoScanner(GitScanner):
         :param repo_path: The local filesystem path pointing to the repository
         """
         self.git_options = git_options
-        super().__init__(global_options, repo_path)
+        super().__init__(global_options, repo_path, repo)
 
-    def load_repo(self, repo_path: str) -> pygit2.Repository:
+    def load_config(self, repo_path) -> None:
         config_file: Optional[pathlib.Path] = None
         data: MutableMapping[str, Any] = {}
         try:
             (config_file, data) = config.load_config_from_path(
                 pathlib.Path(repo_path), traverse=False
             )
-        except (FileNotFoundError, types.ConfigException) as exc:
+        except (FileNotFoundError, types.ConfigException):
             config_file = None
         if config_file and config_file != self.global_options.config:
             signatures = data.get("exclude_signatures", None)
@@ -421,7 +432,11 @@ class GitRepoScanner(GitScanner):
                     with extras_file.open() as handle:
                         excludes += config.compile_path_rules(handle.readlines())
                     self._excluded_paths = excludes
+
+    def load_repo(self, repo_path: str) -> pygit2.Repository:
+        self.load_config(repo_path)
         try:
+            print("load_repo(" + repo_path + ")")
             return pygit2.Repository(repo_path)
         except pygit2.GitError as exc:
             raise types.GitLocalException(str(exc)) from exc
@@ -472,29 +487,18 @@ class GitRepoScanner(GitScanner):
             try:
                 if self.git_options.fetch:
                     print("Fetching remote origin/" + self.git_options.branch)
-                    pub_key = pathlib.Path("~/.ssh/id_rsa.pub").expanduser()
-                    priv_key = pathlib.Path("~/.ssh/id_rsa").expanduser()
-                    keypair = pygit2.Keypair("git", str(pub_key), str(priv_key), "")
-                    remote_callbacks = pygit2.RemoteCallbacks(credentials=keypair)
-                    self._repo.remotes["origin"].fetch(
-                        self.git_options.branch, callbacks=remote_callbacks
-                    )
+                    util.fetch_ssh_repo(self._repo, self.git_options.branch)
             except pygit2.GitError as exc:
-                raise types.GitRemoteException(exc.stderr.strip()) from exc
+                raise types.GitRemoteException(exc) from exc
         else:
             # Everything
             branches = self._repo.branches
             try:
                 if self.git_options.fetch:
                     print("Fetching remote origin (all branches)")
-                    pub_key = pathlib.Path("~/.ssh/id_rsa.pub").expanduser()
-                    priv_key = pathlib.Path("~/.ssh/id_rsa").expanduser()
-                    keypair = pygit2.Keypair("git", str(pub_key), str(priv_key), "")
-                    remote_callbacks = pygit2.RemoteCallbacks(credentials=keypair)
-                    self._repo.remotes["origin"].fetch(callbacks=remote_callbacks)
-                    self._repo.remotes.origin.fetch()
+                    util.fetch_ssh_repo(self._repo)
             except pygit2.GitError as exc:
-                raise types.GitRemoteException(exc.stderr.strip()) from exc
+                raise types.GitRemoteException(exc) from exc
 
         for branch_name in branches:
             branch: pygit2.Branch = self._repo.branches.get(branch_name)

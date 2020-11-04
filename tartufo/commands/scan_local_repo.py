@@ -43,7 +43,7 @@ def main(
     )
     issues: List[Issue] = []
     try:
-        scanner = GitRepoScanner(options, git_options, str(repo_path))
+        scanner = GitRepoScanner(options, git_options, str(repo_path), None)
         issues = scanner.scan()
     except types.GitLocalException as exc:
         util.fail(f"{repo_path} is not a valid git repository.", ctx)

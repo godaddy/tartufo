@@ -9,7 +9,17 @@ import tempfile
 import uuid
 from functools import lru_cache, partial
 from hashlib import blake2s
-from typing import Any, Callable, Dict, Iterable, List, Optional, TYPE_CHECKING, Pattern
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    TYPE_CHECKING,
+    Pattern,
+    Tuple,
+)
 
 import click
 import pygit2
@@ -85,7 +95,7 @@ def write_outputs(found_issues: "List[Issue]", output_dir: pathlib.Path) -> List
 
 def clone_git_repo(
     git_url: str, target_dir: Optional[pathlib.Path] = None
-) -> pathlib.Path:
+) -> Tuple[pathlib.Path, pygit2.Repository]:
     """Clone a remote git repository and return its filesystem path.
 
     :param git_url: The URL of the git repository to be cloned
@@ -97,22 +107,27 @@ def clone_git_repo(
     else:
         project_path = str(target_dir)
 
+    repo: pygit2.Repository
     if not git_url.strip().startswith("https://"):
         # Assume git_url is ssh
         # TODO: Support ssh credentials paths as command line option
-        find_ssh_credentials(git_url, project_path)
+        print("Clone ssh repo: " + git_url)
+        repo = clone_ssh_repo(git_url, project_path)
     else:
         try:
             # Assume git_url is https
             # TODO: Support https credentials as command line option
-            pygit2.clone_repository(git_url, project_path)
+            print("Clone https repo: " + git_url)
+            repo = pygit2.clone_repository(git_url, project_path)
         except pygit2.GitError as exc:
             raise types.GitRemoteException(str(exc)) from exc
+    print("Returning (" + project_path + ", Repository)")
+    return (pathlib.Path(project_path), repo)
 
-    return pathlib.Path(project_path)
 
-
-def find_ssh_credentials(git_url: str, project_path: str) -> pygit2.Repository:
+def fetch_ssh_repo(
+    repo: pygit2.Repository, branch: Optional[str] = None
+) -> pygit2.Repository:
     # TODO: Support Windows paths
     path_tuples = [
         ["~/.ssh/id_ed25519.pub", "~/.ssh/id_ed25519"],
@@ -120,17 +135,67 @@ def find_ssh_credentials(git_url: str, project_path: str) -> pygit2.Repository:
         ["~/.ssh/id_dsa.pub", "~/.ssh/id_dsa"],
     ]
 
+    if branch is not None:
+        print("fetch_ssh_repo(branch: " + branch + ")")
+    else:
+        print("fetch_ssh_repo()")
+
     for path_tuple in path_tuples:
         try:
+            print("pub_key=" + path_tuple[0])
             pub_key = pathlib.Path(path_tuple[0]).expanduser()
+            print("priv_key=" + path_tuple[1])
             priv_key = pathlib.Path(path_tuple[1]).expanduser()
             if not (pub_key.is_file() and priv_key.is_file()):
+                print("Credentials don't exist")
                 continue
+            print("Have credentials")
             keypair = pygit2.Keypair("git", pub_key, priv_key, "")
             remote_callbacks = pygit2.RemoteCallbacks(credentials=keypair)
-            pygit2.clone_repository(git_url, project_path, callbacks=remote_callbacks)
-            return pygit2.Repository
+            print("Fetching origin")
+            # TODO: Filter on branch if user specifies branch
+            repo.remotes["origin"].fetch(callbacks=remote_callbacks)
+            return
+
         except pygit2.GitError:
+            print("GitError")
+            # TODO: differentiate credentials errors from other errors
+            continue
+    raise types.GitRemoteException("Could not locate working ssh credentials")
+
+
+def clone_ssh_repo(git_url: str, project_path: str) -> pygit2.Repository:
+    # TODO: Support Windows paths
+    path_tuples = [
+        ["~/.ssh/id_ed25519.pub", "~/.ssh/id_ed25519"],
+        ["~/.ssh/id_rsa.pub", "~/.ssh/id_rsa"],
+        ["~/.ssh/id_dsa.pub", "~/.ssh/id_dsa"],
+    ]
+    print("find_ssh_credentials")
+    for path_tuple in path_tuples:
+        try:
+            print("pub_key=" + path_tuple[0])
+            pub_key = pathlib.Path(path_tuple[0]).expanduser()
+            print("priv_key=" + path_tuple[1])
+            priv_key = pathlib.Path(path_tuple[1]).expanduser()
+            if not (pub_key.is_file() and priv_key.is_file()):
+                print("Credentials don't exist")
+                continue
+            print("Have credentials")
+            keypair = pygit2.Keypair("git", pub_key, priv_key, "")
+            remote_callbacks = pygit2.RemoteCallbacks(credentials=keypair)
+            print("Repository(" + git_url + ")")
+
+            # pygit2.Repository(git_url, callbacks=remote_callbacks)
+            print("clone_repository(" + git_url + ")")
+            repository = pygit2.clone_repository(
+                git_url, project_path, callbacks=remote_callbacks
+            )
+            print("Successful clone")
+            return repository
+
+        except pygit2.GitError:
+            print("GitError")
             # TODO: differentiate credentials errors from other errors
             continue
     raise types.GitRemoteException("Could not locate working ssh credentials")
