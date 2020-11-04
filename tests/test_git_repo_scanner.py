@@ -4,8 +4,6 @@ import re
 import unittest
 from unittest import mock
 
-import pygit2
-
 from tartufo import scanner, types
 from tartufo.types import GlobalOptions, GitOptions
 
@@ -23,20 +21,27 @@ class RepoLoadTests(ScannerTestCase):
         self.data_dir = pathlib.Path(__file__).parent / "data"
         super().setUp()
 
-    @mock.patch("pygit2.Repository")
+    @mock.patch("tartufo.config.util.get_repository")
     def test_repo_is_loaded_on_init(self, mock_repo: mock.MagicMock):
+        mock_repo.return_value = (pathlib.Path("."), None)
         scanner.GitRepoScanner(self.global_options, self.git_options, ".")
         mock_repo.assert_called_once()
 
-    @mock.patch("pygit2.Repository")
+    @mock.patch("tartufo.config.util.get_repository")
     def test_load_repo_loads_new_repo(self, mock_repo: mock.MagicMock):
+        repo_path = "../tartufo"
+        mock_repo.return_value = (pathlib.Path(repo_path), None)
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
-        repo_path = "../tartufo"
         print("test_load_repo_loads_new_repo: load_repo(" + repo_path + ")")
         test_scanner.load_repo(repo_path)
-        mock_repo.assert_has_calls((mock.call("."), mock.call("../tartufo")))
+        mock_repo.assert_has_calls(
+            (
+                mock.call(".", fetch=None, branch=None),
+                mock.call("../tartufo", fetch=None, branch=None),
+            )
+        )
 
     @mock.patch("pygit2.Repository", new=mock.MagicMock())
     @mock.patch("tartufo.config.load_config_from_path")
@@ -132,15 +137,17 @@ class ChunkGeneratorTests(ScannerTestCase):
         self, mock_repo: mock.MagicMock
     ):
         self.git_options.fetch = True
-        mock_repo.return_value.remotes.origin.fetch.side_effect = pygit2.GitError(
-            "Fetch failed!"
+        mock_repo.return_value.remotes.origin.fetch.side_effect = types.GitRemoteException(
+            "Could not locate working ssh credentials"
         )
-        test_scanner = scanner.GitRepoScanner(
-            self.global_options, self.git_options, "."
-        )
+
         with self.assertRaisesRegex(
             types.GitRemoteException, "Could not locate working ssh credentials"
         ):
+            test_scanner = scanner.GitRepoScanner(
+                self.global_options, self.git_options, "."
+            )
+
             for _ in test_scanner.chunks:
                 pass
 
