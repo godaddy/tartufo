@@ -36,7 +36,7 @@ class GitTests(unittest.TestCase):
     def test_clone_git_repo_returns_path_to_clone(self, mock_mkdtemp: mock.MagicMock):
         mock_mkdtemp.return_value = "/foo"
         repo_path = util.clone_git_repo("https://github.com/godaddy/tartufo.git")
-        self.assertEqual(repo_path, Path("/foo"))
+        self.assertEqual(repo_path[0], Path("/foo"))
 
     @mock.patch("pygit2.clone_repository")
     @mock.patch("tartufo.util.tempfile.mkdtemp")

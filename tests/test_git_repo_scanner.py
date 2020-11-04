@@ -123,7 +123,7 @@ class ChunkGeneratorTests(ScannerTestCase):
     ):
         self.git_options.fetch = True
         mock_repo.return_value.remotes.origin.fetch.side_effect = pygit2.GitError(
-            command="git fetch -v origin", status=42, stderr="Fetch failed!"
+            "Fetch failed!"
         )
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
@@ -323,8 +323,7 @@ class IterBranchCommitsTests(ScannerTestCase):
         commits = list(test_scanner._iter_branch_commits(mock_repo, mock_branch))
         # Because "since commit" is exclusive, only the 2 commits before it are ever yielded
         self.assertEqual(
-            commits,
-            [(mock_commit_2, mock_commit_1)],
+            commits, [(mock_commit_2, mock_commit_1)],
         )
 
 

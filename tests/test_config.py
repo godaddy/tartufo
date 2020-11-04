@@ -94,7 +94,7 @@ class ConfigureRegexTests(unittest.TestCase):
     def test_configure_regexes_clones_git_rules_repo(self, mock_clone):
         runner = CliRunner()
         with runner.isolated_filesystem():
-            mock_clone.return_value = pathlib.Path(".").resolve()
+            mock_clone.return_value = (pathlib.Path(".").resolve(), None)
             config.configure_regexes(rules_repo="git@github.com:godaddy/tartufo.git")
         mock_clone.assert_called_once_with("git@github.com:godaddy/tartufo.git")
 

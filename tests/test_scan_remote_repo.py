@@ -30,7 +30,7 @@ class ScanRemoteRepoTests(unittest.TestCase):
     def test_cloned_path_is_scanned(
         self, mock_scanner: mock.MagicMock, mock_clone: mock.MagicMock
     ):
-        mock_clone.return_value = "/foo"
+        mock_clone.return_value = (Path("/foo"), None)
         mock_scanner.return_value.scan.return_value = []
         runner = CliRunner()
         with runner.isolated_filesystem():
@@ -54,7 +54,7 @@ class ScanRemoteRepoTests(unittest.TestCase):
         mock_path.return_value.exists.return_value = True
         runner = CliRunner()
         with runner.isolated_filesystem() as dirname:
-            mock_clone.return_value = Path(dirname)
+            mock_clone.return_value = (Path(dirname), None)
             runner.invoke(
                 cli.main, ["scan-remote-repo", "git@github.com:godaddy/tartufo.git"]
             )
@@ -83,7 +83,7 @@ class ScanRemoteRepoTests(unittest.TestCase):
     def test_command_fails_on_scan_exception(
         self, mock_scanner: mock.MagicMock, mock_clone: mock.MagicMock
     ):
-        mock_clone.return_value = "/foo"
+        mock_clone.return_value = (Path("/foo"), None)
         mock_scanner.return_value.scan.side_effect = types.ScanException("Scan failed!")
         runner = CliRunner()
         with runner.isolated_filesystem():
@@ -104,7 +104,7 @@ class ScanRemoteRepoTests(unittest.TestCase):
         mock_scanner.return_value.scan.return_value = []
         runner = CliRunner()
         with runner.isolated_filesystem() as dirname:
-            mock_clone.return_value = Path("/foo")
+            mock_clone.return_value = (Path("/foo"), None)
             runner.invoke(
                 cli.main,
                 [
