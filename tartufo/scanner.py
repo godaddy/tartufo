@@ -332,7 +332,7 @@ class GitScanner(ScannerBase, abc.ABC):
         self,
         global_options: types.GlobalOptions,
         repo_path: str,
-        repo: pygit2.Repository,
+        repo: Optional[pygit2.Repository] = None,
     ) -> None:
         """
         :param global_options: The options provided to the top-level tartufo command
@@ -390,7 +390,7 @@ class GitRepoScanner(GitScanner):
         global_options: types.GlobalOptions,
         git_options: types.GitOptions,
         repo_path: str,
-        repo: pygit2.Repository,
+        repo: Optional[pygit2.Repository] = None,
     ) -> None:
         """Used for scanning a full clone of a git repository.
 
