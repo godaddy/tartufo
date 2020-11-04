@@ -57,7 +57,11 @@ def main(
         repo_path.mkdir(parents=True)
     issues: List[Issue] = []
     try:
-        (repo_path, repository) = util.clone_git_repo(git_url, repo_path)
+        if repo_path is None:
+            (repo_path, repository) = util.get_repository(git_url)
+        else:
+            (repo_path, repository) = util.get_repository(git_url, str(repo_path))
+
         scanner = GitRepoScanner(options, git_options, str(repo_path), repository)
         issues = scanner.scan()
     except types.GitException as exc:

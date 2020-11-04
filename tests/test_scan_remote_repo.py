@@ -10,7 +10,7 @@ from tests import helpers
 
 
 class ScanRemoteRepoTests(unittest.TestCase):
-    @mock.patch("tartufo.commands.scan_remote_repo.util.clone_git_repo")
+    @mock.patch("tartufo.commands.scan_remote_repo.util.get_repository")
     @mock.patch("tartufo.commands.scan_remote_repo.GitRepoScanner")
     @mock.patch("tartufo.commands.scan_remote_repo.rmtree", new=mock.MagicMock())
     def test_scan_clones_remote_repo(
@@ -22,9 +22,9 @@ class ScanRemoteRepoTests(unittest.TestCase):
             runner.invoke(
                 cli.main, ["scan-remote-repo", "git@github.com:godaddy/tartufo.git"]
             )
-        mock_clone.assert_called_once_with("git@github.com:godaddy/tartufo.git", None)
+        mock_clone.assert_called_once_with("git@github.com:godaddy/tartufo.git")
 
-    @mock.patch("tartufo.commands.scan_remote_repo.util.clone_git_repo")
+    @mock.patch("tartufo.commands.scan_remote_repo.util.get_repository")
     @mock.patch("tartufo.commands.scan_remote_repo.GitRepoScanner")
     @mock.patch("tartufo.commands.scan_remote_repo.rmtree", new=mock.MagicMock())
     def test_cloned_path_is_scanned(
@@ -39,7 +39,7 @@ class ScanRemoteRepoTests(unittest.TestCase):
             )
         self.assertEqual(mock_scanner.call_args[0][2], "/foo")
 
-    @mock.patch("tartufo.commands.scan_remote_repo.util.clone_git_repo")
+    @mock.patch("tartufo.commands.scan_remote_repo.util.get_repository")
     @mock.patch("tartufo.commands.scan_remote_repo.GitRepoScanner")
     @mock.patch("tartufo.commands.scan_remote_repo.Path")
     @mock.patch("tartufo.commands.scan_remote_repo.rmtree")
@@ -60,7 +60,7 @@ class ScanRemoteRepoTests(unittest.TestCase):
             )
             self.assertEqual(mock_rmtree.call_args[0][0], dirname)
 
-    @mock.patch("tartufo.commands.scan_remote_repo.util.clone_git_repo")
+    @mock.patch("tartufo.commands.scan_remote_repo.util.get_repository")
     @mock.patch("tartufo.commands.scan_remote_repo.GitRepoScanner")
     @mock.patch("tartufo.commands.scan_remote_repo.rmtree", new=mock.MagicMock())
     def test_command_fails_on_clone_error(
@@ -77,7 +77,7 @@ class ScanRemoteRepoTests(unittest.TestCase):
             result.output, "Error cloning remote repo: stderr: 'Bad repo. Bad.'\n"
         )
 
-    @mock.patch("tartufo.commands.scan_remote_repo.util.clone_git_repo")
+    @mock.patch("tartufo.commands.scan_remote_repo.util.get_repository")
     @mock.patch("tartufo.commands.scan_remote_repo.GitRepoScanner")
     @mock.patch("tartufo.commands.scan_remote_repo.rmtree", new=mock.MagicMock())
     def test_command_fails_on_scan_exception(
@@ -95,7 +95,7 @@ class ScanRemoteRepoTests(unittest.TestCase):
     @unittest.skipIf(
         helpers.BROKEN_USER_PATHS, "Skipping due to truncated Windows usernames"
     )
-    @mock.patch("tartufo.commands.scan_remote_repo.util.clone_git_repo")
+    @mock.patch("tartufo.commands.scan_remote_repo.util.get_repository")
     @mock.patch("tartufo.commands.scan_remote_repo.GitRepoScanner")
     @mock.patch("tartufo.commands.scan_remote_repo.rmtree", new=mock.MagicMock())
     def test_subdir_of_work_dir_is_passed_to_clone_repo(
@@ -116,5 +116,5 @@ class ScanRemoteRepoTests(unittest.TestCase):
             )
             mock_clone.assert_called_once_with(
                 "git@github.com:godaddy/tartufo.git",
-                Path(dirname).resolve() / "tartufo.git",
+                str(Path(dirname).resolve() / "tartufo.git"),
             )

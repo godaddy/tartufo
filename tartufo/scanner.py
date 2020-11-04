@@ -331,6 +331,7 @@ class GitScanner(ScannerBase, abc.ABC):
     def __init__(
         self,
         global_options: types.GlobalOptions,
+        git_option: types.GitOptions,
         repo_path: str,
         repo: Optional[pygit2.Repository] = None,
     ) -> None:
@@ -342,7 +343,9 @@ class GitScanner(ScannerBase, abc.ABC):
         super().__init__(global_options)
         if repo is None:
             print("Loading repo from repo_path")
-            self._repo = self.load_repo(self.repo_path)
+            (_, self._repo) = util.get_repository(
+                self.repo_path, fetch=git_option.fetch, branch=git_option.branch
+            )
         else:
             print("Using existing repo object")
             self._repo = repo
@@ -399,7 +402,7 @@ class GitRepoScanner(GitScanner):
         :param repo_path: The local filesystem path pointing to the repository
         """
         self.git_options = git_options
-        super().__init__(global_options, repo_path, repo)
+        super().__init__(global_options, git_options, repo_path, repo)
 
     def load_config(self, repo_path) -> None:
         config_file: Optional[pathlib.Path] = None
@@ -436,8 +439,11 @@ class GitRepoScanner(GitScanner):
     def load_repo(self, repo_path: str) -> pygit2.Repository:
         self.load_config(repo_path)
         try:
-            print("load_repo(" + repo_path + ")")
-            return pygit2.Repository(repo_path)
+            print("GitRepoScanner.load_repo(" + repo_path + ")")
+            result = util.get_repository(
+                repo_path, fetch=self.git_options.fetch, branch=self.git_options.branch
+            )
+            return result[1]
         except pygit2.GitError as exc:
             raise types.GitLocalException(str(exc)) from exc
 
@@ -480,27 +486,18 @@ class GitRepoScanner(GitScanner):
 
         if self.git_options.branch:
             # Single branch only
+            print("Scanning filtered branches")
             unfiltered_branches = list(self._repo.branches)
             branches = [
                 x for x in unfiltered_branches if x.name == self.git_options.branch
             ]
-            try:
-                if self.git_options.fetch:
-                    print("Fetching remote origin/" + self.git_options.branch)
-                    util.fetch_ssh_repo(self._repo, self.git_options.branch)
-            except pygit2.GitError as exc:
-                raise types.GitRemoteException(exc) from exc
         else:
             # Everything
+            print("Scanning all branches")
             branches = self._repo.branches
-            try:
-                if self.git_options.fetch:
-                    print("Fetching remote origin (all branches)")
-                    util.fetch_ssh_repo(self._repo)
-            except pygit2.GitError as exc:
-                raise types.GitRemoteException(exc) from exc
 
         for branch_name in branches:
+            print("Scanning branch " + branch_name)
             branch: pygit2.Branch = self._repo.branches.get(branch_name)
             diff_hash: bytes
             curr_commit: pygit2.Commit = None
@@ -542,7 +539,8 @@ class GitPreCommitScanner(GitScanner):
     """For use in a git pre-commit hook."""
 
     def load_repo(self, repo_path: str) -> pygit2.Repository:
-        return pygit2.Repository(repo_path)
+        print("GitPreCommitScanner.load_repo(" + repo_path + ")")
+        return util.get_repository(repo_path)[1]
 
     @property
     def chunks(self):

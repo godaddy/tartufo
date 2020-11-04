@@ -26,25 +26,25 @@ class GitTests(unittest.TestCase):
         self, mock_mkdtemp: mock.MagicMock, mock_clone: mock.MagicMock
     ):
         mock_mkdtemp.return_value = "/foo"
-        util.clone_git_repo("https://github.com/godaddy/tartufo.git")
+        util.get_repository("https://github.com/godaddy/tartufo.git")
         mock_clone.assert_called_once_with(
             "https://github.com/godaddy/tartufo.git", "/foo"
         )
 
     @mock.patch("pygit2.clone_repository", new=mock.MagicMock())
     @mock.patch("tartufo.util.tempfile.mkdtemp")
-    def test_clone_git_repo_returns_path_to_clone(self, mock_mkdtemp: mock.MagicMock):
+    def test_get_repository_returns_path_to_clone(self, mock_mkdtemp: mock.MagicMock):
         mock_mkdtemp.return_value = "/foo"
-        repo_path = util.clone_git_repo("https://github.com/godaddy/tartufo.git")
+        repo_path = util.get_repository("https://github.com/godaddy/tartufo.git")
         self.assertEqual(repo_path[0], Path("/foo"))
 
     @mock.patch("pygit2.clone_repository")
     @mock.patch("tartufo.util.tempfile.mkdtemp")
-    def test_clone_git_repo_clones_into_target_dir(
+    def test_get_repository_clones_into_target_dir(
         self, mock_temp: mock.MagicMock, mock_clone: mock.MagicMock
     ):
-        util.clone_git_repo(
-            "https://github.com/godaddy/tartufo.git", Path("/foo/tartufo.git")
+        util.get_repository(
+            "https://github.com/godaddy/tartufo.git", "/foo/tartufo.git"
         )
         mock_temp.assert_not_called()
         mock_clone.assert_called_once_with(
@@ -53,14 +53,12 @@ class GitTests(unittest.TestCase):
 
     @mock.patch("pygit2.clone_repository")
     @mock.patch("tartufo.util.tempfile.mkdtemp", new=mock.MagicMock())
-    def test_clone_git_repo_raises_explicit_exception_on_clone_fail(
+    def test_get_repository_raises_explicit_exception_on_clone_fail(
         self, mock_clone: mock.MagicMock
     ):
         mock_clone.side_effect = pygit2.GitError()
-        with self.assertRaisesRegex(
-            types.GitRemoteException, "stderr: 'Error cloning repo!'"
-        ):
-            util.clone_git_repo("https://github.com/godaddy/tartufo.git")
+        with self.assertRaises(types.GitRemoteException):
+            util.get_repository("https://github.com/godaddy/tartufo.git")
 
 
 class OutputTests(unittest.TestCase):

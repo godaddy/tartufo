@@ -7,6 +7,7 @@ import pathlib
 import stat
 import tempfile
 import uuid
+import re
 from functools import lru_cache, partial
 from hashlib import blake2s
 from typing import (
@@ -93,39 +94,105 @@ def write_outputs(found_issues: "List[Issue]", output_dir: pathlib.Path) -> List
     return result_files
 
 
-def clone_git_repo(
-    git_url: str, target_dir: Optional[pathlib.Path] = None
-) -> Tuple[pathlib.Path, pygit2.Repository]:
-    """Clone a remote git repository and return its filesystem path.
+def _is_ssh(url: str) -> bool:
+    if url.startswith("ssh://"):
+        return True
+    if re.search(r"(.+)\.(.+):(.*)", url) is not None:
+        return True
+    return False
 
-    :param git_url: The URL of the git repository to be cloned
-    :param target_dir: Where to clone the repository to
-    :raises types.GitRemoteException: If there was an error cloning the repository
-    """
-    if not target_dir:
-        project_path = tempfile.mkdtemp()
-    else:
-        project_path = str(target_dir)
+
+def _is_https(url: str) -> bool:
+    if url.startswith("https://"):
+        return True
+    return False
+
+
+def get_repository(
+    git_url: str,
+    target_dir: Optional[str] = None,
+    fetch: Optional[bool] = False,
+    branch: Optional[str] = None,
+) -> Tuple[pathlib.Path, pygit2.Repository]:
 
     repo: pygit2.Repository
-    if not git_url.strip().startswith("https://"):
-        # Assume git_url is ssh
-        # TODO: Support ssh credentials paths as command line option
-        print("Clone ssh repo: " + git_url)
-        repo = clone_ssh_repo(git_url, project_path)
+
+    is_ssh = _is_ssh(git_url)
+    if not is_ssh:
+        is_https = _is_https(git_url)
     else:
-        try:
+        is_https = False
+
+    if is_ssh or is_https:
+        # This is a remote repo
+        print("get_repository: " + git_url + " appears to be a remote repository")
+
+        # Establish project_path
+        if target_dir is None:
+            print("get_repository: target_dir is None")
+            project_path = tempfile.mkdtemp()
+            print("get_repository: using mkdtemp(): " + project_path)
+        else:
+            print("get_repository: using target_dir: " + target_dir)
+            project_path = target_dir
+
+        git_path = pathlib.Path(project_path).expanduser().resolve()
+
+        # We need to clone
+        if not git_url.strip().startswith("https://"):
+            # Assume git_url is ssh
+            print(
+                "get_repository: Clone ssh repo: " + git_url + " into " + project_path
+            )
+            repo = _clone_ssh_repo(git_url, project_path)
+            print("get_repository: Skipping fetch because remote/ssh repo")
+        else:
             # Assume git_url is https
-            # TODO: Support https credentials as command line option
-            print("Clone https repo: " + git_url)
-            repo = pygit2.clone_repository(git_url, project_path)
-        except pygit2.GitError as exc:
-            raise types.GitRemoteException(str(exc)) from exc
-    print("Returning (" + project_path + ", Repository)")
-    return (pathlib.Path(project_path), repo)
+            try:
+                # TODO: Support https credentials as command line option
+                print(
+                    "get_repository: Clone https repo: "
+                    + git_url
+                    + " into "
+                    + project_path
+                )
+                repo = pygit2.clone_repository(git_url, project_path)
+                print("get_repository: Skipping fetch because remote/https repo")
+            except pygit2.GitError as exc:
+                raise types.GitRemoteException(str(exc)) from exc
+    else:
+        # This is a local repo
+        git_path = pathlib.Path(git_url).absolute().expanduser()
+        if not git_path.is_dir():
+            print("get_repository: " + git_url + " does not exist as a directory")
+            raise types.GitLocalException(
+                git_url + " is not a valid git repository (does not exist)"
+            )
+        print("get_repository: " + git_url + " appears to exist as a directory")
+
+        repo = pygit2.Repository(git_path)
+        print("get_repository: pygit2.Repository(" + str(git_path) + ")")
+        # We may need to fetch
+        if fetch:
+            if branch is not None:
+                print("get_repository: Fetching single branch: " + branch)
+                _fetch_ssh_repo(repo, branch)
+            else:
+                print("get_repository: Fetching all branches")
+                _fetch_ssh_repo(repo)
+        else:
+            print("get_repository: Skipping fetch due to fetch == False")
+
+    if repo.head is None:
+        print("get_repository: Head is None")
+    else:
+        print("get_repository: Head is " + str(repo.head))
+    print("get_repository: Repo is " + str(repo))
+
+    return (git_path, repo)
 
 
-def fetch_ssh_repo(
+def _fetch_ssh_repo(
     repo: pygit2.Repository, branch: Optional[str] = None
 ) -> pygit2.Repository:
     # TODO: Support Windows paths
@@ -152,10 +219,13 @@ def fetch_ssh_repo(
             print("Have credentials")
             keypair = pygit2.Keypair("git", pub_key, priv_key, "")
             remote_callbacks = pygit2.RemoteCallbacks(credentials=keypair)
-            print("Fetching origin")
-            # TODO: Filter on branch if user specifies branch
-            repo.remotes["origin"].fetch(callbacks=remote_callbacks)
-            return
+            if branch is not None:
+                print("Fetching origin/" + branch)
+                repo.remotes.origin.fetch(branch, callbacks=remote_callbacks)
+            else:
+                print("Fetching all branches from origin")
+                repo.remotes.origin.fetch(callbacks=remote_callbacks)
+            return repo
 
         except pygit2.GitError:
             print("GitError")
@@ -164,7 +234,7 @@ def fetch_ssh_repo(
     raise types.GitRemoteException("Could not locate working ssh credentials")
 
 
-def clone_ssh_repo(git_url: str, project_path: str) -> pygit2.Repository:
+def _clone_ssh_repo(git_url: str, project_path: str) -> pygit2.Repository:
     # TODO: Support Windows paths
     path_tuples = [
         ["~/.ssh/id_ed25519.pub", "~/.ssh/id_ed25519"],
@@ -184,9 +254,7 @@ def clone_ssh_repo(git_url: str, project_path: str) -> pygit2.Repository:
             print("Have credentials")
             keypair = pygit2.Keypair("git", pub_key, priv_key, "")
             remote_callbacks = pygit2.RemoteCallbacks(credentials=keypair)
-            print("Repository(" + git_url + ")")
 
-            # pygit2.Repository(git_url, callbacks=remote_callbacks)
             print("clone_repository(" + git_url + ")")
             repository = pygit2.clone_repository(
                 git_url, project_path, callbacks=remote_callbacks
