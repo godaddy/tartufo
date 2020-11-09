@@ -10,9 +10,11 @@ Bugfixes:
 * #115 - Strange behavior can manifest with invalid sub-commands
 * #117 - Ignore whitespace-only lines in exclusion files
 * #121 - Match rules specified with --git-rules-repo were not included in scans
+* #140 - Ensure a valid output folder name in Windows
 
 Other changes:
 
+* #95 - Run CI across Linux, Windows, and MacOS
 * #130 - Added references to Tartufo GoogleGroups mailing list to docs
 * Fixed testing in Pypy3 and explicitly added Python 3.9 support
 * #143 - Updated GitHub Action hashes to newest rev to address https://github.blog/changelog/2020-10-01-github-actions-deprecating-set-env-and-add-path-commands/ where possible
