@@ -1,4 +1,4 @@
-vX.Y.Z - TBD
+v2.0.2 - 09 November 2020
 ------------------------
 
 Bug fixes:
