@@ -8,12 +8,14 @@ on:
 
 jobs:
   tox:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: [3.6, 3.7, 3.8, 3.9, pypy3]
+    runs-on: ${{ matrix.os }}
     env:
       PYTHON: ${{ matrix.python-version }}
+      OS: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@5a4ac90
     - name: Set up Python ${{ matrix.python-version }}
@@ -28,4 +30,4 @@ jobs:
       uses: codecov/codecov-action@07127fd
       with:
         file: coverage.xml
-        env_vars: PYTHON
+        env_vars: OS,PYTHON
