@@ -9,6 +9,7 @@ Bugfixes:
 
 * #115 - Strange behavior can manifest with invalid sub-commands
 * #117 - Ignore whitespace-only lines in exclusion files
+* #121 - Match rules specified with --git-rules-repo were not included in scans
 
 Other changes:
 

@@ -6,7 +6,6 @@ import shutil
 from typing import (
     Any,
     Dict,
-    IO,
     Iterable,
     List,
     MutableMapping,
@@ -165,7 +164,7 @@ def configure_regexes(
         rules = {}
 
     if rules_files:
-        all_files: List[IO[Any]] = list(rules_files)
+        all_files: List[TextIO] = list(rules_files)
     else:
         all_files = []
     try:
@@ -174,13 +173,14 @@ def configure_regexes(
         if rules_repo:
             repo_path = pathlib.Path(rules_repo)
             if not repo_path.is_dir():
+                cloned_repo = True
                 repo_path = pathlib.Path(util.clone_git_repo(rules_repo))
             if not rules_repo_files:
                 rules_repo_files = ("*.json",)
             for repo_file in rules_repo_files:
                 all_files.extend([path.open("r") for path in repo_path.glob(repo_file)])
-        if rules_files:
-            for rules_file in rules_files:
+        if all_files:
+            for rules_file in all_files:
                 loaded = load_rules_from_file(rules_file)
                 dupes = set(loaded.keys()).intersection(rules.keys())
                 if dupes:
