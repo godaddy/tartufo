@@ -48,7 +48,8 @@ class GitTests(unittest.TestCase):
         )
         mock_temp.assert_not_called()
         mock_clone.assert_called_once_with(
-            "https://github.com/godaddy/tartufo.git", "/foo/tartufo.git"
+            "https://github.com/godaddy/tartufo.git",
+            str(Path("/foo/tartufo.git").resolve()),
         )
 
     @mock.patch("git.Repo.clone_from")
