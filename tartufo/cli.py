@@ -2,6 +2,7 @@
 
 import importlib
 import pathlib
+import platform
 from datetime import datetime
 from typing import List, Optional, Tuple
 
@@ -172,6 +173,9 @@ def process_issues(
     output_dir = None
     if options.output_dir:
         now = datetime.now().isoformat("T", "microseconds")
+        if platform.system().lower() == "windows":
+            # Make sure we aren't using illegal characters for Windows folder names
+            now = now.replace(":", "")
         output_dir = pathlib.Path(options.output_dir) / f"tartufo-scan-results-{now}"
         output_dir.mkdir(parents=True)
 

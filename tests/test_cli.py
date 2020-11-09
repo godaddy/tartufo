@@ -1,3 +1,4 @@
+import platform
 import unittest
 from collections import namedtuple
 from pathlib import Path
@@ -93,6 +94,30 @@ class ProcessIssuesTest(unittest.TestCase):
             )
         ]
         mock_dt.now.return_value.isoformat.return_value = "nownownow"
+        runner = CliRunner()
+        with runner.isolated_filesystem() as dirname:
+            result = runner.invoke(
+                cli.main, ["--output-dir", "./foo", "scan-local-repo", "."]
+            )
+        self.assertEqual(
+            result.output,
+            f"Results have been saved in {Path(dirname).resolve()}/foo/tartufo-scan-results-nownownow\n",
+        )
+
+    @unittest.skipUnless(platform.system().lower() == "windows", "Test is Windows-only")
+    @mock.patch("tartufo.cli.datetime")
+    @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
+    @mock.patch("tartufo.util.echo_issues", new=mock.MagicMock())
+    @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
+    def test_output_dir_is_valid_name_in_windows(
+        self, mock_scanner: mock.MagicMock, mock_dt: mock.MagicMock
+    ):
+        mock_scanner.return_value.scan.return_value = [
+            scanner.Issue(
+                types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {})
+            )
+        ]
+        mock_dt.now.return_value.isoformat.return_value = "now:now:now"
         runner = CliRunner()
         with runner.isolated_filesystem() as dirname:
             result = runner.invoke(
