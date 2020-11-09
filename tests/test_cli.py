@@ -99,9 +99,11 @@ class ProcessIssuesTest(unittest.TestCase):
             result = runner.invoke(
                 cli.main, ["--output-dir", "./foo", "scan-local-repo", "."]
             )
+        output_dir = (
+            Path(dirname) / "foo" / "tartufo-scan-results-nownownow"
+        ).resolve()
         self.assertEqual(
-            result.output,
-            f"Results have been saved in {Path(dirname).resolve()}/foo/tartufo-scan-results-nownownow\n",
+            result.output, f"Results have been saved in {output_dir}\n",
         )
 
     @unittest.skipUnless(platform.system().lower() == "windows", "Test is Windows-only")
