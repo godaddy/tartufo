@@ -14,6 +14,7 @@ Other changes:
 
 * #130 - Added references to Tartufo GoogleGroups mailing list to docs
 * Fixed testing in Pypy3 and explicitly added Python 3.9 support
+* #143 - Updated GitHub Action hashes to newest rev to address https://github.blog/changelog/2020-10-01-github-actions-deprecating-set-env-and-add-path-commands/ where possible
 
 v2.0.1 - 09 October 2020
 ------------------------
