@@ -77,10 +77,10 @@ class OutputTests(unittest.TestCase):
     @mock.patch("tartufo.util.json")
     def test_echo_issues_outputs_proper_json_when_requested(self, mock_json):
         issue_1 = scanner.Issue(
-            types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar")
+            types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {})
         )
         issue_2 = scanner.Issue(
-            types.IssueType.RegEx, "bar", types.Chunk("foo", "/bar")
+            types.IssueType.RegEx, "bar", types.Chunk("foo", "/bar", {})
         )
         util.echo_issues([issue_1, issue_2], True, "/repo", "/output")
         mock_json.dumps.assert_called_once_with(
@@ -112,10 +112,10 @@ class OutputTests(unittest.TestCase):
     @mock.patch("tartufo.util.json")
     def test_echo_issues_outputs_proper_json_when_requested_pathtype(self, mock_json):
         issue_1 = scanner.Issue(
-            types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar")
+            types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {})
         )
         issue_2 = scanner.Issue(
-            types.IssueType.RegEx, "bar", types.Chunk("foo", "/bar")
+            types.IssueType.RegEx, "bar", types.Chunk("foo", "/bar", {})
         )
         util.echo_issues([issue_1, issue_2], True, "/repo", Path("/tmp"))
         mock_json.dumps.assert_called_once_with(

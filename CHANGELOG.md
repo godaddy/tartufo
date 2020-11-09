@@ -1,15 +1,20 @@
 vX.Y.Z - TBD
 ------------------------
 
-Bug fixes:
+Features:
 
+* #125 - Implement CODEOWNERS and auto-assignment to maintainers on PRs
+
+Bugfixes:
+
+* #115 - Strange behavior can manifest with invalid sub-commands
 * #117 - Ignore whitespace-only lines in exclusion files
 * #121 - Match rules specified with --git-rules-repo were not included in scans
 
 Other changes:
 
-* Added references to Tartufo GoogleGroups mailing list to docs
-
+* #130 - Added references to Tartufo GoogleGroups mailing list to docs
+* Fixed testing in Pypy3 and explicitly added Python 3.9 support
 
 v2.0.1 - 09 October 2020
 ------------------------

@@ -30,5 +30,8 @@ twilio
 txt
 util
 versioned
+# For the ChangeLog on undeclared version numbers -- vX.Y.Z
+vX
 walkthrough
 whitelist
+whitespace
