@@ -15,9 +15,9 @@ jobs:
     env:
       PYTHON: ${{ matrix.python-version }}
     steps:
-    - uses: actions/checkout@592cf69
+    - uses: actions/checkout@5a4ac90
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@0c28554
+      uses: actions/setup-python@41b7212
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
