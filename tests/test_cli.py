@@ -1,4 +1,3 @@
-import platform
 import unittest
 from collections import namedtuple
 from pathlib import Path
@@ -7,6 +6,7 @@ from unittest import mock
 from click.testing import CliRunner
 from tartufo import cli, scanner, types
 
+from tests import helpers
 from tests.commands import foo as command_foo
 
 
@@ -81,6 +81,9 @@ class ListCommandTests(unittest.TestCase):
 
 
 class ProcessIssuesTest(unittest.TestCase):
+    @unittest.skipIf(
+        helpers.BROKEN_USER_PATHS, "Skipping due to truncated Windows usernames"
+    )
     @mock.patch("tartufo.cli.datetime")
     @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
     @mock.patch("tartufo.util.echo_issues", new=mock.MagicMock())
@@ -106,7 +109,10 @@ class ProcessIssuesTest(unittest.TestCase):
             result.output, f"Results have been saved in {output_dir}\n",
         )
 
-    @unittest.skipUnless(platform.system().lower() == "windows", "Test is Windows-only")
+    @unittest.skipUnless(helpers.WINDOWS, "Test is Windows-only")
+    @unittest.skipIf(
+        helpers.BROKEN_USER_PATHS, "Skipping due to truncated Windows usernames"
+    )
     @mock.patch("tartufo.cli.datetime")
     @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
     @mock.patch("tartufo.util.echo_issues", new=mock.MagicMock())
