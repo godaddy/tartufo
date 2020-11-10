@@ -183,7 +183,7 @@ class LoadConfigFromPathTests(unittest.TestCase):
     def test_parent_directory_not_checked_if_traverse_is_false(self):
         with self.assertRaisesRegex(
             FileNotFoundError,
-            f"Could not find config file in {self.data_dir / 'config'}.",
+            rf"Could not find config file in {self.data_dir / 'config'}.",
         ):
             config.load_config_from_path(
                 self.data_dir / "config", "pyproject.toml", False
