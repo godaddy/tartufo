@@ -1,6 +1,7 @@
 import copy
 import os
 import pathlib
+import platform
 import re
 import unittest
 from unittest import mock
@@ -85,6 +86,10 @@ class ConfigureRegexTests(unittest.TestCase):
             config.configure_regexes(rules_repo=".")
         mock_clone.assert_not_called()
 
+    @unittest.skipIf(
+        platform.system().lower() == "windows",
+        "Avoiding a race condition/permission error in Windows",
+    )
     @mock.patch("tartufo.config.util.clone_git_repo")
     def test_configure_regexes_clones_git_rules_repo(self, mock_clone):
         runner = CliRunner()
