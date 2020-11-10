@@ -15,6 +15,7 @@ hexidecimal
 json
 metadata
 pre
+Pypy
 refactored
 regexes
 repo
