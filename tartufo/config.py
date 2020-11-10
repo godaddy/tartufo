@@ -196,7 +196,7 @@ def configure_regexes(
                 rules.update(loaded)
     finally:
         if cloned_repo:
-            shutil.rmtree(repo_path)  # type: ignore
+            shutil.rmtree(repo_path, onerror=util.del_rw)  # type: ignore
 
     return rules
 
