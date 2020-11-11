@@ -404,12 +404,12 @@ class GitRepoScanner(GitScanner):
         self.git_options = git_options
         super().__init__(global_options, git_options, repo_path, repo)
 
-    def load_config(self, repo_path) -> None:
+    def load_config(self, repo_path: pathlib.Path) -> None:
         config_file: Optional[pathlib.Path] = None
         data: MutableMapping[str, Any] = {}
         try:
             (config_file, data) = config.load_config_from_path(
-                pathlib.Path(repo_path), traverse=False
+                repo_path, traverse=False
             )
         except (FileNotFoundError, types.ConfigException):
             config_file = None
@@ -437,13 +437,13 @@ class GitRepoScanner(GitScanner):
                     self._excluded_paths = excludes
 
     def load_repo(self, repo_path: str) -> pygit2.Repository:
-        self.load_config(repo_path)
         try:
             print("GitRepoScanner.load_repo(" + repo_path + ")")
-            result = util.get_repository(
+            (final_path, repo) = util.get_repository(
                 repo_path, fetch=self.git_options.fetch, branch=self.git_options.branch
             )
-            return result[1]
+            self.load_config(final_path)
+            return repo
         except pygit2.GitError as exc:
             raise types.GitLocalException(str(exc)) from exc
 

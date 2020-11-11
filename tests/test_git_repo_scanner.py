@@ -43,12 +43,12 @@ class RepoLoadTests(ScannerTestCase):
             )
         )
 
-    @mock.patch("pygit2.Repository", new=mock.MagicMock())
     @mock.patch("tartufo.config.load_config_from_path")
     @mock.patch("tartufo.config.util.get_repository")
     def test_extra_inclusions_get_added(
-        self, mock_load: mock.MagicMock, mock_get_repo: mock.MagicMock
+        self, mock_get_repo: mock.MagicMock, mock_load: mock.MagicMock
     ):
+        mock_get_repo.return_value = (self.data_dir, None)
         mock_load.return_value = (
             self.data_dir / "pyproject.toml",
             {"include_paths": "include-files"},
@@ -56,22 +56,18 @@ class RepoLoadTests(ScannerTestCase):
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, str(self.data_dir)
         )
-        repo_path = "../tartufo"
-        print("test_extra_inclusions_get_added: load_repo(" + repo_path + ")")
-        test_scanner.load_repo(repo_path)
+        test_scanner.load_repo(str(self.data_dir))
         self.assertEqual(
             test_scanner.included_paths,
             [re.compile("tartufo/"), re.compile("scripts/")],
         )
 
-    @mock.patch("pygit2.Repository", new=mock.MagicMock())
     @mock.patch("tartufo.config.load_config_from_path")
-    @mock.patch("tartufo.config.util.get_repository")
+    @mock.patch("tartufo.util.get_repository")
     def test_extra_exclusions_get_added(
-        self, mock_load: mock.MagicMock, mock_get_repo: mock.MagicMock
+        self, mock_get_repo: mock.MagicMock, mock_load: mock.MagicMock
     ):
-        repo_path = "../tartufo"
-        mock_get_repo.return_value = (pathlib.Path(repo_path), None)
+        mock_get_repo.return_value = (self.data_dir, None)
         mock_load.return_value = (
             self.data_dir / "pyproject.toml",
             {"exclude_paths": "exclude-files"},
@@ -80,8 +76,7 @@ class RepoLoadTests(ScannerTestCase):
             self.global_options, self.git_options, str(self.data_dir)
         )
 
-        print("test_extra_exclusions_get_added: load_repo(" + repo_path + ")")
-        test_scanner.load_repo(repo_path)
+        test_scanner.load_repo(str(self.data_dir))
         self.assertEqual(
             test_scanner.excluded_paths,
             [
@@ -91,13 +86,13 @@ class RepoLoadTests(ScannerTestCase):
             ],
         )
 
-    @mock.patch("pygit2.Repository", new=mock.MagicMock())
     @mock.patch("tartufo.config.load_config_from_path")
     @mock.patch("tartufo.config.util.get_repository")
     def test_extra_signatures_get_added(
-        self, mock_load: mock.MagicMock, mock_get_repo: mock.MagicMock
+        self, mock_get_repo: mock.MagicMock, mock_load: mock.MagicMock
     ):
         self.global_options.exclude_signatures = ()
+        mock_get_repo.return_value = (self.data_dir, None)
         mock_load.return_value = (
             self.data_dir / "pyproject.toml",
             {"exclude_signatures": ["foo", "bar"]},
@@ -105,9 +100,7 @@ class RepoLoadTests(ScannerTestCase):
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, str(self.data_dir)
         )
-        repo_path = "../tartufo"
-        print("test_extra_signatures_get_added: load_repo(" + repo_path + ")")
-        test_scanner.load_repo(repo_path)
+        test_scanner.load_repo(str(self.data_dir))
         self.assertEqual(
             sorted(test_scanner.global_options.exclude_signatures), ["bar", "foo"]
         )
