@@ -41,15 +41,15 @@ class RepoLoadTests(ScannerTestCase):
     def test_extra_inclusions_get_added(self, mock_load: mock.MagicMock):
         mock_load.return_value = (
             self.data_dir / "pyproject.toml",
-            {"include_paths": "include-files"},
+            {"include_paths": "include-files", "include_path_patterns": ("foo/",)},
         )
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, str(self.data_dir)
         )
         test_scanner.load_repo("../tartufo")
-        self.assertEqual(
+        self.assertCountEqual(
             test_scanner.included_paths,
-            [re.compile("tartufo/"), re.compile("scripts/")],
+            [re.compile("foo/"), re.compile("tartufo/"), re.compile("scripts/")],
         )
 
     @mock.patch("git.Repo", new=mock.MagicMock())
@@ -57,15 +57,16 @@ class RepoLoadTests(ScannerTestCase):
     def test_extra_exclusions_get_added(self, mock_load: mock.MagicMock):
         mock_load.return_value = (
             self.data_dir / "pyproject.toml",
-            {"exclude_paths": "exclude-files"},
+            {"exclude_paths": "exclude-files", "exclude_path_patterns": ("bar/",)},
         )
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, str(self.data_dir)
         )
         test_scanner.load_repo("../tartufo")
-        self.assertEqual(
+        self.assertCountEqual(
             test_scanner.excluded_paths,
             [
+                re.compile("bar/"),
                 re.compile("tests/"),
                 re.compile(r"\.venv/"),
                 re.compile(r".*\.egg-info/"),

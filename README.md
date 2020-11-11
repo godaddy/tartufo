@@ -66,6 +66,15 @@ Options:
                                   included unless otherwise excluded via the
                                   --exclude-paths option.
 
+  -ip, --include-path-patterns TEXT
+                                  Specify a regular expression which matches
+                                  Git object paths to include in the scan.
+                                  This option can be specified multiple times
+                                  to include multiple patterns. This can be
+                                  used in conjunction with or as a replacement
+                                  for --include-paths and also defaults to an
+                                  empty list, including all Git object paths.
+
   -x, --exclude-paths FILENAME    File with regular expressions (one per
                                   line), none of which may match a Git object
                                   path in order for it to be scanned; lines
@@ -74,6 +83,15 @@ Options:
                                   (default), no Git object paths are excluded
                                   unless effectively excluded via the
                                   --include-paths option.
+
+  -xp, --exclude-path-patterns TEXT
+                                  Specify a regular expression which matches
+                                  Git object paths to exclude from the scan.
+                                  This option can be specified multiple times
+                                  to exclude multiple patterns. This can be
+                                  used in conjunction with or as a replacement
+                                  for --exclude-paths and also defaults to an
+                                  empty list.
 
   -e, --exclude-signatures TEXT   Specify signatures of matches that you
                                   explicitly want to exclude from the scan,

@@ -38,6 +38,16 @@ this:
    json = false
    regex = true
    entropy = true
+   exclude-path-patterns = [
+       'poetry.lock',
+       # To not have to escape `\` in regexes, use single quoted
+       # TOML 'literal strings'
+       'docs/source/(.*)\.rst',
+   ]
+   exclude-signatures = [
+       "62f22e4500140a6ed959a6143c52b0e81c74e7491081292fce733de4ec574542",
+       "ecbbe1edd6373c7e2b88b65d24d7fe84610faafd1bc2cf6ae35b43a77183e80b",
+   ]
 
 Note that all options specified in a configuration file are treated as
 defaults, and will be overridden by any options specified on the command line.

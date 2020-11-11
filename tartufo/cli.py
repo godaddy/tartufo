@@ -85,6 +85,16 @@ class TartufoCLI(click.MultiCommand):
     "included unless otherwise excluded via the --exclude-paths option.",
 )
 @click.option(
+    "-ip",
+    "--include-path-patterns",
+    multiple=True,
+    help="""Specify a regular expression which matches Git object paths
+    to include in the scan. This option can be specified multiple
+    times to include multiple patterns. This can be used in
+    conjunction with or as a replacement for --include-paths and
+    also defaults to an empty list, including all Git object paths.""",
+)
+@click.option(
     "-x",
     "--exclude-paths",
     type=click.File("r"),
@@ -93,6 +103,16 @@ class TartufoCLI(click.MultiCommand):
     "starting with '#' are treated as comments and are ignored. If "
     "empty or not provided (default), no Git object paths are excluded "
     "unless effectively excluded via the --include-paths option.",
+)
+@click.option(
+    "-xp",
+    "--exclude-path-patterns",
+    multiple=True,
+    help="""Specify a regular expression which matches Git object paths
+    to exclude from the scan. This option can be specified multiple
+    times to exclude multiple patterns. This can be used in conjunction
+    with or as a replacement for --exclude-paths and also defaults to an
+    empty list.""",
 )
 @click.option(
     "-e",

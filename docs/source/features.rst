@@ -267,6 +267,59 @@ Done! This particular issue will no longer show up in your scan results.
 Limiting Scans by Path
 ++++++++++++++++++++++
 
+By default ``tartufo`` will scan all objects tracked by Git. You can limit
+scanning by either including fewer paths or excluding some of them using
+Python Regular Expressions (regex).
+
+.. warning::
+
+   Using include patterns is more dangerous, since it's easy to miss the
+   creation of new secrets if future files don't match an existing include
+   rule. We recommend only using fine-grained exclude patterns instead.
+
+.. code-block:: toml
+
+   [tool.tartufo]
+   include-path-patterns = [
+      'src/',
+      'gradle/',
+      # regexes must match the entire path, but can use python's regex syntax
+      # for case-insensitive matching and other advanced options
+      '(.*/)?id_[rd]sa$',
+      # Single quoted strings in TOML don't require escapes for `\` in regexes
+      '(?i).*\.(properties|conf|ini|txt|y(a)?ml)$',
+   ]
+   exclude-path-patterns = [
+      '(.*/)?\.classpath$',
+      '.*\.jmx$',
+      '(.*/)?test/(.*/)?resources/',
+   ]
+
+The filter expressions can also be specified as command line arguments.
+Patterns specified like this are merged with any patterns specified
+in the config file:
+
+.. code-block:: sh
+
+   # --include-path-patterns == -ip
+   # --exclude-path-patterns == -xp
+   > tartufo -ip 'src/' -ip 'gradle/' \
+     -xp '(.*/)?\.classpath$' -xp '.*\.jmx$' \
+     scan-local-repo file://path/to/my/repo.git
+
+
+Limiting Scans by Path (via inclusion/exclusion files)
+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+.. note::
+
+   The ``--include-paths`` and ``--exclude-paths`` options are no longer
+   recommended, you can create the same filters inside your ``.toml`` config
+   file using ``include-path-patterns`` and ``exclude-path-patterns``
+   (as shown above).
+
+   We have left these options for backwards compatibility.
+
 With the ``--include-paths`` and ``--exclude-paths`` options, it is also
 possible to limit scanning to a subset of objects in the Git history by
 defining regular expressions (one per line) in a file to match the targeted

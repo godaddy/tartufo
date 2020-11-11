@@ -136,13 +136,13 @@ class ScannerBase(abc.ABC):
         :rtype: List[Pattern]
         """
         if self._included_paths is None:
+            patterns = self.global_options.include_path_patterns or ()
             if self.global_options.include_paths:
-                self._included_paths = config.compile_path_rules(
-                    self.global_options.include_paths.readlines()
-                )
+                patterns += tuple(self.global_options.include_paths.readlines())
                 self.global_options.include_paths.close()
-            else:
-                self._included_paths = []
+            self._included_paths = (
+                config.compile_path_rules(set(patterns)) if patterns else []
+            )
         return self._included_paths
 
     @property
@@ -152,13 +152,13 @@ class ScannerBase(abc.ABC):
         :rtype: List[Pattern]
         """
         if self._excluded_paths is None:
+            patterns = self.global_options.exclude_path_patterns or ()
             if self.global_options.exclude_paths:
-                self._excluded_paths = config.compile_path_rules(
-                    self.global_options.exclude_paths.readlines()
-                )
+                patterns += tuple(self.global_options.exclude_paths.readlines())
                 self.global_options.exclude_paths.close()
-            else:
-                self._excluded_paths = []
+            self._excluded_paths = (
+                config.compile_path_rules(set(patterns)) if patterns else []
+            )
         return self._excluded_paths
 
     @property
@@ -403,22 +403,28 @@ class GitRepoScanner(GitScanner):
                 self.global_options.exclude_signatures = tuple(
                     set(self.global_options.exclude_signatures + tuple(signatures))
                 )
-            extras_path = data.get("include_paths", None)
-            if extras_path:
-                extras_file = pathlib.Path(repo_path, extras_path)
-                if extras_file.exists():
-                    includes = self.included_paths
-                    with extras_file.open() as handle:
-                        includes += config.compile_path_rules(handle.readlines())
-                    self._included_paths = includes
-            extras_path = data.get("exclude_paths", None)
-            if extras_path:
-                extras_file = pathlib.Path(repo_path, extras_path)
-                if extras_file.exists():
-                    excludes = self.excluded_paths
-                    with extras_file.open() as handle:
-                        excludes += config.compile_path_rules(handle.readlines())
-                    self._excluded_paths = excludes
+
+            include_patterns = data.get("include_path_patterns", ())
+            repo_include_file = data.get("include_paths", None)
+            if repo_include_file:
+                repo_include_file = pathlib.Path(repo_path, repo_include_file)
+                if repo_include_file.exists():
+                    with repo_include_file.open() as handle:
+                        include_patterns += tuple(handle.readlines())
+            if include_patterns:
+                include_patterns = config.compile_path_rules(include_patterns)
+                self._included_paths = list(set(self.included_paths + include_patterns))
+
+            exclude_patterns = data.get("exclude_path_patterns", ())
+            repo_exclude_file = data.get("exclude_paths", None)
+            if repo_exclude_file:
+                repo_exclude_file = pathlib.Path(repo_path, repo_exclude_file)
+                if repo_exclude_file.exists():
+                    with repo_exclude_file.open() as handle:
+                        exclude_patterns += tuple(handle.readlines())
+            if exclude_patterns:
+                exclude_patterns = config.compile_path_rules(exclude_patterns)
+                self._excluded_paths = list(set(self.excluded_paths + exclude_patterns))
         try:
             return git.Repo(repo_path)
         except git.GitError as exc:
