@@ -133,3 +133,6 @@ dmypy.json
 *.swp
 
 .DS_Store
+
+#GH Codespaces
+pythonenv3.*
