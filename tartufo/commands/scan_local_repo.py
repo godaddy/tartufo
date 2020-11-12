@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple
 import click
 
 from tartufo import types, util
-from tartufo.scanner import GitRepoScanner, Issue
+from tartufo.scanner import GitLocalRepoScanner, Issue
 
 
 @click.command("scan-local-repo")
@@ -43,7 +43,7 @@ def main(
     )
     issues: List[Issue] = []
     try:
-        scanner = GitRepoScanner(options, git_options, str(repo_path), None)
+        scanner = GitLocalRepoScanner(options, git_options, repo_path)
         issues = scanner.scan()
     except types.GitLocalException as exc:
         util.fail(f"{repo_path} is not a valid git repository.", ctx)

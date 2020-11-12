@@ -17,6 +17,7 @@ from typing import (
     Set,
     Tuple,
 )
+from urllib.parse import urlparse
 
 import pygit2
 
@@ -328,27 +329,14 @@ class GitScanner(ScannerBase, abc.ABC):
     _repo: pygit2.Repository
     repo_path: str
 
-    def __init__(
-        self,
-        global_options: types.GlobalOptions,
-        git_option: types.GitOptions,
-        repo_path: str,
-        repo: Optional[pygit2.Repository] = None,
-    ) -> None:
+    def __init__(self, global_options: types.GlobalOptions, repo_path: str) -> None:
         """
         :param global_options: The options provided to the top-level tartufo command
         :param repo_path: The local filesystem path pointing to the repository
         """
         self.repo_path = repo_path
         super().__init__(global_options)
-        if repo is None:
-            print("Loading repo from repo_path")
-            (_, self._repo) = util.get_repository(
-                self.repo_path, fetch=git_option.fetch, branch=git_option.branch
-            )
-        else:
-            print("Using existing repo object")
-            self._repo = repo
+        self._repo = self.load_repo(self.repo_path)
 
     @abc.abstractmethod
     def load_repo(self, repo_path: str) -> pygit2.Repository:
@@ -393,7 +381,6 @@ class GitRepoScanner(GitScanner):
         global_options: types.GlobalOptions,
         git_options: types.GitOptions,
         repo_path: str,
-        repo: Optional[pygit2.Repository] = None,
     ) -> None:
         """Used for scanning a full clone of a git repository.
 
@@ -402,7 +389,7 @@ class GitRepoScanner(GitScanner):
         :param repo_path: The local filesystem path pointing to the repository
         """
         self.git_options = git_options
-        super().__init__(global_options, git_options, repo_path, repo)
+        super().__init__(global_options, repo_path)
 
     def load_config(self, repo_path: pathlib.Path) -> None:
         config_file: Optional[pathlib.Path] = None
@@ -435,17 +422,6 @@ class GitRepoScanner(GitScanner):
                     with extras_file.open() as handle:
                         excludes += config.compile_path_rules(handle.readlines())
                     self._excluded_paths = excludes
-
-    def load_repo(self, repo_path: str) -> pygit2.Repository:
-        try:
-            print("GitRepoScanner.load_repo(" + repo_path + ")")
-            (final_path, repo) = util.get_repository(
-                repo_path, fetch=self.git_options.fetch, branch=self.git_options.branch
-            )
-            self.load_config(final_path)
-            return repo
-        except pygit2.GitError as exc:
-            raise types.GitLocalException(str(exc)) from exc
 
     def _iter_branch_commits(
         self, repo: pygit2.Repository, branch: pygit2.Branch
@@ -533,6 +509,53 @@ class GitRepoScanner(GitScanner):
                         file_path,
                         util.extract_commit_metadata(curr_commit, branch),
                     )
+
+
+class GitLocalRepoScanner(GitRepoScanner):
+    def load_repo(self, repo_path: str) -> pygit2.Repository:
+        try:
+            print("GitRepoScanner.load_repo(" + repo_path + ")")
+            (final_path, repo) = util.get_repository(
+                repo_path, fetch=self.git_options.fetch, branch=self.git_options.branch
+            )
+            self.load_config(final_path)
+            return repo
+        except pygit2.GitError as exc:
+            raise types.GitLocalException(str(exc)) from exc
+
+
+class GitRemoteRepoScanner(GitRepoScanner):
+    work_dir: Optional[str] = None
+    clone_path: Optional[pathlib.Path] = None
+
+    def __init__(
+        self,
+        global_options: types.GlobalOptions,
+        git_options: types.GitOptions,
+        repo_path: str,
+        work_dir: Optional[str],
+    ) -> None:
+        self.work_dir = work_dir
+        super().__init__(global_options, git_options, repo_path)
+
+    def load_repo(self, repo_path: str) -> pygit2.Repository:
+        target_dir: Optional[pathlib.Path] = None
+        if self.work_dir:
+            # Make sure we clone into a sub-directory of the working directory
+            #   so that we don't inadvertently delete the working directory
+            repo_name = urlparse(repo_path).path.split("/")[-1]
+            target_dir = pathlib.Path(self.work_dir) / repo_name
+            target_dir.mkdir(parents=True)
+        if repo_path is None:
+            (self.clone_path, repository) = util.get_repository(repo_path)
+        elif target_dir:
+            (self.clone_path, repository) = util.get_repository(
+                repo_path, str(target_dir)
+            )
+        else:
+            (self.clone_path, repository) = util.get_repository(repo_path)
+        self.load_config(self.clone_path)
+        return repository
 
 
 class GitPreCommitScanner(GitScanner):

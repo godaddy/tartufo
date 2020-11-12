@@ -1,12 +1,10 @@
-from pathlib import Path
 from shutil import rmtree
 from typing import List, Optional, Tuple
-from urllib.parse import urlparse
 
 import click
 
 from tartufo import types, util
-from tartufo.scanner import GitRepoScanner, Issue
+from tartufo.scanner import GitRemoteRepoScanner, Issue
 
 
 @click.command("scan-remote-repo")
@@ -48,27 +46,16 @@ def main(
     git_options = types.GitOptions(
         since_commit=since_commit, max_depth=max_depth, branch=branch, fetch=False
     )
-    repo_path: Optional[Path] = None
-    if work_dir:
-        # Make sure we clone into a sub-directory of the working directory
-        #   so that we don't inadvertently delete the working directory
-        repo_name = urlparse(git_url).path.split("/")[-1]
-        repo_path = Path(work_dir) / repo_name
-        repo_path.mkdir(parents=True)
     issues: List[Issue] = []
+    scanner: Optional[GitRemoteRepoScanner] = None
     try:
-        if repo_path is None:
-            (repo_path, repository) = util.get_repository(git_url)
-        else:
-            (repo_path, repository) = util.get_repository(git_url, str(repo_path))
-
-        scanner = GitRepoScanner(options, git_options, str(repo_path), repository)
+        scanner = GitRemoteRepoScanner(options, git_options, git_url, work_dir)
         issues = scanner.scan()
     except types.GitException as exc:
         util.fail(f"Error cloning remote repo: {exc}", ctx)
     except types.TartufoException as exc:
         util.fail(str(exc), ctx)
     finally:
-        if repo_path and repo_path.exists():
-            rmtree(str(repo_path), onerror=util.del_rw)
+        if scanner and scanner.clone_path and scanner.clone_path.exists():
+            rmtree(str(scanner.clone_path), onerror=util.del_rw)
     return (git_url, issues)
