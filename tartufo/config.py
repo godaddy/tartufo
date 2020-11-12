@@ -172,9 +172,15 @@ def configure_regexes(
         repo_path = None
         if rules_repo:
             repo_path = pathlib.Path(rules_repo)
-            if not repo_path.is_dir():
+            try:
+                if not repo_path.is_dir():
+                    cloned_repo = True
+            except OSError:
+                # If a git URL is passed in, Windows will raise an OSError on `is_dir()`
                 cloned_repo = True
-                repo_path = pathlib.Path(util.clone_git_repo(rules_repo))
+            finally:
+                if cloned_repo:
+                    repo_path = pathlib.Path(util.clone_git_repo(rules_repo))
             if not rules_repo_files:
                 rules_repo_files = ("*.json",)
             for repo_file in rules_repo_files:
@@ -190,7 +196,7 @@ def configure_regexes(
                 rules.update(loaded)
     finally:
         if cloned_repo:
-            shutil.rmtree(repo_path)  # type: ignore
+            shutil.rmtree(repo_path, onerror=util.del_rw)  # type: ignore
 
     return rules
 

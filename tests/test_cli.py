@@ -6,6 +6,7 @@ from unittest import mock
 from click.testing import CliRunner
 from tartufo import cli, scanner, types
 
+from tests import helpers
 from tests.commands import foo as command_foo
 
 
@@ -80,6 +81,9 @@ class ListCommandTests(unittest.TestCase):
 
 
 class ProcessIssuesTest(unittest.TestCase):
+    @unittest.skipIf(
+        helpers.BROKEN_USER_PATHS, "Skipping due to truncated Windows usernames"
+    )
     @mock.patch("tartufo.cli.datetime")
     @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
     @mock.patch("tartufo.util.echo_issues", new=mock.MagicMock())
@@ -98,9 +102,40 @@ class ProcessIssuesTest(unittest.TestCase):
             result = runner.invoke(
                 cli.main, ["--output-dir", "./foo", "scan-local-repo", "."]
             )
+        output_dir = (
+            Path(dirname) / "foo" / "tartufo-scan-results-nownownow"
+        ).resolve()
         self.assertEqual(
-            result.output,
-            f"Results have been saved in {Path(dirname).resolve()}/foo/tartufo-scan-results-nownownow\n",
+            result.output, f"Results have been saved in {output_dir}\n",
+        )
+
+    @unittest.skipUnless(helpers.WINDOWS, "Test is Windows-only")
+    @unittest.skipIf(
+        helpers.BROKEN_USER_PATHS, "Skipping due to truncated Windows usernames"
+    )
+    @mock.patch("tartufo.cli.datetime")
+    @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
+    @mock.patch("tartufo.util.echo_issues", new=mock.MagicMock())
+    @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
+    def test_output_dir_is_valid_name_in_windows(
+        self, mock_scanner: mock.MagicMock, mock_dt: mock.MagicMock
+    ):
+        mock_scanner.return_value.scan.return_value = [
+            scanner.Issue(
+                types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {})
+            )
+        ]
+        mock_dt.now.return_value.isoformat.return_value = "now:now:now"
+        runner = CliRunner()
+        with runner.isolated_filesystem() as dirname:
+            result = runner.invoke(
+                cli.main, ["--output-dir", "./foo", "scan-local-repo", "."]
+            )
+        output_dir = (
+            Path(dirname) / "foo" / "tartufo-scan-results-nownownow"
+        ).resolve()
+        self.assertEqual(
+            result.output, f"Results have been saved in {output_dir}\n",
         )
 
     @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")

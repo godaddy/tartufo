@@ -12,6 +12,8 @@ from click.testing import CliRunner
 from tartufo import config, types
 from tartufo.types import Rule
 
+from tests import helpers
+
 
 class ConfigureRegexTests(unittest.TestCase):
     def test_configure_regexes_rules_files_without_defaults(self):
@@ -85,6 +87,9 @@ class ConfigureRegexTests(unittest.TestCase):
             config.configure_regexes(rules_repo=".")
         mock_clone.assert_not_called()
 
+    @unittest.skipIf(
+        helpers.WINDOWS, "Avoiding a race condition/permission error in Windows",
+    )
     @mock.patch("tartufo.config.util.clone_git_repo")
     def test_configure_regexes_clones_git_rules_repo(self, mock_clone):
         runner = CliRunner()
@@ -183,7 +188,9 @@ class LoadConfigFromPathTests(unittest.TestCase):
     def test_parent_directory_not_checked_if_traverse_is_false(self):
         with self.assertRaisesRegex(
             FileNotFoundError,
-            f"Could not find config file in {self.data_dir / 'config'}.",
+            f"Could not find config file in {self.data_dir / 'config'}.".replace(
+                "\\", "\\\\"
+            ),
         ):
             config.load_config_from_path(
                 self.data_dir / "config", "pyproject.toml", False
