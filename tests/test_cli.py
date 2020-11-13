@@ -85,7 +85,7 @@ class ProcessIssuesTest(unittest.TestCase):
         helpers.BROKEN_USER_PATHS, "Skipping due to truncated Windows usernames"
     )
     @mock.patch("tartufo.cli.datetime")
-    @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
+    @mock.patch("tartufo.commands.scan_local_repo.GitLocalRepoScanner")
     @mock.patch("tartufo.util.echo_issues", new=mock.MagicMock())
     @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
     def test_output_dir_is_called_out(
@@ -138,7 +138,7 @@ class ProcessIssuesTest(unittest.TestCase):
             result.output, f"Results have been saved in {output_dir}\n",
         )
 
-    @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
+    @mock.patch("tartufo.commands.scan_local_repo.GitLocalRepoScanner")
     @mock.patch("tartufo.util.echo_issues", new=mock.MagicMock())
     @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
     def test_output_dir_is_not_called_out_when_outputting_json(
@@ -158,7 +158,7 @@ class ProcessIssuesTest(unittest.TestCase):
         #   "Results have been saved in ..." message is not output.
         self.assertEqual(result.output, "")
 
-    @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
+    @mock.patch("tartufo.commands.scan_local_repo.GitLocalRepoScanner")
     @mock.patch("tartufo.util.echo_issues", new=mock.MagicMock())
     @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
     def test_output_dir_is_created_if_it_does_not_exist(
@@ -178,7 +178,7 @@ class ProcessIssuesTest(unittest.TestCase):
 
     @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
     @mock.patch("tartufo.util.echo_issues", new=mock.MagicMock())
-    @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
+    @mock.patch("tartufo.commands.scan_local_repo.GitLocalRepoScanner")
     def test_command_exits_with_positive_return_code_when_issues_are_found(
         self, mock_scanner: mock.MagicMock
     ):

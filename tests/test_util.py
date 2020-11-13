@@ -53,6 +53,7 @@ class GitTests(unittest.TestCase):
 
     @mock.patch("pygit2.clone_repository")
     @mock.patch("tartufo.util.tempfile.mkdtemp", new=mock.MagicMock())
+    @mock.patch("pathlib.Path", new=mock.MagicMock())
     def test_get_repository_raises_explicit_exception_on_clone_fail(
         self, mock_clone: mock.MagicMock
     ):

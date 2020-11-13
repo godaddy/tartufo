@@ -9,7 +9,7 @@ from tests import helpers
 
 
 class ScanLocalRepoTests(unittest.TestCase):
-    @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
+    @mock.patch("tartufo.commands.scan_local_repo.GitLocalRepoScanner")
     def test_scan_exits_gracefully_on_scan_exception(
         self, mock_scanner: mock.MagicMock
     ):
@@ -25,11 +25,11 @@ class ScanLocalRepoTests(unittest.TestCase):
     )
     def test_scan_exits_gracefully_when_target_is_not_git_repo(self):
         runner = CliRunner()
-        with runner.isolated_filesystem():
-            result = runner.invoke(cli.main, ["scan-local-repo", "."])
+        with runner.isolated_filesystem() as run_path:
+            result = runner.invoke(cli.main, ["scan-local-repo", run_path])
             self.assertRegex(result.output, "is not a valid git repository")
 
-    @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
+    @mock.patch("tartufo.commands.scan_local_repo.GitLocalRepoScanner")
     def test_scan_exits_gracefully_when_remote_fetch_fails(
         self, mock_scanner: mock.MagicMock
     ):
