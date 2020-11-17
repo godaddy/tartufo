@@ -221,14 +221,14 @@ def _fetch_ssh_repo(
             remote_callbacks = pygit2.RemoteCallbacks(credentials=keypair)
             if branch is not None:
                 print("Fetching origin/" + branch)
-                repo.remotes.origin.fetch(branch, callbacks=remote_callbacks)
+                repo.remotes["origin"].fetch(branch, callbacks=remote_callbacks)
             else:
                 print("Fetching all branches from origin")
-                repo.remotes.origin.fetch(callbacks=remote_callbacks)
+                repo.remotes["origin"].fetch(callbacks=remote_callbacks)
             return repo
 
-        except pygit2.GitError:
-            print("GitError")
+        except pygit2.GitError as exc:
+            print(f"GitError raised: {exc}")
             # TODO: differentiate credentials errors from other errors
             continue
     raise types.GitRemoteException("Could not locate working ssh credentials")

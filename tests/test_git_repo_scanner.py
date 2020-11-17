@@ -1,5 +1,6 @@
 # pylint: disable=protected-access
 import pathlib
+from pathlib import Path
 import re
 import unittest
 from unittest import mock
@@ -105,41 +106,47 @@ class RepoLoadTests(ScannerTestCase):
 
 
 class ChunkGeneratorTests(ScannerTestCase):
+    @mock.patch("pygit2.RemoteCallbacks")
     @mock.patch("pygit2.Repository")
-    def test_single_branch_is_loaded_if_specified(self, mock_repo: mock.MagicMock):
+    def test_single_branch_is_loaded_if_specified(
+        self, mock_repo: mock.MagicMock, mock_callback: mock.MagicMock
+    ):
         self.git_options.branch = "foo"
         self.git_options.fetch = True
         mock_fetch = mock.MagicMock()
         mock_fetch.return_value = []
-        mock_repo.return_value.remotes.origin.fetch = mock_fetch
+        mock_repo.return_value.remotes["origin"].fetch = mock_fetch
         test_scanner = scanner.GitLocalRepoScanner(
             self.global_options, self.git_options, "."
         )
         for _ in test_scanner.chunks:
             pass
-        mock_fetch.assert_called()
-        # TODO: Changed because fetch now takes a second parameter for callback
-        # mock_fetch.assert_called_once_with("foo")
+        mock_fetch.assert_called_once_with("foo", callbacks=mock_callback.return_value)
 
+    @mock.patch("pygit2.RemoteCallbacks")
     @mock.patch("pygit2.Repository")
-    def test_all_branches_are_loaded_if_specified(self, mock_repo: mock.MagicMock):
+    def test_all_branches_are_loaded_if_specified(
+        self, mock_repo: mock.MagicMock, mock_callback: mock.MagicMock
+    ):
         mock_fetch = mock.MagicMock()
         mock_fetch.return_value = []
-        mock_repo.return_value.remotes.origin.fetch = mock_fetch
+        mock_repo.return_value.remotes["origin"].fetch = mock_fetch
         self.git_options.fetch = True
         test_scanner = scanner.GitLocalRepoScanner(
             self.global_options, self.git_options, "."
         )
         for _ in test_scanner.chunks:
             pass
-        mock_fetch.assert_called()
+        mock_fetch.assert_called_once_with(callbacks=mock_callback.return_value)
 
     @mock.patch("pygit2.Repository")
     def test_explicit_exception_is_raised_if_fetch_fails(
         self, mock_repo: mock.MagicMock
     ):
         self.git_options.fetch = True
-        mock_repo.return_value.remotes.origin.fetch.side_effect = types.GitRemoteException(
+        mock_repo.return_value.remotes[
+            "origin"
+        ].fetch.side_effect = types.GitRemoteException(
             "Could not locate working ssh credentials"
         )
 
@@ -154,13 +161,13 @@ class ChunkGeneratorTests(ScannerTestCase):
                 pass
 
     @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
-    @mock.patch("pygit2.Repository")
+    @mock.patch("tartufo.util.get_repository")
     def test_all_branches_are_scanned_for_commits(
-        self, mock_repo: mock.MagicMock, mock_iter_commits: mock.MagicMock
+        self, mock_get_repo: mock.MagicMock, mock_iter_commits: mock.MagicMock
     ):
-        self.git_options.fetch = True
-        # mock_repo.return_value.remotes.origin.fetch.return_value = ["foo", "bar"]
-        mock_repo.return_value.pygit2.Repository.branches.return_value = ["foo", "bar"]
+        mock_repo = mock.MagicMock()
+        mock_repo.branches = {"foo": mock.MagicMock(), "bar": mock.MagicMock()}
+        mock_get_repo.return_value = (Path("/foo"), mock_repo)
         test_scanner = scanner.GitLocalRepoScanner(
             self.global_options, self.git_options, "."
         )
