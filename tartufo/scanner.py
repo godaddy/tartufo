@@ -470,8 +470,9 @@ class GitRepoScanner(GitScanner):
         else:
             # Everything
             print("Scanning all branches")
-            branches = self._repo.branches
+            branches = list(self._repo.branches)
 
+        print(f"Scanning {str(len(branches))} branches")
         for branch_name in branches:
             print("Scanning branch " + branch_name)
             branch: pygit2.Branch = self._repo.branches.get(branch_name)

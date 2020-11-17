@@ -166,8 +166,10 @@ class ChunkGeneratorTests(ScannerTestCase):
         self, mock_get_repo: mock.MagicMock, mock_iter_commits: mock.MagicMock
     ):
         mock_repo = mock.MagicMock()
+        mock_repo.return_value.remotes.origin.fetch.return_value = ["foo", "bar"]
         mock_repo.branches = {"foo": mock.MagicMock(), "bar": mock.MagicMock()}
         mock_get_repo.return_value = (Path("/foo"), mock_repo)
+
         test_scanner = scanner.GitLocalRepoScanner(
             self.global_options, self.git_options, "."
         )
@@ -183,15 +185,19 @@ class ChunkGeneratorTests(ScannerTestCase):
 
     @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
     @mock.patch("tartufo.scanner.GitRepoScanner._iter_diff")
-    @mock.patch("pygit2.Repository")
+    @mock.patch("tartufo.util.get_repository")
     def test_all_commits_are_scanned_for_files(
         self,
-        mock_repo: mock.MagicMock,
+        mock_get_repo: mock.MagicMock,
         mock_iter_diff: mock.MagicMock,
         mock_iter_commits: mock.MagicMock,
     ):
         self.git_options.fetch = True
+        mock_repo = mock.MagicMock()
         mock_repo.return_value.remotes.origin.fetch.return_value = ["foo"]
+        mock_repo.branches = {"foo": mock.MagicMock()}
+        mock_get_repo.return_value = (Path("/foo"), mock_repo)
+
         test_scanner = scanner.GitLocalRepoScanner(
             self.global_options, self.git_options, "."
         )
