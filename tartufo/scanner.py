@@ -475,7 +475,7 @@ class GitRepoScanner(GitScanner):
                 raise types.GitRemoteException(exc.stderr.strip()) from exc
         else:
             # Everything
-            branches = self._repo.branches
+            branches = list(self._repo.branches)
             try:
                 if self.git_options.fetch:
                     print("Fetching remote origin (all branches)")
@@ -483,6 +483,7 @@ class GitRepoScanner(GitScanner):
             except git.GitCommandError as exc:
                 raise types.GitRemoteException(exc.stderr.strip()) from exc
 
+        print("Scanning " + str(len(branches)) + " branches")
         for branch in branches:
             diff_index: git.DiffIndex = None
             diff_hash: bytes
