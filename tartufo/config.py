@@ -175,7 +175,7 @@ def configure_regexes(
             try:
                 if not repo_path.is_dir():
                     cloned_repo = True
-            except OSError:
+            except OSError:  # pragma: no cover
                 # If a git URL is passed in, Windows will raise an OSError on `is_dir()`
                 cloned_repo = True
             finally:
