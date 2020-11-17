@@ -461,29 +461,23 @@ class GitRepoScanner(GitScanner):
         """
         already_searched: Set[bytes] = set()
 
-        if self.git_options.branch:
-            # Single branch only
-            unfiltered_branches = list(self._repo.branches)
-            branches = [
-                x for x in unfiltered_branches if x.name == self.git_options.branch
-            ]
-            try:
+        try:
+            if self.git_options.branch:
+                # Single branch only
+                unfiltered_branches = list(self._repo.branches)
+                branches = [
+                    x for x in unfiltered_branches if x.name == self.git_options.branch
+                ]
                 if self.git_options.fetch:
-                    print("Fetching remote origin/" + self.git_options.branch)
                     self._repo.remotes.origin.fetch(self.git_options.branch)
-            except git.GitCommandError as exc:
-                raise types.GitRemoteException(exc.stderr.strip()) from exc
-        else:
-            # Everything
-            branches = list(self._repo.branches)
-            try:
+            else:
+                # Everything
+                branches = list(self._repo.branches)
                 if self.git_options.fetch:
-                    print("Fetching remote origin (all branches)")
                     self._repo.remotes.origin.fetch()
-            except git.GitCommandError as exc:
-                raise types.GitRemoteException(exc.stderr.strip()) from exc
+        except git.GitCommandError as exc:
+            raise types.GitRemoteException(exc.stderr.strip()) from exc
 
-        print("Scanning " + str(len(branches)) + " branches")
         for branch in branches:
             diff_index: git.DiffIndex = None
             diff_hash: bytes
