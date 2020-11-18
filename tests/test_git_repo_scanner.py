@@ -160,41 +160,53 @@ class ChunkGeneratorTests(ScannerTestCase):
             for _ in test_scanner.chunks:
                 pass
 
-    @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
+    @mock.patch("tartufo.scanner.GitScanner._iter_diff")
     @mock.patch("tartufo.util.get_repository")
     def test_all_branches_are_scanned_for_commits(
-        self, mock_get_repo: mock.MagicMock, mock_iter_commits: mock.MagicMock
+        self, mock_get_repo: mock.MagicMock, mock_iter_diff: mock.MagicMock
     ):
         mock_repo = mock.MagicMock()
-        mock_repo.return_value.remotes.origin.fetch.return_value = ["foo", "bar"]
         mock_repo.branches = {"foo": mock.MagicMock(), "bar": mock.MagicMock()}
         mock_get_repo.return_value = (Path("/foo"), mock_repo)
 
         test_scanner = scanner.GitLocalRepoScanner(
             self.global_options, self.git_options, "."
         )
-        mock_iter_commits.return_value = []
+
+        mock_commit_1 = mock.MagicMock()
+        mock_commit_1.parents = None
+        mock_commit_2 = mock.MagicMock()
+        mock_commit_2.parents = [mock_commit_1]
+        mock_commit_3 = mock.MagicMock()
+        mock_commit_3.parents = [mock_commit_2]
+
+        mock_repo.walk.return_value = [
+            mock_commit_3,
+            mock_commit_2,
+            mock_commit_1,
+        ]
+
+        mock_iter_diff.return_value = []
         for _ in test_scanner.chunks:
             pass
-        mock_iter_commits.assert_has_calls(
+
+        # TODO: Change this to expect a compare of mock_commit_1 to tree
+        mock_repo.diff.assert_has_calls(
             (
-                mock.call(mock_repo.return_value, "foo"),
-                mock.call(mock_repo.return_value, "bar"),
+                mock.call(mock_commit_3, mock_commit_2),
+                mock.call(mock_commit_2, mock_commit_1),
+                mock.call(mock_commit_3, mock_commit_2),
+                mock.call(mock_commit_2, mock_commit_1),
             )
         )
 
-    @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
     @mock.patch("tartufo.scanner.GitRepoScanner._iter_diff")
     @mock.patch("tartufo.util.get_repository")
     def test_all_commits_are_scanned_for_files(
-        self,
-        mock_get_repo: mock.MagicMock,
-        mock_iter_diff: mock.MagicMock,
-        mock_iter_commits: mock.MagicMock,
+        self, mock_get_repo: mock.MagicMock, mock_iter_diff: mock.MagicMock,
     ):
         self.git_options.fetch = True
         mock_repo = mock.MagicMock()
-        mock_repo.return_value.remotes.origin.fetch.return_value = ["foo"]
         mock_repo.branches = {"foo": mock.MagicMock()}
         mock_get_repo.return_value = (Path("/foo"), mock_repo)
 
@@ -202,49 +214,62 @@ class ChunkGeneratorTests(ScannerTestCase):
             self.global_options, self.git_options, "."
         )
         mock_commit_1 = mock.MagicMock()
+        mock_commit_1.parents = None
         mock_commit_2 = mock.MagicMock()
+        mock_commit_2.parents = [mock_commit_1]
         mock_commit_3 = mock.MagicMock()
-        mock_iter_commits.return_value = [
-            (mock_commit_2, mock_commit_3),
-            (mock_commit_1, mock_commit_2),
+        mock_commit_3.parents = [mock_commit_2]
+
+        mock_repo.walk.return_value = [
+            mock_commit_3,
+            mock_commit_2,
+            mock_commit_1,
         ]
         mock_iter_diff.return_value = []
         for _ in test_scanner.chunks:
             pass
-        mock_commit_2.diff.assert_called_once_with(mock_commit_3, create_patch=True)
-        mock_commit_1.diff.assert_has_calls(
+
+        # TODO: Add assertion for commit 1 being compared to tree
+        mock_repo.diff.assert_has_calls(
             (
-                mock.call(mock_commit_2, create_patch=True),
-                #                mock.call(git.NULL_TREE, create_patch=True),
-            )
-        )
-        mock_iter_diff.assert_has_calls(
-            (
-                mock.call(mock_commit_2.diff.return_value),
-                mock.call(mock_commit_1.diff.return_value),
-                mock.call(mock_commit_1.diff.return_value),
+                mock.call(mock_commit_3, mock_commit_2),
+                mock.call(mock_commit_2, mock_commit_1),
             )
         )
 
-    @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
-    @mock.patch("tartufo.scanner.GitRepoScanner._iter_diff")
+    @mock.patch("tartufo.scanner.GitScanner._iter_diff")
     @mock.patch("tartufo.util.extract_commit_metadata")
-    @mock.patch("pygit2.Repository")
+    @mock.patch("tartufo.util.get_repository")
     def test_all_files_are_yielded_as_chunks(
         self,
-        mock_repo: mock.MagicMock,
+        mock_get_repo: mock.MagicMock,
         mock_extract: mock.MagicMock,
         mock_iter_diff: mock.MagicMock,
-        mock_iter_commits: mock.MagicMock,
     ):
         self.git_options.fetch = True
+        mock_repo = mock.MagicMock()
+        mock_repo.return_value.remotes.origin.fetch.return_value = ["foo"]
+        mock_repo.branches = {"foo": mock.MagicMock()}
+        mock_get_repo.return_value = (Path("/foo"), mock_repo)
+
         mock_repo.return_value.remotes.origin.fetch.return_value = ["foo"]
         test_scanner = scanner.GitLocalRepoScanner(
             self.global_options, self.git_options, "."
         )
+
         mock_commit_1 = mock.MagicMock()
+        mock_commit_1.parents = None
         mock_commit_2 = mock.MagicMock()
-        mock_iter_commits.return_value = [(mock_commit_1, mock_commit_2)]
+        mock_commit_2.parents = [mock_commit_1]
+        mock_commit_3 = mock.MagicMock()
+        mock_commit_3.parents = [mock_commit_2]
+
+        mock_repo.walk.return_value = [
+            mock_commit_3,
+            mock_commit_2,
+            mock_commit_1,
+        ]
+
         mock_iter_diff.return_value = [("foo", "bar.py"), ("baz", "blah.py")]
         chunks = list(test_scanner.chunks)
         # These get duplicated in this test, because `_iter_diff` is called

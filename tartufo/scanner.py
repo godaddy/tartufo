@@ -479,20 +479,27 @@ class GitRepoScanner(GitScanner):
             diff_hash: bytes
             curr_commit: pygit2.Commit = None
             prev_commit: pygit2.Commit = None
-
+            print("Walking repo branch " + str(branch_name))
             for curr_commit in self._repo.walk(
                 branch.resolve().target, pygit2.GIT_SORT_TOPOLOGICAL
             ):
+                print(f"Found commit {str(curr_commit.hex)} / {str(curr_commit.id)}")
                 if not curr_commit.parents:
+                    print("Skipping because no parents " + str(curr_commit.hex))
                     continue
                 prev_commit = curr_commit.parents[0]
+                print(
+                    f"Calling _repo.diff({str(curr_commit)} / {str(curr_commit.hex)} / {str(curr_commit.id)}, {str(prev_commit)} / {str(prev_commit.hex)} / {str(prev_commit.id)})"
+                )
                 diff: pygit2.Diff = self._repo.diff(curr_commit, prev_commit)
                 diff_hash = hashlib.md5(
                     (str(prev_commit) + str(curr_commit)).encode("utf-8")
                 ).digest()
                 if diff_hash in already_searched:
+                    print("Skipping because already searched " + str(curr_commit.hex))
                     continue
                 already_searched.add(diff_hash)
+                print("Iterating diff " + str(diff_hash.hex()))
                 for blob, file_path in self._iter_diff(diff):
                     yield types.Chunk(
                         blob,
@@ -502,6 +509,7 @@ class GitRepoScanner(GitScanner):
 
             # Finally, yield the first commit to the branch
             if curr_commit:
+                print("Finding first commit for " + str(curr_commit.hex))
                 tree: pygit2.Tree = self._repo.revparse_single(curr_commit.hex).tree
                 tree_diff: pygit2.Diff = tree.diff_to_tree()
                 for blob, file_path in self._iter_diff(tree_diff):
