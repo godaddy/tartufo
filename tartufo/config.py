@@ -19,7 +19,6 @@ from typing import (
 import click
 import toml
 import truffleHogRegexes.regexChecks
-import pygit2
 
 from tartufo import types, util
 from tartufo.types import Rule
