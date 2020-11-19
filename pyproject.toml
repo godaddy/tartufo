@@ -69,7 +69,6 @@ docs = ["recommonmark", "sphinx", "sphinx-click", "sphinx-rtd-theme", "sphinxcon
 [tool.tartufo]
 cleanup = true
 entropy = true
-# exclude-paths = ".tartufo-excludes"
 exclude-path-patterns = [
     'poetry.lock',
     'pyproject.toml',

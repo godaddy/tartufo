@@ -269,7 +269,8 @@ Limiting Scans by Path
 
 By default ``tartufo`` will scan all objects tracked by Git. You can limit
 scanning by either including fewer paths or excluding some of them using
-Python Regular Expressions (regex).
+Python Regular Expressions (regex) and the `--include-path-patterns` and
+`--exclude-path-patterns` options.
 
 .. warning::
 
@@ -305,54 +306,6 @@ in the config file:
      --include-path-patterns 'src/' -ip 'gradle/' \
      --exclude-path-patterns '(.*/)?\.classpath$' -xp '.*\.jmx$' \
      scan-local-repo file://path/to/my/repo.git
-
-
-Limiting Scans by Path (via inclusion/exclusion files)
-++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-.. note::
-
-   The ``--include-paths`` and ``--exclude-paths`` options are no longer
-   recommended, you can create the same filters inside your ``.toml`` config
-   file using ``include-path-patterns`` and ``exclude-path-patterns``
-   (as shown above).
-
-   We have left these options for backwards compatibility.
-
-With the ``--include-paths`` and ``--exclude-paths`` options, it is also
-possible to limit scanning to a subset of objects in the Git history by
-defining regular expressions (one per line) in a file to match the targeted
-object paths. To illustrate, see the example include and exclude files below:
-
-.. code-block:: ini
-   :caption: include-patterns.txt
-
-   src/
-   # lines beginning with "#" are treated as comments and are ignored
-   gradle/
-   # regexes must match the entire path, but can use python's regex syntax for
-   # case-insensitive matching and other advanced options
-   (?i).*\.(properties|conf|ini|txt|y(a)?ml)$
-   (.*/)?id_[rd]sa$
-
-.. code-block:: ini
-   :caption: exclude-patterns.txt
-
-   (.*/)?\.classpath$
-   .*\.jmx$
-   (.*/)?test/(.*/)?resources/
-
-These filter files could then be applied by:
-
-.. code-block:: sh
-
-   > tartufo --include-paths include-patterns.txt \
-     --exclude-paths exclude-patterns.txt \
-     scan-local-repo file://path/to/my/repo.git
-
-With these filters, issues found in files in the root-level ``src`` directory
-would be reported, unless they had the ``.classpath`` or ``.jmx`` extension, or
-if they were found in the ``src/test/dev/resources/`` directory, for example.
 
 
 Additional usage information is provided when calling ``tartufo`` with the

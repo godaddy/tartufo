@@ -1,8 +1,0 @@
-# This is now specified directly in `pyproject.toml` `exclude-path-patterns`,
-# but the patterns below would also work if specified with `--exclude-paths`:
-.github/workflows/(.*)\.yml
-poetry.lock
-pyproject.toml
-docs/source/(.*)\.rst
-tests/test_base_scanner\.py
-tests/test_util.py

@@ -57,41 +57,23 @@ Options:
   --regex / --no-regex            Enable high signal regexes checks.
                                   [default: False]
 
-  -i, --include-paths FILENAME    File with regular expressions (one per
-                                  line), at least one of which must match a
-                                  Git object path in order for it to be
-                                  scanned; lines starting with '#' are treated
-                                  as comments and are ignored. If empty or not
-                                  provided (default), all Git object paths are
-                                  included unless otherwise excluded via the
-                                  --exclude-paths option.
-
   -ip, --include-path-patterns TEXT
                                   Specify a regular expression which matches
                                   Git object paths to include in the scan.
                                   This option can be specified multiple times
-                                  to include multiple patterns. This can be
-                                  used in conjunction with or as a replacement
-                                  for --include-paths and also defaults to an
-                                  empty list, including all Git object paths.
-
-  -x, --exclude-paths FILENAME    File with regular expressions (one per
-                                  line), none of which may match a Git object
-                                  path in order for it to be scanned; lines
-                                  starting with '#' are treated as comments
-                                  and are ignored. If empty or not provided
-                                  (default), no Git object paths are excluded
-                                  unless effectively excluded via the
-                                  --include-paths option.
+                                  to include multiple patterns. If not
+                                  provided (default), all Git object paths are
+                                  included unless otherwise excluded via the
+                                  --exclude-path-patterns option.
 
   -xp, --exclude-path-patterns TEXT
                                   Specify a regular expression which matches
                                   Git object paths to exclude from the scan.
                                   This option can be specified multiple times
-                                  to exclude multiple patterns. This can be
-                                  used in conjunction with or as a replacement
-                                  for --exclude-paths and also defaults to an
-                                  empty list.
+                                  to exclude multiple patterns. If not
+                                  provided (default), no Git object paths are
+                                  excluded unless effectively excluded via the
+                                  --include-path-patterns option.
 
   -e, --exclude-signatures TEXT   Specify signatures of matches that you
                                   explicitly want to exclude from the scan,
@@ -122,15 +104,15 @@ Options:
                                   specified multiple times.
 
   --config FILE                   Read configuration from specified file.
-                                  [default: pyproject.toml]
+                                  [default: tartufo.toml]
 
   -V, --version                   Show the version and exit.
   -h, --help                      Show this message and exit.
 
 Commands:
   pre-commit        Scan staged changes in a pre-commit hook.
-  scan-remote-repo  Automatically clone and scan a remote git repository.
   scan-local-repo   Scan a repository already cloned to your local system.
+  scan-remote-repo  Automatically clone and scan a remote git repository.
 
 ```
 
