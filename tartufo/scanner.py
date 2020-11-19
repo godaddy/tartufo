@@ -464,17 +464,17 @@ class GitRepoScanner(GitScanner):
         try:
             if self.git_options.branch:
                 # Single branch only
+                if self.git_options.fetch:
+                    self._repo.remotes.origin.fetch(self.git_options.branch)
                 unfiltered_branches = list(self._repo.branches)
                 branches = [
                     x for x in unfiltered_branches if x == self.git_options.branch
                 ]
-                if self.git_options.fetch:
-                    self._repo.remotes.origin.fetch(self.git_options.branch)
             else:
                 # Everything
-                branches = list(self._repo.branches)
                 if self.git_options.fetch:
                     self._repo.remotes.origin.fetch()
+                branches = list(self._repo.branches)
         except git.GitCommandError as exc:
             raise types.GitRemoteException(exc.stderr.strip()) from exc
 
