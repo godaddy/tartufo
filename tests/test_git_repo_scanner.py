@@ -267,12 +267,15 @@ class ChunkGeneratorTests(ScannerTestCase):
 
         mock_iter_diff.return_value = [("foo", "bar.py"), ("baz", "blah.py")]
         chunks = list(test_scanner.chunks)
+
         # These get duplicated in this test, because `_iter_diff` is called
         # both in the normal branch/commit iteration, and then once more afterward
         # to capture the first commit on the branch
         self.assertEqual(
             chunks,
             [
+                types.Chunk("foo", "bar.py", mock_extract.return_value),
+                types.Chunk("baz", "blah.py", mock_extract.return_value),
                 types.Chunk("foo", "bar.py", mock_extract.return_value),
                 types.Chunk("baz", "blah.py", mock_extract.return_value),
                 types.Chunk("foo", "bar.py", mock_extract.return_value),
