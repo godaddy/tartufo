@@ -230,7 +230,7 @@ class ChunkGeneratorTests(ScannerTestCase):
         for _ in test_scanner.chunks:
             pass
 
-        assert len(mock_iter_diff.mock_calls) == 3
+        self.assertEqual(len(mock_iter_diff.mock_calls), 3)
 
     @mock.patch("tartufo.scanner.GitScanner._iter_diff")
     @mock.patch("tartufo.util.extract_commit_metadata")
