@@ -301,10 +301,9 @@ in the config file:
 
 .. code-block:: sh
 
-   # --include-path-patterns == -ip
-   # --exclude-path-patterns == -xp
-   > tartufo -ip 'src/' -ip 'gradle/' \
-     -xp '(.*/)?\.classpath$' -xp '.*\.jmx$' \
+   > tartufo \
+     --include-path-patterns 'src/' -ip 'gradle/' \
+     --exclude-path-patterns '(.*/)?\.classpath$' -xp '.*\.jmx$' \
      scan-local-repo file://path/to/my/repo.git
 
 
