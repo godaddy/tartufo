@@ -205,6 +205,7 @@ class ChunkGeneratorTests(ScannerTestCase):
     def test_all_commits_are_scanned_for_files(
         self, mock_get_repo: mock.MagicMock, mock_iter_diff: mock.MagicMock,
     ):
+        print("******************************************************************")
         self.git_options.fetch = True
         mock_repo = mock.MagicMock()
         mock_repo.branches = {"foo": mock.MagicMock()}
@@ -229,13 +230,7 @@ class ChunkGeneratorTests(ScannerTestCase):
         for _ in test_scanner.chunks:
             pass
 
-        # TODO: Add assertion for commit 1 being compared to tree
-        mock_repo.diff.assert_has_calls(
-            (
-                mock.call(mock_commit_3, mock_commit_2),
-                mock.call(mock_commit_2, mock_commit_1),
-            )
-        )
+        assert len(mock_iter_diff.mock_calls) == 3
 
     @mock.patch("tartufo.scanner.GitScanner._iter_diff")
     @mock.patch("tartufo.util.extract_commit_metadata")

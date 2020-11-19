@@ -499,7 +499,7 @@ class GitRepoScanner(GitScanner):
                     print("Skipping because already searched " + str(curr_commit.hex))
                     continue
                 already_searched.add(diff_hash)
-                print("Iterating diff " + str(diff_hash.hex()))
+                print("*** Iterating diff")
                 for blob, file_path in self._iter_diff(diff):
                     yield types.Chunk(
                         blob,
@@ -512,7 +512,10 @@ class GitRepoScanner(GitScanner):
                 print("Finding first commit for " + str(curr_commit.hex))
                 tree: pygit2.Tree = self._repo.revparse_single(curr_commit.hex).tree
                 tree_diff: pygit2.Diff = tree.diff_to_tree()
-                for blob, file_path in self._iter_diff(tree_diff):
+                print(f"*** Iterating diff of first commit {str(tree_diff)}")
+                iter_diff = self._iter_diff(tree_diff)
+                for blob, file_path in iter_diff:
+                    print(f"First commit diff {file_path}")
                     yield types.Chunk(
                         blob,
                         file_path,
