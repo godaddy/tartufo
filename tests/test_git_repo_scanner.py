@@ -191,6 +191,7 @@ class ChunkGeneratorTests(ScannerTestCase):
         mock_iter_commits.return_value = []
         for _ in test_scanner.chunks:
             pass
+        mock_repo.return_value.remotes.origin.fetch.assert_not_called()
         mock_iter_commits.assert_has_calls((mock.call(mock_repo.return_value, "bar"),))
 
     @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
@@ -208,6 +209,7 @@ class ChunkGeneratorTests(ScannerTestCase):
         mock_iter_commits.return_value = []
         for _ in test_scanner.chunks:
             pass
+        mock_repo.return_value.remotes.origin.fetch.assert_called()
         mock_iter_commits.assert_has_calls((mock.call(mock_repo.return_value, "bar"),))
 
     @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
