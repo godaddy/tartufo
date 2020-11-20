@@ -106,11 +106,8 @@ class RepoLoadTests(ScannerTestCase):
 
 
 class ChunkGeneratorTests(ScannerTestCase):
-    @mock.patch("pygit2.RemoteCallbacks")
-    @mock.patch("pygit2.Repository")
-    def test_single_branch_is_loaded_if_specified(
-        self, mock_repo: mock.MagicMock, mock_callback: mock.MagicMock
-    ):
+    @mock.patch("tartufo.config.util.get_repository")
+    def test_single_branch_is_loaded_if_specified(self, mock_get_repo: mock.MagicMock):
         self.git_options.branch = "foo"
         self.git_options.fetch = True
         mock_fetch = mock.MagicMock()
@@ -123,11 +120,8 @@ class ChunkGeneratorTests(ScannerTestCase):
             pass
         mock_fetch.assert_called_once_with("foo", callbacks=mock_callback.return_value)
 
-    @mock.patch("pygit2.RemoteCallbacks")
-    @mock.patch("pygit2.Repository")
-    def test_all_branches_are_loaded_if_specified(
-        self, mock_repo: mock.MagicMock, mock_callback: mock.MagicMock
-    ):
+    @mock.patch("tartufo.config.util.get_repository")
+    def test_all_branches_are_loaded_if_specified(self, mock_get_repo: mock.MagicMock):
         mock_fetch = mock.MagicMock()
         mock_fetch.return_value = []
         mock_repo.return_value.remotes["origin"].fetch = mock_fetch
@@ -139,9 +133,9 @@ class ChunkGeneratorTests(ScannerTestCase):
             pass
         mock_fetch.assert_called_once_with(callbacks=mock_callback.return_value)
 
-    @mock.patch("pygit2.Repository")
+    @mock.patch("tartufo.config.util.get_repository")
     def test_explicit_exception_is_raised_if_fetch_fails(
-        self, mock_repo: mock.MagicMock
+        self, mock_get_repo: mock.MagicMock
     ):
         self.git_options.fetch = True
         mock_repo.return_value.remotes[
@@ -285,8 +279,8 @@ class ChunkGeneratorTests(ScannerTestCase):
 
 
 class IterDiffIndexTests(ScannerTestCase):
-    @mock.patch("pygit2.Repository", new=mock.MagicMock())
-    def test_binary_files_are_skipped(self):
+    @mock.patch("tartufo.config.util.get_repository")
+    def test_binary_files_are_skipped(self, mock_get_repo: mock.MagicMock):
         mock_diff = mock.MagicMock()
         mock_diff.delta.is_binary = True
         test_scanner = scanner.GitLocalRepoScanner(
@@ -295,9 +289,11 @@ class IterDiffIndexTests(ScannerTestCase):
         diffs = list(test_scanner._iter_diff([mock_diff]))
         self.assertEqual(diffs, [])
 
-    @mock.patch("pygit2.Repository", new=mock.MagicMock())
     @mock.patch("tartufo.scanner.ScannerBase.should_scan")
-    def test_excluded_files_are_not_scanned(self, mock_should: mock.MagicMock):
+    @mock.patch("tartufo.config.util.get_repository")
+    def test_excluded_files_are_not_scanned(
+        self, mock_get_repo: mock.MagicMock, mock_should: mock.MagicMock
+    ):
         mock_should.return_value = False
         mock_diff = mock.MagicMock()
         mock_diff.delta.is_binary = False
@@ -308,9 +304,11 @@ class IterDiffIndexTests(ScannerTestCase):
         self.assertEqual(diffs, [])
         mock_should.assert_called_once()
 
-    @mock.patch("pygit2.Repository", new=mock.MagicMock())
     @mock.patch("tartufo.scanner.ScannerBase.should_scan")
-    def test_all_files_are_yielded(self, mock_should: mock.MagicMock):
+    @mock.patch("tartufo.config.util.get_repository")
+    def test_all_files_are_yielded(
+        self, mock_get_repo: mock.MagicMock, mock_should: mock.MagicMock
+    ):
         mock_should.return_value = True
         mock_diff_1 = mock.MagicMock()
         mock_diff_1.delta.is_binary = False
@@ -330,8 +328,8 @@ class IterDiffIndexTests(ScannerTestCase):
 
 
 class IterBranchCommitsTests(ScannerTestCase):
-    @mock.patch("pygit2.Repository", new=mock.MagicMock())
-    def test_all_commits_get_yielded_in_pairs(self):
+    @mock.patch("tartufo.config.util.get_repository")
+    def test_all_commits_get_yielded_in_pairs(self, mock_get_repo: mock.MagicMock):
         test_scanner = scanner.GitLocalRepoScanner(
             self.global_options, self.git_options, "."
         )
@@ -357,8 +355,10 @@ class IterBranchCommitsTests(ScannerTestCase):
             ],
         )
 
-    @mock.patch("pygit2.Repository", new=mock.MagicMock())
-    def test_iteration_stops_when_since_commit_is_reached(self):
+    @mock.patch("tartufo.config.util.get_repository")
+    def test_iteration_stops_when_since_commit_is_reached(
+        self, mock_get_repo: mock.MagicMock
+    ):
         self.git_options.since_commit = "42"
         test_scanner = scanner.GitLocalRepoScanner(
             self.global_options, self.git_options, "."
