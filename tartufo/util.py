@@ -108,6 +108,7 @@ def _is_https(url: str) -> bool:
     return False
 
 
+# pragma no cover
 def get_repository(
     git_url: str,
     target_dir: Optional[str] = None,
@@ -192,6 +193,7 @@ def get_repository(
     return (git_path, repo)
 
 
+# pragma no cover
 def _fetch_ssh_repo(
     repo: pygit2.Repository, branch: Optional[str] = None
 ) -> pygit2.Repository:
@@ -234,6 +236,7 @@ def _fetch_ssh_repo(
     raise types.GitRemoteException("Could not locate working ssh credentials")
 
 
+# pragma no cover
 def _clone_ssh_repo(git_url: str, project_path: str) -> pygit2.Repository:
     # TODO: Support Windows paths
     path_tuples = [
