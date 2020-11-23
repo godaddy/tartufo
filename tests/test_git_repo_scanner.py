@@ -23,21 +23,23 @@ class RepoLoadTests(ScannerTestCase):
         super().setUp()
 
     @mock.patch("tartufo.config.util.get_repository")
-    def test_repo_is_loaded_on_init(self, mock_repo: mock.MagicMock):
-        mock_repo.return_value = (pathlib.Path("."), None)
+    def test_repo_is_loaded_on_init(self, mock_get_repo: mock.MagicMock):
+        mock_repo = mock.MagicMock()
+        mock_get_repo.return_value = (pathlib.Path("."), mock_repo)
         scanner.GitLocalRepoScanner(self.global_options, self.git_options, ".")
-        mock_repo.assert_called_once()
+        mock_get_repo.assert_called_once()
 
     @mock.patch("tartufo.config.util.get_repository")
-    def test_load_repo_loads_new_repo(self, mock_repo: mock.MagicMock):
+    def test_load_repo_loads_new_repo(self, mock_get_repo: mock.MagicMock):
         repo_path = "../tartufo"
-        mock_repo.return_value = (pathlib.Path(repo_path), None)
+        mock_repo = mock.MagicMock()
+        mock_get_repo.return_value = (pathlib.Path(repo_path), mock_repo)
         test_scanner = scanner.GitLocalRepoScanner(
             self.global_options, self.git_options, "."
         )
         print("test_load_repo_loads_new_repo: load_repo(" + repo_path + ")")
         test_scanner.load_repo(repo_path)
-        mock_repo.assert_has_calls(
+        mock_get_repo.assert_has_calls(
             (
                 mock.call(".", fetch=None, branch=None),
                 mock.call("../tartufo", fetch=None, branch=None),
@@ -49,7 +51,8 @@ class RepoLoadTests(ScannerTestCase):
     def test_extra_inclusions_get_added(
         self, mock_get_repo: mock.MagicMock, mock_load: mock.MagicMock
     ):
-        mock_get_repo.return_value = (self.data_dir, None)
+        mock_repo = mock.MagicMock()
+        mock_get_repo.return_value = (self.data_dir, mock_repo)
         mock_load.return_value = (
             self.data_dir / "pyproject.toml",
             {"include_paths": "include-files"},
@@ -67,7 +70,8 @@ class RepoLoadTests(ScannerTestCase):
     def test_extra_exclusions_get_added(
         self, mock_get_repo: mock.MagicMock, mock_load: mock.MagicMock
     ):
-        mock_get_repo.return_value = (self.data_dir, None)
+        mock_repo = mock.MagicMock()
+        mock_get_repo.return_value = (self.data_dir, mock_repo)
         mock_load.return_value = (
             self.data_dir / "pyproject.toml",
             {"exclude_paths": "exclude-files"},
@@ -91,7 +95,8 @@ class RepoLoadTests(ScannerTestCase):
         self, mock_get_repo: mock.MagicMock, mock_load: mock.MagicMock
     ):
         self.global_options.exclude_signatures = ()
-        mock_get_repo.return_value = (self.data_dir, None)
+        mock_repo = mock.MagicMock()
+        mock_get_repo.return_value = (self.data_dir, mock_repo)
         mock_load.return_value = (
             self.data_dir / "pyproject.toml",
             {"exclude_signatures": ["foo", "bar"]},
@@ -110,37 +115,45 @@ class ChunkGeneratorTests(ScannerTestCase):
     def test_single_branch_is_loaded_if_specified(self, mock_get_repo: mock.MagicMock):
         self.git_options.branch = "foo"
         self.git_options.fetch = True
+        data_dir = Path("/foo")
+        mock_repo = mock.MagicMock()
+        mock_get_repo.return_value = (data_dir, mock_repo)
         mock_fetch = mock.MagicMock()
         mock_fetch.return_value = []
-        mock_repo.return_value.remotes["origin"].fetch = mock_fetch
+        mock_repo.remotes["origin"].fetch = mock_fetch
         test_scanner = scanner.GitLocalRepoScanner(
             self.global_options, self.git_options, "."
         )
         for _ in test_scanner.chunks:
             pass
-        mock_fetch.assert_called_once_with("foo", callbacks=mock_callback.return_value)
+        mock_fetch.assert_called_once_with("foo")
 
     @mock.patch("tartufo.config.util.get_repository")
     def test_all_branches_are_loaded_if_specified(self, mock_get_repo: mock.MagicMock):
+        data_dir = Path("/foo")
+        mock_repo = mock.MagicMock()
+        mock_get_repo.return_value = (data_dir, mock_repo)
         mock_fetch = mock.MagicMock()
         mock_fetch.return_value = []
-        mock_repo.return_value.remotes["origin"].fetch = mock_fetch
+        mock_repo.remotes["origin"].fetch = mock_fetch
+
         self.git_options.fetch = True
         test_scanner = scanner.GitLocalRepoScanner(
             self.global_options, self.git_options, "."
         )
         for _ in test_scanner.chunks:
             pass
-        mock_fetch.assert_called_once_with(callbacks=mock_callback.return_value)
+        mock_fetch.assert_called_once_with()
 
     @mock.patch("tartufo.config.util.get_repository")
     def test_explicit_exception_is_raised_if_fetch_fails(
         self, mock_get_repo: mock.MagicMock
     ):
         self.git_options.fetch = True
-        mock_repo.return_value.remotes[
-            "origin"
-        ].fetch.side_effect = types.GitRemoteException(
+        data_dir = Path("/foo")
+        mock_repo = mock.MagicMock()
+        mock_get_repo.return_value = (data_dir, mock_repo)
+        mock_repo.remotes["origin"].fetch.side_effect = types.GitRemoteException(
             "Could not locate working ssh credentials"
         )
 
@@ -199,7 +212,6 @@ class ChunkGeneratorTests(ScannerTestCase):
     def test_all_commits_are_scanned_for_files(
         self, mock_get_repo: mock.MagicMock, mock_iter_diff: mock.MagicMock,
     ):
-        print("******************************************************************")
         self.git_options.fetch = True
         mock_repo = mock.MagicMock()
         mock_repo.branches = {"foo": mock.MagicMock()}
@@ -283,6 +295,9 @@ class IterDiffIndexTests(ScannerTestCase):
     def test_binary_files_are_skipped(self, mock_get_repo: mock.MagicMock):
         mock_diff = mock.MagicMock()
         mock_diff.delta.is_binary = True
+        data_dir = Path("/foo")
+        mock_repo = mock.MagicMock()
+        mock_get_repo.return_value = (data_dir, mock_repo)
         test_scanner = scanner.GitLocalRepoScanner(
             self.global_options, self.git_options, "."
         )
@@ -297,6 +312,9 @@ class IterDiffIndexTests(ScannerTestCase):
         mock_should.return_value = False
         mock_diff = mock.MagicMock()
         mock_diff.delta.is_binary = False
+        data_dir = Path("/foo")
+        mock_repo = mock.MagicMock()
+        mock_get_repo.return_value = (data_dir, mock_repo)
         test_scanner = scanner.GitLocalRepoScanner(
             self.global_options, self.git_options, "."
         )
@@ -309,6 +327,7 @@ class IterDiffIndexTests(ScannerTestCase):
     def test_all_files_are_yielded(
         self, mock_get_repo: mock.MagicMock, mock_should: mock.MagicMock
     ):
+        data_dir = Path("/foo")
         mock_should.return_value = True
         mock_diff_1 = mock.MagicMock()
         mock_diff_1.delta.is_binary = False
@@ -318,6 +337,8 @@ class IterDiffIndexTests(ScannerTestCase):
         mock_diff_2.delta.is_binary = False
         mock_diff_2.text = "- Marvin"
         mock_diff_2.delta.new_file.path = "/bar"
+        mock_repo = mock.MagicMock()
+        mock_get_repo.return_value = (data_dir, mock_repo)
         test_scanner = scanner.GitLocalRepoScanner(
             self.global_options, self.git_options, "."
         )
@@ -330,10 +351,14 @@ class IterDiffIndexTests(ScannerTestCase):
 class IterBranchCommitsTests(ScannerTestCase):
     @mock.patch("tartufo.config.util.get_repository")
     def test_all_commits_get_yielded_in_pairs(self, mock_get_repo: mock.MagicMock):
+        data_dir = Path("/foo")
+        mock_repo = mock.MagicMock()
+        mock_get_repo.return_value = (data_dir, mock_repo)
+
         test_scanner = scanner.GitLocalRepoScanner(
             self.global_options, self.git_options, "."
         )
-        mock_repo = mock.MagicMock()
+
         mock_branch = mock.MagicMock(name="foo")
         mock_commit_1 = mock.MagicMock()
         mock_commit_2 = mock.MagicMock()
@@ -359,11 +384,15 @@ class IterBranchCommitsTests(ScannerTestCase):
     def test_iteration_stops_when_since_commit_is_reached(
         self, mock_get_repo: mock.MagicMock
     ):
+        data_dir = Path("/foo")
+        mock_repo = mock.MagicMock()
+        mock_get_repo.return_value = (data_dir, mock_repo)
+
         self.git_options.since_commit = "42"
         test_scanner = scanner.GitLocalRepoScanner(
             self.global_options, self.git_options, "."
         )
-        mock_repo = mock.MagicMock()
+
         mock_branch = mock.MagicMock(name="foo")
         mock_commit_1 = mock.MagicMock()
         mock_commit_2 = mock.MagicMock()
