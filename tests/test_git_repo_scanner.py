@@ -109,64 +109,6 @@ class RepoLoadTests(ScannerTestCase):
             sorted(test_scanner.global_options.exclude_signatures), ["bar", "foo"]
         )
 
-
-class ChunkGeneratorTests(ScannerTestCase):
-    @mock.patch("tartufo.config.util.get_repository")
-    def test_single_branch_is_loaded_if_specified(self, mock_get_repo: mock.MagicMock):
-        self.git_options.branch = "foo"
-        self.git_options.fetch = True
-        data_dir = Path("/foo")
-        mock_repo = mock.MagicMock()
-        mock_get_repo.return_value = (data_dir, mock_repo)
-        mock_fetch = mock.MagicMock()
-        mock_fetch.return_value = []
-        mock_repo.remotes["origin"].fetch = mock_fetch
-        test_scanner = scanner.GitLocalRepoScanner(
-            self.global_options, self.git_options, "."
-        )
-        for _ in test_scanner.chunks:
-            pass
-        mock_fetch.assert_called_once_with("foo")
-
-    @mock.patch("tartufo.config.util.get_repository")
-    def test_all_branches_are_loaded_if_specified(self, mock_get_repo: mock.MagicMock):
-        data_dir = Path("/foo")
-        mock_repo = mock.MagicMock()
-        mock_get_repo.return_value = (data_dir, mock_repo)
-        mock_fetch = mock.MagicMock()
-        mock_fetch.return_value = []
-        mock_repo.remotes["origin"].fetch = mock_fetch
-
-        self.git_options.fetch = True
-        test_scanner = scanner.GitLocalRepoScanner(
-            self.global_options, self.git_options, "."
-        )
-        for _ in test_scanner.chunks:
-            pass
-        mock_fetch.assert_called_once_with()
-
-    @mock.patch("tartufo.config.util.get_repository")
-    def test_explicit_exception_is_raised_if_fetch_fails(
-        self, mock_get_repo: mock.MagicMock
-    ):
-        self.git_options.fetch = True
-        data_dir = Path("/foo")
-        mock_repo = mock.MagicMock()
-        mock_get_repo.return_value = (data_dir, mock_repo)
-        mock_repo.remotes["origin"].fetch.side_effect = types.GitRemoteException(
-            "Could not locate working ssh credentials"
-        )
-
-        with self.assertRaisesRegex(
-            types.GitRemoteException, "Could not locate working ssh credentials"
-        ):
-            test_scanner = scanner.GitLocalRepoScanner(
-                self.global_options, self.git_options, "."
-            )
-
-            for _ in test_scanner.chunks:
-                pass
-
     @mock.patch("tartufo.scanner.GitScanner._iter_diff")
     @mock.patch("tartufo.util.get_repository")
     def test_all_branches_are_scanned_for_commits(
