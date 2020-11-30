@@ -463,20 +463,28 @@ class GitRepoScanner(GitScanner):
 
         try:
             if self.git_options.branch:
-                branches = self._repo.remotes.origin.fetch(self.git_options.branch)
+                # Single branch only
+                if self.git_options.fetch:
+                    self._repo.remotes.origin.fetch(self.git_options.branch)
+                unfiltered_branches = list(self._repo.branches)
+                branches = [
+                    x for x in unfiltered_branches if x == self.git_options.branch
+                ]
             else:
-                branches = self._repo.remotes.origin.fetch()
+                # Everything
+                if self.git_options.fetch:
+                    self._repo.remotes.origin.fetch()
+                branches = list(self._repo.branches)
         except git.GitCommandError as exc:
             raise types.GitRemoteException(exc.stderr.strip()) from exc
 
-        for remote_branch in branches:
+        for branch in branches:
             diff_index: git.DiffIndex = None
             diff_hash: bytes
             curr_commit: git.Commit = None
             prev_commit: git.Commit = None
-
             for curr_commit, prev_commit in self._iter_branch_commits(
-                self._repo, remote_branch
+                self._repo, branch
             ):
                 diff_index = curr_commit.diff(prev_commit, create_patch=True)
                 diff_hash = hashlib.md5(
@@ -489,7 +497,7 @@ class GitRepoScanner(GitScanner):
                     yield types.Chunk(
                         blob,
                         file_path,
-                        util.extract_commit_metadata(prev_commit, remote_branch),
+                        util.extract_commit_metadata(prev_commit, branch),
                     )
 
             # Finally, yield the first commit to the branch
@@ -499,7 +507,7 @@ class GitRepoScanner(GitScanner):
                     yield types.Chunk(
                         blob,
                         file_path,
-                        util.extract_commit_metadata(prev_commit, remote_branch),
+                        util.extract_commit_metadata(prev_commit, branch),
                     )
 
 

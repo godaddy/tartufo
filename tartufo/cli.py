@@ -146,6 +146,7 @@ class TartufoCLI(click.MultiCommand):
     callback=config.read_pyproject_toml,
     help="Read configuration from specified file. [default: tartufo.toml]",
 )
+
 # The first positional argument here would be a hard-coded version, hence the `None`
 @click.version_option(None, "-V", "--version")
 @click.pass_context
@@ -173,7 +174,7 @@ def process_issues(
     output_dir = None
     if options.output_dir:
         now = datetime.now().isoformat("T", "microseconds")
-        if platform.system().lower() == "windows":
+        if platform.system().lower() == "windows":  # pragma: no cover
             # Make sure we aren't using illegal characters for Windows folder names
             now = now.replace(":", "")
         output_dir = pathlib.Path(options.output_dir) / f"tartufo-scan-results-{now}"
