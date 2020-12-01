@@ -190,7 +190,7 @@ while ensuring a high bar of quality for the code and the project.
 This process is thankfully mostly automated. There are, however, a handful of
 manual steps that must be taken to kick off that automation. It is all built
 this way to help ensure that issuing a release is a very conscious decision,
-requiring peer review, and cannot easily happy accidentally. The steps involved
+requiring peer review, and cannot easily happen accidentally. The steps involved
 currently are:
 
 - Create a new branch locally for the release, for example:
