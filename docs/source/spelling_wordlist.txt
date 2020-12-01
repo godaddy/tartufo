@@ -30,9 +30,12 @@ tuple
 twilio
 txt
 util
+# For contractions: you've, we've, I've
+ve
 versioned
 # For the ChangeLog on undeclared version numbers -- vX.Y.Z
 vX
 walkthrough
 whitelist
 whitespace
+Yay
