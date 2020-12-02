@@ -1,14 +1,17 @@
-vX.Y.Z - TBD
+v2.1.0 - 02 December 2020
 ------------------------
 
 Features:
 
+* #119 - Added a new `--fetch`/`--no-fetch` option for local scans, controlling
+  whether the local clone is refreshed before scan. (Thanks @jgowdy!)
 * #125 - Implement CODEOWNERS and auto-assignment to maintainers on PRs
 
 Bugfixes:
 
 * #115 - Strange behavior can manifest with invalid sub-commands
 * #117 - Ignore whitespace-only lines in exclusion files
+* #118 - Local scans fetch remote origin
 * #121 - Match rules specified with --git-rules-repo were not included in scans
 * #140 - Ensure a valid output folder name in Windows
 
