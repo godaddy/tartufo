@@ -31,7 +31,7 @@ maintainers = ["GoDaddy <oss@godaddy.com>"]
 name = "tartufo"
 readme = "README.md"
 repository = "https://github.com/godaddy/tartufo/"
-version = "2.1.0"
+version = "2.2.0"
 
 [tool.poetry.scripts]
 tartufo = "tartufo.cli:main"
