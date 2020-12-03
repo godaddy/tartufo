@@ -1,3 +1,7 @@
 {
-  "RSA private key 2": "-----BEGIN EC PRIVATE KEY-----"
+  "RSA private key 2": "-----BEGIN EC PRIVATE KEY-----",
+  "Complex Rule": {
+    "pattern": "complex-rule",
+    "path_pattern": "/tmp/[a-z0-9A-Z]+\\.(py|js|json)"
+  }
 }

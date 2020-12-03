@@ -3,7 +3,7 @@ import unittest
 from unittest import mock
 
 from tartufo import scanner, types
-from tartufo.types import GlobalOptions
+from tartufo.types import GlobalOptions, Rule
 
 from tests.helpers import generate_options
 
@@ -92,7 +92,7 @@ class IssuesTests(ScannerTestCase):
     def test_populated_issues_list_does_not_rescan(self, mock_scan: mock.MagicMock):
         test_scanner = TestScanner(self.options)
         test_scanner._issues = [  # pylint: disable=protected-access
-            scanner.Issue(types.IssueType.RegEx, "foo", types.Chunk("foo", "bar"))
+            scanner.Issue(types.IssueType.RegEx, "foo", types.Chunk("foo", "bar", {}))
         ]
         test_scanner.issues  # pylint: disable=pointless-statement
         mock_scan.assert_not_called()
@@ -226,15 +226,24 @@ class RegexScanTests(ScannerTestCase):
         rule_1.findall.return_value = []
         rule_2 = mock.MagicMock()
         rule_2.findall.return_value = []
+        rule_2_path = mock.MagicMock()
+        rule_2_path.match = mock.MagicMock(return_value=["/file/path"])
+        rule_3 = mock.MagicMock()
+        rule_3_path = mock.MagicMock()
+        rule_3_path.match = mock.MagicMock(return_value=[])
         test_scanner = TestScanner(self.options)
         test_scanner._rules_regexes = {  # pylint: disable=protected-access
-            "foo": rule_1,
-            "bar": rule_2,
+            "foo": Rule(name=None, pattern=rule_1, path_pattern=None),
+            "bar": Rule(name=None, pattern=rule_2, path_pattern=rule_2_path),
+            "not-found": Rule(name=None, pattern=rule_3, path_pattern=rule_3_path),
         }
-        chunk = types.Chunk("foo", "bar")
+        chunk = types.Chunk("foo", "/file/path", {})
         test_scanner.scan_regex(chunk)
         rule_1.findall.assert_called_once_with("foo")
         rule_2.findall.assert_called_once_with("foo")
+        rule_2_path.match.assert_called_once_with("/file/path")
+        rule_3_path.match.assert_called_once_with("/file/path")
+        rule_3.assert_not_called()
 
     @mock.patch("tartufo.scanner.ScannerBase.signature_is_excluded")
     def test_issue_is_not_created_if_signature_is_excluded(
@@ -243,9 +252,9 @@ class RegexScanTests(ScannerTestCase):
         mock_signature.return_value = True
         test_scanner = TestScanner(self.options)
         test_scanner._rules_regexes = {  # pylint: disable=protected-access
-            "foo": re.compile("foo")
+            "foo": Rule(name=None, pattern=re.compile("foo"), path_pattern=None)
         }
-        chunk = types.Chunk("foo", "bar")
+        chunk = types.Chunk("foo", "bar", {})
         issues = test_scanner.scan_regex(chunk)
         mock_signature.assert_called_once_with("foo", "bar")
         self.assertEqual(issues, [])
@@ -257,9 +266,9 @@ class RegexScanTests(ScannerTestCase):
         mock_signature.return_value = False
         test_scanner = TestScanner(self.options)
         test_scanner._rules_regexes = {  # pylint: disable=protected-access
-            "foo": re.compile("foo")
+            "foo": Rule(name=None, pattern=re.compile("foo"), path_pattern=None)
         }
-        chunk = types.Chunk("foo", "bar")
+        chunk = types.Chunk("foo", "bar", {})
         issues = test_scanner.scan_regex(chunk)
         mock_signature.assert_called_once_with("foo", "bar")
         self.assertEqual(len(issues), 1)
@@ -278,6 +287,7 @@ class EntropyTests(ScannerTestCase):
         asdfqwer
         """,
             "foo.py",
+            {},
         )
         self.scanner = TestScanner(self.options)
 

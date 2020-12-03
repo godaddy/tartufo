@@ -1,23 +1,24 @@
 # Contributing
 
 Everyone is welcome to contribute to GoDaddy's Open Source Software.
-Contributing doesn’t just mean submitting pull requests. You can also get
+Contributing doesn't just mean submitting pull requests. You can also get
 involved by reporting/triaging bugs, or participating in discussions on the evolution of each
 project.
 
-No matter how you want to get involved, we ask that you first learn what’s
+No matter how you want to get involved, we ask that you first learn what's
 expected of anyone who participates in the project by reading these Contribution
 Guidelines.
 
 **Please Note:** GitHub is for bug reports and contributions primarily - if you
-have a support question head over to [GoDaddy's Open Source Software Slack][slack].
+have a support question head over to [GoDaddy's Open Source Software Slack][slack], or the
+[Tartufo Mailing list].
 
 ## Answering Questions
 
 One of the most important and immediate ways you can support this project is to
-answer questions on [Slack][slack] or [Github][issues]. Whether you’re helping a
-newcomer understand a feature or troubleshooting an edge case with a seasoned
-developer, your knowledge and experience with Python or security can go a long
+answer questions on [Slack][slack], [Github][issues], or the [Tartufo Mailing list].
+Whether you're helping a newcomer understand a feature or troubleshooting an edge case with a
+seasoned developer, your knowledge and experience with Python or security can go a long
 way to help others.
 
 ## Reporting Bugs
@@ -40,7 +41,7 @@ Submit a ticket for your issue, assuming one does not already exist:
   - Describe the environment that (re)produced the problem.
 
 > For a bug to be actionable, it needs to be reproducible. If you or
-> contributors can’t reproduce the bug, try to figure out why. Please take care
+> contributors can't reproduce the bug, try to figure out why. Please take care
 > to stay involved in discussions around solving the problem.
 
 ## Triaging bugs or contributing code
@@ -80,12 +81,12 @@ Sometimes code reviews will take longer than you would hope for, especially for
 larger features. Here are some accepted ways to speed up review times for your
 patches:
 
-- Review other people’s changes. If you help out, others will be more willing to
+- Review other people's changes. If you help out, others will be more willing to
   do the same for you. Good will is our currency.
 - Split your change into multiple smaller changes. The smaller your change, the
   higher the probability that somebody will take a quick look at it.
 - Ping the change on [slack]. If it is urgent, provide reasons why it is
-  important to get this change landed. Remember that you’re asking for valuable
+  important to get this change landed. Remember that you're asking for valuable
   time from other professional developers.
 
 **Note that anyone is welcome to review and give feedback on a change, but only
@@ -177,6 +178,53 @@ black....................................................................Passed
 pylint...................................................................Passed
 ```
 
+## Contributing as a Maintainer
+
+On top of all our lovely contributors, we have a core group of people who act as
+maintainers of the project. They are the ones who are the gatekeepers, and make
+sure that issues are addressed, PRs are merged, and new releases issued, all
+while ensuring a high bar of quality for the code and the project.
+
+### Issuing a New Release
+
+This process is thankfully mostly automated. There are, however, a handful of
+manual steps that must be taken to kick off that automation. It is all built
+this way to help ensure that issuing a release is a very conscious decision,
+requiring peer review, and cannot easily happen accidentally. The steps involved
+currently are:
+
+- Create a new branch locally for the release, for example:
+
+  ```console
+  > git checkout -b releases/v2.1.0
+  ```
+
+- Tell Poetry to [bump the version]:
+
+  ```console
+  > poetry version minor
+  Bumping version from 2.0.1 to 2.1.0
+  ```
+
+  - Note: All this is doing, is updating the version number in the
+    `pyproject.toml`. You can totally do this manually. This command just might
+    be a bit quicker. And it's nice to have a command to do it for you. Yay
+    automation!
+- Update the CHANGELOG with the appropriate new version number and release date.
+- Create a pull request for these changes, and get it approved!
+- Once your PR has been merged, the final piece is to actually create the new
+  release.
+
+  1. Go to the `tartufo` [releases page] and click on `Draft a new release`.
+  2. Enter an appropriate tag version (in this example, `v2.1.0`).
+  3. Title the release. Generally these would just be in the form
+     `Version 2.1.0`. (Not very creative, I know. But predictable!)
+  4. Copy-paste the CHANGELOG entries for this new version into the description.
+  5. Click `Publish release`!
+
+Congratulations, you've just issued a new release for `tartufo`. The automation
+will take care of the rest! 🎉
+
 ## Additional Resources
 
 - [General GitHub Documentation](https://help.github.com/)
@@ -184,6 +232,7 @@ pylint...................................................................Passed
 
 [black]: https://github.com/psf/black
 [black-editors]: https://github.com/psf/black#editor-integration
+[bump the version]: https://python-poetry.org/docs/cli/#version
 [issues]: https://github.com/godaddy/tartufo/issues
 [Install Poetry]: https://python-poetry.org/docs/#installation
 [Poetry Environments]: https://python-poetry.org/docs/managing-environments/
@@ -193,5 +242,7 @@ pylint...................................................................Passed
 [poetry docs]: https://python-poetry.org/docs/
 [pre-commit]: https://pre-commit.com/
 [PyPI]: http://pypi.org/
+[releases page]: https://github.com/godaddy/tartufo/releases
 [slack]: https://godaddy-oss.slack.com/
 [tox]: https://tox.readthedocs.io/en/latest/
+[Tartufo Mailing list]: https://groups.google.com/g/tartufo-secrets-scanner

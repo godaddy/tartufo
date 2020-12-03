@@ -10,6 +10,9 @@ import toml
 from click.testing import CliRunner
 
 from tartufo import config, types
+from tartufo.types import Rule
+
+from tests import helpers
 
 
 class ConfigureRegexTests(unittest.TestCase):
@@ -17,7 +20,16 @@ class ConfigureRegexTests(unittest.TestCase):
         rules_path = pathlib.Path(__file__).parent / "data" / "testRules.json"
         rules_files = (rules_path.open(),)
         expected_regexes = {
-            "RSA private key 2": re.compile("-----BEGIN EC PRIVATE KEY-----")
+            "RSA private key 2": Rule(
+                name="RSA private key 2",
+                pattern=re.compile("-----BEGIN EC PRIVATE KEY-----"),
+                path_pattern=None,
+            ),
+            "Complex Rule": Rule(
+                name="Complex Rule",
+                pattern=re.compile("complex-rule"),
+                path_pattern=re.compile("/tmp/[a-z0-9A-Z]+\\.(py|js|json)"),
+            ),
         }
 
         actual_regexes = config.configure_regexes(
@@ -35,8 +47,15 @@ class ConfigureRegexTests(unittest.TestCase):
         rules_path = pathlib.Path(__file__).parent / "data" / "testRules.json"
         rules_files = (rules_path.open(),)
         expected_regexes = copy.copy(config.DEFAULT_REGEXES)
-        expected_regexes["RSA private key 2"] = re.compile(
-            "-----BEGIN EC PRIVATE KEY-----"
+        expected_regexes["RSA private key 2"] = Rule(
+            name="RSA private key 2",
+            pattern=re.compile("-----BEGIN EC PRIVATE KEY-----"),
+            path_pattern=None,
+        )
+        expected_regexes["Complex Rule"] = Rule(
+            name="Complex Rule",
+            pattern=re.compile("complex-rule"),
+            path_pattern=re.compile("/tmp/[a-z0-9A-Z]+\\.(py|js|json)"),
         )
 
         actual_regexes = config.configure_regexes(
@@ -68,6 +87,9 @@ class ConfigureRegexTests(unittest.TestCase):
             config.configure_regexes(rules_repo=".")
         mock_clone.assert_not_called()
 
+    @unittest.skipIf(
+        helpers.WINDOWS, "Avoiding a race condition/permission error in Windows",
+    )
     @mock.patch("tartufo.config.util.clone_git_repo")
     def test_configure_regexes_clones_git_rules_repo(self, mock_clone):
         runner = CliRunner()
@@ -99,6 +121,33 @@ class ConfigureRegexTests(unittest.TestCase):
             repo_path.glob.return_value = []
             config.configure_regexes(rules_repo=".", rules_repo_files=("tartufo.json",))
             repo_path.glob.assert_called_once_with("tartufo.json")
+
+    def test_configure_regexes_includes_rules_from_rules_repo(self):
+        rules_path = pathlib.Path(__file__).parent / "data"
+        actual_regexes = config.configure_regexes(
+            include_default=False,
+            rules_repo=str(rules_path),
+            rules_repo_files=["testRules.json"],
+        )
+        expected_regexes = {
+            "RSA private key 2": Rule(
+                name="RSA private key 2",
+                pattern=re.compile("-----BEGIN EC PRIVATE KEY-----"),
+                path_pattern=None,
+            ),
+            "Complex Rule": Rule(
+                name="Complex Rule",
+                pattern=re.compile("complex-rule"),
+                path_pattern=re.compile("/tmp/[a-z0-9A-Z]+\\.(py|js|json)"),
+            ),
+        }
+
+        self.assertEqual(
+            expected_regexes,
+            actual_regexes,
+            "The regexes dictionary should match the test rules "
+            "(expected: {}, actual: {})".format(expected_regexes, actual_regexes),
+        )
 
 
 class LoadConfigFromPathTests(unittest.TestCase):
@@ -139,7 +188,9 @@ class LoadConfigFromPathTests(unittest.TestCase):
     def test_parent_directory_not_checked_if_traverse_is_false(self):
         with self.assertRaisesRegex(
             FileNotFoundError,
-            f"Could not find config file in {self.data_dir / 'config'}.",
+            f"Could not find config file in {self.data_dir / 'config'}.".replace(
+                "\\", "\\\\"
+            ),
         ):
             config.load_config_from_path(
                 self.data_dir / "config", "pyproject.toml", False
@@ -215,6 +266,27 @@ class ReadPyprojectTomlTests(unittest.TestCase):
         result = config.read_pyproject_toml(self.ctx, self.param, "")
         os.chdir(str(cur_dir))
         self.assertEqual(result, str(self.data_dir / "config" / "tartufo.toml"))
+
+
+class CompilePathRulesTests(unittest.TestCase):
+    def test_commented_lines_are_ignored(self):
+        rules = config.compile_path_rules(["# Poetry lock file", r"poetry\.lock"])
+        self.assertEqual(rules, [re.compile(r"poetry\.lock")])
+
+    def test_whitespace_lines_are_ignored(self):
+        rules = config.compile_path_rules(
+            [
+                "# Poetry lock file",
+                r"poetry\.lock",
+                "",
+                "\t\n",
+                "# NPM files",
+                r"package-lock\.json",
+            ]
+        )
+        self.assertEqual(
+            rules, [re.compile(r"poetry\.lock"), re.compile(r"package-lock\.json")]
+        )
 
 
 if __name__ == "__main__":

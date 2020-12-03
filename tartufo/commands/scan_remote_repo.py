@@ -46,7 +46,7 @@ def main(
 ) -> Tuple[str, Generator[Issue, None, None]]:
     """Automatically clone and scan a remote git repository."""
     git_options = types.GitOptions(
-        since_commit=since_commit, max_depth=max_depth, branch=branch
+        since_commit=since_commit, max_depth=max_depth, branch=branch, fetch=False
     )
     repo_path: Optional[Path] = None
     if work_dir:

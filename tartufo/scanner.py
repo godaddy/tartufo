@@ -21,7 +21,7 @@ from typing import (
 import git
 
 from tartufo import config, types, util
-
+from tartufo.types import Rule
 
 BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
 HEX_CHARS = "1234567890abcdefABCDEF"
@@ -110,7 +110,7 @@ class ScannerBase(abc.ABC):
     _issues: Optional[List[Issue]] = None
     _included_paths: Optional[List[Pattern]] = None
     _excluded_paths: Optional[List[Pattern]] = None
-    _rules_regexes: Optional[Dict[str, Pattern]] = None
+    _rules_regexes: Optional[Dict[str, Rule]] = None
     global_options: types.GlobalOptions
 
     def __init__(self, options: types.GlobalOptions) -> None:
@@ -162,7 +162,7 @@ class ScannerBase(abc.ABC):
         return self._excluded_paths
 
     @property
-    def rules_regexes(self) -> Dict[str, Pattern]:
+    def rules_regexes(self) -> Dict[str, Rule]:
         """Get a dictionary of regular expressions to scan the code for.
 
         :raises types.TartufoConfigException: If there was a problem compiling the rules
@@ -180,7 +180,7 @@ class ScannerBase(abc.ABC):
                 raise types.ConfigException(str(exc)) from exc
         return self._rules_regexes
 
-    @lru_cache()
+    @lru_cache(maxsize=None)
     def should_scan(self, file_path: str):
         """Check if the a file path should be included in analysis.
 
@@ -216,7 +216,7 @@ class ScannerBase(abc.ABC):
             in self.global_options.exclude_signatures
         )
 
-    @lru_cache()
+    @lru_cache(maxsize=None)
     def calculate_entropy(self, data: str, char_set: str) -> float:
         """Calculate the Shannon entropy for a piece of data.
 
@@ -299,14 +299,15 @@ class ScannerBase(abc.ABC):
         :param chunk: The chunk of data to be scanned
         """
         issues: List[Issue] = []
-        for key, pattern in self.rules_regexes.items():
-            found_strings = pattern.findall(chunk.contents)
-            for match in found_strings:
-                # Filter out any explicitly "allowed" match signatures
-                if not self.signature_is_excluded(match, chunk.file_path):
-                    issue = Issue(types.IssueType.RegEx, match, chunk)
-                    issue.issue_detail = key
-                    issues.append(issue)
+        for key, rule in self.rules_regexes.items():
+            if rule.path_pattern is None or rule.path_pattern.match(chunk.file_path):
+                found_strings = rule.pattern.findall(chunk.contents)
+                for match in found_strings:
+                    # Filter out any explicitly "allowed" match signatures
+                    if not self.signature_is_excluded(match, chunk.file_path):
+                        issue = Issue(types.IssueType.RegEx, match, chunk)
+                        issue.issue_detail = key
+                        issues.append(issue)
         return issues
 
     @property
@@ -467,20 +468,28 @@ class GitRepoScanner(GitScanner):
 
         try:
             if self.git_options.branch:
-                branches = self._repo.remotes.origin.fetch(self.git_options.branch)
+                # Single branch only
+                if self.git_options.fetch:
+                    self._repo.remotes.origin.fetch(self.git_options.branch)
+                unfiltered_branches = list(self._repo.branches)
+                branches = [
+                    x for x in unfiltered_branches if x == self.git_options.branch
+                ]
             else:
-                branches = self._repo.remotes.origin.fetch()
+                # Everything
+                if self.git_options.fetch:
+                    self._repo.remotes.origin.fetch()
+                branches = list(self._repo.branches)
         except git.GitCommandError as exc:
             raise types.GitRemoteException(exc.stderr.strip()) from exc
 
-        for remote_branch in branches:
+        for branch in branches:
             diff_index: git.DiffIndex = None
             diff_hash: bytes
             curr_commit: git.Commit = None
             prev_commit: git.Commit = None
-
             for curr_commit, prev_commit in self._iter_branch_commits(
-                self._repo, remote_branch
+                self._repo, branch
             ):
                 diff_index = curr_commit.diff(prev_commit, create_patch=True)
                 diff_hash = hashlib.md5(
@@ -493,7 +502,7 @@ class GitRepoScanner(GitScanner):
                     yield types.Chunk(
                         blob,
                         file_path,
-                        util.extract_commit_metadata(prev_commit, remote_branch),
+                        util.extract_commit_metadata(prev_commit, branch),
                     )
 
             # Finally, yield the first commit to the branch
@@ -503,7 +512,7 @@ class GitRepoScanner(GitScanner):
                     yield types.Chunk(
                         blob,
                         file_path,
-                        util.extract_commit_metadata(prev_commit, remote_branch),
+                        util.extract_commit_metadata(prev_commit, branch),
                     )
 
 
@@ -523,4 +532,4 @@ class GitPreCommitScanner(GitScanner):
             self._repo.head.commit, create_patch=True, R=True
         )
         for blob, file_path in self._iter_diff_index(diff_index):
-            yield types.Chunk(blob, file_path)
+            yield types.Chunk(blob, file_path, {})

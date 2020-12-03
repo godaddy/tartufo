@@ -93,6 +93,7 @@ class ChunkGeneratorTests(ScannerTestCase):
     @mock.patch("git.Repo")
     def test_single_branch_is_loaded_if_specified(self, mock_repo: mock.MagicMock):
         self.git_options.branch = "foo"
+        self.git_options.fetch = True
         mock_fetch = mock.MagicMock()
         mock_fetch.return_value = []
         mock_repo.return_value.remotes.origin.fetch = mock_fetch
@@ -108,6 +109,7 @@ class ChunkGeneratorTests(ScannerTestCase):
         mock_fetch = mock.MagicMock()
         mock_fetch.return_value = []
         mock_repo.return_value.remotes.origin.fetch = mock_fetch
+        self.git_options.fetch = True
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
@@ -119,6 +121,7 @@ class ChunkGeneratorTests(ScannerTestCase):
     def test_explicit_exception_is_raised_if_fetch_fails(
         self, mock_repo: mock.MagicMock
     ):
+        self.git_options.fetch = True
         mock_repo.return_value.remotes.origin.fetch.side_effect = git.GitCommandError(
             command="git fetch -v origin", status=42, stderr="Fetch failed!"
         )
@@ -136,7 +139,9 @@ class ChunkGeneratorTests(ScannerTestCase):
     def test_all_branches_are_scanned_for_commits(
         self, mock_repo: mock.MagicMock, mock_iter_commits: mock.MagicMock
     ):
+        self.git_options.fetch = True
         mock_repo.return_value.remotes.origin.fetch.return_value = ["foo", "bar"]
+        mock_repo.return_value.branches = ["foo", "bar"]
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
@@ -151,15 +156,74 @@ class ChunkGeneratorTests(ScannerTestCase):
         )
 
     @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
+    @mock.patch("git.Repo")
+    def test_scan_all_branches_fetch_false(
+        self, mock_repo: mock.MagicMock, mock_iter_commits: mock.MagicMock
+    ):
+        self.git_options.fetch = False
+        mock_repo.return_value.remotes.origin.fetch.return_value = ["foo", "bar"]
+        mock_repo.return_value.branches = ["foo", "bar"]
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        mock_iter_commits.return_value = []
+        for _ in test_scanner.chunks:
+            pass
+        mock_iter_commits.assert_has_calls(
+            (
+                mock.call(mock_repo.return_value, "foo"),
+                mock.call(mock_repo.return_value, "bar"),
+            )
+        )
+
+    @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
+    @mock.patch("git.Repo")
+    def test_scan_single_branch_fetch_false(
+        self, mock_repo: mock.MagicMock, mock_iter_commits: mock.MagicMock
+    ):
+        self.git_options.fetch = False
+        self.git_options.branch = "bar"
+        mock_repo.return_value.remotes.origin.fetch.return_value = ["foo", "bar"]
+        mock_repo.return_value.branches = ["foo", "bar"]
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        mock_iter_commits.return_value = []
+        for _ in test_scanner.chunks:
+            pass
+        mock_repo.return_value.remotes.origin.fetch.assert_not_called()
+        mock_iter_commits.assert_has_calls((mock.call(mock_repo.return_value, "bar"),))
+
+    @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
+    @mock.patch("git.Repo")
+    def test_scan_single_branch_fetch_true(
+        self, mock_repo: mock.MagicMock, mock_iter_commits: mock.MagicMock
+    ):
+        self.git_options.fetch = True
+        self.git_options.branch = "bar"
+        mock_repo.return_value.remotes.origin.fetch.return_value = ["foo", "bar"]
+        mock_repo.return_value.branches = ["foo", "bar"]
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        mock_iter_commits.return_value = []
+        for _ in test_scanner.chunks:
+            pass
+        mock_repo.return_value.remotes.origin.fetch.assert_called()
+        mock_iter_commits.assert_has_calls((mock.call(mock_repo.return_value, "bar"),))
+
+    @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
     @mock.patch("tartufo.scanner.GitRepoScanner._iter_diff_index")
     @mock.patch("git.Repo")
     def test_all_commits_are_scanned_for_files(
         self,
         mock_repo: mock.MagicMock,
-        mock_iter_diff: mock.MagicMock,
+        mock_iter_diff_index: mock.MagicMock,
         mock_iter_commits: mock.MagicMock,
     ):
+        self.git_options.fetch = True
         mock_repo.return_value.remotes.origin.fetch.return_value = ["foo"]
+        mock_repo.return_value.branches = ["foo"]
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
@@ -170,7 +234,7 @@ class ChunkGeneratorTests(ScannerTestCase):
             (mock_commit_2, mock_commit_3),
             (mock_commit_1, mock_commit_2),
         ]
-        mock_iter_diff.return_value = []
+        mock_iter_diff_index.return_value = []
         for _ in test_scanner.chunks:
             pass
         mock_commit_2.diff.assert_called_once_with(mock_commit_3, create_patch=True)
@@ -180,7 +244,7 @@ class ChunkGeneratorTests(ScannerTestCase):
                 mock.call(git.NULL_TREE, create_patch=True),
             )
         )
-        mock_iter_diff.assert_has_calls(
+        mock_iter_diff_index.assert_has_calls(
             (
                 mock.call(mock_commit_2.diff.return_value),
                 mock.call(mock_commit_1.diff.return_value),
@@ -196,17 +260,19 @@ class ChunkGeneratorTests(ScannerTestCase):
         self,
         mock_repo: mock.MagicMock,
         mock_extract: mock.MagicMock,
-        mock_iter_diff: mock.MagicMock,
+        mock_iter_diff_index: mock.MagicMock,
         mock_iter_commits: mock.MagicMock,
     ):
+        self.git_options.fetch = True
         mock_repo.return_value.remotes.origin.fetch.return_value = ["foo"]
+        mock_repo.return_value.branches = ["foo"]
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
         mock_commit_1 = mock.MagicMock()
         mock_commit_2 = mock.MagicMock()
         mock_iter_commits.return_value = [(mock_commit_1, mock_commit_2)]
-        mock_iter_diff.return_value = [("foo", "bar.py"), ("baz", "blah.py")]
+        mock_iter_diff_index.return_value = [("foo", "bar.py"), ("baz", "blah.py")]
         chunks = list(test_scanner.chunks)
         # These get duplicated in this test, because `_iter_diff_index` is called
         # both in the normal branch/commit iteration, and then once more afterward

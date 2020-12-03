@@ -6,7 +6,6 @@ import shutil
 from typing import (
     Any,
     Dict,
-    IO,
     Iterable,
     List,
     MutableMapping,
@@ -22,11 +21,11 @@ import toml
 import truffleHogRegexes.regexChecks
 
 from tartufo import types, util
-
+from tartufo.types import Rule
 
 OptionTypes = Union[str, int, bool, None, TextIO, Tuple[TextIO, ...]]
 
-DEFAULT_REGEXES = truffleHogRegexes.regexChecks.regexes
+DEFAULT_REGEXES = util.convert_regexes_to_rules(truffleHogRegexes.regexChecks.regexes)
 
 
 def load_config_from_path(
@@ -151,7 +150,7 @@ def configure_regexes(
     rules_files: Optional[Iterable[TextIO]] = None,
     rules_repo: Optional[str] = None,
     rules_repo_files: Optional[Iterable[str]] = None,
-) -> Dict[str, Pattern]:
+) -> Dict[str, Rule]:
     """Build a set of regular expressions to be used during a regex scan.
 
     :param include_default: Whether to include the built-in set of regexes
@@ -165,7 +164,7 @@ def configure_regexes(
         rules = {}
 
     if rules_files:
-        all_files: List[IO[Any]] = list(rules_files)
+        all_files: List[TextIO] = list(rules_files)
     else:
         all_files = []
     try:
@@ -173,14 +172,21 @@ def configure_regexes(
         repo_path = None
         if rules_repo:
             repo_path = pathlib.Path(rules_repo)
-            if not repo_path.is_dir():
-                repo_path = pathlib.Path(util.clone_git_repo(rules_repo))
+            try:
+                if not repo_path.is_dir():
+                    cloned_repo = True
+            except OSError:  # pragma: no cover
+                # If a git URL is passed in, Windows will raise an OSError on `is_dir()`
+                cloned_repo = True
+            finally:
+                if cloned_repo:
+                    repo_path = pathlib.Path(util.clone_git_repo(rules_repo))
             if not rules_repo_files:
                 rules_repo_files = ("*.json",)
             for repo_file in rules_repo_files:
                 all_files.extend([path.open("r") for path in repo_path.glob(repo_file)])
-        if rules_files:
-            for rules_file in rules_files:
+        if all_files:
+            for rules_file in all_files:
                 loaded = load_rules_from_file(rules_file)
                 dupes = set(loaded.keys()).intersection(rules.keys())
                 if dupes:
@@ -190,27 +196,38 @@ def configure_regexes(
                 rules.update(loaded)
     finally:
         if cloned_repo:
-            shutil.rmtree(repo_path)  # type: ignore
+            shutil.rmtree(repo_path, onerror=util.del_rw)  # type: ignore
 
     return rules
 
 
-def load_rules_from_file(rules_file: TextIO) -> Dict[str, Pattern]:
+def load_rules_from_file(rules_file: TextIO) -> Dict[str, Rule]:
     """Load a set of JSON rules from a file and return them as compiled patterns.
 
     :param rules_file: An open file handle containing a JSON dictionary of regexes
     :raises ValueError: If the rules contain invalid JSON
     """
-    regexes = {}
+    rules: Dict[str, Rule] = {}
     try:
         new_rules = json.load(rules_file)
     except json.JSONDecodeError as exc:
         raise ValueError(
             "Error loading rules from file: {}".format(rules_file.name)
         ) from exc
-    for rule in new_rules:
-        regexes[rule] = re.compile(new_rules[rule])
-    return regexes
+    for rule_name, rule_definition in new_rules.items():
+        try:
+            path_pattern = rule_definition.get("path_pattern", None)
+            rule = Rule(
+                name=rule_name,
+                pattern=re.compile(rule_definition["pattern"]),
+                path_pattern=re.compile(path_pattern) if path_pattern else None,
+            )
+        except AttributeError:
+            rule = Rule(
+                name=rule_name, pattern=re.compile(rule_definition), path_pattern=None
+            )
+        rules[rule_name] = rule
+    return rules
 
 
 def compile_path_rules(patterns: Iterable[str]) -> List[Pattern]:
@@ -223,5 +240,5 @@ def compile_path_rules(patterns: Iterable[str]) -> List[Pattern]:
     return [
         re.compile(pattern.strip())
         for pattern in patterns
-        if pattern and not pattern.startswith("#")
+        if pattern.strip() and not pattern.startswith("#")
     ]

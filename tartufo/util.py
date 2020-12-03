@@ -9,12 +9,13 @@ import tempfile
 import uuid
 from functools import lru_cache, partial
 from hashlib import blake2s
-from typing import Any, Callable, Dict, Iterable, List, Optional, TYPE_CHECKING
+from typing import Any, Callable, Dict, Iterable, List, Optional, TYPE_CHECKING, Pattern
 
 import click
 import git
 
 from tartufo import types
+from tartufo.types import Rule
 
 if TYPE_CHECKING:
     from tartufo.scanner import Issue  # pylint: disable=cyclic-import
@@ -34,6 +35,13 @@ def del_rw(_func: Callable, name: str, _exc: Exception) -> None:
     """
     os.chmod(name, stat.S_IWRITE)
     os.remove(name)
+
+
+def convert_regexes_to_rules(regexes: Dict[str, Pattern]) -> Dict[str, Rule]:
+    return {
+        name: Rule(name=name, pattern=pattern, path_pattern=None)
+        for name, pattern in regexes.items()
+    }
 
 
 def echo_issues(
@@ -112,7 +120,7 @@ def fail(msg: str, ctx: click.Context, code: int = 1) -> None:
     ctx.exit(code)
 
 
-@lru_cache()
+@lru_cache(maxsize=None)
 def generate_signature(snippet: str, filename: str) -> str:
     """Generate a stable hash signature for an issue found in a commit.
 

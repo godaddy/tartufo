@@ -6,6 +6,8 @@ from click.testing import CliRunner
 
 from tartufo import cli, types
 
+from tests import helpers
+
 
 class ScanLocalRepoTests(unittest.TestCase):
     @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
@@ -19,6 +21,9 @@ class ScanLocalRepoTests(unittest.TestCase):
         self.assertGreater(result.exit_code, 0)
         self.assertEqual(result.output, "Scan failed!\n")
 
+    @unittest.skipIf(
+        helpers.BROKEN_USER_PATHS, "Skipping due to truncated Windows usernames"
+    )
     def test_scan_exits_gracefully_when_target_is_not_git_repo(self):
         runner = CliRunner()
         with runner.isolated_filesystem() as dirname:

@@ -48,7 +48,7 @@ class GitTests(unittest.TestCase):
         )
         mock_temp.assert_not_called()
         mock_clone.assert_called_once_with(
-            "https://github.com/godaddy/tartufo.git", "/foo/tartufo.git"
+            "https://github.com/godaddy/tartufo.git", str(Path("/foo/tartufo.git")),
         )
 
     @mock.patch("git.Repo.clone_from")
@@ -77,10 +77,10 @@ class OutputTests(unittest.TestCase):
     @mock.patch("tartufo.util.json")
     def test_echo_issues_outputs_proper_json_when_requested(self, mock_json):
         issue_1 = scanner.Issue(
-            types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar")
+            types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {})
         )
         issue_2 = scanner.Issue(
-            types.IssueType.RegEx, "bar", types.Chunk("foo", "/bar")
+            types.IssueType.RegEx, "bar", types.Chunk("foo", "/bar", {})
         )
         util.echo_issues([issue_1, issue_2], True, "/repo", "/output")
         mock_json.dumps.assert_called_once_with(
@@ -112,16 +112,16 @@ class OutputTests(unittest.TestCase):
     @mock.patch("tartufo.util.json")
     def test_echo_issues_outputs_proper_json_when_requested_pathtype(self, mock_json):
         issue_1 = scanner.Issue(
-            types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar")
+            types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {})
         )
         issue_2 = scanner.Issue(
-            types.IssueType.RegEx, "bar", types.Chunk("foo", "/bar")
+            types.IssueType.RegEx, "bar", types.Chunk("foo", "/bar", {})
         )
         util.echo_issues([issue_1, issue_2], True, "/repo", Path("/tmp"))
         mock_json.dumps.assert_called_once_with(
             {
                 "project_path": "/repo",
-                "output_dir": "/tmp",
+                "output_dir": str(Path("/tmp")),
                 "found_issues": [
                     {
                         "issue_type": "High Entropy",

@@ -19,6 +19,13 @@ from tartufo.scanner import GitRepoScanner, Issue
     "repo-path",
     type=click.Path(exists=True, file_okay=False, resolve_path=True, allow_dash=False),
 )
+@click.option(
+    "--fetch/--no-fetch",
+    is_flag=True,
+    default=True,
+    show_default=True,
+    help="Controls whether or not the remote repo is fetched prior to local scanning",
+)
 @click.pass_obj
 @click.pass_context
 def main(
@@ -28,10 +35,11 @@ def main(
     since_commit: Optional[str],
     max_depth: int,
     branch: Optional[str],
+    fetch: bool,
 ) -> Tuple[str, Generator[Issue, None, None]]:
     """Scan a repository already cloned to your local system."""
     git_options = types.GitOptions(
-        since_commit=since_commit, max_depth=max_depth, branch=branch
+        since_commit=since_commit, max_depth=max_depth, branch=branch, fetch=fetch
     )
     issues: Generator[Issue, None, None] = (_ for _ in ())
     try:
