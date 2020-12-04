@@ -1,4 +1,11 @@
-v2.1.0 - 02 December 2020
+v2.2.1 - 02 December 2020
+-------------------------
+
+Bugfixes:
+
+* Rev build and release versions to match
+
+v2.2.0 - 02 December 2020
 ------------------------
 
 Features:
