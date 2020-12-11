@@ -11,6 +11,20 @@ project by reading these Contribution Guidelines.
 to [GoDaddy's Open Source Software Slack][slack], or the
 [Tartufo Mailing list].
 
+Table of Contents
+=================
+
+* [Answering Questions](#answering-questions)
+* [Reporting Bugs](#reporting-bugs)
+* [Triaging bugs or contributing code](#triaging-bugs-or-contributing-code)
+* [Code Review](#code-review)
+* [Attribution of Changes](#attribution-of-changes)
+* [Writing Code](#writing-code)
+    * [Setting Up A Development Environment](#setting-up-a-development-environment)
+    * [Code Style](#code-style)
+* [Running tests](#running-tests)
+* [Additional Resources](#additional-resources)
+
 ## Answering Questions
 
 One of the most important and immediate ways you can support this project is to answer questions on [Slack][slack]
@@ -105,6 +119,10 @@ Done!
 
 ### Code Style
 
+From [PEP 8 -- Style Guide for Python Code][PEP 8#a-foolish-consistency-is-the-hobgoblin-of-little-minds]
+> A style guide is about consistency. Consistency with this style guide is important. Consistency within a project is
+> more important. Consistency within one module or function is the most important.
+
 To make code formatting easy on developers, and to simplify the conversation around pull request reviews, this project
 has adopted the
 [black] code formatter. This formatter must be run against any new code written for this project. The advantage is, you
@@ -112,6 +130,23 @@ no longer have to think about how your code is styled; it's all handled for you!
 
 To make this easier on you, you can [set up most editors][black-editors] to auto-run `black` for you. We have also set
 up a [pre-commit] hook to run automatically on every commit, which is detailed below!
+
+There can be more to code style than, "spaces vs tabs." Styling conventions, best practices, and language developments 
+can all lead to changes to what is the best code style be followed. When existing code needs changing, or new code is 
+submitted, questions can then arise as to what style to follow or what best practice takes precedence.
+
+This isn't something that has a hard and fast rule. As a rule of thumb, we ask that contributors take each pull request 
+as an opportunity to uplift the code they are touching to be in alignment with current recommendations. In an ideal 
+world, the newest code in the codebase will reflect the best patterns to use, but if there is existing code being 
+changed it is a balance between keeping style versus adoption of new ones.
+
+There may be occasions when the maintainers of the project may ask a contributor to adopt a newer style or pattern to 
+add in uplifting the project as a whole and to help our community become better software developers.
+
+We understand that time or other constraints may mean such requests are not able to be part of the pull request. In such 
+cases please engage in communication with the maintainers. We would much rather have a pull request of a feature that 
+aligns with the current codebase styles and patterns; and add an issue to the backlog to refactor with new patterns when 
+bandwidth permits; than to have you not contribute a pull request.
 
 ## Running tests
 
