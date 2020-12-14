@@ -36,10 +36,11 @@ class GlobalOptions:
 
 @dataclass
 class GitOptions:
-    __slots__ = ("since_commit", "max_depth", "branch")
+    __slots__ = ("since_commit", "max_depth", "branch", "fetch")
     since_commit: Optional[str]
     max_depth: int
     branch: Optional[str]
+    fetch: bool
 
 
 class IssueType(enum.Enum):

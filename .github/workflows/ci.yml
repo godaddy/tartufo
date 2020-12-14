@@ -8,18 +8,28 @@ on:
 
 jobs:
   tox:
-    runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: [3.6, 3.7, 3.8, 3.9, pypy3]
+        exclude:
+          # https://github.com/tox-dev/tox/issues/1704
+          - os: windows-latest
+            python-version: pypy3
+    runs-on: ${{ matrix.os }}
     env:
       PYTHON: ${{ matrix.python-version }}
+      OS: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@5a4ac90
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@41b7212
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Install Enchant
+      run: brew install enchant
+      if: ${{ matrix.os == 'macos-latest' && matrix.python-version == '3.7' }}
     - name: Install dependencies
       run:  pip install poetry tox codecov tox-gh-actions
     - name: Run tox environments
@@ -28,4 +38,4 @@ jobs:
       uses: codecov/codecov-action@07127fd
       with:
         file: coverage.xml
-        env_vars: PYTHON
+        env_vars: OS,PYTHON
