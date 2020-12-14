@@ -131,21 +131,21 @@ no longer have to think about how your code is styled; it's all handled for you!
 To make this easier on you, you can [set up most editors][black-editors] to auto-run `black` for you. We have also set
 up a [pre-commit] hook to run automatically on every commit, which is detailed below!
 
-There can be more to code style than, "spaces vs tabs." Styling conventions, best practices, and language developments 
-can all lead to changes to what is the best code style be followed. When existing code needs changing, or new code is 
+There can be more to code style than, "spaces vs tabs." Styling conventions, best practices, and language developments
+can all lead to changes to what is the best code style be followed. When existing code needs changing, or new code is
 submitted, questions can then arise as to what style to follow or what best practice takes precedence.
 
-This isn't something that has a hard and fast rule. As a rule of thumb, we ask that contributors take each pull request 
-as an opportunity to uplift the code they are touching to be in alignment with current recommendations. In an ideal 
-world, the newest code in the codebase will reflect the best patterns to use, but if there is existing code being 
+This isn't something that has a hard and fast rule. As a rule of thumb, we ask that contributors take each pull request
+as an opportunity to uplift the code they are touching to be in alignment with current recommendations. In an ideal
+world, the newest code in the codebase will reflect the best patterns to use, but if there is existing code being
 changed it is a balance between keeping style versus adoption of new ones.
 
-There may be occasions when the maintainers of the project may ask a contributor to adopt a newer style or pattern to 
+There may be occasions when the maintainers of the project may ask a contributor to adopt a newer style or pattern to
 add in uplifting the project as a whole and to help our community become better software developers.
 
-We understand that time or other constraints may mean such requests are not able to be part of the pull request. In such 
-cases please engage in communication with the maintainers. We would much rather have a pull request of a feature that 
-aligns with the current codebase styles and patterns; and add an issue to the backlog to refactor with new patterns when 
+We understand that time or other constraints may mean such requests are not able to be part of the pull request. In such
+cases please engage in communication with the maintainers. We would much rather have a pull request of a feature that
+aligns with the current codebase styles and patterns; and add an issue to the backlog to refactor with new patterns when
 bandwidth permits; than to have you not contribute a pull request.
 
 ## Running tests
@@ -196,18 +196,15 @@ pylint...................................................................Passed
 
 ## Contributing as a Maintainer
 
-On top of all our lovely contributors, we have a core group of people who act as
-maintainers of the project. They are the ones who are the gatekeepers, and make
-sure that issues are addressed, PRs are merged, and new releases issued, all
+On top of all our lovely contributors, we have a core group of people who act as maintainers of the project. They are
+the ones who are the gatekeepers, and make sure that issues are addressed, PRs are merged, and new releases issued, all
 while ensuring a high bar of quality for the code and the project.
 
 ### Issuing a New Release
 
-This process is thankfully mostly automated. There are, however, a handful of
-manual steps that must be taken to kick off that automation. It is all built
-this way to help ensure that issuing a release is a very conscious decision,
-requiring peer review, and cannot easily happen accidentally. The steps involved
-currently are:
+This process is thankfully mostly automated. There are, however, a handful of manual steps that must be taken to kick
+off that automation. It is all built this way to help ensure that issuing a release is a very conscious decision,
+requiring peer review, and cannot easily happen accidentally. The steps involved currently are:
 
 - Create a new branch locally for the release, for example:
 
@@ -222,24 +219,21 @@ currently are:
   Bumping version from 2.0.1 to 2.1.0
   ```
 
-  - Note: All this is doing, is updating the version number in the
-    `pyproject.toml`. You can totally do this manually. This command just might
-    be a bit quicker. And it's nice to have a command to do it for you. Yay
-    automation!
+    - Note: All this is doing, is updating the version number in the
+      `pyproject.toml`. You can totally do this manually. This command just might be a bit quicker. And it's nice to
+      have a command to do it for you. Yay automation!
 - Update the CHANGELOG with the appropriate new version number and release date.
 - Create a pull request for these changes, and get it approved!
-- Once your PR has been merged, the final piece is to actually create the new
-  release.
+- Once your PR has been merged, the final piece is to actually create the new release.
 
-  1. Go to the `tartufo` [releases page] and click on `Draft a new release`.
-  2. Enter an appropriate tag version (in this example, `v2.1.0`).
-  3. Title the release. Generally these would just be in the form
-     `Version 2.1.0`. (Not very creative, I know. But predictable!)
-  4. Copy-paste the CHANGELOG entries for this new version into the description.
-  5. Click `Publish release`!
+    1. Go to the `tartufo` [releases page] and click on `Draft a new release`.
+    2. Enter an appropriate tag version (in this example, `v2.1.0`).
+    3. Title the release. Generally these would just be in the form
+       `Version 2.1.0`. (Not very creative, I know. But predictable!)
+    4. Copy-paste the CHANGELOG entries for this new version into the description.
+    5. Click `Publish release`!
 
-Congratulations, you've just issued a new release for `tartufo`. The automation
-will take care of the rest! 🎉
+Congratulations, you've just issued a new release for `tartufo`. The automation will take care of the rest! 🎉
 
 ## Additional Resources
 
@@ -251,6 +245,7 @@ will take care of the rest! 🎉
 [black-editors]: https://github.com/psf/black#editor-integration
 
 [bump the version]: https://python-poetry.org/docs/cli/#version
+
 [issues]: https://github.com/godaddy/tartufo/issues
 
 [Install Poetry]: https://python-poetry.org/docs/#installation
@@ -270,6 +265,7 @@ will take care of the rest! 🎉
 [PyPI]: http://pypi.org/
 
 [releases page]: https://github.com/godaddy/tartufo/releases
+
 [slack]: https://godaddy-oss.slack.com/
 
 [tox]: https://tox.readthedocs.io/en/latest/
