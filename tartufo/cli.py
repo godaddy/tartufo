@@ -45,12 +45,6 @@ class TartufoCLI(click.MultiCommand):
     name="tartufo",
     context_settings=dict(help_option_names=["-h", "--help"]),
 )
-@click.option(
-    "--rules",
-    multiple=True,
-    type=click.File("r"),
-    help="Path(s) to regex rules json list file(s).",
-)
 @click.option("--json/--no-json", help="Output in JSON format.", is_flag=True)
 @click.option(
     "--rules",
