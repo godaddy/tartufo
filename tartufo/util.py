@@ -56,7 +56,9 @@ def echo_result(
     """Print all found issues out to the console, optionally as JSON.
 
     :param issues: The list of issues to be printed out
-    :param as_json: Whether the output should be formatted as JSON
+    :param options: Global options object
+    :param scanner: ScannerBase contaning excluded paths from config tree
+    "param now: Timestamp for the scan in isoformat (str)
     :param repo_path: The path to the repository the issues were found in
     :param output_dir: The directory that issue details were written out to
     """
