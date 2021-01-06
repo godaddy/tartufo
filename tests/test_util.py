@@ -1,4 +1,5 @@
 import unittest
+import re
 from pathlib import Path
 from unittest import mock
 
@@ -66,27 +67,45 @@ class GitTests(unittest.TestCase):
 
 
 class OutputTests(unittest.TestCase):
+    @mock.patch("tartufo.scanner.ScannerBase")
+    @mock.patch("tartufo.types.GlobalOptions")
     @mock.patch("tartufo.util.click")
-    def test_echo_issues_echos_all_when_not_json(self, mock_click):
-        util.echo_issues([1, 2, 3, 4], False, "", "")
+    def test_echo_result_echos_all_when_not_json(
+        self, mock_click, mock_options, mock_scanner
+    ):
+        now = "now:now:now"
+        mock_options.json = False
+        mock_scanner.exclude_signatures = []
+        util.echo_result([1, 2, 3, 4], mock_options, mock_scanner, now, "", "")
         mock_click.echo.assert_has_calls(
             (mock.call(1), mock.call(2), mock.call(3), mock.call(4)), any_order=False
         )
 
+    @mock.patch("tartufo.scanner.ScannerBase")
+    @mock.patch("tartufo.types.GlobalOptions")
     @mock.patch("tartufo.util.click", new=mock.MagicMock())
     @mock.patch("tartufo.util.json")
-    def test_echo_issues_outputs_proper_json_when_requested(self, mock_json):
+    def test_echo_result_outputs_proper_json_when_requested(
+        self, mock_json, mock_options, mock_scanner
+    ):
+        now = "now:now:now"
         issue_1 = scanner.Issue(
             types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {})
         )
         issue_2 = scanner.Issue(
             types.IssueType.RegEx, "bar", types.Chunk("foo", "/bar", {})
         )
-        util.echo_issues([issue_1, issue_2], True, "/repo", "/output")
+        mock_scanner.excluded_paths = []
+        mock_options.exclude_signatures = []
+        util.echo_result(
+            [issue_1, issue_2], mock_options, mock_scanner, now, "/repo", "/output"
+        )
         mock_json.dumps.assert_called_once_with(
             {
                 "project_path": "/repo",
                 "output_dir": "/output",
+                "excluded_paths": [],
+                "excluded_signatures": [],
                 "found_issues": [
                     {
                         "issue_type": "High Entropy",
@@ -108,20 +127,40 @@ class OutputTests(unittest.TestCase):
             }
         )
 
+    @mock.patch("tartufo.scanner.ScannerBase")
+    @mock.patch("tartufo.types.GlobalOptions")
     @mock.patch("tartufo.util.click", new=mock.MagicMock())
     @mock.patch("tartufo.util.json")
-    def test_echo_issues_outputs_proper_json_when_requested_pathtype(self, mock_json):
+    def test_echo_result_outputs_proper_json_when_requested_pathtype(
+        self, mock_json, mock_options, mock_scanner
+    ):
+        now = "now:now:now"
         issue_1 = scanner.Issue(
             types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {})
         )
         issue_2 = scanner.Issue(
             types.IssueType.RegEx, "bar", types.Chunk("foo", "/bar", {})
         )
-        util.echo_issues([issue_1, issue_2], True, "/repo", Path("/tmp"))
+        mock_scanner.excluded_paths = [
+            re.compile("package-lock.json"),
+            re.compile("poetry.lock"),
+        ]
+        mock_options.exclude_signatures = [
+            "fffffffffffffffffffffffffff",
+            "ooooooooooooooooooooooooooo",
+        ]
+        util.echo_result(
+            [issue_1, issue_2], mock_options, mock_scanner, now, "/repo", Path("/tmp")
+        )
         mock_json.dumps.assert_called_once_with(
             {
                 "project_path": "/repo",
                 "output_dir": str(Path("/tmp")),
+                "excluded_paths": ["package-lock.json", "poetry.lock"],
+                "excluded_signatures": [
+                    "fffffffffffffffffffffffffff",
+                    "ooooooooooooooooooooooooooo",
+                ],
                 "found_issues": [
                     {
                         "issue_type": "High Entropy",

@@ -45,6 +45,12 @@ class TartufoCLI(click.MultiCommand):
     name="tartufo",
     context_settings=dict(help_option_names=["-h", "--help"]),
 )
+@click.option(
+    "--rules",
+    multiple=True,
+    type=click.File("r"),
+    help="Path(s) to regex rules json list file(s).",
+)
 @click.option("--json/--no-json", help="Output in JSON format.", is_flag=True)
 @click.option(
     "--rules",
@@ -146,7 +152,21 @@ class TartufoCLI(click.MultiCommand):
     callback=config.read_pyproject_toml,
     help="Read configuration from specified file. [default: tartufo.toml]",
 )
-
+@click.option(
+    "-q/ ",
+    "--quiet/--no-quiet",
+    help="Quiet mode. No outputs are reported if the scan is successful and doesn't find any issues",
+    default=False,
+    is_flag=True,
+)
+@click.option(
+    "-v/ ",
+    "--verbose/--no-verbose",
+    help="Verbose mode. When this flag is provided, tartufo will report excluded paths and signatures"
+    " as well as scan issues",
+    default=False,
+    is_flag=True,
+)
 # The first positional argument here would be a hard-coded version, hence the `None`
 @click.version_option(None, "-V", "--version")
 @click.pass_context
@@ -166,26 +186,27 @@ def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
 @click.pass_context
 def process_issues(
     ctx: click.Context,
-    result: Tuple[str, List[scanner.Issue]],
+    result: Tuple[str, List[scanner.Issue], scanner.ScannerBase],
     **kwargs: config.OptionTypes,
 ):
-    repo_path, issues = result
+    repo_path, issues, scanner_base = result
     options = types.GlobalOptions(**kwargs)  # type: ignore
+    now = datetime.now().isoformat("T", "microseconds")
     output_dir = None
     if options.output_dir:
-        now = datetime.now().isoformat("T", "microseconds")
         if platform.system().lower() == "windows":  # pragma: no cover
             # Make sure we aren't using illegal characters for Windows folder names
             now = now.replace(":", "")
         output_dir = pathlib.Path(options.output_dir) / f"tartufo-scan-results-{now}"
         output_dir.mkdir(parents=True)
 
+    util.echo_result(issues, options, scanner_base, now, repo_path, output_dir)
+    if output_dir:
+        util.write_outputs(issues, output_dir)
+        if not options.json:
+            click.echo(f"Results have been saved in {output_dir}")
+
     if issues:
-        util.echo_issues(issues, options.json, repo_path, output_dir)
-        if output_dir:
-            util.write_outputs(issues, output_dir)
-            if not options.json:
-                click.echo(f"Results have been saved in {output_dir}")
         ctx.exit(1)
 
     ctx.exit(0)

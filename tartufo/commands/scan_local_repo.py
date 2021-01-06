@@ -36,12 +36,13 @@ def main(
     max_depth: int,
     branch: Optional[str],
     fetch: bool,
-) -> Tuple[str, List[Issue]]:
+) -> Tuple[str, List[Issue], Optional[GitRepoScanner]]:
     """Scan a repository already cloned to your local system."""
     git_options = types.GitOptions(
         since_commit=since_commit, max_depth=max_depth, branch=branch, fetch=fetch
     )
     issues: List[Issue] = []
+    scanner = None
     try:
         scanner = GitRepoScanner(options, git_options, str(repo_path))
         issues = scanner.scan()
@@ -51,4 +52,4 @@ def main(
         util.fail(f"There was an error fetching from the remote repository: {exc}", ctx)
     except types.TartufoException as exc:
         util.fail(str(exc), ctx)
-    return (str(repo_path), issues)
+    return (str(repo_path), issues, scanner)

@@ -19,6 +19,8 @@ class GlobalOptions:
         "git_rules_repo",
         "git_rules_files",
         "config",
+        "verbose",
+        "quiet",
     )
     json: bool
     rules: Tuple[TextIO, ...]
@@ -32,6 +34,8 @@ class GlobalOptions:
     git_rules_repo: Optional[str]
     git_rules_files: Tuple[str, ...]
     config: Optional[TextIO]
+    verbose: bool
+    quiet: bool
 
 
 @dataclass

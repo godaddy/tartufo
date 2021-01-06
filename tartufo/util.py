@@ -19,6 +19,7 @@ from tartufo.types import Rule
 
 if TYPE_CHECKING:
     from tartufo.scanner import Issue  # pylint: disable=cyclic-import
+    from tartufo.scanner import ScannerBase  # pylint: disable=cyclic-import
 
 
 DATETIME_FORMAT: str = "%Y-%m-%d %H:%M:%S"
@@ -44,9 +45,11 @@ def convert_regexes_to_rules(regexes: Dict[str, Pattern]) -> Dict[str, Rule]:
     }
 
 
-def echo_issues(
+def echo_result(
     issues: "List[Issue]",
-    as_json: bool,
+    options: "types.GlobalOptions",
+    scanner: "ScannerBase",
+    now: str,
     repo_path: str,
     output_dir: Optional[pathlib.Path],
 ) -> None:
@@ -57,16 +60,32 @@ def echo_issues(
     :param repo_path: The path to the repository the issues were found in
     :param output_dir: The directory that issue details were written out to
     """
-    if as_json:
+    if options.json:
         output = {
             "project_path": repo_path,
             "output_dir": str(output_dir) if output_dir else None,
+            "excluded_paths": [str(path.pattern) for path in scanner.excluded_paths],
+            "excluded_signatures": [
+                str(signature) for signature in options.exclude_signatures
+            ],
             "found_issues": [issue.as_dict() for issue in issues],
         }
         click.echo(json.dumps(output))
     else:
-        for issue in issues:
-            click.echo(issue)
+        if not issues:
+            if not options.quiet:
+                click.echo(f"Time: {now}")
+                click.echo("All clear. No secrets detected.")
+        else:
+            for issue in issues:
+                click.echo(issue)
+        if options.verbose:
+            click.echo("\nExcluded paths:")
+            for path in scanner.excluded_paths:
+                click.echo(path.pattern)
+            click.echo("\nExcluded signatures:")
+            for signature in options.exclude_signatures:
+                click.echo(signature)
 
 
 def write_outputs(found_issues: "List[Issue]", output_dir: pathlib.Path) -> List[str]:
