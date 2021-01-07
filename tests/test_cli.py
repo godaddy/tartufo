@@ -192,6 +192,18 @@ class ProcessIssuesTest(unittest.TestCase):
             result = runner.invoke(cli.main, ["scan-local-repo", "."])
         self.assertGreater(result.exit_code, 0)
 
+    @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
+    @mock.patch("tartufo.util.echo_result", new=mock.MagicMock())
+    @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
+    def test_command_exits_with_zero_return_code_when_no_issues_are_found(
+        self, mock_scanner: mock.MagicMock
+    ):
+        mock_scanner.return_value.scan.return_value = []
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli.main, ["scan-local-repo", "."])
+        self.assertEqual(result.exit_code, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,3 +1,12 @@
+v2.3.0 -  January 2021
+-------------------------
+
+Features: 
+
+* #42 - Report output on clean or successful scan. Add new `-q/--quiet` option to suppress output
+* #43 - Report out of the list of exclusions. Add new `-v/--verbose` option to print exclusions
+
+
 v2.2.1 - 02 December 2020
 -------------------------
 

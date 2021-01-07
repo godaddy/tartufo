@@ -83,6 +83,69 @@ class OutputTests(unittest.TestCase):
 
     @mock.patch("tartufo.scanner.ScannerBase")
     @mock.patch("tartufo.types.GlobalOptions")
+    @mock.patch("tartufo.util.click")
+    def test_echo_result_echos_message_when_clean(
+        self, mock_click, mock_options, mock_scanner
+    ):
+        now = "now:now:now"
+        mock_options.json = False
+        mock_options.quiet = False
+        mock_scanner.exclude_signatures = []
+        util.echo_result([], mock_options, mock_scanner, now, "", "")
+        mock_click.echo.assert_has_calls(
+            (mock.call(f"Time: {now}"), mock.call("All clear. No secrets detected.")),
+            any_order=False,
+        )
+
+    @mock.patch("tartufo.scanner.ScannerBase")
+    @mock.patch("tartufo.types.GlobalOptions")
+    @mock.patch("tartufo.util.click")
+    def test_echo_result_echos_exclusions_verbose(
+        self, mock_click, mock_options, mock_scanner
+    ):
+        now = "now:now:now"
+        mock_options.json = False
+        mock_options.quiet = False
+        mock_options.verbose = True
+        mock_scanner.excluded_paths = [
+            re.compile("package-lock.json"),
+            re.compile("poetry.lock"),
+        ]
+        mock_options.exclude_signatures = [
+            "fffffffffffffffffffffffffff",
+            "ooooooooooooooooooooooooooo",
+        ]
+        util.echo_result([], mock_options, mock_scanner, now, "", "")
+        mock_click.echo.assert_has_calls(
+            (
+                mock.call(f"Time: {now}"),
+                mock.call("All clear. No secrets detected."),
+                mock.call("\nExcluded paths:"),
+                mock.call("package-lock.json"),
+                mock.call("poetry.lock"),
+                mock.call("\nExcluded signatures:"),
+                mock.call("fffffffffffffffffffffffffff"),
+                mock.call("ooooooooooooooooooooooooooo"),
+            ),
+            any_order=False,
+        )
+
+    @mock.patch("tartufo.scanner.ScannerBase")
+    @mock.patch("tartufo.types.GlobalOptions")
+    @mock.patch("tartufo.util.click")
+    def test_echo_result_echos_no_message_when_quiet(
+        self, mock_click, mock_options, mock_scanner
+    ):
+        now = "now:now:now"
+        mock_options.json = False
+        mock_options.quiet = True
+        mock_options.verbose = False
+        mock_scanner.exclude_signatures = []
+        util.echo_result([], mock_options, mock_scanner, now, "", "")
+        mock_click.echo.assert_not_called()
+
+    @mock.patch("tartufo.scanner.ScannerBase")
+    @mock.patch("tartufo.types.GlobalOptions")
     @mock.patch("tartufo.util.click", new=mock.MagicMock())
     @mock.patch("tartufo.util.json")
     def test_echo_result_outputs_proper_json_when_requested(
@@ -96,6 +159,7 @@ class OutputTests(unittest.TestCase):
             types.IssueType.RegEx, "bar", types.Chunk("foo", "/bar", {})
         )
         mock_scanner.excluded_paths = []
+        mock_options.json = True
         mock_options.exclude_signatures = []
         util.echo_result(
             [issue_1, issue_2], mock_options, mock_scanner, now, "/repo", "/output"
