@@ -2,6 +2,7 @@
 
 import abc
 import hashlib
+import logging
 import math
 import pathlib
 import re
@@ -36,6 +37,7 @@ class Issue:
     issue_type: types.IssueType
     issue_detail: Optional[str] = None
     matched_string: str = ""
+    logger: logging.Logger
 
     def __init__(
         self, issue_type: types.IssueType, matched_string: str, chunk: types.Chunk
@@ -48,6 +50,7 @@ class Issue:
         self.issue_type = issue_type
         self.matched_string = matched_string
         self.chunk = chunk
+        self.logger = logging.getLogger(__file__)
 
     def as_dict(self) -> Dict[str, Optional[str]]:
         """Return a dictionary representation of an issue.
@@ -112,9 +115,11 @@ class ScannerBase(abc.ABC):
     _excluded_paths: Optional[List[Pattern]] = None
     _rules_regexes: Optional[Dict[str, Rule]] = None
     global_options: types.GlobalOptions
+    logger: logging.Logger
 
     def __init__(self, options: types.GlobalOptions) -> None:
         self.global_options = options
+        self.logger = logging.getLogger(__file__)
 
     @property
     def issues(self) -> List[Issue]:
