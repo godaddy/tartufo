@@ -43,7 +43,7 @@ def main(
     max_depth: int,
     branch: Optional[str],
     work_dir: Optional[str],
-) -> Tuple[str, List[Issue]]:
+) -> Tuple[str, List[Issue], Optional[GitRepoScanner]]:
     """Automatically clone and scan a remote git repository."""
     git_options = types.GitOptions(
         since_commit=since_commit, max_depth=max_depth, branch=branch, fetch=False
@@ -56,6 +56,7 @@ def main(
         repo_path = Path(work_dir) / repo_name
         repo_path.mkdir(parents=True)
     issues: List[Issue] = []
+    scanner = None
     try:
         repo_path = util.clone_git_repo(git_url, repo_path)
         scanner = GitRepoScanner(options, git_options, str(repo_path))
@@ -67,4 +68,4 @@ def main(
     finally:
         if repo_path and repo_path.exists():
             rmtree(str(repo_path), onerror=util.del_rw)
-    return (git_url, issues)
+    return (git_url, issues, scanner)

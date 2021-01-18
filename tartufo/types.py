@@ -34,7 +34,7 @@ class GlobalOptions:
     git_rules_repo: Optional[str]
     git_rules_files: Tuple[str, ...]
     config: Optional[TextIO]
-    verbose: bool
+    verbose: int
     quiet: bool
 
 

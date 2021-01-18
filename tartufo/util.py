@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-
-import datetime
 import json
 import os
 import pathlib
 import stat
 import tempfile
 import uuid
+from datetime import datetime
 from functools import lru_cache, partial
 from hashlib import blake2s
 from typing import Any, Callable, Dict, Iterable, List, Optional, TYPE_CHECKING, Pattern
@@ -49,7 +48,6 @@ def echo_result(
     issues: "List[Issue]",
     options: "types.GlobalOptions",
     scanner: "ScannerBase",
-    now: str,
     repo_path: str,
     output_dir: Optional[pathlib.Path],
 ) -> None:
@@ -58,7 +56,6 @@ def echo_result(
     :param issues: The list of issues to be printed out
     :param options: Global options object
     :param scanner: ScannerBase contaning excluded paths from config tree
-    "param now: Timestamp for the scan in isoformat (str)
     :param repo_path: The path to the repository the issues were found in
     :param output_dir: The directory that issue details were written out to
     """
@@ -76,18 +73,16 @@ def echo_result(
     else:
         if not issues:
             if not options.quiet:
-                click.echo(f"Time: {now}")
-                click.echo("All clear. No secrets detected.")
+                now = datetime.now().isoformat("T", "microseconds")
+                click.echo(f"Time: {now}\nAll clear. No secrets detected.")
         else:
             for issue in issues:
                 click.echo(issue)
-        if options.verbose:
+        if options.verbose > 0:
             click.echo("\nExcluded paths:")
-            for path in scanner.excluded_paths:
-                click.echo(path.pattern)
+            click.echo("\n".join([path.pattern for path in scanner.excluded_paths]))
             click.echo("\nExcluded signatures:")
-            for signature in options.exclude_signatures:
-                click.echo(signature)
+            click.echo("\n".join(options.exclude_signatures))
 
 
 def write_outputs(found_issues: "List[Issue]", output_dir: pathlib.Path) -> List[str]:
@@ -163,7 +158,7 @@ def extract_commit_metadata(
     :param branch: What branch the commit was found on
     """
     return {
-        "commit_time": datetime.datetime.fromtimestamp(commit.committed_date).strftime(
+        "commit_time": datetime.fromtimestamp(commit.committed_date).strftime(
             DATETIME_FORMAT
         ),
         "commit_message": commit.message,

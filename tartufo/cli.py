@@ -149,17 +149,18 @@ class TartufoCLI(click.MultiCommand):
 @click.option(
     "-q/ ",
     "--quiet/--no-quiet",
-    help="Quiet mode. No outputs are reported if the scan is successful and doesn't find any issues",
+    help="Quiet mode. No outputs are reported if the scan is successful and doesn't "
+    "find any issues",
     default=False,
     is_flag=True,
 )
 @click.option(
     "-v/ ",
-    "--verbose/--no-verbose",
-    help="Verbose mode. When this flag is provided, tartufo will report excluded paths and signatures"
-    " as well as scan issues",
-    default=False,
-    is_flag=True,
+    "--verbose",
+    help="Display more verbose output. Specifying this option multiple times will "
+    "incrementally increase the amount of output.",
+    default=0,
+    count=True,
 )
 # The first positional argument here would be a hard-coded version, hence the `None`
 @click.version_option(None, "-V", "--version")
@@ -172,8 +173,11 @@ def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
     also be made to work in pre-commit mode, for scanning blobs of text as a
     pre-commit hook.
     """
+
     options = types.GlobalOptions(**kwargs)  # type: ignore
     ctx.obj = options
+    if options.quiet and options.verbose > 0:
+        raise click.BadParameter("-v/--verbose and -q/--quiet are mutually exclusive.")
 
 
 @main.resultcallback()  # type: ignore
@@ -194,7 +198,7 @@ def process_issues(
         output_dir = pathlib.Path(options.output_dir) / f"tartufo-scan-results-{now}"
         output_dir.mkdir(parents=True)
 
-    util.echo_result(issues, options, scanner_base, now, repo_path, output_dir)
+    util.echo_result(issues, options, scanner_base, repo_path, output_dir)
     if output_dir:
         util.write_outputs(issues, output_dir)
         if not options.json:

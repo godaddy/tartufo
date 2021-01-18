@@ -73,10 +73,10 @@ class OutputTests(unittest.TestCase):
     def test_echo_result_echos_all_when_not_json(
         self, mock_click, mock_options, mock_scanner
     ):
-        now = "now:now:now"
         mock_options.json = False
+        mock_options.verbose = 0
         mock_scanner.exclude_signatures = []
-        util.echo_result([1, 2, 3, 4], mock_options, mock_scanner, now, "", "")
+        util.echo_result([1, 2, 3, 4], mock_options, mock_scanner, "", "")
         mock_click.echo.assert_has_calls(
             (mock.call(1), mock.call(2), mock.call(3), mock.call(4)), any_order=False
         )
@@ -84,48 +84,47 @@ class OutputTests(unittest.TestCase):
     @mock.patch("tartufo.scanner.ScannerBase")
     @mock.patch("tartufo.types.GlobalOptions")
     @mock.patch("tartufo.util.click")
+    @mock.patch("tartufo.util.datetime")
     def test_echo_result_echos_message_when_clean(
-        self, mock_click, mock_options, mock_scanner
+        self, mock_time, mock_click, mock_options, mock_scanner
     ):
-        now = "now:now:now"
+        mock_time.now.return_value.isoformat.return_value = "now:now:now"
         mock_options.json = False
         mock_options.quiet = False
+        mock_options.verbose = 0
         mock_scanner.exclude_signatures = []
-        util.echo_result([], mock_options, mock_scanner, now, "", "")
-        mock_click.echo.assert_has_calls(
-            (mock.call(f"Time: {now}"), mock.call("All clear. No secrets detected.")),
-            any_order=False,
+        util.echo_result([], mock_options, mock_scanner, "", "")
+        mock_click.echo.assert_called_with(
+            "Time: now:now:now\nAll clear. No secrets detected."
         )
 
     @mock.patch("tartufo.scanner.ScannerBase")
     @mock.patch("tartufo.types.GlobalOptions")
     @mock.patch("tartufo.util.click")
+    @mock.patch("tartufo.util.datetime")
     def test_echo_result_echos_exclusions_verbose(
-        self, mock_click, mock_options, mock_scanner
+        self, mock_time, mock_click, mock_options, mock_scanner
     ):
-        now = "now:now:now"
+        mock_time.now.return_value.isoformat.return_value = "now:now:now"
         mock_options.json = False
         mock_options.quiet = False
-        mock_options.verbose = True
+        mock_options.verbose = 1
         mock_scanner.excluded_paths = [
             re.compile("package-lock.json"),
             re.compile("poetry.lock"),
         ]
         mock_options.exclude_signatures = [
-            "fffffffffffffffffffffffffff",
-            "ooooooooooooooooooooooooooo",
+            "fffffffffffff",
+            "ooooooooooooo",
         ]
-        util.echo_result([], mock_options, mock_scanner, now, "", "")
+        util.echo_result([], mock_options, mock_scanner, "", "")
         mock_click.echo.assert_has_calls(
             (
-                mock.call(f"Time: {now}"),
-                mock.call("All clear. No secrets detected."),
+                mock.call("Time: now:now:now\nAll clear. No secrets detected."),
                 mock.call("\nExcluded paths:"),
-                mock.call("package-lock.json"),
-                mock.call("poetry.lock"),
+                mock.call("package-lock.json\npoetry.lock"),
                 mock.call("\nExcluded signatures:"),
-                mock.call("fffffffffffffffffffffffffff"),
-                mock.call("ooooooooooooooooooooooooooo"),
+                mock.call("fffffffffffff\nooooooooooooo"),
             ),
             any_order=False,
         )
@@ -136,12 +135,11 @@ class OutputTests(unittest.TestCase):
     def test_echo_result_echos_no_message_when_quiet(
         self, mock_click, mock_options, mock_scanner
     ):
-        now = "now:now:now"
         mock_options.json = False
         mock_options.quiet = True
-        mock_options.verbose = False
+        mock_options.verbose = 0
         mock_scanner.exclude_signatures = []
-        util.echo_result([], mock_options, mock_scanner, now, "", "")
+        util.echo_result([], mock_options, mock_scanner, "", "")
         mock_click.echo.assert_not_called()
 
     @mock.patch("tartufo.scanner.ScannerBase")
@@ -151,7 +149,6 @@ class OutputTests(unittest.TestCase):
     def test_echo_result_outputs_proper_json_when_requested(
         self, mock_json, mock_options, mock_scanner
     ):
-        now = "now:now:now"
         issue_1 = scanner.Issue(
             types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {})
         )
@@ -162,7 +159,7 @@ class OutputTests(unittest.TestCase):
         mock_options.json = True
         mock_options.exclude_signatures = []
         util.echo_result(
-            [issue_1, issue_2], mock_options, mock_scanner, now, "/repo", "/output"
+            [issue_1, issue_2], mock_options, mock_scanner, "/repo", "/output"
         )
         mock_json.dumps.assert_called_once_with(
             {
@@ -198,7 +195,6 @@ class OutputTests(unittest.TestCase):
     def test_echo_result_outputs_proper_json_when_requested_pathtype(
         self, mock_json, mock_options, mock_scanner
     ):
-        now = "now:now:now"
         issue_1 = scanner.Issue(
             types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {})
         )
@@ -210,21 +206,18 @@ class OutputTests(unittest.TestCase):
             re.compile("poetry.lock"),
         ]
         mock_options.exclude_signatures = [
-            "fffffffffffffffffffffffffff",
-            "ooooooooooooooooooooooooooo",
+            "fffffffffffff",
+            "ooooooooooooo",
         ]
         util.echo_result(
-            [issue_1, issue_2], mock_options, mock_scanner, now, "/repo", Path("/tmp")
+            [issue_1, issue_2], mock_options, mock_scanner, "/repo", Path("/tmp")
         )
         mock_json.dumps.assert_called_once_with(
             {
                 "project_path": "/repo",
                 "output_dir": str(Path("/tmp")),
                 "excluded_paths": ["package-lock.json", "poetry.lock"],
-                "excluded_signatures": [
-                    "fffffffffffffffffffffffffff",
-                    "ooooooooooooooooooooooooooo",
-                ],
+                "excluded_signatures": ["fffffffffffff", "ooooooooooooo",],
                 "found_issues": [
                     {
                         "issue_type": "High Entropy",
