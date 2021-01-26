@@ -76,7 +76,8 @@ class OutputTests(unittest.TestCase):
         mock_options.json = False
         mock_options.verbose = 0
         mock_scanner.exclude_signatures = []
-        util.echo_result([1, 2, 3, 4], mock_options, mock_scanner, "", "")
+        mock_scanner.issues = [1, 2, 3, 4]
+        util.echo_result(mock_options, mock_scanner, "", "")
         mock_click.echo.assert_has_calls(
             (mock.call(1), mock.call(2), mock.call(3), mock.call(4)), any_order=False
         )
@@ -93,7 +94,8 @@ class OutputTests(unittest.TestCase):
         mock_options.quiet = False
         mock_options.verbose = 0
         mock_scanner.exclude_signatures = []
-        util.echo_result([], mock_options, mock_scanner, "", "")
+        mock_scanner.issues = []
+        util.echo_result(mock_options, mock_scanner, "", "")
         mock_click.echo.assert_called_with(
             "Time: now:now:now\nAll clear. No secrets detected."
         )
@@ -109,6 +111,7 @@ class OutputTests(unittest.TestCase):
         mock_options.json = False
         mock_options.quiet = False
         mock_options.verbose = 1
+        mock_scanner.issues = []
         mock_scanner.excluded_paths = [
             re.compile("package-lock.json"),
             re.compile("poetry.lock"),
@@ -117,7 +120,7 @@ class OutputTests(unittest.TestCase):
             "fffffffffffff",
             "ooooooooooooo",
         ]
-        util.echo_result([], mock_options, mock_scanner, "", "")
+        util.echo_result(mock_options, mock_scanner, "", "")
         mock_click.echo.assert_has_calls(
             (
                 mock.call("Time: now:now:now\nAll clear. No secrets detected."),
@@ -138,8 +141,9 @@ class OutputTests(unittest.TestCase):
         mock_options.json = False
         mock_options.quiet = True
         mock_options.verbose = 0
+        mock_scanner.issues = []
         mock_scanner.exclude_signatures = []
-        util.echo_result([], mock_options, mock_scanner, "", "")
+        util.echo_result(mock_options, mock_scanner, "", "")
         mock_click.echo.assert_not_called()
 
     @mock.patch("tartufo.scanner.ScannerBase")
@@ -155,12 +159,11 @@ class OutputTests(unittest.TestCase):
         issue_2 = scanner.Issue(
             types.IssueType.RegEx, "bar", types.Chunk("foo", "/bar", {})
         )
+        mock_scanner.issues = [issue_1, issue_2]
         mock_scanner.excluded_paths = []
         mock_options.json = True
         mock_options.exclude_signatures = []
-        util.echo_result(
-            [issue_1, issue_2], mock_options, mock_scanner, "/repo", "/output"
-        )
+        util.echo_result(mock_options, mock_scanner, "/repo", "/output")
         mock_json.dumps.assert_called_once_with(
             {
                 "project_path": "/repo",
@@ -201,6 +204,7 @@ class OutputTests(unittest.TestCase):
         issue_2 = scanner.Issue(
             types.IssueType.RegEx, "bar", types.Chunk("foo", "/bar", {})
         )
+        mock_scanner.issues = [issue_1, issue_2]
         mock_scanner.excluded_paths = [
             re.compile("package-lock.json"),
             re.compile("poetry.lock"),
@@ -209,9 +213,7 @@ class OutputTests(unittest.TestCase):
             "fffffffffffff",
             "ooooooooooooo",
         ]
-        util.echo_result(
-            [issue_1, issue_2], mock_options, mock_scanner, "/repo", Path("/tmp")
-        )
+        util.echo_result(mock_options, mock_scanner, "/repo", Path("/tmp"))
         mock_json.dumps.assert_called_once_with(
             {
                 "project_path": "/repo",

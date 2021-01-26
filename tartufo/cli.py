@@ -184,10 +184,10 @@ def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
 @click.pass_context
 def process_issues(
     ctx: click.Context,
-    result: Tuple[str, List[scanner.Issue], scanner.ScannerBase],
+    result: Tuple[str, scanner.ScannerBase],
     **kwargs: config.OptionTypes,
 ):
-    repo_path, issues, scanner_base = result
+    repo_path, scan = result
     options = types.GlobalOptions(**kwargs)  # type: ignore
     now = datetime.now().isoformat("T", "microseconds")
     output_dir = None
@@ -198,13 +198,13 @@ def process_issues(
         output_dir = pathlib.Path(options.output_dir) / f"tartufo-scan-results-{now}"
         output_dir.mkdir(parents=True)
 
-    util.echo_result(issues, options, scanner_base, repo_path, output_dir)
+    util.echo_result(options, scan, repo_path, output_dir)
     if output_dir:
-        util.write_outputs(issues, output_dir)
+        util.write_outputs(scan.issues, output_dir)
         if not options.json:
             click.echo(f"Results have been saved in {output_dir}")
 
-    if issues:
+    if scan.issues:
         ctx.exit(1)
 
     ctx.exit(0)

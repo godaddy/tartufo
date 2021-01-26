@@ -45,17 +45,14 @@ def convert_regexes_to_rules(regexes: Dict[str, Pattern]) -> Dict[str, Rule]:
 
 
 def echo_result(
-    issues: "List[Issue]",
     options: "types.GlobalOptions",
     scanner: "ScannerBase",
     repo_path: str,
     output_dir: Optional[pathlib.Path],
 ) -> None:
     """Print all found issues out to the console, optionally as JSON.
-
-    :param issues: The list of issues to be printed out
     :param options: Global options object
-    :param scanner: ScannerBase contaning excluded paths from config tree
+    :param scanner: ScannerBase contaning issues and excluded paths from config tree
     :param repo_path: The path to the repository the issues were found in
     :param output_dir: The directory that issue details were written out to
     """
@@ -67,16 +64,16 @@ def echo_result(
             "excluded_signatures": [
                 str(signature) for signature in options.exclude_signatures
             ],
-            "found_issues": [issue.as_dict() for issue in issues],
+            "found_issues": [issue.as_dict() for issue in scanner.issues],
         }
         click.echo(json.dumps(output))
     else:
-        if not issues:
+        if not scanner.issues:
             if not options.quiet:
                 now = datetime.now().isoformat("T", "microseconds")
                 click.echo(f"Time: {now}\nAll clear. No secrets detected.")
         else:
-            for issue in issues:
+            for issue in scanner.issues:
                 click.echo(issue)
         if options.verbose > 0:
             click.echo("\nExcluded paths:")

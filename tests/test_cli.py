@@ -198,7 +198,7 @@ class ProcessIssuesTest(unittest.TestCase):
     def test_command_exits_with_zero_return_code_when_no_issues_are_found(
         self, mock_scanner: mock.MagicMock
     ):
-        mock_scanner.return_value.scan.return_value = []
+        mock_scanner.return_value.issues = []
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(cli.main, ["scan-local-repo", "."])
@@ -210,7 +210,7 @@ class ProcessIssuesTest(unittest.TestCase):
     def test_command_raises_error_when_quiet_and_verbose_simultaneously(
         self, mock_scanner: mock.MagicMock
     ):
-        mock_scanner.return_value.scan.return_value = []
+        mock_scanner.return_value.issues = []
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(cli.main, ["-q", "-v", "scan-local-repo", "."])
@@ -222,7 +222,7 @@ class ProcessIssuesTest(unittest.TestCase):
     def test_command_returns_with_zero_when_quiet_or_verbose_only(
         self, mock_scanner: mock.MagicMock
     ):
-        mock_scanner.return_value.scan.return_value = []
+        mock_scanner.return_value.issues = []
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(cli.main, ["-q", "scan-local-repo", "."])
