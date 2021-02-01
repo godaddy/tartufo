@@ -241,33 +241,18 @@ Congratulations, you've just issued a new release for `tartufo`. The automation 
 - [GitHub Pull Request documentation](https://help.github.com/send-pull-requests/)
 
 [black]: https://github.com/psf/black
-
 [black-editors]: https://github.com/psf/black#editor-integration
-
 [bump the version]: https://python-poetry.org/docs/cli/#version
-
 [issues]: https://github.com/godaddy/tartufo/issues
-
 [Install Poetry]: https://python-poetry.org/docs/#installation
-
 [Poetry Environments]: https://python-poetry.org/docs/managing-environments/
-
 [our security policy]: https://github.com/godaddy/tartufo/security/policy
-
 [PEP 8]: https://www.python.org/dev/peps/pep-0008/
-
 [Poetry]: https://python-poetry.org/
-
 [poetry docs]: https://python-poetry.org/docs/
-
 [pre-commit]: https://pre-commit.com/
-
 [PyPI]: http://pypi.org/
-
 [releases page]: https://github.com/godaddy/tartufo/releases
-
 [slack]: https://godaddy-oss.slack.com/
-
 [tox]: https://tox.readthedocs.io/en/latest/
-
 [Tartufo Mailing list]: https://groups.google.com/g/tartufo-secrets-scanner
