@@ -119,7 +119,7 @@ Done!
 
 ### Code Style
 
-From [PEP 8 -- Style Guide for Python Code][PEP 8#a-foolish-consistency-is-the-hobgoblin-of-little-minds]
+From [PEP 8 -- Style Guide for Python Code][PEP 8]
 > A style guide is about consistency. Consistency with this style guide is important. Consistency within a project is
 > more important. Consistency within one module or function is the most important.
 
