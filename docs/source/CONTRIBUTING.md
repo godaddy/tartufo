@@ -141,7 +141,7 @@ world, the newest code in the codebase will reflect the best patterns to use, bu
 changed it is a balance between keeping style versus adoption of new ones.
 
 There may be occasions when the maintainers of the project may ask a contributor to adopt a newer style or pattern to
-add in uplifting the project as a whole and to help our community become better software developers.
+aid in uplifting the project as a whole and to help our community become better software developers.
 
 We understand that time or other constraints may mean such requests are not able to be part of the pull request. In such
 cases please engage in communication with the maintainers. We would much rather have a pull request of a feature that
