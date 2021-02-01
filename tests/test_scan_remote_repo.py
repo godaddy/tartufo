@@ -6,6 +6,8 @@ from click.testing import CliRunner
 
 from tartufo import cli, types
 
+from tests import helpers
+
 
 class ScanRemoteRepoTests(unittest.TestCase):
     @mock.patch("tartufo.commands.scan_remote_repo.util.clone_git_repo")
@@ -90,6 +92,9 @@ class ScanRemoteRepoTests(unittest.TestCase):
             )
         self.assertEqual(result.output, "Scan failed!\n")
 
+    @unittest.skipIf(
+        helpers.BROKEN_USER_PATHS, "Skipping due to truncated Windows usernames"
+    )
     @mock.patch("tartufo.commands.scan_remote_repo.util.clone_git_repo")
     @mock.patch("tartufo.commands.scan_remote_repo.GitRepoScanner")
     @mock.patch("tartufo.commands.scan_remote_repo.rmtree", new=mock.MagicMock())

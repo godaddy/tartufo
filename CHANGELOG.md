@@ -1,20 +1,33 @@
-vX.Y.Z - TBD
+v2.2.1 - 02 December 2020
+-------------------------
+
+Bugfixes:
+
+* Rev build and release versions to match
+
+v2.2.0 - 02 December 2020
 ------------------------
 
 Features:
 
+* #119 - Added a new `--fetch`/`--no-fetch` option for local scans, controlling
+  whether the local clone is refreshed before scan. (Thanks @jgowdy!)
 * #125 - Implement CODEOWNERS and auto-assignment to maintainers on PRs
 
 Bugfixes:
 
 * #115 - Strange behavior can manifest with invalid sub-commands
 * #117 - Ignore whitespace-only lines in exclusion files
+* #118 - Local scans fetch remote origin
 * #121 - Match rules specified with --git-rules-repo were not included in scans
+* #140 - Ensure a valid output folder name in Windows
 
 Other changes:
 
+* #95 - Run CI across Linux, Windows, and MacOS
 * #130 - Added references to Tartufo GoogleGroups mailing list to docs
 * Fixed testing in Pypy3 and explicitly added Python 3.9 support
+* #134 - Documented the release process
 * #143 - Updated GitHub Action hashes to newest rev to address https://github.blog/changelog/2020-10-01-github-actions-deprecating-set-env-and-add-path-commands/ where possible
 
 v2.0.1 - 09 October 2020
