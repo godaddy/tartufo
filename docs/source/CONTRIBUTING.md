@@ -247,7 +247,7 @@ Congratulations, you've just issued a new release for `tartufo`. The automation 
 [Install Poetry]: https://python-poetry.org/docs/#installation
 [Poetry Environments]: https://python-poetry.org/docs/managing-environments/
 [our security policy]: https://github.com/godaddy/tartufo/security/policy
-[PEP 8]: https://www.python.org/dev/peps/pep-0008/
+[PEP 8]: https://www.python.org/dev/peps/pep-0008/#a-foolish-consistency-is-the-hobgoblin-of-little-minds
 [Poetry]: https://python-poetry.org/
 [poetry docs]: https://python-poetry.org/docs/
 [pre-commit]: https://pre-commit.com/
