@@ -146,7 +146,22 @@ class TartufoCLI(click.MultiCommand):
     callback=config.read_pyproject_toml,
     help="Read configuration from specified file. [default: tartufo.toml]",
 )
-
+@click.option(
+    "-q/ ",
+    "--quiet/--no-quiet",
+    help="Quiet mode. No outputs are reported if the scan is successful and doesn't "
+    "find any issues",
+    default=False,
+    is_flag=True,
+)
+@click.option(
+    "-v/ ",
+    "--verbose",
+    help="Display more verbose output. Specifying this option multiple times will "
+    "incrementally increase the amount of output.",
+    default=0,
+    count=True,
+)
 # The first positional argument here would be a hard-coded version, hence the `None`
 @click.version_option(None, "-V", "--version")
 @click.pass_context
@@ -158,34 +173,38 @@ def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
     also be made to work in pre-commit mode, for scanning blobs of text as a
     pre-commit hook.
     """
+
     options = types.GlobalOptions(**kwargs)  # type: ignore
     ctx.obj = options
+    if options.quiet and options.verbose > 0:
+        raise click.BadParameter("-v/--verbose and -q/--quiet are mutually exclusive.")
 
 
 @main.resultcallback()  # type: ignore
 @click.pass_context
 def process_issues(
     ctx: click.Context,
-    result: Tuple[str, List[scanner.Issue]],
+    result: Tuple[str, scanner.ScannerBase],
     **kwargs: config.OptionTypes,
 ):
-    repo_path, issues = result
+    repo_path, scan = result
     options = types.GlobalOptions(**kwargs)  # type: ignore
+    now = datetime.now().isoformat("T", "microseconds")
     output_dir = None
     if options.output_dir:
-        now = datetime.now().isoformat("T", "microseconds")
         if platform.system().lower() == "windows":  # pragma: no cover
             # Make sure we aren't using illegal characters for Windows folder names
             now = now.replace(":", "")
         output_dir = pathlib.Path(options.output_dir) / f"tartufo-scan-results-{now}"
         output_dir.mkdir(parents=True)
 
-    if issues:
-        util.echo_issues(issues, options.json, repo_path, output_dir)
-        if output_dir:
-            util.write_outputs(issues, output_dir)
-            if not options.json:
-                click.echo(f"Results have been saved in {output_dir}")
+    util.echo_result(options, scan, repo_path, output_dir)
+    if output_dir:
+        util.write_outputs(scan.issues, output_dir)
+        if not options.json:
+            click.echo(f"Results have been saved in {output_dir}")
+
+    if scan.issues:
         ctx.exit(1)
 
     ctx.exit(0)

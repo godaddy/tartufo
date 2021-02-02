@@ -86,7 +86,7 @@ class ProcessIssuesTest(unittest.TestCase):
     )
     @mock.patch("tartufo.cli.datetime")
     @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
-    @mock.patch("tartufo.util.echo_issues", new=mock.MagicMock())
+    @mock.patch("tartufo.util.echo_result", new=mock.MagicMock())
     @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
     def test_output_dir_is_called_out(
         self, mock_scanner: mock.MagicMock, mock_dt: mock.MagicMock
@@ -115,7 +115,7 @@ class ProcessIssuesTest(unittest.TestCase):
     )
     @mock.patch("tartufo.cli.datetime")
     @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
-    @mock.patch("tartufo.util.echo_issues", new=mock.MagicMock())
+    @mock.patch("tartufo.util.echo_result", new=mock.MagicMock())
     @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
     def test_output_dir_is_valid_name_in_windows(
         self, mock_scanner: mock.MagicMock, mock_dt: mock.MagicMock
@@ -139,7 +139,7 @@ class ProcessIssuesTest(unittest.TestCase):
         )
 
     @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
-    @mock.patch("tartufo.util.echo_issues", new=mock.MagicMock())
+    @mock.patch("tartufo.util.echo_result", new=mock.MagicMock())
     @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
     def test_output_dir_is_not_called_out_when_outputting_json(
         self, mock_scanner: mock.MagicMock
@@ -159,7 +159,7 @@ class ProcessIssuesTest(unittest.TestCase):
         self.assertEqual(result.output, "")
 
     @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
-    @mock.patch("tartufo.util.echo_issues", new=mock.MagicMock())
+    @mock.patch("tartufo.util.echo_result", new=mock.MagicMock())
     @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
     def test_output_dir_is_created_if_it_does_not_exist(
         self, mock_scanner: mock.MagicMock
@@ -177,7 +177,7 @@ class ProcessIssuesTest(unittest.TestCase):
             self.assertTrue(Path("./foo").exists())
 
     @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
-    @mock.patch("tartufo.util.echo_issues", new=mock.MagicMock())
+    @mock.patch("tartufo.util.echo_result", new=mock.MagicMock())
     @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
     def test_command_exits_with_positive_return_code_when_issues_are_found(
         self, mock_scanner: mock.MagicMock
@@ -191,6 +191,54 @@ class ProcessIssuesTest(unittest.TestCase):
         with runner.isolated_filesystem():
             result = runner.invoke(cli.main, ["scan-local-repo", "."])
         self.assertGreater(result.exit_code, 0)
+
+    @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
+    @mock.patch("tartufo.util.echo_result", new=mock.MagicMock())
+    @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
+    def test_command_exits_with_zero_return_code_when_no_issues_are_found(
+        self, mock_scanner: mock.MagicMock
+    ):
+        mock_scanner.return_value.issues = []
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli.main, ["scan-local-repo", "."])
+        self.assertEqual(result.exit_code, 0)
+
+    @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
+    @mock.patch("tartufo.util.echo_result", new=mock.MagicMock())
+    @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
+    def test_command_raises_error_when_quiet_and_verbose_simultaneously(
+        self, mock_scanner: mock.MagicMock
+    ):
+        mock_scanner.return_value.issues = []
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli.main, ["-q", "-v", "scan-local-repo", "."])
+        self.assertEqual(result.exit_code, 2)
+
+    @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
+    @mock.patch("tartufo.util.echo_result", new=mock.MagicMock())
+    @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
+    def test_command_returns_with_zero_when_quiet_only(
+        self, mock_scanner: mock.MagicMock
+    ):
+        mock_scanner.return_value.issues = []
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli.main, ["-q", "scan-local-repo", "."])
+        self.assertEqual(result.exit_code, 0)
+
+    @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
+    @mock.patch("tartufo.util.echo_result", new=mock.MagicMock())
+    @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
+    def test_command_returns_with_zero_when_verbose_only(
+        self, mock_scanner: mock.MagicMock
+    ):
+        mock_scanner.return_value.issues = []
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli.main, ["-v", "scan-local-repo", "."])
+        self.assertEqual(result.exit_code, 0)
 
 
 if __name__ == "__main__":
