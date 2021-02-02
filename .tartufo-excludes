@@ -1,3 +1,4 @@
+.github/workflows/(.*)\.yml
 poetry.lock
 pyproject.toml
 docs/source/(.*)\.rst
