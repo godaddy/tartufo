@@ -1,5 +1,5 @@
 import pathlib
-from typing import Optional, Tuple
+from typing import Tuple
 
 import click
 
@@ -12,7 +12,7 @@ from tartufo.scanner import GitPreCommitScanner
 @click.pass_context
 def main(
     ctx: click.Context, options: types.GlobalOptions
-) -> Tuple[str, Optional[GitPreCommitScanner]]:
+) -> Tuple[str, GitPreCommitScanner]:
     """Scan staged changes in a pre-commit hook."""
     # Assume that the current working directory is the appropriate git repo
     repo_path = pathlib.Path.cwd()
@@ -22,4 +22,4 @@ def main(
         scanner.scan()
     except types.ScanException as exc:
         util.fail(str(exc), ctx)
-    return (str(repo_path), scanner)
+    return (str(repo_path), scanner)  # type: ignore
