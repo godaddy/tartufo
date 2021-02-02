@@ -20,5 +20,5 @@ For questions or help, please see:
 ### Please note that this issue tracker is not a help forum and requests for help will be closed.
 
 [Slack]: https://godaddy-oss.slack.com/
-[README]: https://github.com/godaddy/tartufo/blob/master/README.md
+[README]: https://github.com/godaddy/tartufo/blob/main/README.md
 [Tartufo Mailing list]: https://groups.google.com/g/tartufo-secrets-scanner

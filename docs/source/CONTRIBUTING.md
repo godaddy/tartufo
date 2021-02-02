@@ -65,7 +65,7 @@ From a practical perspective, contributions are as simple as:
 - Making changes to your forked repository.
 - When committing, reference your issue (if present) and include a note about the fix.
 - If possible, and if applicable, please also add/update unit tests for your changes.
-- Push the changes to your fork and submit a pull request to the 'master' branch of the projects' repository.
+- Push the changes to your fork and submit a pull request to the 'main' branch of the projects' repository.
 
 If you are interested in making a large change and feel unsure about its overall effect, please make sure to first
 discuss the change and reach a consensus with core contributors through [slack]. Then ask about the best way to go about
