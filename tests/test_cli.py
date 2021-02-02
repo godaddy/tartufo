@@ -219,7 +219,7 @@ class ProcessIssuesTest(unittest.TestCase):
     @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
     @mock.patch("tartufo.util.echo_result", new=mock.MagicMock())
     @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
-    def test_command_returns_with_zero_when_quiet_or_verbose_only(
+    def test_command_returns_with_zero_when_quiet_only(
         self, mock_scanner: mock.MagicMock
     ):
         mock_scanner.return_value.issues = []
@@ -227,6 +227,15 @@ class ProcessIssuesTest(unittest.TestCase):
         with runner.isolated_filesystem():
             result = runner.invoke(cli.main, ["-q", "scan-local-repo", "."])
         self.assertEqual(result.exit_code, 0)
+
+    @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
+    @mock.patch("tartufo.util.echo_result", new=mock.MagicMock())
+    @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
+    def test_command_returns_with_zero_when_verbose_only(
+        self, mock_scanner: mock.MagicMock
+    ):
+        mock_scanner.return_value.issues = []
+        runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(cli.main, ["-v", "scan-local-repo", "."])
         self.assertEqual(result.exit_code, 0)

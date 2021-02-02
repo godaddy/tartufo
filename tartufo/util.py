@@ -56,8 +56,10 @@ def echo_result(
     :param repo_path: The path to the repository the issues were found in
     :param output_dir: The directory that issue details were written out to
     """
+    now = datetime.now().isoformat("T", "microseconds")
     if options.json:
         output = {
+            "scan_time": now,
             "project_path": repo_path,
             "output_dir": str(output_dir) if output_dir else None,
             "excluded_paths": [str(path.pattern) for path in scanner.excluded_paths],
@@ -70,7 +72,6 @@ def echo_result(
     else:
         if not scanner.issues:
             if not options.quiet:
-                now = datetime.now().isoformat("T", "microseconds")
                 click.echo(f"Time: {now}\nAll clear. No secrets detected.")
         else:
             for issue in scanner.issues:
