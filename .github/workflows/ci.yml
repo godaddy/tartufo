@@ -35,7 +35,7 @@ jobs:
     - name: Run tox environments
       run: tox
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@07127fd
+      uses: codecov/codecov-action@e156083f13aff6830c92fc5faa23505779fbf649
       with:
         file: coverage.xml
         env_vars: OS,PYTHON
