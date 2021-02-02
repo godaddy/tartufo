@@ -74,8 +74,7 @@ def echo_result(
             if not options.quiet:
                 click.echo(f"Time: {now}\nAll clear. No secrets detected.")
         else:
-            for issue in scanner.issues:
-                click.echo(issue)
+            click.echo("\n".join([str(issue) for issue in scanner.issues]))
         if options.verbose > 0:
             click.echo("\nExcluded paths:")
             click.echo("\n".join([path.pattern for path in scanner.excluded_paths]))

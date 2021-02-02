@@ -77,9 +77,7 @@ class OutputTests(unittest.TestCase):
         mock_scanner.exclude_signatures = []
         mock_scanner.issues = [1, 2, 3, 4]
         util.echo_result(options, mock_scanner, "", "")
-        mock_click.echo.assert_has_calls(
-            (mock.call(1), mock.call(2), mock.call(3), mock.call(4)), any_order=False
-        )
+        mock_click.echo.assert_called_once_with("1\n2\n3\n4")
 
     @mock.patch("tartufo.scanner.ScannerBase")
     @mock.patch("tartufo.util.click")
