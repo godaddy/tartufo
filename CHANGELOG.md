@@ -5,6 +5,7 @@ Features:
 
 * #42 - Report output on clean or successful scan. Add new `-q/--quiet` option to suppress output
 * #43 - Report out of the list of exclusions. Add new `-v/--verbose` option to print exclusions
+* #159 - Switched our primary development branch from `master` -> `main`
 
 
 v2.2.1 - 02 December 2020
@@ -15,7 +16,7 @@ Bugfixes:
 * Rev build and release versions to match
 
 v2.2.0 - 02 December 2020
-------------------------
+-------------------------
 
 Features:
 
@@ -79,8 +80,8 @@ New features include:
 
 * #2 - Verified/approved exclusions are now handled by way of hash signatures.
   * These hashes are created on a combination of the matched string and filename
-    where the match was found. They are generated using the `BLAKE2` hashing
-    algorithm. (via #61)
+  where the match was found. They are generated using the `BLAKE2` hashing
+  algorithm. (via #61)
 * #7 - A working directory can now be specified to clone to when scanning a
   remote repository. (via #81)
 * #11 - Removed the `--cleanup` option and added a `--output-dir` in its place.
@@ -107,7 +108,7 @@ Other changes:
 * Issues found during the scan are now represented by a class, instead of some
   amorphous dictionary (via #29)
   * Further, since a single `Issue` is instantiated per match, the output key
-    for the matches has changed from `strings_found` to `matched_string`.
+  for the matches has changed from `strings_found` to `matched_string`.
 * #25 - Set up full documentation on Read The Docs (via #38)
 * #30 - Support for Python 2 has been dropped (via #31)
 * #58 - CI is now handled by GitHub Actions (via #59)
