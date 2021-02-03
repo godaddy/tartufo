@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-
-import datetime
 import json
 import os
 import pathlib
 import stat
 import tempfile
 import uuid
+from datetime import datetime
 from functools import lru_cache, partial
 from hashlib import blake2s
 from typing import Any, Callable, Dict, Iterable, List, Optional, TYPE_CHECKING, Pattern
@@ -19,6 +18,7 @@ from tartufo.types import Rule
 
 if TYPE_CHECKING:
     from tartufo.scanner import Issue  # pylint: disable=cyclic-import
+    from tartufo.scanner import ScannerBase  # pylint: disable=cyclic-import
 
 
 DATETIME_FORMAT: str = "%Y-%m-%d %H:%M:%S"
@@ -44,29 +44,43 @@ def convert_regexes_to_rules(regexes: Dict[str, Pattern]) -> Dict[str, Rule]:
     }
 
 
-def echo_issues(
-    issues: "List[Issue]",
-    as_json: bool,
+def echo_result(
+    options: "types.GlobalOptions",
+    scanner: "ScannerBase",
     repo_path: str,
     output_dir: Optional[pathlib.Path],
 ) -> None:
     """Print all found issues out to the console, optionally as JSON.
-
-    :param issues: The list of issues to be printed out
-    :param as_json: Whether the output should be formatted as JSON
+    :param options: Global options object
+    :param scanner: ScannerBase contaning issues and excluded paths from config tree
     :param repo_path: The path to the repository the issues were found in
     :param output_dir: The directory that issue details were written out to
     """
-    if as_json:
+    now = datetime.now().isoformat("T", "microseconds")
+    if options.json:
         output = {
+            "scan_time": now,
             "project_path": repo_path,
             "output_dir": str(output_dir) if output_dir else None,
-            "found_issues": [issue.as_dict() for issue in issues],
+            "excluded_paths": [str(path.pattern) for path in scanner.excluded_paths],
+            "excluded_signatures": [
+                str(signature) for signature in options.exclude_signatures
+            ],
+            "found_issues": [issue.as_dict() for issue in scanner.issues],
         }
         click.echo(json.dumps(output))
     else:
-        for issue in issues:
-            click.echo(issue)
+        if not scanner.issues:
+            if not options.quiet:
+                click.echo(f"Time: {now}\nAll clear. No secrets detected.")
+        else:
+            for issue in scanner.issues:
+                click.echo(issue)
+        if options.verbose > 0:
+            click.echo("\nExcluded paths:")
+            click.echo("\n".join([path.pattern for path in scanner.excluded_paths]))
+            click.echo("\nExcluded signatures:")
+            click.echo("\n".join(options.exclude_signatures))
 
 
 def write_outputs(found_issues: "List[Issue]", output_dir: pathlib.Path) -> List[str]:
@@ -142,7 +156,7 @@ def extract_commit_metadata(
     :param branch: What branch the commit was found on
     """
     return {
-        "commit_time": datetime.datetime.fromtimestamp(commit.committed_date).strftime(
+        "commit_time": datetime.fromtimestamp(commit.committed_date).strftime(
             DATETIME_FORMAT
         ),
         "commit_message": commit.message,
