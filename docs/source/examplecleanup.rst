@@ -72,10 +72,10 @@ More on this later!)
    .. code-block:: console
 
       # Cleanup with BFG
-      wget https://repo1.maven.org/maven2/com/madgag/bfg/1.13.0/bfg-1.13.0.jar
+      wget https://repo1.maven.org/maven2/com/madgag/bfg/1.13.2/bfg-1.13.2.jar
       # Make a backup
       cp -r ${GITHUBREPO} backup_${GITHUBREPO}
-      java -jar bfg-1.13.0.jar --replace-text remove.txt ${GITHUBREPO}
+      java -jar bfg-1.13.2.jar --replace-text remove.txt ${GITHUBREPO}
 
 #. Uh Oh!
 
@@ -86,7 +86,7 @@ More on this later!)
 
       # occasionally the results will be to big to process all at once
       split -l 200 remove.txt
-      for f in x*; do java -jar bfg-1.13.0.jar --replace-text $f ${GITHUBREPO}; done
+      for f in x*; do java -jar bfg-1.13.2.jar --replace-text $f ${GITHUBREPO}; done
 
 #. Proceed with cleanup/audit
 
@@ -190,7 +190,7 @@ More on this later!)
       # bare clones are missing data, it is easier to re-clone the repo now that it does not have PRs
       git clone git@${GITHUBADDRESS}:${GITHUBPROJECT}/${NEWGITHUBREPO}
       # Now run bfg
-      java -jar bfg-1.13.0.jar --replace-text remove.txt ${NEWGITHUBREPO}
+      java -jar bfg-1.13.2.jar --replace-text remove.txt ${NEWGITHUBREPO}
       cd ${NEWGITHUBREPO}
       git reflog expire --expire=now --all && git gc --prune=now --aggressive
       git push
