@@ -52,7 +52,7 @@ def echo_result(
 ) -> None:
     """Print all found issues out to the console, optionally as JSON.
     :param options: Global options object
-    :param scanner: ScannerBase contaning issues and excluded paths from config tree
+    :param scanner: ScannerBase containing issues and excluded paths from config tree
     :param repo_path: The path to the repository the issues were found in
     :param output_dir: The directory that issue details were written out to
     """
@@ -74,8 +74,7 @@ def echo_result(
             if not options.quiet:
                 click.echo(f"Time: {now}\nAll clear. No secrets detected.")
         else:
-            for issue in scanner.issues:
-                click.echo(issue)
+            click.echo("\n".join([str(issue) for issue in scanner.issues]))
         if options.verbose > 0:
             click.echo("\nExcluded paths:")
             click.echo("\n".join([path.pattern for path in scanner.excluded_paths]))

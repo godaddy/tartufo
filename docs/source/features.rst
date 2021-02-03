@@ -152,13 +152,13 @@ following example to get you started:
 .. code-block:: yaml
 
    - repo: https://github.com/godaddy/tartufo
-     rev: master
+     rev: main
      hooks:
      - id: tartufo
 
 .. warning::
 
-   You probably don't actually want to use the `master` rev. This is the active
+   You probably don't actually want to use the `main` rev. This is the active
    development branch for this project, and can not be guaranteed stable. Your
    best bet would be to choose the latest version, currently |version|.
 

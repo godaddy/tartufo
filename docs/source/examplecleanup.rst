@@ -64,7 +64,7 @@ More on this later!)
 
    There's a very slick tool designed to clean up git commit history called
    `BFG`_. By default, ``BFG`` doesn't modify the contents of your latest commit
-   on your master (or 'HEAD') branch, even though it will clean all the commits
+   on your main (or 'HEAD') branch, even though it will clean all the commits
    before it. This of course means if you have active code with "bad passwords",
    ``tartufo`` will still fail. But let's take the bulk of the old entries out
    first.
@@ -155,7 +155,7 @@ More on this later!)
       Total 1014 (delta 662), reused 964 (delta 638)
       remote: Resolving deltas: 100% (662/662), completed with 24 local objects.
       To git@GITHUBADDRESS:yourproject/yourrepo.git
-       + 56f7476...c76ed2b master -> master (forced update)
+       + 56f7476...c76ed2b main -> main (forced update)
        ! [remote rejected] refs/pull/1/head -> refs/pull/1/head (deny updating a hidden ref)
        ! [remote rejected] refs/pull/2/head -> refs/pull/2/head (deny updating a hidden ref)
        ! [remote rejected] refs/pull/3/head -> refs/pull/3/head (deny updating a hidden ref)
