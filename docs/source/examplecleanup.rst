@@ -42,11 +42,13 @@ More on this later!)
 #. Use ``tartufo`` to scan your repository and find any secrets in its history!
 
    Scan your repo!
+   .. note:: The `--fetch/--no-fetch` option for local scans controls whether the local clone is refreshed before scan.
+   This should be set to `no-fetch` for this process.
 
    .. code-block:: console
 
       # Run Tartufo on your repo and create a list of high entropy items to remove:
-      tartufo --regex --json scan-local-repo ${GITHUBREPO} | \
+      tartufo --regex --json scan-local-repo --no-fetch ${GITHUBREPO} | \
           jq -r '.found_issues[].matched_string' | \
           sort -u > remove.txt
 
@@ -96,7 +98,7 @@ More on this later!)
    .. code-block:: console
 
       # run tartufo again to check for any remaining potential secrets
-      leftovers=`tartufo --regex -od ~/temp scan-local-repo ${GITHUBREPO}`
+      leftovers=`tartufo --regex -od ~/temp scan-local-repo --no-fetch ${GITHUBREPO}`
       tmppath=`echo -e "$leftovers" | tail -n1 | awk '{print $6}'`
       # look through the remaining strings
       # if there's anything that looks like it shouldn't be there, dig into it and clear it out
@@ -203,3 +205,4 @@ More on this later!)
 
 .. _BFG: https://rtyley.github.io/bfg-repo-cleaner/
 .. _Poetry: https://python-poetry.org/
+
