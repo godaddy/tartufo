@@ -42,8 +42,9 @@ More on this later!)
 #. Use ``tartufo`` to scan your repository and find any secrets in its history!
 
    Scan your repo!
+
    .. note:: The `--fetch/--no-fetch` option for local scans controls whether the local clone is refreshed before scan.
-   This should be set to `no-fetch` for this process.
+   This should be set to `no-fetch` for this process. This is an argument to `scan-local-repo`, not the base `tartufo` command.
 
    .. code-block:: console
 
