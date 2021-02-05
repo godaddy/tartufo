@@ -1,3 +1,7 @@
+Other changes:
+* Added no-fetch to code snippets and note about what it does
+
+
 v2.3.0 - 04 February 2021
 -------------------------
 
