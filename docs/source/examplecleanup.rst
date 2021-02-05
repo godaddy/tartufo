@@ -44,7 +44,7 @@ More on this later!)
    Scan your repo!
 
    .. note:: The `--fetch/--no-fetch` option for local scans controls whether the local clone is refreshed before scan.
-   This should be set to `no-fetch` for this process. This is an argument to `scan-local-repo`, not the base `tartufo` command.
+      This should be set to `no-fetch` for this process. This is an argument to `scan-local-repo`, not the base `tartufo` command.
 
    .. code-block:: console
 
