@@ -106,7 +106,8 @@ class ProcessIssuesTest(unittest.TestCase):
             Path(dirname) / "foo" / "tartufo-scan-results-nownownow"
         ).resolve()
         self.assertEqual(
-            result.output, f"Results have been saved in {output_dir}\n",
+            result.output,
+            f"Results have been saved in {output_dir}\n",
         )
 
     @unittest.skipUnless(helpers.WINDOWS, "Test is Windows-only")
@@ -135,7 +136,8 @@ class ProcessIssuesTest(unittest.TestCase):
             Path(dirname) / "foo" / "tartufo-scan-results-nownownow"
         ).resolve()
         self.assertEqual(
-            result.output, f"Results have been saved in {output_dir}\n",
+            result.output,
+            f"Results have been saved in {output_dir}\n",
         )
 
     @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")

@@ -392,7 +392,8 @@ class IterBranchCommitsTests(ScannerTestCase):
         commits = list(test_scanner._iter_branch_commits(mock_repo, mock_branch))
         # Because "since commit" is exclusive, only the 2 commits before it are ever yielded
         self.assertEqual(
-            commits, [(mock_commit_2, mock_commit_1)],
+            commits,
+            [(mock_commit_2, mock_commit_1)],
         )
 
 

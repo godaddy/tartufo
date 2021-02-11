@@ -52,7 +52,8 @@ class GitTests(unittest.TestCase):
         )
         mock_temp.assert_not_called()
         mock_clone.assert_called_once_with(
-            "https://github.com/godaddy/tartufo.git", str(Path("/foo/tartufo.git")),
+            "https://github.com/godaddy/tartufo.git",
+            str(Path("/foo/tartufo.git")),
         )
 
     @mock.patch("git.Repo.clone_from")
@@ -143,7 +144,10 @@ class OutputTests(unittest.TestCase):
     @mock.patch("tartufo.util.json")
     @mock.patch("tartufo.util.datetime")
     def test_echo_result_outputs_proper_json_when_requested(
-        self, mock_time, mock_json, mock_scanner,
+        self,
+        mock_time,
+        mock_json,
+        mock_scanner,
     ):
         mock_time.now.return_value.isoformat.return_value = "now:now:now"
         issue_1 = scanner.Issue(
@@ -218,7 +222,10 @@ class OutputTests(unittest.TestCase):
                 "project_path": "/repo",
                 "output_dir": str(Path("/tmp")),
                 "excluded_paths": ["package-lock.json", "poetry.lock"],
-                "excluded_signatures": ["fffffffffffff", "ooooooooooooo",],
+                "excluded_signatures": [
+                    "fffffffffffff",
+                    "ooooooooooooo",
+                ],
                 "found_issues": [
                     {
                         "issue_type": "High Entropy",
