@@ -68,6 +68,13 @@ class Rule:
     path_pattern: Optional[Pattern]
 
 
+class LogLevel(enum.IntEnum):
+    ERROR = 0
+    WARNING = 1
+    INFO = 2
+    DEBUG = 3
+
+
 class TartufoException(Exception):
     """Base class for all package exceptions"""
 

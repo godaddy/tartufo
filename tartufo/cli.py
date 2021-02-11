@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import importlib
+import logging
 import pathlib
 import platform
 from datetime import datetime
@@ -178,6 +179,32 @@ def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
     ctx.obj = options
     if options.quiet and options.verbose > 0:
         raise click.BadParameter("-v/--verbose and -q/--quiet are mutually exclusive.")
+
+    logger = logging.getLogger()
+    git_logger = logging.getLogger("git")
+    # Make sure we don't exceed the maximum log level
+    if options.verbose > 3:
+        excess_verbosity = options.verbose - 3
+        options.verbose = 3
+        if excess_verbosity > 3:
+            excess_verbosity = 3
+    else:
+        excess_verbosity = 0
+
+    # Translate the number of "verbose" arguments, to an actual logging level
+    logger.setLevel(getattr(logging, types.LogLevel(options.verbose).name))
+    # Pass any excess verbosity down to the git logger, for extreme debugging needs
+    git_logger.setLevel(getattr(logging, types.LogLevel(excess_verbosity).name))
+
+    handler = logging.StreamHandler()
+    if not excess_verbosity:
+        # Example: [2021-02-11 10:28:08,445] [INFO] - Starting scan...
+        log_format = "[%(asctime)s] [%(levelname)s] - %(message)s"
+    else:
+        # Also show the logger name to help differentiate messages
+        log_format = "[%(asctime)s] [%(levelname)s] [%(name)s] - %(message)s"
+    handler.setFormatter(logging.Formatter(log_format))
+    logger.addHandler(handler)
 
 
 @main.resultcallback()  # type: ignore
