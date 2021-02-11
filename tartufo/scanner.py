@@ -50,7 +50,7 @@ class Issue:
         self.issue_type = issue_type
         self.matched_string = matched_string
         self.chunk = chunk
-        self.logger = logging.getLogger(__file__)
+        self.logger = logging.getLogger(__name__)
 
     def as_dict(self) -> Dict[str, Optional[str]]:
         """Return a dictionary representation of an issue.
@@ -119,7 +119,7 @@ class ScannerBase(abc.ABC):
 
     def __init__(self, options: types.GlobalOptions) -> None:
         self.global_options = options
-        self.logger = logging.getLogger(__file__)
+        self.logger = logging.getLogger(__name__)
 
     @property
     def issues(self) -> List[Issue]:
