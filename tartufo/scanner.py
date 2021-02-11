@@ -513,7 +513,13 @@ class GitRepoScanner(GitScanner):
         except git.GitCommandError as exc:
             raise types.GitRemoteException(exc.stderr.strip()) from exc
 
+        self.logger.debug(
+            "Branches to be scanned: %s",
+            ", ".join([str(branch) for branch in branches]),
+        )
+
         for branch in branches:
+            self.logger.info("Scanning branch: %s", branch)
             diff_index: git.DiffIndex = None
             diff_hash: bytes
             curr_commit: git.Commit = None
