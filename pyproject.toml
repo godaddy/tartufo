@@ -74,6 +74,7 @@ exclude-path-patterns = [
     'pyproject.toml',
     # To not have to escape `\` in regexes, use single quoted
     # TOML 'literal strings'
+    '.github/workflows/(.*)\.ymlz',
     'docs/source/(.*)\.rst',
     'tests/test_base_scanner\.py',
     'tests/test_util.py',
