@@ -1,4 +1,12 @@
+vX.Y.Z - TBD
+------------
+
+Bug fixes:
+
+* Added rust toolchain to allow for building of latest cryptography
+
 Other changes:
+
 * Added no-fetch to code snippets and note about what it does
 
 
