@@ -21,6 +21,7 @@ class GlobalOptions:
         "config",
         "verbose",
         "quiet",
+        "log_timestamps",
     )
     json: bool
     rules: Tuple[TextIO, ...]
@@ -36,6 +37,7 @@ class GlobalOptions:
     config: Optional[TextIO]
     verbose: int
     quiet: bool
+    log_timestamps: bool
 
 
 @dataclass

@@ -163,6 +163,13 @@ class TartufoCLI(click.MultiCommand):
     default=0,
     count=True,
 )
+@click.option(
+    "--log-timestamps/--no-log-timestamps",
+    is_flag=True,
+    default=True,
+    show_default=True,
+    help="Enable or disable timestamps in logging messages.",
+)
 # The first positional argument here would be a hard-coded version, hence the `None`
 @click.version_option(None, "-V", "--version")
 @click.pass_context
@@ -199,10 +206,12 @@ def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
     handler = logging.StreamHandler()
     if not excess_verbosity:
         # Example: [2021-02-11 10:28:08,445] [INFO] - Starting scan...
-        log_format = "[%(asctime)s] [%(levelname)s] - %(message)s"
+        log_format = "[%(levelname)s] - %(message)s"
     else:
         # Also show the logger name to help differentiate messages
-        log_format = "[%(asctime)s] [%(levelname)s] [%(name)s] - %(message)s"
+        log_format = "[%(levelname)s] [%(name)s] - %(message)s"
+    if options.log_timestamps:
+        log_format = " ".join(["[%(asctime)s]", log_format])
     handler.setFormatter(logging.Formatter(log_format))
     logger.addHandler(handler)
 
