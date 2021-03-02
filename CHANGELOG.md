@@ -1,3 +1,10 @@
+vX.Y.Z - TBD
+------------
+
+Bug fixes:
+
+* #158 - The `--branch` option was broken and would not actually scan anything
+
 v2.3.1 - 16 February 2021
 -------------------------
 
@@ -8,7 +15,6 @@ Bug fixes:
 Other changes:
 
 * Added no-fetch to code snippets and note about what it does
-
 
 v2.3.0 - 04 February 2021
 -------------------------
