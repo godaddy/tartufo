@@ -1,3 +1,4 @@
+import logging
 import unittest
 from collections import namedtuple
 from pathlib import Path
@@ -241,6 +242,62 @@ class ProcessIssuesTest(unittest.TestCase):
         with runner.isolated_filesystem():
             result = runner.invoke(cli.main, ["-v", "scan-local-repo", "."])
         self.assertEqual(result.exit_code, 0)
+
+
+class LoggingTests(unittest.TestCase):
+    @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
+    @mock.patch("tartufo.util.echo_result", new=mock.MagicMock())
+    @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
+    @mock.patch("tartufo.cli.logging.Formatter")
+    def test_timestamps_are_logged_by_default(
+        self, mock_formatter: mock.MagicMock, mock_scanner: mock.MagicMock
+    ):
+        mock_scanner.return_value.issues = []
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            runner.invoke(cli.main, ["scan-local-repo", "."])
+            mock_formatter.assert_called_once_with(
+                "[%(asctime)s] [%(levelname)s] - %(message)s"
+            )
+
+    @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
+    @mock.patch("tartufo.util.echo_result", new=mock.MagicMock())
+    @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
+    @mock.patch("tartufo.cli.logging.Formatter")
+    def test_timestamps_can_be_turned_off(
+        self, mock_formatter: mock.MagicMock, mock_scanner: mock.MagicMock
+    ):
+        mock_scanner.return_value.issues = []
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            runner.invoke(cli.main, ["--no-log-timestamps", "scan-local-repo", "."])
+            mock_formatter.assert_called_once_with("[%(levelname)s] - %(message)s")
+
+    @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
+    @mock.patch("tartufo.util.echo_result", new=mock.MagicMock())
+    @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
+    @mock.patch("tartufo.cli.logging.Formatter")
+    def test_excess_verbosity_also_logs_the_logger_name(
+        self, mock_formatter: mock.MagicMock, mock_scanner: mock.MagicMock
+    ):
+        mock_scanner.return_value.issues = []
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            runner.invoke(cli.main, ["-vvvv", "scan-local-repo", "."])
+            mock_formatter.assert_called_once_with(
+                "[%(asctime)s] [%(levelname)s] [%(name)s] - %(message)s"
+            )
+
+    @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
+    @mock.patch("tartufo.util.echo_result", new=mock.MagicMock())
+    @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
+    def test_excess_verbosity_does_not_exceed_debug(self, mock_scanner: mock.MagicMock):
+        mock_scanner.return_value.issues = []
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            runner.invoke(cli.main, ["-vvvvvvvvvvvvvvv", "scan-local-repo", "."])
+            git_logger = logging.getLogger("git")
+            self.assertEqual(git_logger.getEffectiveLevel(), logging.DEBUG)
 
 
 if __name__ == "__main__":
