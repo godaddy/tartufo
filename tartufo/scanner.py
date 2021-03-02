@@ -260,14 +260,6 @@ class ScannerBase(abc.ABC):
             prob_x = float(data.count(char)) / len(data)
             if prob_x > 0:
                 entropy += -prob_x * math.log2(prob_x)
-        self.logger.debug(
-            "Calculated entropy for the following is %f:\n"
-            "Character set: %s\n"
-            "Data: %s",
-            entropy,
-            char_set,
-            data,
-        )
         return entropy
 
     def scan(self) -> List[Issue]:
@@ -475,6 +467,7 @@ class GitRepoScanner(GitScanner):
             branch.name, max_count=self.git_options.max_depth
         ):
             commit_hash = curr_commit.hexsha
+            self.logger.debug("Scanning commit: %s", commit_hash)
             if self.git_options.since_commit:
                 if commit_hash == self.git_options.since_commit:
                     since_commit_reached = True
