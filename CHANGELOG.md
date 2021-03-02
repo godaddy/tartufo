@@ -1,6 +1,15 @@
 vX.Y.Z - TBD
 ------------
 
+Features:
+
+* #76 - Added logging! You can now use the `-v`/`--verbose` option to increase
+  the amount of output from tartufo. Specifying multiple times will incrementally
+  increase what is output.
+* Added a `--log-timestamps`/`--no-log-timestamps` option (default: True) so that
+  timestamps can be hidden in log messages. This could be helpful when, for example,
+  comparing the output from multiple runs.
+
 Bug fixes:
 
 * #158 - The `--branch` option was broken and would not actually scan anything
@@ -19,13 +28,12 @@ Other changes:
 v2.3.0 - 04 February 2021
 -------------------------
 
-Features: 
+Features:
 
 * #42 - Report output on clean or successful scan. Add new `-q/--quiet` option to suppress output
 * #43 - Report out of the list of exclusions. Add new `-v/--verbose` option to print exclusions
 * #159 - Switched our primary development branch from `master` -> `main`
 * Updated BFG refs from 1.13.0 to 1.13.2
-
 
 v2.2.1 - 02 December 2020
 -------------------------
