@@ -468,7 +468,7 @@ class GitRepoScanner(GitScanner):
                     self._repo.remotes.origin.fetch(self.git_options.branch)
                 unfiltered_branches = list(self._repo.branches)
                 branches = [
-                    x for x in unfiltered_branches if x == self.git_options.branch
+                    x for x in unfiltered_branches if x.name == self.git_options.branch
                 ]
             else:
                 # Everything

@@ -48,8 +48,8 @@ class GitOptions:
 
 
 class IssueType(enum.Enum):
-    Entropy = "High Entropy"
-    RegEx = "Regular Expression Match"
+    Entropy = "High Entropy"  # pylint: disable=invalid-name
+    RegEx = "Regular Expression Match"  # pylint: disable=invalid-name
 
 
 @dataclass

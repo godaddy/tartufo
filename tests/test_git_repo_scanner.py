@@ -183,8 +183,12 @@ class ChunkGeneratorTests(ScannerTestCase):
     ):
         self.git_options.fetch = False
         self.git_options.branch = "bar"
+        mock_foo = mock.MagicMock()
+        mock_foo.name = "foo"
+        mock_bar = mock.MagicMock()
+        mock_bar.name = "bar"
         mock_repo.return_value.remotes.origin.fetch.return_value = ["foo", "bar"]
-        mock_repo.return_value.branches = ["foo", "bar"]
+        mock_repo.return_value.branches = [mock_foo, mock_bar]
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
@@ -192,7 +196,9 @@ class ChunkGeneratorTests(ScannerTestCase):
         for _ in test_scanner.chunks:
             pass
         mock_repo.return_value.remotes.origin.fetch.assert_not_called()
-        mock_iter_commits.assert_has_calls((mock.call(mock_repo.return_value, "bar"),))
+        mock_iter_commits.assert_has_calls(
+            (mock.call(mock_repo.return_value, mock_bar),)
+        )
 
     @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
     @mock.patch("git.Repo")
@@ -201,8 +207,12 @@ class ChunkGeneratorTests(ScannerTestCase):
     ):
         self.git_options.fetch = True
         self.git_options.branch = "bar"
+        mock_foo = mock.MagicMock()
+        mock_foo.name = "foo"
+        mock_bar = mock.MagicMock()
+        mock_bar.name = "bar"
         mock_repo.return_value.remotes.origin.fetch.return_value = ["foo", "bar"]
-        mock_repo.return_value.branches = ["foo", "bar"]
+        mock_repo.return_value.branches = [mock_foo, mock_bar]
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
@@ -210,7 +220,9 @@ class ChunkGeneratorTests(ScannerTestCase):
         for _ in test_scanner.chunks:
             pass
         mock_repo.return_value.remotes.origin.fetch.assert_called()
-        mock_iter_commits.assert_has_calls((mock.call(mock_repo.return_value, "bar"),))
+        mock_iter_commits.assert_has_calls(
+            (mock.call(mock_repo.return_value, mock_bar),)
+        )
 
     @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
     @mock.patch("tartufo.scanner.GitRepoScanner._iter_diff_index")
