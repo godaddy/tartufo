@@ -21,6 +21,7 @@ class GlobalOptions:
         "config",
         "verbose",
         "quiet",
+        "log_timestamps",
     )
     json: bool
     rules: Tuple[TextIO, ...]
@@ -36,6 +37,7 @@ class GlobalOptions:
     config: Optional[TextIO]
     verbose: int
     quiet: bool
+    log_timestamps: bool
 
 
 @dataclass
@@ -66,6 +68,13 @@ class Rule:
     name: Optional[str]
     pattern: Pattern
     path_pattern: Optional[Pattern]
+
+
+class LogLevel(enum.IntEnum):
+    ERROR = 0
+    WARNING = 1
+    INFO = 2
+    DEBUG = 3
 
 
 class TartufoException(Exception):

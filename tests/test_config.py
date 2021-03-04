@@ -88,7 +88,8 @@ class ConfigureRegexTests(unittest.TestCase):
         mock_clone.assert_not_called()
 
     @unittest.skipIf(
-        helpers.WINDOWS, "Avoiding a race condition/permission error in Windows",
+        helpers.WINDOWS,
+        "Avoiding a race condition/permission error in Windows",
     )
     @mock.patch("tartufo.config.util.clone_git_repo")
     def test_configure_regexes_clones_git_rules_repo(self, mock_clone):

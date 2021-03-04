@@ -2,6 +2,7 @@
 
 import abc
 import hashlib
+import logging
 import math
 import pathlib
 import re
@@ -36,6 +37,7 @@ class Issue:
     issue_type: types.IssueType
     issue_detail: Optional[str] = None
     matched_string: str = ""
+    logger: logging.Logger
 
     def __init__(
         self, issue_type: types.IssueType, matched_string: str, chunk: types.Chunk
@@ -48,6 +50,7 @@ class Issue:
         self.issue_type = issue_type
         self.matched_string = matched_string
         self.chunk = chunk
+        self.logger = logging.getLogger(__name__)
 
     def as_dict(self) -> Dict[str, Optional[str]]:
         """Return a dictionary representation of an issue.
@@ -112,9 +115,11 @@ class ScannerBase(abc.ABC):
     _excluded_paths: Optional[List[Pattern]] = None
     _rules_regexes: Optional[Dict[str, Rule]] = None
     global_options: types.GlobalOptions
+    logger: logging.Logger
 
     def __init__(self, options: types.GlobalOptions) -> None:
         self.global_options = options
+        self.logger = logging.getLogger(__name__)
 
     @property
     def issues(self) -> List[Issue]:
@@ -126,6 +131,7 @@ class ScannerBase(abc.ABC):
         :rtype: List[Issue]
         """
         if self._issues is None:
+            self.logger.debug("Issues called before scan. Calling scan now.")
             self._issues = self.scan()
         return self._issues
 
@@ -136,13 +142,18 @@ class ScannerBase(abc.ABC):
         :rtype: List[Pattern]
         """
         if self._included_paths is None:
+            self.logger.info("Initializing included paths")
             if self.global_options.include_paths:
                 self._included_paths = config.compile_path_rules(
                     self.global_options.include_paths.readlines()
                 )
                 self.global_options.include_paths.close()
             else:
+                self.logger.debug("No include paths found in config")
                 self._included_paths = []
+            self.logger.debug(
+                "Included paths was initialized as: %s", self._included_paths
+            )
         return self._included_paths
 
     @property
@@ -152,13 +163,18 @@ class ScannerBase(abc.ABC):
         :rtype: List[Pattern]
         """
         if self._excluded_paths is None:
+            self.logger.info("Initializing excluded paths")
             if self.global_options.exclude_paths:
                 self._excluded_paths = config.compile_path_rules(
                     self.global_options.exclude_paths.readlines()
                 )
                 self.global_options.exclude_paths.close()
             else:
+                self.logger.debug("No exclude paths found in config")
                 self._excluded_paths = []
+            self.logger.debug(
+                "Excluded paths was initialized as: %s", self._excluded_paths
+            )
         return self._excluded_paths
 
     @property
@@ -169,6 +185,7 @@ class ScannerBase(abc.ABC):
         :rtype: Dict[str, Pattern]
         """
         if self._rules_regexes is None:
+            self.logger.info("Initializing regex rules")
             try:
                 self._rules_regexes = config.configure_regexes(
                     self.global_options.default_regexes,
@@ -177,7 +194,11 @@ class ScannerBase(abc.ABC):
                     self.global_options.git_rules_files,
                 )
             except (ValueError, re.error) as exc:
+                self.logger.exception("Error loading regex rules", exc_info=exc)
                 raise types.ConfigException(str(exc)) from exc
+            self.logger.debug(
+                "Regex rules were initialized as: %s", self._rules_regexes
+            )
         return self._rules_regexes
 
     @lru_cache(maxsize=None)
@@ -200,8 +221,10 @@ class ScannerBase(abc.ABC):
         if self.included_paths and not any(
             p.match(file_path) for p in self.included_paths
         ):
+            self.logger.info("%s excluded - did not match included paths", file_path)
             return False
         if self.excluded_paths and any(p.match(file_path) for p in self.excluded_paths):
+            self.logger.info("%s excluded - matched excluded paths", file_path)
             return False
         return True
 
@@ -251,10 +274,13 @@ class ScannerBase(abc.ABC):
         """
         issues: List[Issue] = []
         if not any((self.global_options.entropy, self.global_options.regex)):
+            self.logger.error("No analysis requested.")
             raise types.ConfigException("No analysis requested.")
         if self.global_options.regex and not self.rules_regexes:
+            self.logger.error("Regex checks requested, but no regexes found.")
             raise types.ConfigException("Regex checks requested, but no regexes found.")
 
+        self.logger.info("Starting scan...")
         for chunk in self.chunks:
             # Run regex scans first to trigger a potential fast fail for bad config
             if self.global_options.regex and self.rules_regexes:
@@ -262,6 +288,7 @@ class ScannerBase(abc.ABC):
             if self.global_options.entropy:
                 issues += self.scan_entropy(chunk)
         self._issues = issues
+        self.logger.info("Found %d issues.", len(self._issues))
         return self._issues
 
     def scan_entropy(self, chunk: types.Chunk) -> List[Issue]:
@@ -440,6 +467,7 @@ class GitRepoScanner(GitScanner):
             branch.name, max_count=self.git_options.max_depth
         ):
             commit_hash = curr_commit.hexsha
+            self.logger.debug("Scanning commit: %s", commit_hash)
             if self.git_options.since_commit:
                 if commit_hash == self.git_options.since_commit:
                     since_commit_reached = True
@@ -478,7 +506,13 @@ class GitRepoScanner(GitScanner):
         except git.GitCommandError as exc:
             raise types.GitRemoteException(exc.stderr.strip()) from exc
 
+        self.logger.debug(
+            "Branches to be scanned: %s",
+            ", ".join([str(branch) for branch in branches]),
+        )
+
         for branch in branches:
+            self.logger.info("Scanning branch: %s", branch)
             diff_index: git.DiffIndex = None
             diff_hash: bytes
             curr_commit: git.Commit = None

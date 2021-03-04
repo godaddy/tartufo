@@ -51,17 +51,16 @@ toml = "^0.10"
 truffleHogRegexes = "^0.0.7"
 
 [tool.poetry.dev-dependencies]
-black = {version = "19.10b0", allow-prereleases = true, markers = "platform_python_implementation == 'CPython'"}
+black = {version = "20.8b1", allow-prereleases = true, markers = "platform_python_implementation == 'CPython'"}
 coverage = {extras = ["toml"], version = "^5.1"}
 mypy = {version = "^0.800", markers = "platform_python_implementation == 'CPython'"}
 pre-commit = "*"
-pylint = "^2.5.2"
-pytest = "^5.4.1"
-pytest-cov = "^2.8.1"
-pytest-sugar = "^0.9.3"
-tox = "^3.14.6"
-vulture = "^1.4"
-wrapt = "^1.12.1"
+pylint = "^2.6.0"
+pytest = "^6.2.2"
+pytest-cov = "^2.11.1"
+pytest-sugar = "^0.9.4"
+tox = "^3.21.4"
+vulture = "^2.3"
 
 [tool.poetry.extras]
 docs = ["recommonmark", "sphinx", "sphinx-click", "sphinx-rtd-theme", "sphinxcontrib-spelling"]
