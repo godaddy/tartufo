@@ -9,6 +9,9 @@ Features:
 * Added a `--log-timestamps`/`--no-log-timestamps` option (default: True) so that
   timestamps can be hidden in log messages. This could be helpful when, for example,
   comparing the output from multiple runs.
+* #107 - Added a `--compact`/`--no-compact` option for abbreviated output on found
+  issues, to avoid unintentionally spamming yourself. (Thanks to @dclayton-godaddy
+  for his work on this one)
 
 Bug fixes:
 
