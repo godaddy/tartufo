@@ -3,6 +3,7 @@ import unittest
 from unittest import mock
 
 from tartufo import scanner, types
+from tartufo.scanner import Issue
 from tartufo.types import GlobalOptions, Rule
 
 from tests.helpers import generate_options
@@ -96,6 +97,52 @@ class IssuesTests(ScannerTestCase):
         ]
         test_scanner.issues  # pylint: disable=pointless-statement
         mock_scan.assert_not_called()
+
+
+class IssueTests(unittest.TestCase):
+    def test_as_dict_returns_dictionary(self):
+        issue = Issue(
+            types.IssueType.Entropy,
+            "test-string",
+            types.Chunk(
+                "test-contents", "test-file", {"test-meta1": "test-meta-value"}
+            ),
+        )
+        issue.issue_detail = "issue-detail"
+        actual = issue.as_dict()
+        self.assertEqual(
+            {
+                "diff": "test-contents",
+                "file_path": "test-file",
+                "issue_detail": "issue-detail",
+                "issue_type": "High Entropy",
+                "matched_string": "test-string",
+                "signature": "bf09b8c7e62db27c45e618f4aa9d8b13bf91cf3de593b11c1fb515e8b1003ca8",
+                "test-meta1": "test-meta-value",
+            },
+            actual,
+        )
+
+    def test_as_dict_returns_compact_dictionary(self):
+        issue = Issue(
+            types.IssueType.Entropy,
+            "test-string",
+            types.Chunk(
+                "test-contents", "test-file", {"test-meta1": "test-meta-value"}
+            ),
+        )
+        issue.issue_detail = "issue-detail"
+        actual = issue.as_dict(compact=True)
+        self.assertEqual(
+            {
+                "file_path": "test-file",
+                "issue_detail": "issue-detail",
+                "issue_type": "High Entropy",
+                "matched_string": "test-string",
+                "signature": "bf09b8c7e62db27c45e618f4aa9d8b13bf91cf3de593b11c1fb515e8b1003ca8",
+            },
+            actual,
+        )
 
 
 class IncludeExcludePathsTests(ScannerTestCase):

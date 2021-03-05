@@ -52,22 +52,26 @@ class Issue:
         self.chunk = chunk
         self.logger = logging.getLogger(__name__)
 
-    def as_dict(self) -> Dict[str, Optional[str]]:
+    def as_dict(self, compact=False) -> Dict[str, Optional[str]]:
         """Return a dictionary representation of an issue.
 
         This is primarily meant to aid in JSON serialization.
 
+        :compact: True to return a dictionary with fewer fields.
         :return: A JSON serializable dictionary representation of this issue
         """
-        return {
+
+        output = {
             "file_path": str(self.chunk.file_path),
             "matched_string": self.matched_string,
-            "diff": self.chunk.contents,
             "signature": self.signature,
             "issue_type": self.issue_type.value,
             "issue_detail": self.issue_detail,
-            **self.chunk.metadata,
         }
+        if not compact:
+            output.update({"diff": self.chunk.contents, **self.chunk.metadata})
+
+        return output
 
     @property
     def signature(self) -> str:

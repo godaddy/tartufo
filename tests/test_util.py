@@ -82,6 +82,31 @@ class OutputTests(unittest.TestCase):
 
     @mock.patch("tartufo.scanner.ScannerBase")
     @mock.patch("tartufo.util.click")
+    def test_echo_result_outputs_compact_format(self, mock_click, mock_scanner):
+        options = generate_options(GlobalOptions, json=False, verbose=0, compact=True)
+        issue1 = scanner.Issue(
+            types.IssueType.Entropy, "foo", types.Chunk("fullfoobar", "/what/foo", {})
+        )
+        issue2 = scanner.Issue(
+            types.IssueType.RegEx, "bar", types.Chunk("fullfoobar", "/what/bar", {})
+        )
+        issue2.issue_detail = "Meets the bar"
+        mock_scanner.issues = [issue1, issue2]
+        util.echo_result(options, mock_scanner, "", "")
+
+        mock_click.echo.assert_has_calls(
+            [
+                mock.call(
+                    "[High Entropy] /what/foo: foo (ea29b8c0f8a478f260689899393107cca188fbbff1c5a5bd4ff32c102cb60226, None)"
+                ),
+                mock.call(
+                    "[Regular Expression Match] /what/bar: bar (fa692eebc3d60e67a9f22b4b877d5939cb2ec96c0c26c7e5168b3b8b660c573c, Meets the bar)"
+                ),
+            ],
+        )
+
+    @mock.patch("tartufo.scanner.ScannerBase")
+    @mock.patch("tartufo.util.click")
     @mock.patch("tartufo.util.datetime")
     def test_echo_result_echos_message_when_clean(
         self, mock_time, mock_click, mock_scanner

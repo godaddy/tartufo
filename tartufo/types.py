@@ -22,6 +22,7 @@ class GlobalOptions:
         "verbose",
         "quiet",
         "log_timestamps",
+        "compact",
     )
     json: bool
     rules: Tuple[TextIO, ...]
@@ -38,6 +39,7 @@ class GlobalOptions:
     verbose: int
     quiet: bool
     log_timestamps: bool
+    compact: bool
 
 
 @dataclass

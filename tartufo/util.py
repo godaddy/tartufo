@@ -66,9 +66,18 @@ def echo_result(
             "excluded_signatures": [
                 str(signature) for signature in options.exclude_signatures
             ],
-            "found_issues": [issue.as_dict() for issue in scanner.issues],
+            "found_issues": [
+                issue.as_dict(compact=options.compact) for issue in scanner.issues
+            ],
         }
+
         click.echo(json.dumps(output))
+    elif options.compact:
+        for issue in scanner.issues:
+            click.echo(
+                f"[{issue.issue_type.value}] {issue.chunk.file_path}: {issue.matched_string} "
+                f"({issue.signature}, {issue.issue_detail})"
+            )
     else:
         if not scanner.issues:
             if not options.quiet:
