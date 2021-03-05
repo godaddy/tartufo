@@ -81,6 +81,7 @@ exclude-path-patterns = [
     'tests/test_base_scanner\.py',
     'tests/test_util.py',
     'tests/data/testRules.json',
+    'tartufo/data/default_regexes\.json'
 ]
 exclude-signatures = [
   "62f22e4500140a6ed959a6143c52b0e81c74e7491081292fce733de4ec574542",
