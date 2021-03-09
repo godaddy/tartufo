@@ -53,9 +53,20 @@ Options:
                                   applicable if --rules is also specified.
                                   [default: True]
 
+  --compact / --no-compact        Enable reduced output.  [default: False]
   --entropy / --no-entropy        Enable entropy checks.  [default: True]
   --regex / --no-regex            Enable high signal regexes checks.
                                   [default: False]
+
+  -i, --include-paths FILENAME    [DEPRECATED] Use `--include-path-patterns`.
+                                  File with regular expressions (one per
+                                  line), at least one of which must match a
+                                  Git object path in order for it to be
+                                  scanned; lines starting with '#' are treated
+                                  as comments and are ignored. If empty or not
+                                  provided (default), all Git object paths are
+                                  included unless otherwise excluded via the
+                                  --exclude-paths option.
 
   -ip, --include-path-patterns TEXT
                                   Specify a regular expression which matches
@@ -65,6 +76,16 @@ Options:
                                   provided (default), all Git object paths are
                                   included unless otherwise excluded via the
                                   --exclude-path-patterns option.
+
+  -x, --exclude-paths FILENAME    [DEPRECATED] Use `--exclude-path-patterns`.
+                                  File with regular expressions (one per
+                                  line), none of which may match a Git object
+                                  path in order for it to be scanned; lines
+                                  starting with '#' are treated as comments
+                                  and are ignored. If empty or not provided
+                                  (default), no Git object paths are excluded
+                                  unless effectively excluded via the
+                                  --include-paths option.
 
   -xp, --exclude-path-patterns TEXT
                                   Specify a regular expression which matches
@@ -105,6 +126,18 @@ Options:
 
   --config FILE                   Read configuration from specified file.
                                   [default: tartufo.toml]
+
+  -q, --quiet / --no-quiet        Quiet mode. No outputs are reported if the
+                                  scan is successful and doesn't find any
+                                  issues
+
+  -v, --verbose                   Display more verbose output. Specifying this
+                                  option multiple times will incrementally
+                                  increase the amount of output.
+
+  --log-timestamps / --no-log-timestamps
+                                  Enable or disable timestamps in logging
+                                  messages.  [default: True]
 
   -V, --version                   Show the version and exit.
   -h, --help                      Show this message and exit.

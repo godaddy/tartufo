@@ -86,7 +86,6 @@ class TartufoCLI(click.MultiCommand):
     "-i",
     "--include-paths",
     type=click.File("r"),
-    hidden=True,
     help="""[DEPRECATED] Use `--include-path-patterns`. File with regular
     expressions (one per line), at least one of which must match a Git object
     path in order for it to be scanned; lines starting with '#' are treated as
@@ -108,7 +107,6 @@ class TartufoCLI(click.MultiCommand):
     "-x",
     "--exclude-paths",
     type=click.File("r"),
-    hidden=True,
     help="""[DEPRECATED] Use `--exclude-path-patterns`. File with regular
     expressions (one per line), none of which may match a Git object path in
     order for it to be scanned; lines starting with '#' are treated as comments
@@ -228,8 +226,11 @@ def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
     else:
         excess_verbosity = 0
 
+    # Log warnings by default, unless quiet
+    default_level = 1 if not options.quiet else 0
     # Translate the number of "verbose" arguments, to an actual logging level
-    logger.setLevel(getattr(logging, types.LogLevel(options.verbose).name))
+    level_name = types.LogLevel(max(options.verbose, default_level)).name
+    logger.setLevel(getattr(logging, level_name))
     # Pass any excess verbosity down to the git logger, for extreme debugging needs
     git_logger.setLevel(getattr(logging, types.LogLevel(excess_verbosity).name))
 

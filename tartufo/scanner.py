@@ -149,6 +149,9 @@ class ScannerBase(abc.ABC):
             self.logger.info("Initializing included paths")
             patterns = list(self.global_options.include_path_patterns or ())
             if self.global_options.include_paths:
+                self.logger.warn(
+                    "DEPRECATED --include-paths, use --include-path-patterns"
+                )
                 patterns += self.global_options.include_paths.readlines()
                 self.global_options.include_paths.close()
             self._included_paths = (
@@ -169,6 +172,9 @@ class ScannerBase(abc.ABC):
             self.logger.info("Initializing excluded paths")
             patterns = list(self.global_options.exclude_path_patterns or ())
             if self.global_options.exclude_paths:
+                self.logger.warn(
+                    "DEPRECATED --exclude-paths, use --exclude-path-patterns"
+                )
                 patterns += self.global_options.exclude_paths.readlines()
                 self.global_options.exclude_paths.close()
             self._excluded_paths = (
