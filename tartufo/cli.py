@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import importlib
+import logging
 import pathlib
 import platform
 from datetime import datetime
@@ -59,6 +60,13 @@ class TartufoCLI(click.MultiCommand):
     show_default=True,
     help="Whether to include the default regex list when configuring"
     " search patterns. Only applicable if --rules is also specified.",
+)
+@click.option(
+    "--compact/--no-compact",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Enable reduced output.",
 )
 @click.option(
     "--entropy/--no-entropy",
@@ -185,6 +193,13 @@ class TartufoCLI(click.MultiCommand):
     default=0,
     count=True,
 )
+@click.option(
+    "--log-timestamps/--no-log-timestamps",
+    is_flag=True,
+    default=True,
+    show_default=True,
+    help="Enable or disable timestamps in logging messages.",
+)
 # The first positional argument here would be a hard-coded version, hence the `None`
 @click.version_option(None, "-V", "--version")
 @click.pass_context
@@ -201,6 +216,34 @@ def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
     ctx.obj = options
     if options.quiet and options.verbose > 0:
         raise click.BadParameter("-v/--verbose and -q/--quiet are mutually exclusive.")
+
+    logger = logging.getLogger()
+    git_logger = logging.getLogger("git")
+    # Make sure we don't exceed the maximum log level
+    if options.verbose > 3:
+        excess_verbosity = options.verbose - 3
+        options.verbose = 3
+        if excess_verbosity > 3:
+            excess_verbosity = 3
+    else:
+        excess_verbosity = 0
+
+    # Translate the number of "verbose" arguments, to an actual logging level
+    logger.setLevel(getattr(logging, types.LogLevel(options.verbose).name))
+    # Pass any excess verbosity down to the git logger, for extreme debugging needs
+    git_logger.setLevel(getattr(logging, types.LogLevel(excess_verbosity).name))
+
+    handler = logging.StreamHandler()
+    if not excess_verbosity:
+        # Example: [2021-02-11 10:28:08,445] [INFO] - Starting scan...
+        log_format = "[%(levelname)s] - %(message)s"
+    else:
+        # Also show the logger name to help differentiate messages
+        log_format = "[%(levelname)s] [%(name)s] - %(message)s"
+    if options.log_timestamps:
+        log_format = " ".join(["[%(asctime)s]", log_format])
+    handler.setFormatter(logging.Formatter(log_format))
+    logger.addHandler(handler)
 
 
 @main.resultcallback()  # type: ignore

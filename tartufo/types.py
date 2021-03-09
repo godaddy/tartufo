@@ -23,6 +23,8 @@ class GlobalOptions:
         "config",
         "verbose",
         "quiet",
+        "log_timestamps",
+        "compact",
     )
     json: bool
     rules: Tuple[TextIO, ...]
@@ -40,6 +42,8 @@ class GlobalOptions:
     config: Optional[TextIO]
     verbose: int
     quiet: bool
+    log_timestamps: bool
+    compact: bool
 
 
 @dataclass
@@ -52,8 +56,8 @@ class GitOptions:
 
 
 class IssueType(enum.Enum):
-    Entropy = "High Entropy"
-    RegEx = "Regular Expression Match"
+    Entropy = "High Entropy"  # pylint: disable=invalid-name
+    RegEx = "Regular Expression Match"  # pylint: disable=invalid-name
 
 
 @dataclass
@@ -70,6 +74,13 @@ class Rule:
     name: Optional[str]
     pattern: Pattern
     path_pattern: Optional[Pattern]
+
+
+class LogLevel(enum.IntEnum):
+    ERROR = 0
+    WARNING = 1
+    INFO = 2
+    DEBUG = 3
 
 
 class TartufoException(Exception):

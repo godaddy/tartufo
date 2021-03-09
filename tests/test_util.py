@@ -52,7 +52,8 @@ class GitTests(unittest.TestCase):
         )
         mock_temp.assert_not_called()
         mock_clone.assert_called_once_with(
-            "https://github.com/godaddy/tartufo.git", str(Path("/foo/tartufo.git")),
+            "https://github.com/godaddy/tartufo.git",
+            str(Path("/foo/tartufo.git")),
         )
 
     @mock.patch("git.Repo.clone_from")
@@ -78,6 +79,31 @@ class OutputTests(unittest.TestCase):
         mock_scanner.issues = [1, 2, 3, 4]
         util.echo_result(options, mock_scanner, "", "")
         mock_click.echo.assert_called_once_with("1\n2\n3\n4")
+
+    @mock.patch("tartufo.scanner.ScannerBase")
+    @mock.patch("tartufo.util.click")
+    def test_echo_result_outputs_compact_format(self, mock_click, mock_scanner):
+        options = generate_options(GlobalOptions, json=False, verbose=0, compact=True)
+        issue1 = scanner.Issue(
+            types.IssueType.Entropy, "foo", types.Chunk("fullfoobar", "/what/foo", {})
+        )
+        issue2 = scanner.Issue(
+            types.IssueType.RegEx, "bar", types.Chunk("fullfoobar", "/what/bar", {})
+        )
+        issue2.issue_detail = "Meets the bar"
+        mock_scanner.issues = [issue1, issue2]
+        util.echo_result(options, mock_scanner, "", "")
+
+        mock_click.echo.assert_has_calls(
+            [
+                mock.call(
+                    "[High Entropy] /what/foo: foo (ea29b8c0f8a478f260689899393107cca188fbbff1c5a5bd4ff32c102cb60226, None)"
+                ),
+                mock.call(
+                    "[Regular Expression Match] /what/bar: bar (fa692eebc3d60e67a9f22b4b877d5939cb2ec96c0c26c7e5168b3b8b660c573c, Meets the bar)"
+                ),
+            ],
+        )
 
     @mock.patch("tartufo.scanner.ScannerBase")
     @mock.patch("tartufo.util.click")
@@ -143,7 +169,10 @@ class OutputTests(unittest.TestCase):
     @mock.patch("tartufo.util.json")
     @mock.patch("tartufo.util.datetime")
     def test_echo_result_outputs_proper_json_when_requested(
-        self, mock_time, mock_json, mock_scanner,
+        self,
+        mock_time,
+        mock_json,
+        mock_scanner,
     ):
         mock_time.now.return_value.isoformat.return_value = "now:now:now"
         issue_1 = scanner.Issue(
@@ -218,7 +247,10 @@ class OutputTests(unittest.TestCase):
                 "project_path": "/repo",
                 "output_dir": str(Path("/tmp")),
                 "excluded_paths": ["package-lock.json", "poetry.lock"],
-                "excluded_signatures": ["fffffffffffff", "ooooooooooooo",],
+                "excluded_signatures": [
+                    "fffffffffffff",
+                    "ooooooooooooo",
+                ],
                 "found_issues": [
                     {
                         "issue_type": "High Entropy",
