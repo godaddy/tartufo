@@ -53,6 +53,7 @@ Features:
 * #119 - Added a new `--fetch`/`--no-fetch` option for local scans, controlling
   whether the local clone is refreshed before scan. (Thanks @jgowdy!)
 * #125 - Implement CODEOWNERS and auto-assignment to maintainers on PRs
+* [#145](https://github.com/godaddy/tartufo/issues/145) - Adds `--exclude-path-patterns` and `--include-path-patterns` to simplify config in a single .toml file
 
 Bugfixes:
 

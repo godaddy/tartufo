@@ -237,8 +237,9 @@ def compile_path_rules(patterns: Iterable[str]) -> List[Pattern]:
 
     :param patterns: The list of patterns to be compiled
     """
+    stripped = (p.strip() for p in patterns)
     return [
-        re.compile(pattern.strip())
-        for pattern in patterns
-        if pattern.strip() and not pattern.startswith("#")
+        re.compile(pattern)
+        for pattern in stripped
+        if pattern and not pattern.startswith("#")
     ]

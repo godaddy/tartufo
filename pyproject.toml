@@ -68,7 +68,17 @@ docs = ["recommonmark", "sphinx", "sphinx-click", "sphinx-rtd-theme", "sphinxcon
 [tool.tartufo]
 cleanup = true
 entropy = true
-exclude-paths = ".tartufo-excludes"
+exclude-path-patterns = [
+    'poetry.lock',
+    'pyproject.toml',
+    # To not have to escape `\` in regexes, use single quoted
+    # TOML 'literal strings'
+    '.github/workflows/(.*)\.yml',
+    'docs/source/(.*)\.rst',
+    'tests/test_base_scanner\.py',
+    'tests/test_util.py',
+    'tests/data/testRules.json',
+]
 exclude-signatures = [
   "62f22e4500140a6ed959a6143c52b0e81c74e7491081292fce733de4ec574542",
   "ecbbe1edd6373c7e2b88b65d24d7fe84610faafd1bc2cf6ae35b43a77183e80b",

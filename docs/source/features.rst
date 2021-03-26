@@ -267,40 +267,45 @@ Done! This particular issue will no longer show up in your scan results.
 Limiting Scans by Path
 ++++++++++++++++++++++
 
-With the ``--include-paths`` and ``--exclude-paths`` options, it is also
-possible to limit scanning to a subset of objects in the Git history by
-defining regular expressions (one per line) in a file to match the targeted
-object paths. To illustrate, see the example include and exclude files below:
+By default ``tartufo`` will scan all objects tracked by Git. You can limit
+scanning by either including fewer paths or excluding some of them using
+Python Regular Expressions (regex) and the `--include-path-patterns` and
+`--exclude-path-patterns` options.
 
-.. code-block:: ini
-   :caption: include-patterns.txt
+.. warning::
 
-   src/
-   # lines beginning with "#" are treated as comments and are ignored
-   gradle/
-   # regexes must match the entire path, but can use python's regex syntax for
-   # case-insensitive matching and other advanced options
-   (?i).*\.(properties|conf|ini|txt|y(a)?ml)$
-   (.*/)?id_[rd]sa$
+   Using include patterns is more dangerous, since it's easy to miss the
+   creation of new secrets if future files don't match an existing include
+   rule. We recommend only using fine-grained exclude patterns instead.
 
-.. code-block:: ini
-   :caption: exclude-patterns.txt
+.. code-block:: toml
 
-   (.*/)?\.classpath$
-   .*\.jmx$
-   (.*/)?test/(.*/)?resources/
+   [tool.tartufo]
+   include-path-patterns = [
+      'src/',
+      'gradle/',
+      # regexes must match the entire path, but can use python's regex syntax
+      # for case-insensitive matching and other advanced options
+      '(.*/)?id_[rd]sa$',
+      # Single quoted strings in TOML don't require escapes for `\` in regexes
+      '(?i).*\.(properties|conf|ini|txt|y(a)?ml)$',
+   ]
+   exclude-path-patterns = [
+      '(.*/)?\.classpath$',
+      '.*\.jmx$',
+      '(.*/)?test/(.*/)?resources/',
+   ]
 
-These filter files could then be applied by:
+The filter expressions can also be specified as command line arguments.
+Patterns specified like this are merged with any patterns specified
+in the config file:
 
 .. code-block:: sh
 
-   > tartufo --include-paths include-patterns.txt \
-     --exclude-paths exclude-patterns.txt \
+   > tartufo \
+     --include-path-patterns 'src/' -ip 'gradle/' \
+     --exclude-path-patterns '(.*/)?\.classpath$' -xp '.*\.jmx$' \
      scan-local-repo file://path/to/my/repo.git
-
-With these filters, issues found in files in the root-level ``src`` directory
-would be reported, unless they had the ``.classpath`` or ``.jmx`` extension, or
-if they were found in the ``src/test/dev/resources/`` directory, for example.
 
 
 Additional usage information is provided when calling ``tartufo`` with the

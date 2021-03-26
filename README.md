@@ -53,11 +53,13 @@ Options:
                                   applicable if --rules is also specified.
                                   [default: True]
 
+  --compact / --no-compact        Enable reduced output.  [default: False]
   --entropy / --no-entropy        Enable entropy checks.  [default: True]
   --regex / --no-regex            Enable high signal regexes checks.
                                   [default: False]
 
-  -i, --include-paths FILENAME    File with regular expressions (one per
+  -i, --include-paths FILENAME    [DEPRECATED] Use `--include-path-patterns`.
+                                  File with regular expressions (one per
                                   line), at least one of which must match a
                                   Git object path in order for it to be
                                   scanned; lines starting with '#' are treated
@@ -66,7 +68,17 @@ Options:
                                   included unless otherwise excluded via the
                                   --exclude-paths option.
 
-  -x, --exclude-paths FILENAME    File with regular expressions (one per
+  -ip, --include-path-patterns TEXT
+                                  Specify a regular expression which matches
+                                  Git object paths to include in the scan.
+                                  This option can be specified multiple times
+                                  to include multiple patterns. If not
+                                  provided (default), all Git object paths are
+                                  included unless otherwise excluded via the
+                                  --exclude-path-patterns option.
+
+  -x, --exclude-paths FILENAME    [DEPRECATED] Use `--exclude-path-patterns`.
+                                  File with regular expressions (one per
                                   line), none of which may match a Git object
                                   path in order for it to be scanned; lines
                                   starting with '#' are treated as comments
@@ -74,6 +86,15 @@ Options:
                                   (default), no Git object paths are excluded
                                   unless effectively excluded via the
                                   --include-paths option.
+
+  -xp, --exclude-path-patterns TEXT
+                                  Specify a regular expression which matches
+                                  Git object paths to exclude from the scan.
+                                  This option can be specified multiple times
+                                  to exclude multiple patterns. If not
+                                  provided (default), no Git object paths are
+                                  excluded unless effectively excluded via the
+                                  --include-path-patterns option.
 
   -e, --exclude-signatures TEXT   Specify signatures of matches that you
                                   explicitly want to exclude from the scan,
@@ -104,15 +125,27 @@ Options:
                                   specified multiple times.
 
   --config FILE                   Read configuration from specified file.
-                                  [default: pyproject.toml]
+                                  [default: tartufo.toml]
+
+  -q, --quiet / --no-quiet        Quiet mode. No outputs are reported if the
+                                  scan is successful and doesn't find any
+                                  issues
+
+  -v, --verbose                   Display more verbose output. Specifying this
+                                  option multiple times will incrementally
+                                  increase the amount of output.
+
+  --log-timestamps / --no-log-timestamps
+                                  Enable or disable timestamps in logging
+                                  messages.  [default: True]
 
   -V, --version                   Show the version and exit.
   -h, --help                      Show this message and exit.
 
 Commands:
   pre-commit        Scan staged changes in a pre-commit hook.
-  scan-remote-repo  Automatically clone and scan a remote git repository.
   scan-local-repo   Scan a repository already cloned to your local system.
+  scan-remote-repo  Automatically clone and scan a remote git repository.
 
 ```
 

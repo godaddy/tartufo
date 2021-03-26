@@ -86,21 +86,42 @@ class TartufoCLI(click.MultiCommand):
     "-i",
     "--include-paths",
     type=click.File("r"),
-    help="File with regular expressions (one per line), at least one of "
-    "which must match a Git object path in order for it to be scanned; "
-    "lines starting with '#' are treated as comments and are ignored. "
-    "If empty or not provided (default), all Git object paths are "
-    "included unless otherwise excluded via the --exclude-paths option.",
+    help="""[DEPRECATED] Use `--include-path-patterns`. File with regular
+    expressions (one per line), at least one of which must match a Git object
+    path in order for it to be scanned; lines starting with '#' are treated as
+    comments and are ignored. If empty or not provided (default), all Git object
+    paths are included unless otherwise excluded via the --exclude-paths
+    option.""",
+)
+@click.option(
+    "-ip",
+    "--include-path-patterns",
+    multiple=True,
+    help="""Specify a regular expression which matches Git object paths to
+    include in the scan. This option can be specified multiple times to include
+    multiple patterns. If not provided (default), all Git object paths are
+    included unless otherwise excluded via the --exclude-path-patterns
+    option.""",
 )
 @click.option(
     "-x",
     "--exclude-paths",
     type=click.File("r"),
-    help="File with regular expressions (one per line), none of which may "
-    "match a Git object path in order for it to be scanned; lines "
-    "starting with '#' are treated as comments and are ignored. If "
-    "empty or not provided (default), no Git object paths are excluded "
-    "unless effectively excluded via the --include-paths option.",
+    help="""[DEPRECATED] Use `--exclude-path-patterns`. File with regular
+    expressions (one per line), none of which may match a Git object path in
+    order for it to be scanned; lines starting with '#' are treated as comments
+    and are ignored. If empty or not provided (default), no Git object paths are
+    excluded unless effectively excluded via the --include-paths option.""",
+)
+@click.option(
+    "-xp",
+    "--exclude-path-patterns",
+    multiple=True,
+    help="""Specify a regular expression which matches Git object paths to
+    exclude from the scan. This option can be specified multiple times to
+    exclude multiple patterns. If not provided (default), no Git object paths
+    are excluded unless effectively excluded via the --include-path-patterns
+    option.""",
 )
 @click.option(
     "-e",
@@ -205,8 +226,11 @@ def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
     else:
         excess_verbosity = 0
 
+    # Log warnings by default, unless quiet
+    default_level = 1 if not options.quiet else 0
     # Translate the number of "verbose" arguments, to an actual logging level
-    logger.setLevel(getattr(logging, types.LogLevel(options.verbose).name))
+    level_name = types.LogLevel(max(options.verbose, default_level)).name
+    logger.setLevel(getattr(logging, level_name))
     # Pass any excess verbosity down to the git logger, for extreme debugging needs
     git_logger.setLevel(getattr(logging, types.LogLevel(excess_verbosity).name))
 
