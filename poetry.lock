@@ -887,7 +887,7 @@ docs = ["recommonmark", "sphinx", "sphinx-click", "sphinx-rtd-theme", "sphinxcon
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "b532a21389ec4ccd3178f74d9eaeef81459ca9ad16d55d2c78a0a472b806b0f4"
+content-hash = "54ae96ac87979f5c7cebb4cc3b2dcc732461a5a4f52c6ca1a265844972758007"
 
 [metadata.files]
 alabaster = [
