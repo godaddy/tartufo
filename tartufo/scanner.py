@@ -391,7 +391,7 @@ class GitScanner(ScannerBase, abc.ABC):
             file_path = diff.b_path if diff.b_path else diff.a_path
             printable_diff: str = diff.diff.decode("utf-8", errors="replace")
             if printable_diff.startswith("Binary files"):
-                self.logger.debug('Binary file skipped: %s', file_path)
+                self.logger.debug("Binary file skipped: %s", file_path)
                 continue
             if self.should_scan(file_path):
                 yield (printable_diff, file_path)
