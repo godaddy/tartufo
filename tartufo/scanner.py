@@ -117,6 +117,7 @@ class ScannerBase(abc.ABC):
     _issues: Optional[List[Issue]] = None
     _included_paths: Optional[List[Pattern]] = None
     _excluded_paths: Optional[List[Pattern]] = None
+    _excluded_entropy: Optional[List[Rule]] = None
     _rules_regexes: Optional[Dict[str, Rule]] = None
     global_options: types.GlobalOptions
     logger: logging.Logger
@@ -161,6 +162,23 @@ class ScannerBase(abc.ABC):
                 "Included paths was initialized as: %s", self._included_paths
             )
         return self._included_paths
+
+    @property
+    def excluded_entropy(self) -> List[Rule]:
+        """Get a list of regexes used as an exclusive list of paths to scan.
+
+        :rtype: List[Pattern]
+        """
+        if self._excluded_entropy is None:
+            self.logger.info("Initializing excluded entropy patterns")
+            patterns = list(self.global_options.exclude_entropy_patterns or ())
+            self._excluded_entropy = (
+                config.compile_rules(set(patterns)) if patterns else []
+            )
+            self.logger.debug(
+                "Excluded entropy was initialized as: %s", self._excluded_entropy
+            )
+        return self._excluded_entropy
 
     @property
     def excluded_paths(self) -> List[Pattern]:
@@ -247,6 +265,35 @@ class ScannerBase(abc.ABC):
             in self.global_options.exclude_signatures
         )
 
+    @staticmethod
+    def rule_matches(rule: Rule, string: str, path: str) -> bool:
+        """
+        Match string and path against rule.
+
+        :param rule: Rule to perform match
+        :param string: string to match against rule pattern
+        :param path: path to match against rule path_pattern
+        :return: True if string and path matched, False otherwise.
+        """
+        match = False
+        if rule.pattern:
+            match = rule.pattern.match(string) is not None
+        if rule.path_pattern:
+            match = match and rule.path_pattern.match(path) is not None
+        return match
+
+    def entropy_string_is_excluded(self, string: str, path: str) -> bool:
+        """Find whether the signature of some data has been excluded in configuration.
+
+        :param string: String to check against rule pattern
+        :param path: Path to check against rule path pattern
+        :return: True if excluded, False otherwise
+        """
+
+        return bool(self.excluded_entropy) and any(
+            ScannerBase.rule_matches(p, string, path) for p in self.excluded_entropy
+        )
+
     @lru_cache(maxsize=None)
     def calculate_entropy(self, data: str, char_set: str) -> float:
         """Calculate the Shannon entropy for a piece of data.
@@ -311,17 +358,39 @@ class ScannerBase(abc.ABC):
                 hex_strings = util.get_strings_of_set(word, HEX_CHARS)
 
                 for string in b64_strings:
-                    if not self.signature_is_excluded(string, chunk.file_path):
-                        b64_entropy = self.calculate_entropy(string, BASE64_CHARS)
-                        if b64_entropy > 4.5:
-                            issues.append(Issue(types.IssueType.Entropy, string, chunk))
+                    self.evaluate_entropy_string(
+                        chunk, issues, string, BASE64_CHARS, 4.5
+                    )
 
                 for string in hex_strings:
-                    if not self.signature_is_excluded(string, chunk.file_path):
-                        hex_entropy = self.calculate_entropy(string, HEX_CHARS)
-                        if hex_entropy > 3:
-                            issues.append(Issue(types.IssueType.Entropy, string, chunk))
+                    self.evaluate_entropy_string(chunk, issues, string, HEX_CHARS, 3)
+
         return issues
+
+    def evaluate_entropy_string(
+        self,
+        chunk: types.Chunk,
+        issues: List[Issue],
+        string: str,
+        chars: str,
+        min_entropy_score: float,
+    ):
+        """
+        Check entropy string using entropy characters and score.
+
+        :param chunk: The chunk of data to check
+        :param issues: Issue list to append any strings flagged
+        :param string: String to check
+        :param chars: Characters to calculate score
+        :param min_entropy_score: Minimum entropy score to flag
+        """
+        if not self.signature_is_excluded(string, chunk.file_path):
+            entropy_score = self.calculate_entropy(string, chars)
+            if entropy_score > min_entropy_score:
+                if self.entropy_string_is_excluded(string, chunk.file_path):
+                    self.logger.debug("entropy string %s was excluded", string)
+                else:
+                    issues.append(Issue(types.IssueType.Entropy, string, chunk))
 
     def scan_regex(self, chunk: types.Chunk) -> List[Issue]:
         """Scan a chunk of data for matches against the configured regexes.

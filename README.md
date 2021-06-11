@@ -96,6 +96,14 @@ Options:
                                   excluded unless effectively excluded via the
                                   --include-path-patterns option.
 
+  -xe, --exclude-entropy-patterns TEXT
+                                  Specify a regular expression which matches
+                                  entropy strings to exclude from the scan.
+                                  This option can be specified multiple times
+                                  to exclude multiple patterns. If not
+                                  provided (default), no entropy strings will
+                                  be excluded ({path regex}::{pattern regex}).
+
   -e, --exclude-signatures TEXT   Specify signatures of matches that you
                                   explicitly want to exclude from the scan,
                                   and mark as okay. These signatures are
