@@ -17,12 +17,28 @@ jobs:
           # https://github.com/tox-dev/tox/issues/1704
           - os: windows-latest
             python-version: pypy3
+        include:
+          - os: ubuntu-latest
+            path: ~/.cache/pypoetry
+          - os: windows-latest
+            path: ~\AppData\Local\pypoetry\Cache
+          - os: macos-latest
+            path: ~/Library/Caches/pypoetry
     runs-on: ${{ matrix.os }}
     env:
       PYTHON: ${{ matrix.python-version }}
       OS: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f
+    - uses: actions/cache@c64c572235d810460d0d6876e9c705ad5002b353
+      name: Cache Poetry & Tox deps
+      with:
+        path: |
+          {{ matrix.path }}
+          .tox
+        key: ${{ runner.os }}-venvs-${{ hashFiles('**/poetry.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-venvs
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@3105fb18c05ddd93efea5f9e0bef7a03a6e9e7df
       with:
