@@ -358,19 +358,18 @@ class ScannerBase(abc.ABC):
                 hex_strings = util.get_strings_of_set(word, HEX_CHARS)
 
                 for string in b64_strings:
-                    self.evaluate_entropy_string(
-                        chunk, issues, string, BASE64_CHARS, 4.5
+                    issues += self.evaluate_entropy_string(
+                        chunk, string, BASE64_CHARS, 4.5
                     )
 
                 for string in hex_strings:
-                    self.evaluate_entropy_string(chunk, issues, string, HEX_CHARS, 3)
+                    issues += self.evaluate_entropy_string(chunk, string, HEX_CHARS, 3)
 
         return issues
 
     def evaluate_entropy_string(
         self,
         chunk: types.Chunk,
-        issues: List[Issue],
         string: str,
         chars: str,
         min_entropy_score: float,
@@ -383,6 +382,7 @@ class ScannerBase(abc.ABC):
         :param string: String to check
         :param chars: Characters to calculate score
         :param min_entropy_score: Minimum entropy score to flag
+        return: List of issues flagged
         """
         if not self.signature_is_excluded(string, chunk.file_path):
             entropy_score = self.calculate_entropy(string, chars)
@@ -390,7 +390,8 @@ class ScannerBase(abc.ABC):
                 if self.entropy_string_is_excluded(string, chunk.file_path):
                     self.logger.debug("entropy string %s was excluded", string)
                 else:
-                    issues.append(Issue(types.IssueType.Entropy, string, chunk))
+                    return [Issue(types.IssueType.Entropy, string, chunk)]
+        return []
 
     def scan_regex(self, chunk: types.Chunk) -> List[Issue]:
         """Scan a chunk of data for matches against the configured regexes.

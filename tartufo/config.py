@@ -252,14 +252,11 @@ def compile_rule(pattern: str) -> Rule:
     :param pattern: Rule pattern with {path_pattern}::{pattern}
     :return Rule: Rule object with pattern and path_pattern
     """
-    parts = pattern.split("::")
-    if len(parts) == 1:
-        parts = [".*", parts[0]]
-    return Rule(
-        name=None,
-        pattern=re.compile("::".join(parts[1:])),
-        path_pattern=re.compile(parts[0]),
-    )
+    try:
+        path, pattern = pattern.split("::", 1)
+    except ValueError:  # Raised when the split separator is not found
+        path = ".*"
+    return Rule(name=None, pattern=re.compile(pattern), path_pattern=re.compile(path))
 
 
 def compile_rules(patterns: Iterable[str]) -> List[Rule]:
