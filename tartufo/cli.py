@@ -221,8 +221,7 @@ def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
     if options.verbose > 3:
         excess_verbosity = options.verbose - 3
         options.verbose = 3
-        if excess_verbosity > 3:
-            excess_verbosity = 3
+        excess_verbosity = min(excess_verbosity, 3)
     else:
         excess_verbosity = 0
 
