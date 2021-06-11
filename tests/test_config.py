@@ -320,13 +320,20 @@ class CompileRulesTests(unittest.TestCase):
 
     def test_path_is_used(self):
         rules = config.compile_rules(
-            [r"src/.*::^[a-zA-Z0-9]{26}$", r"^[a-zA-Z0-9]test$"]
+            [
+                r"src/.*::^[a-zA-Z0-9]{26}$",
+                r"^[a-zA-Z0-9]test$",
+                r"src/.*::^[a-zA-Z0-9]{26}::test$",
+            ]
         )
         self.assertEqual(
             rules,
             [
                 Rule(None, re.compile(r"^[a-zA-Z0-9]{26}$"), re.compile(r"src/.*")),
                 Rule(None, re.compile(r"^[a-zA-Z0-9]test$"), re.compile(r".*")),
+                Rule(
+                    None, re.compile(r"^[a-zA-Z0-9]{26}::test$"), re.compile(r"src/.*")
+                ),
             ],
         )
 
