@@ -77,6 +77,11 @@ class Rule:
     pattern: Pattern
     path_pattern: Optional[Pattern]
 
+    def __hash__(self) -> int:
+        if self.path_pattern:
+            return hash(self.pattern.pattern + self.path_pattern.pattern)
+        return hash(self.pattern.pattern)
+
 
 class LogLevel(enum.IntEnum):
     ERROR = 0

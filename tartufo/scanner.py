@@ -266,6 +266,7 @@ class ScannerBase(abc.ABC):
         )
 
     @staticmethod
+    @lru_cache(maxsize=None)
     def rule_matches(rule: Rule, string: str, path: str) -> bool:
         """
         Match string and path against rule.
