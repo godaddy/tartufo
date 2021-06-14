@@ -79,7 +79,7 @@ class Rule:
 
     def __hash__(self) -> int:
         if self.path_pattern:
-            return hash(self.pattern.pattern + self.path_pattern.pattern)
+            return hash(f"{self.pattern.pattern}::{self.path_pattern.pattern}")
         return hash(self.pattern.pattern)
 
 

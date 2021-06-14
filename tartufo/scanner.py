@@ -374,7 +374,7 @@ class ScannerBase(abc.ABC):
         string: str,
         chars: str,
         min_entropy_score: float,
-    ):
+    ) -> List[Issue]:
         """
         Check entropy string using entropy characters and score.
 
