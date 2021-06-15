@@ -243,3 +243,33 @@ def compile_path_rules(patterns: Iterable[str]) -> List[Pattern]:
         for pattern in stripped
         if pattern and not pattern.startswith("#")
     ]
+
+
+def compile_rule(pattern: str) -> Rule:
+    """
+    Compile pattern string to Rule.
+
+    :param pattern: Rule pattern with {path_pattern}::{pattern}
+    :return Rule: Rule object with pattern and path_pattern
+    """
+    try:
+        path, pattern = pattern.split("::", 1)
+    except ValueError:  # Raised when the split separator is not found
+        path = ".*"
+    return Rule(name=None, pattern=re.compile(pattern), path_pattern=re.compile(path))
+
+
+def compile_rules(patterns: Iterable[str]) -> List[Rule]:
+    """Take a list of regex string with paths and compile them into a List of Rule.
+
+    Any line starting with `#` will be ignored.
+
+    :param patterns: The list of patterns to be compiled
+    :return: List of Rule objects
+    """
+    stripped = (p.strip() for p in patterns)
+    return [
+        compile_rule(pattern)
+        for pattern in stripped
+        if pattern and not pattern.startswith("#")
+    ]

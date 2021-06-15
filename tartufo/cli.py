@@ -124,6 +124,15 @@ class TartufoCLI(click.MultiCommand):
     option.""",
 )
 @click.option(
+    "-xe",
+    "--exclude-entropy-patterns",
+    multiple=True,
+    help="""Specify a regular expression which matches entropy strings to
+    exclude from the scan. This option can be specified multiple times to
+    exclude multiple patterns. If not provided (default), no entropy strings
+    will be excluded ({path regex}::{pattern regex}).""",
+)
+@click.option(
     "-e",
     "--exclude-signatures",
     multiple=True,

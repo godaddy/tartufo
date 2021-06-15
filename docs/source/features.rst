@@ -227,6 +227,28 @@ thing, there needs to be a way to tell ``tartufo`` to ignore those things, and
 not report them out as issues. For this reason, we provide multiple methods for
 excluding these items.
 
+Entropy Limiting
+++++++++++++++++
+
+Entropy scans can produce a high number of false positives such as git SHAs or md5
+digests. To avoid these false positives, enable ``exclude-entropy-patterns``. Exclusions
+apply to any strings flagged by entropy checks.
+
+For example, if ``docs/README.md`` contains a git SHA, this would be flagged by entropy.
+To exclude this, add ``docs/.*\.md$::^[a-zA-Z0-9]{40}$`` to ``exclude-entropy-patterns``.
+
+.. code-block:: sh
+
+    > tartufo ... --exclude-entropy-patterns "docs/.*\.md$::^[a-zA-Z0-9]{40}$"
+
+.. code-block:: toml
+
+    [tool.tartufo]
+    exclude-entropy-patterns = [
+      # format: "{file regex}::{entropy pattern}"
+      "docs/.*\.md$::^[a-zA-Z0-9]{40}$", # exclude all git SHAs in the docs directory
+    ]
+
 Limiting by Signature
 +++++++++++++++++++++
 

@@ -290,5 +290,59 @@ class CompilePathRulesTests(unittest.TestCase):
         )
 
 
+class CompileRulesTests(unittest.TestCase):
+    def test_commented_lines_are_ignored(self):
+        rules = config.compile_rules(["# Poetry lock file", r"^[a-zA-Z0-9]{26}$"])
+        self.assertEqual(
+            rules, [Rule(None, re.compile(r"^[a-zA-Z0-9]{26}$"), re.compile(r".*"))]
+        )
+
+    def test_whitespace_lines_are_ignored(self):
+        rules = config.compile_rules(
+            [
+                "# Poetry lock file",
+                r"poetry\.lock::^[a-zA-Z0-9]{40}$",
+                "",
+                "\t\n",
+                "# NPM files",
+                r"^[a-zA-Z0-9]{26}$",
+            ]
+        )
+        self.assertEqual(
+            rules,
+            [
+                Rule(
+                    None, re.compile(r"^[a-zA-Z0-9]{40}$"), re.compile(r"poetry\.lock")
+                ),
+                Rule(None, re.compile(r"^[a-zA-Z0-9]{26}$"), re.compile(r".*")),
+            ],
+        )
+
+    def test_path_is_used(self):
+        rules = config.compile_rules(
+            [
+                r"src/.*::^[a-zA-Z0-9]{26}$",
+                r"^[a-zA-Z0-9]test$",
+                r"src/.*::^[a-zA-Z0-9]{26}::test$",
+            ]
+        )
+        self.assertEqual(
+            rules,
+            [
+                Rule(None, re.compile(r"^[a-zA-Z0-9]{26}$"), re.compile(r"src/.*")),
+                Rule(None, re.compile(r"^[a-zA-Z0-9]test$"), re.compile(r".*")),
+                Rule(
+                    None, re.compile(r"^[a-zA-Z0-9]{26}::test$"), re.compile(r"src/.*")
+                ),
+            ],
+        )
+
+    def test_match_can_contain_delimiter(self):
+        rules = config.compile_rules([r".*::^[a-zA-Z0-9]::test$"])
+        self.assertEqual(
+            rules, [Rule(None, re.compile(r"^[a-zA-Z0-9]::test$"), re.compile(r".*"))]
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -342,6 +342,21 @@ class EntropyTests(ScannerTestCase):
         )
         self.scanner = TestScanner(self.options)
 
+    def test_entropy_string_is_excluded(self):
+        self.options.exclude_entropy_patterns = [r"docs/.*\.md::f.*"]
+        excluded = self.scanner.entropy_string_is_excluded("foo", "docs/README.md")
+        self.assertEqual(True, excluded)
+
+    def test_entropy_string_is_not_excluded(self):
+        self.options.exclude_entropy_patterns = [r"foo\..*::f.*"]
+        excluded = self.scanner.entropy_string_is_excluded("bar", "foo.py")
+        self.assertEqual(False, excluded)
+
+    def test_entropy_string_is_not_excluded_given_different_path(self):
+        self.options.exclude_entropy_patterns = [r"foo\..*::f.*"]
+        excluded = self.scanner.entropy_string_is_excluded("foo", "bar.py")
+        self.assertEqual(False, excluded)
+
     def test_calculate_base64_entropy_calculation(self):
         random_string = (
             "ZWVTjPQSdhwRgl204Hc51YCsritMIzn8B=/p9UyeX7xu6KkAGqfm3FJ+oObLDNEva"
@@ -439,6 +454,42 @@ class EntropyTests(ScannerTestCase):
         self.assertEqual(len(issues), 1)
         self.assertEqual(issues[0].issue_type, types.IssueType.Entropy)
         self.assertEqual(issues[0].matched_string, "foo")
+
+    @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
+    @mock.patch("tartufo.scanner.ScannerBase.signature_is_excluded")
+    @mock.patch("tartufo.scanner.ScannerBase.entropy_string_is_excluded")
+    @mock.patch("tartufo.util.get_strings_of_set")
+    def test_issues_are_not_created_for_high_entropy_hex_strings_given_entropy_is_excluded(
+        self,
+        mock_strings: mock.MagicMock,
+        mock_entropy: mock.MagicMock,
+        mock_signature: mock.MagicMock,
+        mock_calculate: mock.MagicMock,
+    ):
+        mock_strings.side_effect = ([], ["foo"], [], [], [], [])
+        mock_entropy.return_value = True
+        mock_signature.return_value = False
+        mock_calculate.return_value = 9.0
+        issues = self.scanner.scan_entropy(self.chunk)
+        self.assertEqual(len(issues), 0)
+
+    @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
+    @mock.patch("tartufo.scanner.ScannerBase.signature_is_excluded")
+    @mock.patch("tartufo.scanner.ScannerBase.entropy_string_is_excluded")
+    @mock.patch("tartufo.util.get_strings_of_set")
+    def test_issues_are_not_created_for_low_entropy_b64_strings_given_entropy_is_excluded(
+        self,
+        mock_strings: mock.MagicMock,
+        mock_entropy: mock.MagicMock,
+        mock_signature: mock.MagicMock,
+        mock_calculate: mock.MagicMock,
+    ):
+        mock_strings.side_effect = (["foo"], [], [], [], [], [])
+        mock_entropy.return_value = True
+        mock_signature.return_value = False
+        mock_calculate.return_value = 9.0
+        issues = self.scanner.scan_entropy(self.chunk)
+        self.assertEqual(len(issues), 0)
 
     @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
     @mock.patch("tartufo.scanner.ScannerBase.signature_is_excluded")

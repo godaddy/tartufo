@@ -16,6 +16,7 @@ class GlobalOptions:
         "include_path_patterns",
         "exclude_paths",
         "exclude_path_patterns",
+        "exclude_entropy_patterns",
         "exclude_signatures",
         "output_dir",
         "git_rules_repo",
@@ -35,6 +36,7 @@ class GlobalOptions:
     include_path_patterns: Tuple[str, ...]
     exclude_paths: Optional[TextIO]
     exclude_path_patterns: Tuple[str, ...]
+    exclude_entropy_patterns: Tuple[str, ...]
     exclude_signatures: Tuple[str, ...]
     output_dir: Optional[str]
     git_rules_repo: Optional[str]
@@ -74,6 +76,11 @@ class Rule:
     name: Optional[str]
     pattern: Pattern
     path_pattern: Optional[Pattern]
+
+    def __hash__(self) -> int:
+        if self.path_pattern:
+            return hash(f"{self.pattern.pattern}::{self.path_pattern.pattern}")
+        return hash(self.pattern.pattern)
 
 
 class LogLevel(enum.IntEnum):
