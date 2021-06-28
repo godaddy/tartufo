@@ -36,9 +36,10 @@ jobs:
         path: |
           {{ matrix.path }}
           .tox
-        key: ${{ runner.os }}-venvs-${{ hashFiles('**/poetry.lock') }}
+        key: ${{ matrix.os }}-venvs-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
         restore-keys: |
-          ${{ runner.os }}-venvs
+          ${{ matrix.os }}-venvs-${{ matrix.python-version }}
+          ${{ matrix.os }}-venvs
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@3105fb18c05ddd93efea5f9e0bef7a03a6e9e7df
       with:
