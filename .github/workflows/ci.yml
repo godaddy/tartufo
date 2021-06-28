@@ -48,10 +48,12 @@ jobs:
       run: brew install enchant
       if: ${{ matrix.os == 'macos-latest' && matrix.python-version == '3.7' }}
     - name: Install dependencies
-      run:  pip install poetry tox tox-gh-actions
+      run: |
+        pip install -U pip
+        pip install poetry tox tox-gh-actions
       # run:  pip install poetry tox codecov tox-gh-actions
     - name: Run tox environments
-      run: tox
+      run: tox -vv
     # - name: Upload coverage to Codecov
     #   uses: codecov/codecov-action@e156083f13aff6830c92fc5faa23505779fbf649
     #   with:
