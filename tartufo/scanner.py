@@ -261,7 +261,9 @@ class ScannerBase(abc.ABC):
         :param file_path: The path and file name for the data being scanned
         """
         return (
-            util.generate_signature(blob, file_path)
+            blob
+            in self.global_options.exclude_signatures  # Signatures themselves pop up as entropy matches
+            or util.generate_signature(blob, file_path)
             in self.global_options.exclude_signatures
         )
 

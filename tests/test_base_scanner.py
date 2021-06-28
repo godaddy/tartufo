@@ -265,6 +265,11 @@ class SignatureTests(ScannerTestCase):
         test_scanner = TestScanner(self.options)
         self.assertFalse(test_scanner.signature_is_excluded("blah", "stuff"))
 
+    def test_signature_found_as_scan_match_is_excluded(self):
+        self.options.exclude_signatures = ("ford_prefect",)
+        test_scanner = TestScanner(self.options)
+        self.assertTrue(test_scanner.signature_is_excluded("ford_prefect", "/earth"))
+
 
 class RegexScanTests(ScannerTestCase):
     def setUp(self) -> None:
