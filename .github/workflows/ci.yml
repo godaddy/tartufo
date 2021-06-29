@@ -32,13 +32,15 @@ jobs:
     - uses: actions/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f
     - uses: actions/cache@c64c572235d810460d0d6876e9c705ad5002b353
       name: Cache Poetry & Tox deps
+      if: ${{ !(matrix.os == 'windows-latest' && matrix.python-version == '3.6') }}
       with:
         path: |
           {{ matrix.path }}
           .tox
-        key: ${{ runner.os }}-venvs-${{ hashFiles('**/poetry.lock') }}
+        key: ${{ matrix.os }}-venvs-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
         restore-keys: |
-          ${{ runner.os }}-venvs
+          ${{ matrix.os }}-venvs-${{ matrix.python-version }}
+          ${{ matrix.os }}-venvs
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@3105fb18c05ddd93efea5f9e0bef7a03a6e9e7df
       with:
@@ -47,10 +49,12 @@ jobs:
       run: brew install enchant
       if: ${{ matrix.os == 'macos-latest' && matrix.python-version == '3.7' }}
     - name: Install dependencies
-      run:  pip install poetry tox tox-gh-actions
+      run: |
+        pip install -U pip
+        pip install poetry tox tox-gh-actions
       # run:  pip install poetry tox codecov tox-gh-actions
     - name: Run tox environments
-      run: tox
+      run: tox -vv
     # - name: Upload coverage to Codecov
     #   uses: codecov/codecov-action@e156083f13aff6830c92fc5faa23505779fbf649
     #   with:
