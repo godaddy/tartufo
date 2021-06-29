@@ -1,4 +1,3 @@
-import copy
 import os
 import pathlib
 import re
@@ -46,7 +45,8 @@ class ConfigureRegexTests(unittest.TestCase):
     def test_configure_regexes_rules_files_with_defaults(self):
         rules_path = pathlib.Path(__file__).parent / "data" / "testRules.json"
         rules_files = (rules_path.open(),)
-        expected_regexes = copy.copy(config.DEFAULT_REGEXES)
+        with config.DEFAULT_PATTERN_FILE.open() as handle:
+            expected_regexes = config.load_rules_from_file(handle)
         expected_regexes["RSA private key 2"] = Rule(
             name="RSA private key 2",
             pattern=re.compile("-----BEGIN EC PRIVATE KEY-----"),
@@ -72,8 +72,11 @@ class ConfigureRegexTests(unittest.TestCase):
     def test_configure_regexes_returns_just_default_regexes_by_default(self):
         actual_regexes = config.configure_regexes()
 
+        with config.DEFAULT_PATTERN_FILE.open() as handle:
+            expected_regexes = config.load_rules_from_file(handle)
+
         self.assertEqual(
-            config.DEFAULT_REGEXES,
+            expected_regexes,
             actual_regexes,
             "The regexes dictionary should not have been changed when no rules files are specified",
         )

@@ -1,0 +1,7 @@
+.github/workflows/(.*)\.yml
+poetry\.lock
+pyproject\.toml
+docs/source/(.*)\.rst
+tests/test_base_scanner\.py
+tests/test_util\.py
+tartufo/data/default_regexes\.json
