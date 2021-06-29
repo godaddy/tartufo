@@ -6,6 +6,9 @@ Features:
 * [#194](https://github.com/godaddy/tartufo/issues/194) - Half bugfix, half
   feature. Now when an excluded signature in your config file is found as an
   entropy match, tartufo will realize that and no longer report it as an issue.
+* [#5](https://github.com/godaddy/tartufo/issues/5) - Remove the dependency on
+  `truffleHogRegexes`. This enables us to take full control of the default set
+  of regex checks.
 
 v2.5.0 - 15 June 2021
 ---------------------
