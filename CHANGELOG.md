@@ -10,6 +10,11 @@ Features:
   `truffleHogRegexes`. This enables us to take full control of the default set
   of regex checks.
 
+Bug fixes:
+
+* [#179](https://github.com/godaddy/tartufo/issues/179) - Iterate over commits
+  in topological order, instead of date order.
+
 v2.5.0 - 15 June 2021
 ---------------------
 
