@@ -7,6 +7,11 @@ Features:
   feature. Now when an excluded signature in your config file is found as an
   entropy match, tartufo will realize that and no longer report it as an issue.
 
+Bug fixes:
+
+* [#179](https://github.com/godaddy/tartufo/issues/179) - Iterate over commits
+  in topological order, instead of date order.
+
 v2.5.0 - 15 June 2021
 ---------------------
 

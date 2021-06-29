@@ -552,7 +552,7 @@ class GitRepoScanner(GitScanner):
         curr_commit: git.Commit = None
 
         for curr_commit in repo.iter_commits(
-            branch.name, max_count=self.git_options.max_depth
+            branch.name, max_count=self.git_options.max_depth, topo_order=True
         ):
             commit_hash = curr_commit.hexsha
             self.logger.debug("Scanning commit: %s", commit_hash)
