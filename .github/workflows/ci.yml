@@ -7,16 +7,13 @@ on:
     branches: [ main ]
 
 jobs:
-  tox:
+  unit-test:
+    name: Unit Tests
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: [3.6, 3.7, 3.8, 3.9, pypy3]
-        exclude:
-          # https://github.com/tox-dev/tox/issues/1704
-          - os: windows-latest
-            python-version: pypy3
         include:
           - os: ubuntu-latest
             path: ~/.cache/pypoetry
@@ -30,6 +27,7 @@ jobs:
       OS: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f
+      name: Checkout the repo
     - uses: actions/cache@c64c572235d810460d0d6876e9c705ad5002b353
       name: Cache Poetry & Tox deps
       if: ${{ !(matrix.os == 'windows-latest' && matrix.python-version == '3.6') }}
@@ -53,10 +51,40 @@ jobs:
         pip install -U pip
         pip install poetry tox tox-gh-actions
       # run:  pip install poetry tox codecov tox-gh-actions
-    - name: Run tox environments
+    - name: Unit test in Python ${{ matrix.python-version }} on ${{ matrix.os }}
       run: tox -vv
     # - name: Upload coverage to Codecov
     #   uses: codecov/codecov-action@e156083f13aff6830c92fc5faa23505779fbf649
     #   with:
     #     file: coverage.xml
     #     env_vars: OS,PYTHON
+  linting:
+    name: Linting
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        toxenv: [pylint, vulture, mypy, black, docs]
+    steps:
+    - uses: actions/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f
+      name: Checkout the repo
+    - uses: actions/cache@c64c572235d810460d0d6876e9c705ad5002b353
+      name: Cache Poetry & Tox deps
+      with:
+        path: |
+          ~/.cache/pypoetry
+          .tox
+        key: venvs-${{ matrix.toxenv }}-${{ hashFiles('**/poetry.lock') }}
+        restore-keys: |
+          venvs-${{ matrix.toxenv }}-
+    - name: Set up Python
+      uses: actions/setup-python@3105fb18c05ddd93efea5f9e0bef7a03a6e9e7df
+      with:
+        python-version: 3.7
+    - name: Install dependencies
+      run: |
+        pip install -U pip
+        pip install poetry tox
+    - name: Run ${{ matrix.toxenv }}
+      run: |
+        tox -vv -e ${{ matrix.toxenv }}
