@@ -204,7 +204,7 @@ Feel free to also contribute high signal regexes upstream that you think will
 benefit the community. Things like Azure keys, Twilio keys, Google Compute
 keys, are welcome, provided a high signal regex can be constructed.
 
-tartufo's base rule set currently sources from `the truffleHogRegexes package`_.
+tartufo's base rule set can be found in the file ``data/default_regexes.json``.
 
 High Entropy Checking
 +++++++++++++++++++++
@@ -341,4 +341,3 @@ a devops pipeline.
 .. _install pre-commit: https://pre-commit.com/#install
 .. _pre-commit: https://pre-commit.com/
 .. _Shannon entropy: https://en.wiktionary.org/wiki/Shannon_entropy
-.. _the truffleHogRegexes package: https://github.com/dxa4481/truffleHogRegexes/blob/master/truffleHogRegexes/regexes.json
