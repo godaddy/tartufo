@@ -48,7 +48,6 @@ sphinx-click = {version = "^2.5.0", optional = true}
 sphinx-rtd-theme = {version = "^0.5.0", optional = true}
 sphinxcontrib-spelling = {version = "^5.4.0", optional = true}
 toml = "^0.10"
-truffleHogRegexes = "^0.0.7"
 
 [tool.poetry.dev-dependencies]
 black = {version = "21.5b2", allow-prereleases = true, markers = "platform_python_implementation == 'CPython'"}

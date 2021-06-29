@@ -1,4 +1,3 @@
-import copy
 import json
 import pathlib
 import re
@@ -18,14 +17,13 @@ from typing import (
 
 import click
 import toml
-import truffleHogRegexes.regexChecks
 
 from tartufo import types, util
 from tartufo.types import Rule
 
 OptionTypes = Union[str, int, bool, None, TextIO, Tuple[TextIO, ...]]
 
-DEFAULT_REGEXES = util.convert_regexes_to_rules(truffleHogRegexes.regexChecks.regexes)
+DEFAULT_PATTERN_FILE = pathlib.Path(__file__).parent / "data" / "default_regexes.json"
 
 
 def load_config_from_path(
@@ -159,7 +157,8 @@ def configure_regexes(
     :param rules_repo_files: A set of patterns used to find files in the rules repo
     """
     if include_default:
-        rules = copy.copy(DEFAULT_REGEXES)
+        with DEFAULT_PATTERN_FILE.open() as handle:
+            rules = load_rules_from_file(handle)
     else:
         rules = {}
 
