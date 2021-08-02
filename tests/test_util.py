@@ -190,7 +190,9 @@ class OutputTests(unittest.TestCase):
         )
         mock_scanner.issues = [issue_1, issue_2]
         mock_scanner.excluded_paths = []
-        options = generate_options(GlobalOptions, json=True, exclude_signatures=[], exclude_entropy_patterns=[])
+        options = generate_options(
+            GlobalOptions, json=True, exclude_signatures=[], exclude_entropy_patterns=[]
+        )
         util.echo_result(options, mock_scanner, "/repo", "/output")
 
         mock_json.dumps.assert_called_once_with(
@@ -250,7 +252,10 @@ class OutputTests(unittest.TestCase):
             "ccccc::ddddd",
         ]
         options = generate_options(
-            GlobalOptions, json=True, exclude_signatures=exclude_signatures, exclude_entropy_patterns=exclude_entropy_patterns
+            GlobalOptions,
+            json=True,
+            exclude_signatures=exclude_signatures,
+            exclude_entropy_patterns=exclude_entropy_patterns,
         )
         util.echo_result(options, mock_scanner, "/repo", Path("/tmp"))
         mock_json.dumps.assert_called_once_with(
