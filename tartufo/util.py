@@ -66,6 +66,9 @@ def echo_result(
             "excluded_signatures": [
                 str(signature) for signature in options.exclude_signatures
             ],
+            "exclude_entropy_patterns": [
+                str(pattern) for pattern in options.exclude_entropy_patterns
+            ],
             "found_issues": [
                 issue.as_dict(compact=options.compact) for issue in scanner.issues
             ],
@@ -89,6 +92,8 @@ def echo_result(
             click.echo("\n".join([path.pattern for path in scanner.excluded_paths]))
             click.echo("\nExcluded signatures:")
             click.echo("\n".join(options.exclude_signatures))
+            click.echo("\Excluded entropy patterns:")
+            click.echo("\n".join(options.exclude_entropy_patterns))
 
 
 def write_outputs(found_issues: "List[Issue]", output_dir: pathlib.Path) -> List[str]:
