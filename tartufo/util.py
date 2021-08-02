@@ -92,7 +92,7 @@ def echo_result(
             click.echo("\n".join([path.pattern for path in scanner.excluded_paths]))
             click.echo("\nExcluded signatures:")
             click.echo("\n".join(options.exclude_signatures))
-            click.echo("\Excluded entropy patterns:")
+            click.echo("\nExcluded entropy patterns:")
             click.echo("\n".join(options.exclude_entropy_patterns))
 
 

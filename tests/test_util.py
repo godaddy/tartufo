@@ -131,12 +131,17 @@ class OutputTests(unittest.TestCase):
             "fffffffffffff",
             "ooooooooooooo",
         ]
+        exclude_entropy_patterns = [
+            "aaaa::bbbb",
+            "cccc::dddd",
+        ]
         options = generate_options(
             GlobalOptions,
             json=False,
             quiet=False,
             verbose=1,
             exclude_signatures=exclude_signatures,
+            exclude_entropy_patterns=exclude_entropy_patterns,
         )
         mock_scanner.issues = []
         mock_scanner.excluded_paths = [
@@ -151,6 +156,8 @@ class OutputTests(unittest.TestCase):
                 mock.call("package-lock.json\npoetry.lock"),
                 mock.call("\nExcluded signatures:"),
                 mock.call("fffffffffffff\nooooooooooooo"),
+                mock.call("\nExcluded entropy patterns:"),
+                mock.call("aaaa::bbbb\ncccc::dddd"),
             ),
             any_order=False,
         )
@@ -183,7 +190,7 @@ class OutputTests(unittest.TestCase):
         )
         mock_scanner.issues = [issue_1, issue_2]
         mock_scanner.excluded_paths = []
-        options = generate_options(GlobalOptions, json=True, exclude_signatures=[])
+        options = generate_options(GlobalOptions, json=True, exclude_signatures=[], exclude_entropy_patterns=[])
         util.echo_result(options, mock_scanner, "/repo", "/output")
 
         mock_json.dumps.assert_called_once_with(
@@ -193,6 +200,7 @@ class OutputTests(unittest.TestCase):
                 "output_dir": "/output",
                 "excluded_paths": [],
                 "excluded_signatures": [],
+                "exclude_entropy_patterns": [],
                 "found_issues": [
                     {
                         "issue_type": "High Entropy",
@@ -237,8 +245,12 @@ class OutputTests(unittest.TestCase):
             "fffffffffffff",
             "ooooooooooooo",
         ]
+        exclude_entropy_patterns = [
+            "aaaaa::bbbbb",
+            "ccccc::ddddd",
+        ]
         options = generate_options(
-            GlobalOptions, json=True, exclude_signatures=exclude_signatures
+            GlobalOptions, json=True, exclude_signatures=exclude_signatures, exclude_entropy_patterns=exclude_entropy_patterns
         )
         util.echo_result(options, mock_scanner, "/repo", Path("/tmp"))
         mock_json.dumps.assert_called_once_with(
@@ -250,6 +262,10 @@ class OutputTests(unittest.TestCase):
                 "excluded_signatures": [
                     "fffffffffffff",
                     "ooooooooooooo",
+                ],
+                "exclude_entropy_patterns": [
+                    "aaaaa::bbbbb",
+                    "ccccc::ddddd",
                 ],
                 "found_issues": [
                     {
