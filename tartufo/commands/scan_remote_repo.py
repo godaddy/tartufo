@@ -32,6 +32,13 @@ from tartufo.scanner import GitRepoScanner
     help="Specify a working directory; this is where the repository will be cloned "
     "to before scanning.",
 )
+@click.option(
+    "--include-submodules/--exclude-submodules",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Controls whether the contents of git submodules are scanned",
+)
 @click.argument("git-url")
 @click.pass_obj
 @click.pass_context
@@ -43,10 +50,15 @@ def main(
     max_depth: int,
     branch: Optional[str],
     work_dir: Optional[str],
+    include_submodules: bool,
 ) -> Tuple[str, GitRepoScanner]:
     """Automatically clone and scan a remote git repository."""
     git_options = types.GitOptions(
-        since_commit=since_commit, max_depth=max_depth, branch=branch, fetch=False
+        since_commit=since_commit,
+        max_depth=max_depth,
+        branch=branch,
+        fetch=False,
+        include_submodules=include_submodules,
     )
     repo_path: Optional[Path] = None
     if work_dir:

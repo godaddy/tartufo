@@ -29,6 +29,9 @@ class RepoLoadTests(ScannerTestCase):
         mock_repo.assert_called_once_with(".")
 
     @mock.patch("git.Repo")
+    @mock.patch(
+        "tartufo.scanner.GitRepoScanner.filter_submodules", new=mock.MagicMock()
+    )
     def test_load_repo_loads_new_repo(self, mock_repo: mock.MagicMock):
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."

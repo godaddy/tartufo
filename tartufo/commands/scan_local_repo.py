@@ -26,6 +26,13 @@ from tartufo.scanner import GitRepoScanner
     show_default=True,
     help="Controls whether or not the remote repo is fetched prior to local scanning",
 )
+@click.option(
+    "--include-submodules/--exclude-submodules",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Controls whether the contents of git submodules are scanned",
+)
 @click.pass_obj
 @click.pass_context
 def main(
@@ -36,10 +43,15 @@ def main(
     max_depth: int,
     branch: Optional[str],
     fetch: bool,
+    include_submodules: bool,
 ) -> Tuple[str, GitRepoScanner]:
     """Scan a repository already cloned to your local system."""
     git_options = types.GitOptions(
-        since_commit=since_commit, max_depth=max_depth, branch=branch, fetch=fetch
+        since_commit=since_commit,
+        max_depth=max_depth,
+        branch=branch,
+        fetch=fetch,
+        include_submodules=include_submodules,
     )
     scanner = None
     try:

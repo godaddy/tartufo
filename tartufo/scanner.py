@@ -22,7 +22,7 @@ from typing import (
 import git
 
 from tartufo import config, types, util
-from tartufo.types import Rule
+from tartufo.types import Rule, TartufoException
 
 BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
 HEX_CHARS = "1234567890abcdefABCDEF"
@@ -469,6 +469,21 @@ class GitScanner(ScannerBase, abc.ABC):
             if self.should_scan(file_path):
                 yield (printable_diff, file_path)
 
+    def filter_submodules(self, repo: git.Repo) -> None:
+        """Exclude all git submodules and their contents from being scanned."""
+        patterns: List[Pattern] = []
+        self.logger.info("Excluding submodules paths from scan.")
+        try:
+            for module in repo.submodules:
+                patterns.append(re.compile(f"^{module.path}"))
+        except AttributeError as exc:
+            raise TartufoException(
+                "There was an error while parsing submodules for this repository. "
+                "A likely cause is that a file tree was committed in place of a "
+                "submodule."
+            ) from exc
+        self._excluded_paths = list(set(self.excluded_paths + patterns))
+
     @abc.abstractmethod
     def load_repo(self, repo_path: str) -> git.Repo:
         """Load and return the repository to be scanned.
@@ -535,7 +550,10 @@ class GitRepoScanner(GitScanner):
                 exclude_patterns = config.compile_path_rules(exclude_patterns)
                 self._excluded_paths = list(set(self.excluded_paths + exclude_patterns))
         try:
-            return git.Repo(repo_path)
+            repo = git.Repo(repo_path)
+            if not self.git_options.include_submodules:
+                self.filter_submodules(repo)
+            return repo
         except git.GitError as exc:
             raise types.GitLocalException(str(exc)) from exc
 
@@ -636,8 +654,20 @@ class GitRepoScanner(GitScanner):
 class GitPreCommitScanner(GitScanner):
     """For use in a git pre-commit hook."""
 
+    def __init__(
+        self,
+        global_options: types.GlobalOptions,
+        repo_path: str,
+        include_submodules: bool,
+    ) -> None:
+        self._include_submodules = include_submodules
+        super().__init__(global_options, repo_path)
+
     def load_repo(self, repo_path: str) -> git.Repo:
-        return git.Repo(repo_path, search_parent_directories=True)
+        repo = git.Repo(repo_path, search_parent_directories=True)
+        if not self._include_submodules:
+            self.filter_submodules(repo)
+        return repo
 
     @property
     def chunks(self):
