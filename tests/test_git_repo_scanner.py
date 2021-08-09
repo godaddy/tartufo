@@ -127,7 +127,7 @@ class FilterSubmoduleTests(ScannerTestCase):
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
-        self.assertEqual(
+        self.assertCountEqual(
             test_scanner.excluded_paths, [re.compile("^foo"), re.compile("^bar")]
         )
 
