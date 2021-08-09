@@ -37,7 +37,7 @@ version = "2.6.0"
 tartufo = "tartufo.cli:main"
 
 [tool.poetry.dependencies]
-GitPython = ">= 2.1.1, <4.0.0"
+GitPython = "<3.1.20"
 click = "^7"
 colorama = {version = "*", markers = "sys_platform == 'win32'"}
 dataclasses = {version = "*", python = "< 3.7"}
@@ -60,9 +60,9 @@ pytest-cov = "^2.11.1"
 pytest-sugar = "^0.9.4"
 tox = "^3.21.4"
 vulture = "^2.3"
-types-toml = "^0.1.1"
-types-click = "^7.1.0"
-types-requests = "^0.1.9"
+types-requests = "^2.25.2"
+types-toml = "^0.1.3"
+types-click = "^7.1.2"
 
 [tool.poetry.extras]
 docs = ["recommonmark", "sphinx", "sphinx-click", "sphinx-rtd-theme", "sphinxcontrib-spelling"]

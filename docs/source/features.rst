@@ -142,6 +142,8 @@ potential secrets were discovered) will git commit the staged changes.
 Using the "pre-commit" tool
 ***************************
 
+.. versionadded:: 2.0.0
+
 If you want a slightly more automated approach which can be more easily shared
 to ensure a unified setup across all developer's systems, you can use the
 wonderful `pre-commit`_ tool.
@@ -227,8 +229,25 @@ thing, there needs to be a way to tell ``tartufo`` to ignore those things, and
 not report them out as issues. For this reason, we provide multiple methods for
 excluding these items.
 
+Excluding Submodule Paths
++++++++++++++++++++++++++
+
+.. versionadded:: 2.7.0
+
+By default, any path in the repository specified as a `submodule`_ will be
+excluded from scans. Since these are upstream repositories over which you may
+not have direct control, ``tartufo`` will not hold you accountable for the
+secrets in those. If you want to include these in your scans, you can specify
+the ``--include-submodules`` option.
+
+.. code-block:: sh
+
+    > tartufo ... --include-submodules
+
 Entropy Limiting
 ++++++++++++++++
+
+.. versionadded:: 2.5.0
 
 Entropy scans can produce a high number of false positives such as git SHAs or md5
 digests. To avoid these false positives, enable ``exclude-entropy-patterns``. Exclusions
@@ -289,6 +308,8 @@ Done! This particular issue will no longer show up in your scan results.
 Limiting Scans by Path
 ++++++++++++++++++++++
 
+.. versionadded:: 2.5.0
+
 By default ``tartufo`` will scan all objects tracked by Git. You can limit
 scanning by either including fewer paths or excluding some of them using
 Python Regular Expressions (regex) and the `--include-path-patterns` and
@@ -341,3 +362,4 @@ a devops pipeline.
 .. _install pre-commit: https://pre-commit.com/#install
 .. _pre-commit: https://pre-commit.com/
 .. _Shannon entropy: https://en.wiktionary.org/wiki/Shannon_entropy
+.. _submodule: https://git-scm.com/book/en/v2/Git-Tools-Submodules
