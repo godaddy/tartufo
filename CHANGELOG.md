@@ -1,3 +1,12 @@
+vX.Y.Z - TBD
+------------
+
+Features:
+
+* [#96](https://github.com/godaddy/tartufo/issues/96) - Explicitly handle
+  submodules. Basically, always ignore them by default. There is also a new
+  option to toggle this functionality: `--include-submodules`
+
 v2.6.0 - 30 June 2021
 ---------------------
 
