@@ -7,7 +7,7 @@ from unittest import mock
 import git
 
 from tartufo import scanner, types
-from tartufo.types import GlobalOptions, GitOptions
+from tartufo.types import GlobalOptions, GitOptions, TartufoException
 
 from tests.helpers import generate_options
 
@@ -38,6 +38,24 @@ class RepoLoadTests(ScannerTestCase):
         )
         test_scanner.load_repo("../tartufo")
         mock_repo.assert_has_calls((mock.call("."), mock.call("../tartufo")))
+
+    @mock.patch("git.Repo")
+    @mock.patch("tartufo.scanner.GitRepoScanner.filter_submodules")
+    def test_load_repo_filters_submodules_when_specified(
+        self, mock_filter: mock.MagicMock, mock_repo: mock.MagicMock
+    ):
+        self.git_options.include_submodules = False
+        scanner.GitRepoScanner(self.global_options, self.git_options, ".")
+        mock_filter.assert_called_once_with(mock_repo.return_value)
+
+    @mock.patch("git.Repo", new=mock.MagicMock())
+    @mock.patch("tartufo.scanner.GitRepoScanner.filter_submodules")
+    def test_load_repo_does_not_filter_submodules_when_requested(
+        self, mock_filter: mock.MagicMock
+    ):
+        self.git_options.include_submodules = True
+        scanner.GitRepoScanner(self.global_options, self.git_options, ".")
+        mock_filter.assert_not_called()
 
     @mock.patch("git.Repo", new=mock.MagicMock())
     @mock.patch("tartufo.config.load_config_from_path")
@@ -91,6 +109,38 @@ class RepoLoadTests(ScannerTestCase):
         self.assertEqual(
             sorted(test_scanner.global_options.exclude_signatures), ["bar", "foo"]
         )
+
+
+class FilterSubmoduleTests(ScannerTestCase):
+    @mock.patch("git.Repo")
+    def test_filter_submodules_adds_all_submodule_paths_to_exclusions(
+        self, mock_repo: mock.MagicMock
+    ):
+        class FakeSubmodule:
+            path: str
+
+            def __init__(self, path: str):
+                self.path = path
+
+        self.git_options.include_submodules = False
+        mock_repo.return_value.submodules = [FakeSubmodule("foo"), FakeSubmodule("bar")]
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        self.assertEqual(
+            test_scanner.excluded_paths, [re.compile("^foo"), re.compile("^bar")]
+        )
+
+    @mock.patch("git.Repo")
+    def test_filter_submodules_handles_broken_submodules_explicitly(
+        self, mock_repo: mock.MagicMock
+    ):
+        self.git_options.include_submodules = False
+        mock_repo.return_value.submodules.__iter__.side_effect = AttributeError
+        with self.assertRaisesRegex(
+            TartufoException, "There was an error while parsing submodules"
+        ):
+            scanner.GitRepoScanner(self.global_options, self.git_options, ".")
 
 
 class ChunkGeneratorTests(ScannerTestCase):
