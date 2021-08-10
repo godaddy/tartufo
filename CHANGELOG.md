@@ -1,11 +1,12 @@
-vX.Y.Z - TBD
-------------
+v2.7.0 - 10 August 2021
+-----------------------
 
 Features:
 
 * [#96](https://github.com/godaddy/tartufo/issues/96) - Explicitly handle
   submodules. Basically, always ignore them by default. There is also a new
   option to toggle this functionality: `--include-submodules`
+* Add `exclude_entropy_patterns` to output
 
 v2.6.0 - 30 June 2021
 ---------------------
