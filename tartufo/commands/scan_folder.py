@@ -1,9 +1,9 @@
-from typing import List, Tuple
+from typing import Tuple
 
 import click
 
 from tartufo import types, util
-from tartufo.scanner import FolderScanner, Issue
+from tartufo.scanner import FolderScanner
 
 
 @click.command("scan-folder")
