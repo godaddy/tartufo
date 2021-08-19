@@ -21,7 +21,7 @@ def main(
     options: types.GlobalOptions,
     target: str,
     include_path_pattern: str,
-) -> Tuple[str, List[Issue]]:
+) -> Tuple[str, FolderScanner]:
     """Scan a folder."""
     folder_options = types.FolderOptions(
         include_path_pattern=include_path_pattern,
