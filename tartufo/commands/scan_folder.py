@@ -20,7 +20,7 @@ def main(
     ctx: click.Context,
     options: types.GlobalOptions,
     target: str,
-    include_path_pattern: Optional[str],
+    include_path_pattern: str,
 ) -> Tuple[str, List[Issue]]:
     """Scan a folder."""
     folder_options = types.FolderOptions(
