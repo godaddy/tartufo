@@ -14,7 +14,7 @@ class FolderScannerTestCase(unittest.TestCase):
 
     def test_scan_should_detect_entropy_and_not_binary(self):
         folder_path = pathlib.Path(__file__).parent / "data/scan_folder"
-        self.folder_options.pattern = "*"
+        self.folder_options.include_path_pattern = "*"
         self.global_options.entropy = True
         self.global_options.exclude_signatures = []
 

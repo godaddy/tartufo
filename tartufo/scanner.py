@@ -692,7 +692,7 @@ class FolderScanner(ScannerBase):
         self,
         global_options: types.GlobalOptions,
         folder_options: types.FolderOptions,
-        folder_path: str,
+        target: str,
     ) -> None:
         """Used for scanning a folder.
 
@@ -701,11 +701,11 @@ class FolderScanner(ScannerBase):
         :param folder_path: The local filesystem path to scan
         """
         self.folder_options = folder_options
-        self.folder_path = folder_path
+        self.target = target
         super().__init__(global_options)
 
     @property
-    def chunks(self):
+    def chunks(self) -> Generator[types.Chunk, None, None]:
         """Yield the individual file changes currently staged for commit.
 
         :rtype: Generator[Chunk, None, None]
@@ -715,9 +715,9 @@ class FolderScanner(ScannerBase):
             if self.should_scan(file_path):
                 yield types.Chunk(blob, file_path, {})
 
-    def _iter_folder(self):
-        folder_path = pathlib.Path(self.folder_path)
-        for file_path in folder_path.glob(self.folder_options.pattern):
+    def _iter_folder(self) -> Generator[types.Tuple, None, None]:
+        folder_path = pathlib.Path(self.target)
+        for file_path in folder_path.glob(self.folder_options.include_path_pattern):
             if file_path.is_file():
                 with open(file_path, "rb") as fhd:
                     data = fhd.read()

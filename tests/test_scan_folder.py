@@ -25,6 +25,6 @@ class ScanFolderTests(unittest.TestCase):
             result = runner.invoke(cli.main, ["scan-folder", scan_folder])
             self.assertGreater(result.exit_code, 0)
             self.assertIn(
-                f"Error: Invalid value for 'FOLDER_PATH': Directory '{scan_folder}' does not exist.\n",
+                f"Error: Invalid value for 'TARGET': Directory '{scan_folder}' does not exist.\n",
                 result.output,
             )

@@ -60,7 +60,7 @@ class GitOptions:
 
 @dataclass
 class FolderOptions:
-    pattern: Optional[str] = "*"
+    include_path_pattern: Optional[str] = "*"
 
 
 class IssueType(enum.Enum):
