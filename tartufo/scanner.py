@@ -717,7 +717,7 @@ class FolderScanner(ScannerBase):
 
     def _iter_folder(self) -> Generator[types.Tuple, None, None]:
         folder_path = pathlib.Path(self.target)
-        for file_path in folder_path.glob(self.folder_options.include_path_pattern):
+        for file_path in folder_path.rglob(self.folder_options.include_path_pattern):
             if file_path.is_file():
                 with open(file_path, "rb") as fhd:
                     data = fhd.read()
