@@ -26,10 +26,9 @@ def main(
     folder_options = types.FolderOptions(
         include_path_pattern=include_path_pattern,
     )
-    issues: List[Issue] = []
     try:
         scanner = FolderScanner(options, folder_options, target)
-        issues = scanner.scan()
+        scanner.scan()
     except types.TartufoException as exc:
         util.fail(str(exc), ctx)
-    return target, issues
+    return target, scanner
