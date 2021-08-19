@@ -1,3 +1,11 @@
+vX.Y.Z - TBD
+------------
+
+* [#211](https://github.com/godaddy/tartufo/issues/211) - Attempt to fix a case
+  where output encoding could be set to cp1252 on Windows, which would cause a
+  crash if unicode characters were printed. Now issues are output as utf-8
+  encoded bytestreams instead.
+
 v2.7.0 - 10 August 2021
 -----------------------
 
