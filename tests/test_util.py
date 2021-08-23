@@ -78,7 +78,10 @@ class OutputTests(unittest.TestCase):
         mock_scanner.exclude_signatures = []
         mock_scanner.issues = [1, 2, 3, 4]
         util.echo_result(options, mock_scanner, "", "")
-        mock_click.echo.assert_called_once_with("1\n2\n3\n4")
+        # Ensure that the issues are output as a byte stream
+        mock_click.echo.assert_called_once_with(
+            bytes(1) + b"\n" + bytes(2) + b"\n" + bytes(3) + b"\n" + bytes(4)
+        )
 
     @mock.patch("tartufo.scanner.ScannerBase")
     @mock.patch("tartufo.util.click")

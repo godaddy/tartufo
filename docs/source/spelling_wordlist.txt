@@ -2,20 +2,27 @@ backport
 backported
 bugfix
 bugfixes
+bytestreams
 codebase
+codecov
 config
+cp
 cryptographic
+dclayton
 devops
 dir
 doesn
+envs
 filename
 filesystem
 github
+godaddy
 hexidecimal
 # For "isn't"
 isn
 jgowdy
 json
+md
 metadata
 param
 pre
@@ -27,12 +34,17 @@ runtime
 serializable
 shannon
 subdomain
+Submodule
+submodules
 tartufo
 toml
+toolchain
 triaging
 tuple
 twilio
 txt
+unicode
+utf
 util
 # For contractions: you've, we've, I've
 ve

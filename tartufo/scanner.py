@@ -102,6 +102,9 @@ class Issue:
         output.append(self.OUTPUT_SEPARATOR)
         return "\n".join(output)
 
+    def __bytes__(self) -> bytes:
+        return self.__str__().encode("utf8")
+
 
 class ScannerBase(abc.ABC):
     """Provide the base, generic functionality needed by all scanners.
