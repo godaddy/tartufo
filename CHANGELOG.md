@@ -1,5 +1,7 @@
-vX.Y.Z - TBD
-------------
+v2.7.1 - 23 August 2021
+-----------------------
+
+Bug fixes:
 
 * [#211](https://github.com/godaddy/tartufo/issues/211) - Attempt to fix a case
   where output encoding could be set to cp1252 on Windows, which would cause a
