@@ -714,7 +714,7 @@ class FolderScanner(ScannerBase):
             if self.should_scan(file_path):
                 yield types.Chunk(blob, file_path, {})
 
-    def _iter_folder(self) -> Generator[types.Tuple, None, None]:
+    def _iter_folder(self) -> Generator[Tuple[str, str], None, None]:
         folder_path = pathlib.Path(self.target)
         for file_path in folder_path.rglob("**/*"):
             relative_path = file_path.relative_to(folder_path)
