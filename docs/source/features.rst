@@ -57,8 +57,9 @@ directory, scan the local clone, and then delete it.
 Scanning a Folder
 +++++++++++++++++++++++++++
 
-This is scanning a local folder and does not look at git commit history. Ideal for locating
-secrets in the latest source files or files not in source control.
+Operating in this mode, tartufo scans the files in a local folder, rather than
+operating on git commit history. This is ideal for locating secrets in the latest
+version of source files, or files not in source control.
 
 .. code-block:: sh
 

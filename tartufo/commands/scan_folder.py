@@ -1,3 +1,5 @@
+import sys
+
 from typing import Tuple
 
 import click
@@ -18,6 +20,14 @@ def main(
 ) -> Tuple[str, FolderScanner]:
     """Scan a folder."""
     try:
+        resume: bool = True
+        if util.path_contains_git(target) is True:
+            resume = click.confirm(
+                "This folder is a git repository, and should be scanned using the "
+                "scan-local-repo command. Are you sure you wish to proceed?"
+            )
+        if resume is False:
+            sys.exit(0)
         scanner = FolderScanner(options, target)
         scanner.scan()
     except types.TartufoException as exc:

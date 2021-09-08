@@ -19,6 +19,8 @@ from typing import (
     Tuple,
 )
 
+import click
+
 import git
 
 from tartufo import config, types, util
@@ -688,7 +690,7 @@ class GitPreCommitScanner(GitScanner):
 class FolderScanner(ScannerBase):
     """Used to scan a folder."""
 
-    folder_path: str
+    target: str
 
     def __init__(
         self,
@@ -711,16 +713,18 @@ class FolderScanner(ScannerBase):
         """
 
         for blob, file_path in self._iter_folder():
-            if self.should_scan(file_path):
-                yield types.Chunk(blob, file_path, {})
+            yield types.Chunk(blob, file_path, {})
 
     def _iter_folder(self) -> Generator[Tuple[str, str], None, None]:
         folder_path = pathlib.Path(self.target)
         for file_path in folder_path.rglob("**/*"):
             relative_path = file_path.relative_to(folder_path)
             if file_path.is_file() and self.should_scan(str(relative_path)):
-                with file_path.open("rb") as fhd:
-                    data = fhd.read()
+                try:
+                    with file_path.open("rb") as fhd:
+                        data = fhd.read()
+                except OSError as exc:
+                    raise click.FileError(filename=str(file_path), hint=str(exc))
 
                 try:
                     blob = data.decode("utf-8")
