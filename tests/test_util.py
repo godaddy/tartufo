@@ -69,6 +69,30 @@ class GitTests(unittest.TestCase):
         ):
             util.clone_git_repo("https://github.com/godaddy/tartufo.git")
 
+    @mock.patch("git.Repo")
+    def test_path_contains_git_should_return_false_given_giterror(
+        self, mock_git_repo: mock.MagicMock
+    ):
+        mock_git_repo.side_effect = git.GitError()
+        actual = util.path_contains_git("./test")
+        self.assertFalse(actual)
+
+    @mock.patch("git.Repo")
+    def test_path_contains_git_should_return_false_given_null_repo(
+        self, mock_git_repo: mock.MagicMock
+    ):
+        mock_git_repo.return_value = None
+        actual = util.path_contains_git("./test")
+        self.assertFalse(actual)
+
+    @mock.patch("git.Repo")
+    def test_path_contains_git_should_return_true_given_repo_object(
+        self, mock_git_repo: mock.MagicMock
+    ):
+        mock_git_repo.return_value = mock.Mock()
+        actual = util.path_contains_git("./test")
+        self.assertTrue(actual)
+
 
 class OutputTests(unittest.TestCase):
     @mock.patch("tartufo.scanner.ScannerBase")

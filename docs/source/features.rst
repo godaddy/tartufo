@@ -54,6 +54,32 @@ To use ``docker``:
 When used this way, `tartufo` will clone the repository to a temporary
 directory, scan the local clone, and then delete it.
 
+Scanning a Folder
++++++++++++++++++++++++++++
+
+Operating in this mode, tartufo scans the files in a local folder, rather than
+operating on git commit history. This is ideal for locating secrets in the latest
+version of source files, or files not in source control.
+
+.. code-block:: sh
+
+   $ tartufo scan-folder .
+
+.. code-block:: sh
+
+   $ docker run --rm -v "/path/to/my/repo:/git" godaddy/tartufo scan-folder /git
+
+.. note::
+
+   If you are using ``podman`` in place of ``docker``, you will need to add the
+   ``--privileged`` flag to the ``run`` command, in order to avoid a permission
+   denied error.
+
+   This will scan all files and folders in the specified directory including
+   .git and any other files that may not be in source control. Perform a git clean
+   or use a fresh clone of the repository before running scanning a folder and add
+   ``.git`` to the ``exclude-paths``.
+
 Accessing Repositories via SSH from Docker
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

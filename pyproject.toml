@@ -75,12 +75,13 @@ exclude-path-patterns = [
     'pyproject.toml',
     # To not have to escape `\` in regexes, use single quoted
     # TOML 'literal strings'
-    '.github/workflows/(.*)\.yml',
+    '\.github/workflows/(.*)\.yml',
     'docs/source/(.*)\.rst',
     'tests/test_base_scanner\.py',
     'tests/test_util.py',
     'tests/data/testRules.json',
-    'tartufo/data/default_regexes\.json'
+    'tartufo/data/default_regexes\.json',
+    '\.git/.*',
 ]
 exclude-signatures = [
   "62f22e4500140a6ed959a6143c52b0e81c74e7491081292fce733de4ec574542",
@@ -136,6 +137,11 @@ exclude-signatures = [
   "586f9df1870fcfafd3070dc553e97db25b3fce82c9144602567d69a86597c06f",
   "842533f44cf32fb3d93a7f56227977aa4f16caafe82ace8f5f4de27d750c1ec1",
   "d039c652f27c4d42026c5b5c9be31bfe368b283b24248e98d92f131272580053",
+
+  # test secrets
+  "d26b223efb2087d4a3db7b3ff0f65362372c46190fd74b8061db8099f4a2ee60", # tests/data/scan_folder/donotscan.txt
+  "94c45f9acae0551a2438fa8932fac466e903fd9a09bd2e11897198b133937ccd", # tests/data/scan_folder/test.txt
+  "743b893e30777d9c4e28d3d341ca4ba1c2541a9c62b497dece75c2a64420e770", # tests/test_folder_scanner.py
 ]
 json = false
 regex = true

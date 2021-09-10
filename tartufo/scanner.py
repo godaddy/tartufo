@@ -19,6 +19,8 @@ from typing import (
     Tuple,
 )
 
+import click
+
 import git
 
 from tartufo import config, types, util
@@ -243,7 +245,7 @@ class ScannerBase(abc.ABC):
         this function when no inclusions or exclusions exist.
 
         :param file_path: The file path to check for inclusion
-        :return: False if the file path is _not_ matched by `self.indluded_paths`
+        :return: False if the file path is _not_ matched by `self.included_paths`
             (when non-empty) or if it is matched by `self.excluded_paths` (when
             non-empty), otherwise returns True
         """
@@ -683,3 +685,51 @@ class GitPreCommitScanner(GitScanner):
         )
         for blob, file_path in self._iter_diff_index(diff_index):
             yield types.Chunk(blob, file_path, {})
+
+
+class FolderScanner(ScannerBase):
+    """Used to scan a folder."""
+
+    target: str
+
+    def __init__(
+        self,
+        global_options: types.GlobalOptions,
+        target: str,
+    ) -> None:
+        """Used for scanning a folder.
+
+        :param global_options: The options provided to the top-level tartufo command
+        :param target: The local filesystem path to scan
+        """
+        self.target = target
+        super().__init__(global_options)
+
+    @property
+    def chunks(self) -> Generator[types.Chunk, None, None]:
+        """Yield the individual files in the target directory.
+
+        :rtype: Generator[Chunk, None, None]
+        """
+
+        for blob, file_path in self._iter_folder():
+            yield types.Chunk(blob, file_path, {})
+
+    def _iter_folder(self) -> Generator[Tuple[str, str], None, None]:
+        folder_path = pathlib.Path(self.target)
+        for file_path in folder_path.rglob("**/*"):
+            relative_path = file_path.relative_to(folder_path)
+            if file_path.is_file() and self.should_scan(str(relative_path)):
+                try:
+                    with file_path.open("rb") as fhd:
+                        data = fhd.read()
+                except OSError as exc:
+                    raise click.FileError(filename=str(file_path), hint=str(exc))
+
+                try:
+                    blob = data.decode("utf-8")
+                except UnicodeDecodeError:
+                    # binary file, continue
+                    continue
+
+                yield blob, str(relative_path)

@@ -207,3 +207,10 @@ def get_strings_of_set(
     if count > threshold:
         strings.append(letters)
     return strings
+
+
+def path_contains_git(path: str) -> bool:
+    try:
+        return git.Repo(path) is not None
+    except git.GitError:
+        return False
