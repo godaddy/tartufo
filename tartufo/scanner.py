@@ -707,7 +707,7 @@ class FolderScanner(ScannerBase):
 
     @property
     def chunks(self) -> Generator[types.Chunk, None, None]:
-        """Yield the individual file changes currently staged for commit.
+        """Yield the individual files in the target directory.
 
         :rtype: Generator[Chunk, None, None]
         """
