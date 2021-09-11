@@ -57,7 +57,7 @@ def main(
     try:
         scanner = GitRepoScanner(options, git_options, str(repo_path))
         scanner.scan()
-    except types.GitLocalException as exc:
+    except types.GitLocalException:
         util.fail(f"{repo_path} is not a valid git repository.", ctx)
     except types.GitRemoteException as exc:
         util.fail(f"There was an error fetching from the remote repository: {exc}", ctx)
