@@ -103,6 +103,10 @@ class ScanException(TartufoException):
     """Raised if there is a problem encountered during a scan"""
 
 
+class BranchNotFoundException(TartufoException):
+    """Raised if a branch was not found"""
+
+
 class GitException(TartufoException):
     """Raised if there is a problem interacting with git"""
 
