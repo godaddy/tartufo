@@ -1,3 +1,24 @@
+v2.8.0 - 14 September 2021
+--------------------------
+
+Features:
+
+* [#83](https://github.com/godaddy/tartufo/issues/83) - New `scan-folder` command
+  to scan files without viewing as a git repository.
+
+Bug fixes:
+
+* [#220](https://github.com/godaddy/tartufo/pull/220) - Display an explicit error
+  message when a requested branch is not found, as opposed to failing silently.
+
+Misc:
+
+* [#219](https://github.com/godaddy/tartufo/pull/219) - Incremental optimizations;
+  using `__slots__` for the `Issue` class to improve memory consumption, and
+  a small logic speed-up in when we generate the diff between commits. Both of
+  these should help at least some when it comes to scanning very large
+  repositories.
+
 v2.7.1 - 23 August 2021
 -----------------------
 
