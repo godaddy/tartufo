@@ -103,7 +103,7 @@ class ScanException(TartufoException):
     """Raised if there is a problem encountered during a scan"""
 
 
-class BranchNotException(TartufoException):
+class BranchNotFoundException(TartufoException):
     """Raised if a branch was not found"""
 
 

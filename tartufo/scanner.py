@@ -24,7 +24,7 @@ import click
 import git
 
 from tartufo import config, types, util
-from tartufo.types import BranchNotException, Rule, TartufoException
+from tartufo.types import BranchNotFoundException, Rule, TartufoException
 
 BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
 HEX_CHARS = "1234567890abcdefABCDEF"
@@ -611,7 +611,7 @@ class GitRepoScanner(GitScanner):
                 ]
 
                 if len(branches) == 0:
-                    raise BranchNotException(
+                    raise BranchNotFoundException(
                         f"Branch {self.git_options.branch} was not found."
                     )
             else:
