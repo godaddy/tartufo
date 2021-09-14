@@ -33,12 +33,20 @@ HEX_CHARS = "1234567890abcdefABCDEF"
 class Issue:
     """Represent an issue found while scanning a target."""
 
-    OUTPUT_SEPARATOR: str = "~~~~~~~~~~~~~~~~~~~~~"
+    __slots__ = (
+        "OUTPUT_SEPARATOR",
+        "chunk",
+        "issue_type",
+        "issue_detail",
+        "matched_string",
+        "logger",
+    )
 
+    OUTPUT_SEPARATOR: str
     chunk: types.Chunk
     issue_type: types.IssueType
-    issue_detail: Optional[str] = None
-    matched_string: str = ""
+    issue_detail: Optional[str]
+    matched_string: str
     logger: logging.Logger
 
     def __init__(
@@ -49,6 +57,9 @@ class Issue:
         :param matched_string: The string that was identified as a potential issue
         :param chunk: The chunk of data where the match was found
         """
+        self.OUTPUT_SEPARATOR = "~~~~~~~~~~~~~~~~~~~~~"  # pylint: disable=invalid-name
+        self.issue_detail = None
+
         self.issue_type = issue_type
         self.matched_string = matched_string
         self.chunk = chunk
@@ -467,11 +478,11 @@ class GitScanner(ScannerBase, abc.ABC):
         diff: git.Diff
         for diff in diff_index:
             file_path = diff.b_path if diff.b_path else diff.a_path
-            printable_diff: str = diff.diff.decode("utf-8", errors="replace")
-            if printable_diff.startswith("Binary files"):
-                self.logger.debug("Binary file skipped: %s", file_path)
-                continue
             if self.should_scan(file_path):
+                printable_diff = diff.diff.decode("utf-8", errors="replace")
+                if printable_diff.startswith("Binary files"):
+                    self.logger.debug("Binary file skipped: %s", file_path)
+                    continue
                 yield (printable_diff, file_path)
 
     def filter_submodules(self, repo: git.Repo) -> None:
@@ -524,7 +535,7 @@ class GitRepoScanner(GitScanner):
             (config_file, data) = config.load_config_from_path(
                 pathlib.Path(repo_path), traverse=False
             )
-        except (FileNotFoundError, types.ConfigException) as exc:
+        except (FileNotFoundError, types.ConfigException):
             config_file = None
         if config_file and config_file != self.global_options.config:
             signatures = data.get("exclude_signatures", None)
