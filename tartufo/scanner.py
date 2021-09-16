@@ -296,9 +296,9 @@ class ScannerBase(abc.ABC):
         """
         match = False
         if rule.pattern:
-            match = rule.pattern.match(string) is not None
+            match = rule.pattern.search(string) is not None
         if rule.path_pattern:
-            match = match and rule.path_pattern.match(path) is not None
+            match = match and rule.path_pattern.search(path) is not None
         return match
 
     def entropy_string_is_excluded(self, string: str, path: str) -> bool:
@@ -378,17 +378,20 @@ class ScannerBase(abc.ABC):
 
                 for string in b64_strings:
                     issues += self.evaluate_entropy_string(
-                        chunk, string, BASE64_CHARS, 4.5
+                        chunk, line, string, BASE64_CHARS, 4.5
                     )
 
                 for string in hex_strings:
-                    issues += self.evaluate_entropy_string(chunk, string, HEX_CHARS, 3)
+                    issues += self.evaluate_entropy_string(
+                        chunk, line, string, HEX_CHARS, 3
+                    )
 
         return issues
 
     def evaluate_entropy_string(
         self,
         chunk: types.Chunk,
+        line: str,
         string: str,
         chars: str,
         min_entropy_score: float,
@@ -406,8 +409,8 @@ class ScannerBase(abc.ABC):
         if not self.signature_is_excluded(string, chunk.file_path):
             entropy_score = self.calculate_entropy(string, chars)
             if entropy_score > min_entropy_score:
-                if self.entropy_string_is_excluded(string, chunk.file_path):
-                    self.logger.debug("entropy string %s was excluded", string)
+                if self.entropy_string_is_excluded(line, chunk.file_path):
+                    self.logger.debug("line containing entropy was excluded: %s", line)
                 else:
                     return [Issue(types.IssueType.Entropy, string, chunk)]
         return []

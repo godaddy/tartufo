@@ -352,6 +352,13 @@ class EntropyTests(ScannerTestCase):
         excluded = self.scanner.entropy_string_is_excluded("foo", "docs/README.md")
         self.assertEqual(True, excluded)
 
+    def test_entropy_string_is_excluded_given_partial_line_match(self):
+        self.options.exclude_entropy_patterns = [r"docs/.*\.md::line.+?foo"]
+        excluded = self.scanner.entropy_string_is_excluded(
+            "+a line that contains foo", "docs/README.md"
+        )
+        self.assertEqual(True, excluded)
+
     def test_entropy_string_is_not_excluded(self):
         self.options.exclude_entropy_patterns = [r"foo\..*::f.*"]
         excluded = self.scanner.entropy_string_is_excluded("bar", "foo.py")
