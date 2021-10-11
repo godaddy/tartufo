@@ -1,3 +1,12 @@
+v2.8.1 - 11 October 2021
+------------------------
+
+Bug fixes:
+
+* [#222](https://github.com/godaddy/tartufo/pull/222) - Allow
+  exclude-entropy-patterns to match lines containing partial matches -- thanks
+  to @kbartholomew-godaddy for the work on this one!
+
 v2.8.0 - 14 September 2021
 --------------------------
 
