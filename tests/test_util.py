@@ -141,10 +141,14 @@ class OutputTests(unittest.TestCase):
         mock_time.now.return_value.isoformat.return_value = "now:now:now"
         options = generate_options(GlobalOptions, json=False, quiet=False, verbose=0)
         mock_scanner.exclude_signatures = []
+        mock_scanner.issue_count = 0
         mock_scanner.issues = []
         util.echo_result(options, mock_scanner, "", "")
-        mock_click.echo.assert_called_with(
-            "Time: now:now:now\nAll clear. No secrets detected."
+        mock_click.echo.assert_has_calls(
+            [
+                mock.call(b""),
+                mock.call("Time: now:now:now\nAll clear. No secrets detected."),
+            ]
         )
 
     @mock.patch("tartufo.scanner.ScannerBase")
@@ -171,6 +175,7 @@ class OutputTests(unittest.TestCase):
             exclude_entropy_patterns=exclude_entropy_patterns,
         )
         mock_scanner.issues = []
+        mock_scanner.issue_count = 0
         mock_scanner.excluded_paths = [
             re.compile("package-lock.json"),
             re.compile("poetry.lock"),
@@ -196,7 +201,9 @@ class OutputTests(unittest.TestCase):
         mock_scanner.issues = []
         mock_scanner.exclude_signatures = []
         util.echo_result(options, mock_scanner, "", "")
-        mock_click.echo.assert_not_called()
+        # We unavoidably get an empty line because we have to run the iterator
+        # to figure out whether we did or didn't find any issues.
+        mock_click.echo.assert_called_once_with(b"")
 
     @mock.patch("tartufo.scanner.ScannerBase")
     @mock.patch("tartufo.util.click", new=mock.MagicMock())
@@ -216,6 +223,7 @@ class OutputTests(unittest.TestCase):
             types.IssueType.RegEx, "bar", types.Chunk("foo", "/bar", {})
         )
         mock_scanner.issues = [issue_1, issue_2]
+        mock_scanner.issue_count = 2
         mock_scanner.excluded_paths = []
         options = generate_options(
             GlobalOptions, json=True, exclude_signatures=[], exclude_entropy_patterns=[]

@@ -144,6 +144,19 @@ class ScannerBase(abc.ABC):
         self.logger = logging.getLogger(__name__)
 
     @property
+    def issue_count(self) -> int:
+        """Return the number of issues found during the scan (so far)
+
+        This may be less that the (eventual) total number of issues if the scan
+        has not been run yet, or if not all output has been consumed and the
+        generator functions are still evaluating targets.
+
+        :returns: Number of reported issues
+        """
+
+        return self._issue_count or 0
+
+    @property
     def issues(self) -> Generator[Issue, None, None]:
         """Get a list of issues found during the scan.
 

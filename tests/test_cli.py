@@ -202,6 +202,7 @@ class ProcessIssuesTest(unittest.TestCase):
         self, mock_scanner: mock.MagicMock
     ):
         mock_scanner.return_value.issues = []
+        mock_scanner.return_value.issue_count = 0
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(cli.main, ["scan-local-repo", "."])
@@ -226,6 +227,7 @@ class ProcessIssuesTest(unittest.TestCase):
         self, mock_scanner: mock.MagicMock
     ):
         mock_scanner.return_value.issues = []
+        mock_scanner.return_value.issue_count = 0
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(cli.main, ["-q", "scan-local-repo", "."])
@@ -238,6 +240,7 @@ class ProcessIssuesTest(unittest.TestCase):
         self, mock_scanner: mock.MagicMock
     ):
         mock_scanner.return_value.issues = []
+        mock_scanner.return_value.issue_count = 0
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(cli.main, ["-v", "scan-local-repo", "."])

@@ -92,11 +92,10 @@ def echo_result(
                 f"({issue.signature}, {issue.issue_detail})"
             )
     else:
-        if not scanner.issues:
+        click.echo(b"\n".join([bytes(issue) for issue in scanner.issues]))
+        if not scanner.issue_count:
             if not options.quiet:
                 click.echo(f"Time: {now}\nAll clear. No secrets detected.")
-        else:
-            click.echo(b"\n".join([bytes(issue) for issue in scanner.issues]))
         if options.verbose > 0:
             click.echo("\nExcluded paths:")
             click.echo("\n".join([path.pattern for path in scanner.excluded_paths]))
@@ -107,7 +106,7 @@ def echo_result(
 
 
 def write_outputs(
-    found_issues: "Generator[Issue, None, None]", output_dir: pathlib.Path
+    found_issues: Generator["Issue", None, None], output_dir: pathlib.Path
 ) -> List[str]:
     """Write details of the issues to individual files in the specified directory.
 

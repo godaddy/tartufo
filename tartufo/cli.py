@@ -302,7 +302,7 @@ def process_issues(
         if not options.json:
             click.echo(f"Results have been saved in {output_dir}")
 
-    if scan.issues:
+    if scan.issue_count:
         ctx.exit(1)
 
     ctx.exit(0)
