@@ -276,7 +276,8 @@ class ChunkGeneratorTests(ScannerTestCase):
             self.global_options, self.git_options, "."
         )
         mock_iter_commits.return_value = []
-        self.assertRaises(types.BranchNotFoundException, test_scanner.scan)
+        with self.assertRaises(types.BranchNotFoundException):
+            list(test_scanner.scan())
 
     @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
     @mock.patch("git.Repo")

@@ -8,7 +8,17 @@ import uuid
 from datetime import datetime
 from functools import lru_cache, partial
 from hashlib import blake2s
-from typing import Any, Callable, Dict, Iterable, List, Optional, TYPE_CHECKING, Pattern
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    Iterable,
+    List,
+    Optional,
+    TYPE_CHECKING,
+    Pattern,
+)
 
 import click
 import git
@@ -96,10 +106,12 @@ def echo_result(
             click.echo("\n".join(options.exclude_entropy_patterns))
 
 
-def write_outputs(found_issues: "List[Issue]", output_dir: pathlib.Path) -> List[str]:
+def write_outputs(
+    found_issues: "Generator[Issue, None, None]", output_dir: pathlib.Path
+) -> List[str]:
     """Write details of the issues to individual files in the specified directory.
 
-    :param found_issues: The list of issues to be written out
+    :param found_issues: A generator for issues to be written out
     :param output_dir: The directory where the files should be written
     """
     result_files = []
