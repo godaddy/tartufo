@@ -124,9 +124,7 @@ def echo_result(
     return all_issues
 
 
-def write_outputs(
-    found_issues: List["Issue"], output_dir: pathlib.Path
-) -> List[str]:
+def write_outputs(found_issues: List["Issue"], output_dir: pathlib.Path) -> List[str]:
     """Write details of the issues to individual files in the specified directory.
 
     :param found_issues: A list of issues to be written out
