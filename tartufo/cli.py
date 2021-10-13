@@ -296,9 +296,9 @@ def process_issues(
         output_dir = pathlib.Path(options.output_dir) / f"tartufo-scan-results-{now}"
         output_dir.mkdir(parents=True)
 
-    util.echo_result(options, scan, repo_path, output_dir)
+    issues = util.echo_result(options, scan, repo_path, output_dir)
     if output_dir:
-        util.write_outputs(scan.issues, output_dir)
+        util.write_outputs(issues, output_dir)
         if not options.json:
             click.echo(f"Results have been saved in {output_dir}")
 

@@ -12,7 +12,6 @@ from typing import (
     Any,
     Callable,
     Dict,
-    Generator,
     Iterable,
     List,
     Optional,
@@ -59,13 +58,15 @@ def echo_result(
     scanner: "ScannerBase",
     repo_path: str,
     output_dir: Optional[pathlib.Path],
-) -> None:
+) -> List["Issue"]:
     """Print all found issues out to the console, optionally as JSON.
     :param options: Global options object
     :param scanner: ScannerBase containing issues and excluded paths from config tree
     :param repo_path: The path to the repository the issues were found in
     :param output_dir: The directory that issue details were written out to
+    :returns: All issues that were displayed
     """
+    all_issues: List["Issue"] = []
     now = datetime.now().isoformat("T", "microseconds")
     if options.json:
         output = {
@@ -93,18 +94,21 @@ def echo_result(
         click.echo(f'{static_part[:-1]}, "found_issues": [', nl=False)
         delimiter = ""
         for issue in scanner.issues:
+            all_issues.append(issue)
             live_part = json.dumps(issue.as_dict(compact=options.compact))
             click.echo(f"{delimiter}{live_part}", nl=False)
             delimiter = ", "
         click.echo("]}")
     elif options.compact:
         for issue in scanner.issues:
+            all_issues.append(issue)
             click.echo(
                 f"[{issue.issue_type.value}] {issue.chunk.file_path}: {issue.matched_string} "
                 f"({issue.signature}, {issue.issue_detail})"
             )
     else:
         for issue in scanner.issues:
+            all_issues.append(issue)
             click.echo(bytes(issue))
         if not scanner.issue_count:
             if not options.quiet:
@@ -117,13 +121,15 @@ def echo_result(
             click.echo("\nExcluded entropy patterns:")
             click.echo("\n".join(options.exclude_entropy_patterns))
 
+    return all_issues
+
 
 def write_outputs(
-    found_issues: Generator["Issue", None, None], output_dir: pathlib.Path
+    found_issues: List["Issue"], output_dir: pathlib.Path
 ) -> List[str]:
     """Write details of the issues to individual files in the specified directory.
 
-    :param found_issues: A generator for issues to be written out
+    :param found_issues: A list of issues to be written out
     :param output_dir: The directory where the files should be written
     """
     result_files = []
