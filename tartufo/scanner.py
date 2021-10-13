@@ -154,7 +154,7 @@ class ScannerBase(abc.ABC):
         :returns: Number of reported issues
         """
 
-        return self._issue_count or 0
+        return self._issue_count if self._issue_count > 0 else 0
 
     @property
     def issues(self) -> Generator[Issue, None, None]:
