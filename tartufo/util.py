@@ -79,12 +79,24 @@ def echo_result(
             "exclude_entropy_patterns": [
                 str(pattern) for pattern in options.exclude_entropy_patterns
             ],
-            "found_issues": [
-                issue.as_dict(compact=options.compact) for issue in scanner.issues
-            ],
+            # This member is for reference. Read below...
+            # "found_issues": [
+            #     issue.as_dict(compact=options.compact) for issue in scanner.issues
+            # ],
         }
 
-        click.echo(json.dumps(output))
+        # Observation: We want to "stream" JSON; the only generator output is the
+        # "found_issues" list (which is at the top level). Dump the "static" part
+        # minus the closing "}", then generate issues individually, then emit the
+        # closing "}".
+        static_part = json.dumps(output)
+        click.echo(f'{static_part[:-1]}, "found_issues": [', nl=False)
+        delimiter = ""
+        for issue in scanner.issues:
+            live_part = json.dumps(issue.as_dict(compact=options.compact))
+            click.echo(f"{delimiter}{live_part}", nl=False)
+            delimiter = ", "
+        click.echo("]}")
     elif options.compact:
         for issue in scanner.issues:
             click.echo(

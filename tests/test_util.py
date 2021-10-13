@@ -1,5 +1,7 @@
-import unittest
+from io import StringIO
+import json
 import re
+import unittest
 from pathlib import Path
 from unittest import mock
 
@@ -207,13 +209,10 @@ class OutputTests(unittest.TestCase):
         mock_click.echo.assert_not_called()
 
     @mock.patch("tartufo.scanner.ScannerBase")
-    @mock.patch("tartufo.util.click", new=mock.MagicMock())
-    @mock.patch("tartufo.util.json")
     @mock.patch("tartufo.util.datetime")
     def test_echo_result_outputs_proper_json_when_requested(
         self,
         mock_time,
-        mock_json,
         mock_scanner,
     ):
         mock_time.now.return_value.isoformat.return_value = "now:now:now"
@@ -229,9 +228,16 @@ class OutputTests(unittest.TestCase):
         options = generate_options(
             GlobalOptions, json=True, exclude_signatures=[], exclude_entropy_patterns=[]
         )
-        util.echo_result(options, mock_scanner, "/repo", "/output")
 
-        mock_json.dumps.assert_called_once_with(
+        # We're generating JSON piecemeal, so if we want to be safe we'll recover
+        # the entire output, deserialize it (to confirm it's valid syntax) and
+        # compare the result to the original input dictionary.
+        with mock.patch("sys.stdout", new=StringIO()) as mock_stdout:
+            util.echo_result(options, mock_scanner, "/repo", "/output")
+            actual_output = mock_stdout.getvalue()
+
+        self.assertEqual(
+            json.loads(actual_output),
             {
                 "scan_time": "now:now:now",
                 "project_path": "/repo",
@@ -257,15 +263,13 @@ class OutputTests(unittest.TestCase):
                         "file_path": "/bar",
                     },
                 ],
-            }
+            },
         )
 
     @mock.patch("tartufo.scanner.ScannerBase")
-    @mock.patch("tartufo.util.click", new=mock.MagicMock())
-    @mock.patch("tartufo.util.json")
     @mock.patch("tartufo.util.datetime")
     def test_echo_result_outputs_proper_json_when_requested_pathtype(
-        self, mock_time, mock_json, mock_scanner
+        self, mock_time, mock_scanner
     ):
         mock_time.now.return_value.isoformat.return_value = "now:now:now"
         issue_1 = scanner.Issue(
@@ -293,8 +297,15 @@ class OutputTests(unittest.TestCase):
             exclude_signatures=exclude_signatures,
             exclude_entropy_patterns=exclude_entropy_patterns,
         )
-        util.echo_result(options, mock_scanner, "/repo", Path("/tmp"))
-        mock_json.dumps.assert_called_once_with(
+
+        # We're generating JSON piecemeal, so if we want to be safe we'll recover
+        # the entire output, deserialize it (to confirm it's valid syntax) and
+        # compare the result to the original input dictionary.
+        with mock.patch("sys.stdout", new=StringIO()) as mock_stdout:
+            util.echo_result(options, mock_scanner, "/repo", Path("/tmp"))
+            actual_output = mock_stdout.getvalue()
+        self.assertEqual(
+            json.loads(actual_output),
             {
                 "scan_time": "now:now:now",
                 "project_path": "/repo",
@@ -326,7 +337,7 @@ class OutputTests(unittest.TestCase):
                         "file_path": "/bar",
                     },
                 ],
-            }
+            },
         )
 
 
