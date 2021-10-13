@@ -92,7 +92,8 @@ def echo_result(
                 f"({issue.signature}, {issue.issue_detail})"
             )
     else:
-        click.echo(b"\n".join([bytes(issue) for issue in scanner.issues]))
+        for issue in scanner.issues:
+            click.echo(bytes(issue))
         if not scanner.issue_count:
             if not options.quiet:
                 click.echo(f"Time: {now}\nAll clear. No secrets detected.")

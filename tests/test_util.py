@@ -103,9 +103,15 @@ class OutputTests(unittest.TestCase):
         mock_scanner.issues = [1, 2, 3, 4]
         util.echo_result(options, mock_scanner, "", "")
         # Ensure that the issues are output as a byte stream
-        mock_click.echo.assert_called_once_with(
-            bytes(1) + b"\n" + bytes(2) + b"\n" + bytes(3) + b"\n" + bytes(4)
+        mock_click.echo.assert_has_calls(
+            [
+                mock.call(bytes(1)),
+                mock.call(bytes(2)),
+                mock.call(bytes(3)),
+                mock.call(bytes(4)),
+            ]
         )
+        self.assertEqual(mock_click.echo.call_count, 4)
 
     @mock.patch("tartufo.scanner.ScannerBase")
     @mock.patch("tartufo.util.click")
@@ -144,11 +150,8 @@ class OutputTests(unittest.TestCase):
         mock_scanner.issue_count = 0
         mock_scanner.issues = []
         util.echo_result(options, mock_scanner, "", "")
-        mock_click.echo.assert_has_calls(
-            [
-                mock.call(b""),
-                mock.call("Time: now:now:now\nAll clear. No secrets detected."),
-            ]
+        mock_click.echo.assert_called_once_with(
+            "Time: now:now:now\nAll clear. No secrets detected."
         )
 
     @mock.patch("tartufo.scanner.ScannerBase")
@@ -201,9 +204,7 @@ class OutputTests(unittest.TestCase):
         mock_scanner.issues = []
         mock_scanner.exclude_signatures = []
         util.echo_result(options, mock_scanner, "", "")
-        # We unavoidably get an empty line because we have to run the iterator
-        # to figure out whether we did or didn't find any issues.
-        mock_click.echo.assert_called_once_with(b"")
+        mock_click.echo.assert_not_called()
 
     @mock.patch("tartufo.scanner.ScannerBase")
     @mock.patch("tartufo.util.click", new=mock.MagicMock())
