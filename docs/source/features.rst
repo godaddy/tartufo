@@ -310,8 +310,8 @@ hashes for GitHub Actions in your workflows:
 
     [tool.tartufo]
     exclude-entropy-patterns = [
-        {files = 'docs/.*\.md$', match = '^[a-zA-Z0-9]$', reason = 'exclude all git SHAs in the docs'},
-        {files = '\.github/workflows/.*\.yml', match = 'uses: .*@[a-zA-Z0-9]{40}', reason = 'GitHub Actions'}
+        {files = 'docs/.*\.md$', pattern = '^[a-zA-Z0-9]$', reason = 'exclude all git SHAs in the docs'},
+        {files = '\.github/workflows/.*\.yml', pattern = 'uses: .*@[a-zA-Z0-9]{40}', reason = 'GitHub Actions'}
     ]
 
 Thanks to the magic of TOML, you could also split these out into their own tables
@@ -322,13 +322,17 @@ you see above:
 
     [[tool.tartufo.exclude-entropy-patterns]]
     files = 'docs/.*\.md$'
-    match = '^[a-zA-Z0-9]$'
+    pattern = '^[a-zA-Z0-9]$'
     reason = 'exclude all git SHAs in the docs'
 
     [[tool.tartufo.exclude-entropy-patterns]]
     files = '\.github/workflows/.*\.yml'
-    match = 'uses: .*@[a-zA-Z0-9]{40}'
+    pattern = 'uses: .*@[a-zA-Z0-9]{40}'
     reason = 'GitHub Actions'
+
+.. note::
+    In reality, the only key you **have** to specify is ``pattern``. If you do
+    this, the pattern match will apply to **all** files that are scanned.
 
 Limiting by Signature
 +++++++++++++++++++++
