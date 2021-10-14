@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: [3.6, 3.7, 3.8, 3.9, pypy3]
+        python-version: [3.6, 3.7, 3.8, 3.9, pypy-3.7]
         include:
           - os: ubuntu-latest
             path: ~/.cache/pypoetry
@@ -40,7 +40,7 @@ jobs:
           ${{ matrix.os }}-venvs-${{ matrix.python-version }}
           ${{ matrix.os }}-venvs
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@3105fb18c05ddd93efea5f9e0bef7a03a6e9e7df
+      uses: actions/setup-python@dc73133d4da04e56a135ae2246682783cc7c7cb6
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install Enchant
@@ -78,7 +78,7 @@ jobs:
         restore-keys: |
           venvs-${{ matrix.toxenv }}-
     - name: Set up Python
-      uses: actions/setup-python@3105fb18c05ddd93efea5f9e0bef7a03a6e9e7df
+      uses: actions/setup-python@dc73133d4da04e56a135ae2246682783cc7c7cb6
       with:
         python-version: 3.7
     - name: Install dependencies
