@@ -389,6 +389,12 @@ class CompileRulesTests(unittest.TestCase):
             ],
         )
 
+    def test_config_exception_is_raised_if_no_match_field_found(self):
+        with self.assertRaisesRegex(
+            types.ConfigException, "Malformed exclude-entropy-patterns: "
+        ):
+            config.compile_rules([{"foo": "bar"}])
+
 
 if __name__ == "__main__":
     unittest.main()
