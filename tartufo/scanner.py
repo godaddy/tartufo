@@ -6,6 +6,7 @@ import logging
 import math
 import pathlib
 import re
+import warnings
 from functools import lru_cache
 from typing import (
     Any,
@@ -166,8 +167,9 @@ class ScannerBase(abc.ABC):
             self.logger.info("Initializing included paths")
             patterns = list(self.global_options.include_path_patterns or ())
             if self.global_options.include_paths:
-                self.logger.warning(
-                    "DEPRECATED --include-paths, use --include-path-patterns"
+                warnings.warn(
+                    "--include-paths is deprecated and will be removed in v3.0. Use --include-path-patterns instead.",
+                    DeprecationWarning,
                 )
                 patterns += self.global_options.include_paths.readlines()
                 self.global_options.include_paths.close()
@@ -204,8 +206,9 @@ class ScannerBase(abc.ABC):
             self.logger.info("Initializing excluded paths")
             patterns = list(self.global_options.exclude_path_patterns or ())
             if self.global_options.exclude_paths:
-                self.logger.warning(
-                    "DEPRECATED --exclude-paths, use --exclude-path-patterns"
+                warnings.warn(
+                    "--exclude-paths is deprecated and will be removed in v3.0. Use --exclude-path-patterns instead.",
+                    DeprecationWarning,
                 )
                 patterns += self.global_options.exclude_paths.readlines()
                 self.global_options.exclude_paths.close()
