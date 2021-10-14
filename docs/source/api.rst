@@ -17,7 +17,7 @@ tartufo.scanner
 .. automodule:: tartufo.scanner
    :inherited-members:
    :members:
-   :private-members: _iter_diff, _iter_branch_commits
+   :private-members: _iter_diff_index
    :show-inheritance:
    :undoc-members:
 

@@ -21,6 +21,7 @@ from typing import (
 
 import click
 import git
+import pygit2
 
 from tartufo import types
 from tartufo.types import Rule
@@ -182,21 +183,19 @@ def generate_signature(snippet: str, filename: str) -> str:
     return blake2s(f"{snippet}$${filename}".encode("utf-8")).hexdigest()
 
 
-def extract_commit_metadata(
-    commit: git.Commit, branch: git.FetchInfo
-) -> Dict[str, Any]:
+def extract_commit_metadata(commit: pygit2.Commit, branch: str) -> Dict[str, Any]:
     """Grab a consistent set of metadata from a git commit, for user output.
 
     :param commit: The commit to extract the data from
     :param branch: What branch the commit was found on
     """
     return {
-        "commit_time": datetime.fromtimestamp(commit.committed_date).strftime(
+        "commit_time": datetime.fromtimestamp(commit.commit_time).strftime(
             DATETIME_FORMAT
         ),
         "commit_message": commit.message,
-        "commit_hash": commit.hexsha,
-        "branch": branch.name,
+        "commit_hash": commit.hex,
+        "branch": branch,
     }
 
 

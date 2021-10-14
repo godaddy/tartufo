@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-import pygit2
+import git
 
 from tartufo import scanner, types, util
 from tartufo.types import GlobalOptions
@@ -26,31 +26,31 @@ class GitTests(unittest.TestCase):
          should only ever rely on the code which is being directly tested.
     """
 
-    @mock.patch("pygit2.clone_repository")
+    @mock.patch("git.Repo.clone_from")
     @mock.patch("tartufo.util.tempfile.mkdtemp")
     def test_tartufo_clones_git_repo_into_temp_dir(
         self, mock_mkdtemp: mock.MagicMock, mock_clone: mock.MagicMock
     ):
         mock_mkdtemp.return_value = "/foo"
-        util.get_repository("https://github.com/godaddy/tartufo.git")
+        util.clone_git_repo("https://github.com/godaddy/tartufo.git")
         mock_clone.assert_called_once_with(
             "https://github.com/godaddy/tartufo.git", "/foo"
         )
 
-    @mock.patch("pygit2.clone_repository", new=mock.MagicMock())
+    @mock.patch("git.Repo.clone_from", new=mock.MagicMock())
     @mock.patch("tartufo.util.tempfile.mkdtemp")
-    def test_get_repository_returns_path_to_clone(self, mock_mkdtemp: mock.MagicMock):
+    def test_clone_git_repo_returns_path_to_clone(self, mock_mkdtemp: mock.MagicMock):
         mock_mkdtemp.return_value = "/foo"
-        repo_path = util.get_repository("https://github.com/godaddy/tartufo.git")
-        self.assertEqual(repo_path[0], Path("/foo"))
+        repo_path = util.clone_git_repo("https://github.com/godaddy/tartufo.git")
+        self.assertEqual(repo_path, Path("/foo"))
 
-    @mock.patch("pygit2.clone_repository")
+    @mock.patch("git.Repo.clone_from")
     @mock.patch("tartufo.util.tempfile.mkdtemp")
-    def test_get_repository_clones_into_target_dir(
+    def test_clone_git_repo_clones_into_target_dir(
         self, mock_temp: mock.MagicMock, mock_clone: mock.MagicMock
     ):
-        util.get_repository(
-            "https://github.com/godaddy/tartufo.git", "/foo/tartufo.git"
+        util.clone_git_repo(
+            "https://github.com/godaddy/tartufo.git", Path("/foo/tartufo.git")
         )
         mock_temp.assert_not_called()
         mock_clone.assert_called_once_with(
@@ -58,17 +58,20 @@ class GitTests(unittest.TestCase):
             str(Path("/foo/tartufo.git")),
         )
 
-    @mock.patch("pygit2.clone_repository")
+    @mock.patch("git.Repo.clone_from")
     @mock.patch("tartufo.util.tempfile.mkdtemp", new=mock.MagicMock())
-    @mock.patch("pathlib.Path", new=mock.MagicMock())
-    def test_get_repository_raises_explicit_exception_on_clone_fail(
+    def test_clone_git_repo_raises_explicit_exception_on_clone_fail(
         self, mock_clone: mock.MagicMock
     ):
-        mock_clone.side_effect = pygit2.GitError()
-        with self.assertRaises(types.GitRemoteException):
-            util.get_repository("https://github.com/godaddy/tartufo.git")
+        mock_clone.side_effect = git.GitCommandError(
+            command="git clone foo.git", status=42, stderr="Error cloning repo!"
+        )
+        with self.assertRaisesRegex(
+            types.GitRemoteException, "stderr: 'Error cloning repo!'"
+        ):
+            util.clone_git_repo("https://github.com/godaddy/tartufo.git")
 
-    @mock.patch("git.Repo")
+    @mock.patch("pygit2.Repository")
     def test_path_contains_git_should_return_false_given_giterror(
         self, mock_git_repo: mock.MagicMock
     ):

@@ -1,4 +1,5 @@
 import unittest
+from pathlib import Path
 from unittest import mock
 
 from click.testing import CliRunner
@@ -9,7 +10,7 @@ from tests import helpers
 
 
 class ScanLocalRepoTests(unittest.TestCase):
-    @mock.patch("tartufo.commands.scan_local_repo.GitLocalRepoScanner")
+    @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
     def test_scan_exits_gracefully_on_scan_exception(
         self, mock_scanner: mock.MagicMock
     ):
@@ -27,14 +28,17 @@ class ScanLocalRepoTests(unittest.TestCase):
         runner = CliRunner()
         with runner.isolated_filesystem() as run_path:
             result = runner.invoke(cli.main, ["scan-local-repo", run_path])
-            self.assertRegex(result.output, "is not a valid git repository")
+            self.assertRegex(
+                str(result.exception),
+                f"Repository not found at {Path(run_path).resolve()}",
+            )
 
-    @mock.patch("tartufo.commands.scan_local_repo.GitLocalRepoScanner")
+    @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
     def test_scan_exits_gracefully_when_remote_fetch_fails(
         self, mock_scanner: mock.MagicMock
     ):
         mock_scanner.return_value.scan.side_effect = types.GitRemoteException(
-            "Could not locate working ssh credentials"
+            "Fetch failed!"
         )
         runner = CliRunner()
         with runner.isolated_filesystem():
@@ -42,5 +46,5 @@ class ScanLocalRepoTests(unittest.TestCase):
         self.assertGreater(result.exit_code, 0)
         self.assertEqual(
             result.output,
-            "There was an error fetching from the remote repository: Could not locate working ssh credentials\n",
+            "There was an error fetching from the remote repository: Fetch failed!\n",
         )
