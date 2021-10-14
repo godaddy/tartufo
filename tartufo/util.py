@@ -39,7 +39,7 @@ def del_rw(_func: Callable, name: str, _exc: Exception) -> None:
 
 def convert_regexes_to_rules(regexes: Dict[str, Pattern]) -> Dict[str, Rule]:
     return {
-        name: Rule(name=name, pattern=pattern, path_pattern=None)
+        name: Rule(name=name, pattern=pattern, path_pattern=None, re_match_type="match")
         for name, pattern in regexes.items()
     }
 

@@ -188,9 +188,7 @@ class ScannerBase(abc.ABC):
         if self._excluded_entropy is None:
             self.logger.info("Initializing excluded entropy patterns")
             patterns = list(self.global_options.exclude_entropy_patterns or ())
-            self._excluded_entropy = (
-                config.compile_rules(set(patterns)) if patterns else []
-            )
+            self._excluded_entropy = config.compile_rules(patterns) if patterns else []
             self.logger.debug(
                 "Excluded entropy was initialized as: %s", self._excluded_entropy
             )
@@ -285,7 +283,7 @@ class ScannerBase(abc.ABC):
 
     @staticmethod
     @lru_cache(maxsize=None)
-    def rule_matches(rule: Rule, string: str, path: str) -> bool:
+    def rule_matches(rule: Rule, string: str, line: str, path: str) -> bool:
         """
         Match string and path against rule.
 
@@ -295,13 +293,20 @@ class ScannerBase(abc.ABC):
         :return: True if string and path matched, False otherwise.
         """
         match = False
-        if rule.pattern:
-            match = rule.pattern.search(string) is not None
-        if rule.path_pattern:
-            match = match and rule.path_pattern.search(path) is not None
+        if rule.re_match_type == "match":
+            if rule.pattern:
+                match = rule.pattern.match(string) is not None
+            if rule.path_pattern:
+                match = match and rule.path_pattern.match(path) is not None
+        elif rule.re_match_type == "search":
+            if rule.pattern:
+                match = rule.pattern.search(line) is not None
+            if rule.path_pattern:
+                match = match and rule.path_pattern.search(path) is not None
+
         return match
 
-    def entropy_string_is_excluded(self, string: str, path: str) -> bool:
+    def entropy_string_is_excluded(self, string: str, line: str, path: str) -> bool:
         """Find whether the signature of some data has been excluded in configuration.
 
         :param string: String to check against rule pattern
@@ -310,7 +315,8 @@ class ScannerBase(abc.ABC):
         """
 
         return bool(self.excluded_entropy) and any(
-            ScannerBase.rule_matches(p, string, path) for p in self.excluded_entropy
+            ScannerBase.rule_matches(p, string, line, path)
+            for p in self.excluded_entropy
         )
 
     @lru_cache(maxsize=None)
@@ -409,7 +415,7 @@ class ScannerBase(abc.ABC):
         if not self.signature_is_excluded(string, chunk.file_path):
             entropy_score = self.calculate_entropy(string, chars)
             if entropy_score > min_entropy_score:
-                if self.entropy_string_is_excluded(line, chunk.file_path):
+                if self.entropy_string_is_excluded(string, line, chunk.file_path):
                     self.logger.debug("line containing entropy was excluded: %s", line)
                 else:
                     return [Issue(types.IssueType.Entropy, string, chunk)]

@@ -4,6 +4,7 @@ import importlib
 import logging
 import pathlib
 import platform
+import warnings
 from datetime import datetime
 from typing import List, Optional, Tuple
 
@@ -253,6 +254,8 @@ def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
         log_format = " ".join(["[%(asctime)s]", log_format])
     handler.setFormatter(logging.Formatter(log_format))
     logger.addHandler(handler)
+    # Show deprecation warnings to the console by default
+    warnings.simplefilter("always", DeprecationWarning)
 
 
 @main.resultcallback()  # type: ignore
