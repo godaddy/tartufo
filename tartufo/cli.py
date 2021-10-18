@@ -207,6 +207,26 @@ class TartufoCLI(click.MultiCommand):
     show_default=True,
     help="Enable or disable timestamps in logging messages.",
 )
+@click.option(
+    "-b64",
+    "--b64-entropy-score",
+    default=4.5,
+    show_default=True,
+    help="Modify the base64 entropy score. If a value greater than the default is "
+    "specified, tartufo lists higher entropy base64 strings (longer or more randomized "
+    "strings). A lower value lists lower entropy base64 strings (shorter or less "
+    "randomized strings).",
+)
+@click.option(
+    "-hex",
+    "--hex-entropy-score",
+    default=3.0,
+    show_default=True,
+    help="Modify the hexadecimal entropy score. If a value greater than the default is "
+    "specified, tartufo lists higher entropy hexadecimal strings (longer or more randomized "
+    "strings). A lower value lists lower entropy hexadecimal strings (shorter or less "
+    "randomized strings).",
+)
 # The first positional argument here would be a hard-coded version, hence the `None`
 @click.version_option(None, "-V", "--version")
 @click.pass_context
