@@ -369,15 +369,23 @@ class ScannerBase(abc.ABC):
             if self.global_options.regex and self.rules_regexes:
                 issues += self.scan_regex(chunk)
             if self.global_options.entropy:
-                issues += self.scan_entropy(chunk)
+                issues += self.scan_entropy(
+                    chunk,
+                    self.global_options.b64_entropy_score,
+                    self.global_options.hex_entropy_score,
+                )
         self._issues = issues
         self.logger.info("Found %d issues.", len(self._issues))
         return self._issues
 
-    def scan_entropy(self, chunk: types.Chunk) -> List[Issue]:
+    def scan_entropy(
+        self, chunk: types.Chunk, b64_entropy_score: float, hex_entropy_score: float
+    ) -> List[Issue]:
         """Scan a chunk of data for apparent high entropy.
 
         :param chunk: The chunk of data to be scanned
+        :param b64_entropy_score: Base64 entropy score
+        :param hex_entropy_score: Hexadecimal entropy score
         """
         issues: List[Issue] = []
         for line in chunk.contents.split("\n"):
@@ -387,12 +395,12 @@ class ScannerBase(abc.ABC):
 
                 for string in b64_strings:
                     issues += self.evaluate_entropy_string(
-                        chunk, line, string, BASE64_CHARS, 4.5
+                        chunk, line, string, BASE64_CHARS, b64_entropy_score
                     )
 
                 for string in hex_strings:
                     issues += self.evaluate_entropy_string(
-                        chunk, line, string, HEX_CHARS, 3
+                        chunk, line, string, HEX_CHARS, hex_entropy_score
                     )
 
         return issues

@@ -26,6 +26,8 @@ class GlobalOptions:
         "quiet",
         "log_timestamps",
         "compact",
+        "b64_entropy_score",
+        "hex_entropy_score",
     )
     json: bool
     rules: Tuple[TextIO, ...]
@@ -46,6 +48,8 @@ class GlobalOptions:
     quiet: bool
     log_timestamps: bool
     compact: bool
+    b64_entropy_score: float
+    hex_entropy_score: float
 
 
 @dataclass

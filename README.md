@@ -147,6 +147,24 @@ Options:
                                   Enable or disable timestamps in logging
                                   messages.  [default: True]
 
+  -b64, --b64-entropy-score FLOAT
+                                  Modify the base64 entropy score. If you
+                                  specify a value greater than the default,
+                                  tartufo lists higher entropy base64 strings
+                                  (longer or more randomized strings). A lower
+                                  value lists lower entropy base64 strings
+                                  (shorter or less randomized strings).
+                                  [default: 4.5]
+
+  -hex, --hex-entropy-score FLOAT
+                                  Modify the hexadecimal entropy score. If you
+                                  specify a value greater than the default,
+                                  tartufo lists higher entropy hexadecimal
+                                  strings (longer or more randomized strings).
+                                  A lower value lists lower entropy
+                                  hexadecimal strings (shorter or less
+                                  randomized strings).  [default: 3.0]
+
   -V, --version                   Show the version and exit.
   -h, --help                      Show this message and exit.
 
