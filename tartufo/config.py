@@ -282,7 +282,7 @@ def compile_rules(patterns: Iterable[Union[str, Dict[str, str]]]) -> List[Rule]:
                 Rule(
                     name=pattern.get("reason", None),  # type: ignore[union-attr]
                     pattern=re.compile(pattern["pattern"]),  # type: ignore[index]
-                    path_pattern=re.compile(pattern.get("files", ".*")),  # type: ignore[union-attr]
+                    path_pattern=re.compile(pattern.get("path-pattern", ".*")),  # type: ignore[union-attr]
                     re_match_type="search",
                 )
                 for pattern in patterns

@@ -378,7 +378,7 @@ class EntropyTests(ScannerTestCase):
 
     def test_entropy_string_is_excluded_given_partial_line_match(self):
         self.options.exclude_entropy_patterns = [
-            {"files": r"docs/.*\.md", "pattern": "line.+?foo"}
+            {"path-pattern": r"docs/.*\.md", "pattern": "line.+?foo"}
         ]
         excluded = self.scanner.entropy_string_is_excluded(
             "foo", "+a line that contains foo", "docs/README.md"

@@ -310,8 +310,8 @@ hashes for GitHub Actions in your workflows:
 
     [tool.tartufo]
     exclude-entropy-patterns = [
-        {files = 'docs/.*\.md$', pattern = '^[a-zA-Z0-9]$', reason = 'exclude all git SHAs in the docs'},
-        {files = '\.github/workflows/.*\.yml', pattern = 'uses: .*@[a-zA-Z0-9]{40}', reason = 'GitHub Actions'}
+        {path-pattern = 'docs/.*\.md$', pattern = '^[a-zA-Z0-9]$', reason = 'exclude all git SHAs in the docs'},
+        {path-pattern = '\.github/workflows/.*\.yml', pattern = 'uses: .*@[a-zA-Z0-9]{40}', reason = 'GitHub Actions'}
     ]
 
 Thanks to the magic of TOML, you could also split these out into their own tables
@@ -321,12 +321,12 @@ you see above:
 .. code-block:: toml
 
     [[tool.tartufo.exclude-entropy-patterns]]
-    files = 'docs/.*\.md$'
+    path-pattern = 'docs/.*\.md$'
     pattern = '^[a-zA-Z0-9]$'
     reason = 'exclude all git SHAs in the docs'
 
     [[tool.tartufo.exclude-entropy-patterns]]
-    files = '\.github/workflows/.*\.yml'
+    path-pattern = '\.github/workflows/.*\.yml'
     pattern = 'uses: .*@[a-zA-Z0-9]{40}'
     reason = 'GitHub Actions'
 
