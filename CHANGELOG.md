@@ -1,5 +1,5 @@
-vX.Y.Z - TBD
-------------
+v2.9.0 - 19 October 2021
+------------------------
 
 Bug fixes:
 
@@ -16,6 +16,10 @@ Features:
   `DeprecationWarning` stating that the old behavior will go away with v3.0.
 * Fixed up warning handling so that we can display `DeprecationWarning`s to users
   more easily.
+* [#223](https://github.com/godaddy/tartufo/pull/223) New flags
+  (`-b64`/`--b64-entropy-score` and `-hex`/`--hex-entropy-score`) allow for user
+  tuning of the entropy reporting sensitivity. They default to 4.5 and 3.0,
+  respectively.
 
 v2.8.1 - 11 October 2021
 ------------------------
