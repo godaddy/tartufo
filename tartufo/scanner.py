@@ -386,7 +386,7 @@ class ScannerBase(abc.ABC):
                     self.global_options.b64_entropy_score,
                     self.global_options.hex_entropy_score,
                 )
-        self.logger.info("Found %d issues.", self._issue_count))
+        self.logger.info("Found %d issues.", self._issue_count)
 
     def scan_entropy(
         self, chunk: types.Chunk, b64_entropy_score: float, hex_entropy_score: float
