@@ -1,3 +1,22 @@
+vX.Y.Z - TBD
+------------
+
+Bug fixes:
+
+* Reverted [#222](https://github.com/godaddy/tartufo/pull/222) -- users had been
+  relying on the previously implemented behavior, causing this change to break
+  their pipelines.
+
+Features:
+
+* Behavior introduced in [#222](https://github.com/godaddy/tartufo/pull/222) is
+  now opt-in via an updated config specification for `exclude-entropy-patterns`.
+  This is now done via a TOML table, rather than a specifically patterned string.
+  Users who have the old style configuration will now receive a
+  `DeprecationWarning` stating that the old behavior will go away with v3.0.
+* Fixed up warning handling so that we can display `DeprecationWarning`s to users
+  more easily.
+
 v2.8.1 - 11 October 2021
 ------------------------
 

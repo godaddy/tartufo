@@ -294,6 +294,46 @@ To exclude this, add ``docs/.*\.md$::^[a-zA-Z0-9]{40}$`` to ``exclude-entropy-pa
       "docs/.*\.md$::^[a-zA-Z0-9]{40}$", # exclude all git SHAs in the docs directory
     ]
 
+.. warning::
+    .. versionchanged:: 2.9.0
+    As of version 2.9.0, the above specification style has been deprecated, and
+    will be removed in version 3.0. The new style uses a TOML `array of tables`_
+    as shown below.
+
+    Note that this new syntax is not available on the command line, and must be
+    specified in your config file.
+
+Here is an example of how you might exclude SHA hashes in your docs, as well as
+hashes for GitHub Actions in your workflows:
+
+.. code-block:: toml
+
+    [tool.tartufo]
+    exclude-entropy-patterns = [
+        {path-pattern = 'docs/.*\.md$', pattern = '^[a-zA-Z0-9]$', reason = 'exclude all git SHAs in the docs'},
+        {path-pattern = '\.github/workflows/.*\.yml', pattern = 'uses: .*@[a-zA-Z0-9]{40}', reason = 'GitHub Actions'}
+    ]
+
+Thanks to the magic of TOML, you could also split these out into their own tables
+in the config if you wanted. So the following would be 100% equivalent to what
+you see above:
+
+.. code-block:: toml
+
+    [[tool.tartufo.exclude-entropy-patterns]]
+    path-pattern = 'docs/.*\.md$'
+    pattern = '^[a-zA-Z0-9]$'
+    reason = 'exclude all git SHAs in the docs'
+
+    [[tool.tartufo.exclude-entropy-patterns]]
+    path-pattern = '\.github/workflows/.*\.yml'
+    pattern = 'uses: .*@[a-zA-Z0-9]{40}'
+    reason = 'GitHub Actions'
+
+.. note::
+    In reality, the only key you **have** to specify is ``pattern``. If you do
+    this, the pattern match will apply to **all** files that are scanned.
+
 Limiting by Signature
 +++++++++++++++++++++
 
@@ -385,6 +425,7 @@ a devops pipeline.
 
 :doc:`examplecleanup`
 
+.. _array of tables: https://toml.io/en/v1.0.0#array-of-tables
 .. _install pre-commit: https://pre-commit.com/#install
 .. _pre-commit: https://pre-commit.com/
 .. _Shannon entropy: https://en.wiktionary.org/wiki/Shannon_entropy

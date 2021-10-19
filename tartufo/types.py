@@ -77,10 +77,11 @@ class Chunk:
 
 @dataclass
 class Rule:
-    __slots__ = ("name", "pattern", "path_pattern")
+    __slots__ = ("name", "pattern", "path_pattern", "re_match_type")
     name: Optional[str]
     pattern: Pattern
     path_pattern: Optional[Pattern]
+    re_match_type: str
 
     def __hash__(self) -> int:
         if self.path_pattern:

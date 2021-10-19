@@ -23,11 +23,13 @@ class ConfigureRegexTests(unittest.TestCase):
                 name="RSA private key 2",
                 pattern=re.compile("-----BEGIN EC PRIVATE KEY-----"),
                 path_pattern=None,
+                re_match_type="match",
             ),
             "Complex Rule": Rule(
                 name="Complex Rule",
                 pattern=re.compile("complex-rule"),
                 path_pattern=re.compile("/tmp/[a-z0-9A-Z]+\\.(py|js|json)"),
+                re_match_type="match",
             ),
         }
 
@@ -51,11 +53,13 @@ class ConfigureRegexTests(unittest.TestCase):
             name="RSA private key 2",
             pattern=re.compile("-----BEGIN EC PRIVATE KEY-----"),
             path_pattern=None,
+            re_match_type="match",
         )
         expected_regexes["Complex Rule"] = Rule(
             name="Complex Rule",
             pattern=re.compile("complex-rule"),
             path_pattern=re.compile("/tmp/[a-z0-9A-Z]+\\.(py|js|json)"),
+            re_match_type="match",
         )
 
         actual_regexes = config.configure_regexes(
@@ -138,11 +142,13 @@ class ConfigureRegexTests(unittest.TestCase):
                 name="RSA private key 2",
                 pattern=re.compile("-----BEGIN EC PRIVATE KEY-----"),
                 path_pattern=None,
+                re_match_type="match",
             ),
             "Complex Rule": Rule(
                 name="Complex Rule",
                 pattern=re.compile("complex-rule"),
                 path_pattern=re.compile("/tmp/[a-z0-9A-Z]+\\.(py|js|json)"),
+                re_match_type="match",
             ),
         }
 
@@ -297,7 +303,15 @@ class CompileRulesTests(unittest.TestCase):
     def test_commented_lines_are_ignored(self):
         rules = config.compile_rules(["# Poetry lock file", r"^[a-zA-Z0-9]{26}$"])
         self.assertEqual(
-            rules, [Rule(None, re.compile(r"^[a-zA-Z0-9]{26}$"), re.compile(r".*"))]
+            rules,
+            [
+                Rule(
+                    None,
+                    re.compile(r"^[a-zA-Z0-9]{26}$"),
+                    re.compile(r".*"),
+                    re_match_type="match",
+                )
+            ],
         )
 
     def test_whitespace_lines_are_ignored(self):
@@ -315,9 +329,17 @@ class CompileRulesTests(unittest.TestCase):
             rules,
             [
                 Rule(
-                    None, re.compile(r"^[a-zA-Z0-9]{40}$"), re.compile(r"poetry\.lock")
+                    None,
+                    re.compile(r"^[a-zA-Z0-9]{40}$"),
+                    re.compile(r"poetry\.lock"),
+                    re_match_type="match",
                 ),
-                Rule(None, re.compile(r"^[a-zA-Z0-9]{26}$"), re.compile(r".*")),
+                Rule(
+                    None,
+                    re.compile(r"^[a-zA-Z0-9]{26}$"),
+                    re.compile(r".*"),
+                    re_match_type="match",
+                ),
             ],
         )
 
@@ -332,10 +354,23 @@ class CompileRulesTests(unittest.TestCase):
         self.assertEqual(
             rules,
             [
-                Rule(None, re.compile(r"^[a-zA-Z0-9]{26}$"), re.compile(r"src/.*")),
-                Rule(None, re.compile(r"^[a-zA-Z0-9]test$"), re.compile(r".*")),
                 Rule(
-                    None, re.compile(r"^[a-zA-Z0-9]{26}::test$"), re.compile(r"src/.*")
+                    None,
+                    re.compile(r"^[a-zA-Z0-9]{26}$"),
+                    re.compile(r"src/.*"),
+                    re_match_type="match",
+                ),
+                Rule(
+                    None,
+                    re.compile(r"^[a-zA-Z0-9]test$"),
+                    re.compile(r".*"),
+                    re_match_type="match",
+                ),
+                Rule(
+                    None,
+                    re.compile(r"^[a-zA-Z0-9]{26}::test$"),
+                    re.compile(r"src/.*"),
+                    re_match_type="match",
                 ),
             ],
         )
@@ -343,8 +378,22 @@ class CompileRulesTests(unittest.TestCase):
     def test_match_can_contain_delimiter(self):
         rules = config.compile_rules([r".*::^[a-zA-Z0-9]::test$"])
         self.assertEqual(
-            rules, [Rule(None, re.compile(r"^[a-zA-Z0-9]::test$"), re.compile(r".*"))]
+            rules,
+            [
+                Rule(
+                    None,
+                    re.compile(r"^[a-zA-Z0-9]::test$"),
+                    re.compile(r".*"),
+                    re_match_type="match",
+                )
+            ],
         )
+
+    def test_config_exception_is_raised_if_no_match_field_found(self):
+        with self.assertRaisesRegex(
+            types.ConfigException, "Malformed exclude-entropy-patterns: "
+        ):
+            config.compile_rules([{"foo": "bar"}])
 
 
 if __name__ == "__main__":

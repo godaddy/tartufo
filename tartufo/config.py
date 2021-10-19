@@ -2,6 +2,7 @@ import json
 import pathlib
 import re
 import shutil
+import warnings
 from typing import (
     Any,
     Dict,
@@ -19,7 +20,7 @@ import click
 import toml
 
 from tartufo import types, util
-from tartufo.types import Rule
+from tartufo.types import ConfigException, Rule
 
 OptionTypes = Union[str, int, bool, None, TextIO, Tuple[TextIO, ...]]
 
@@ -220,10 +221,14 @@ def load_rules_from_file(rules_file: TextIO) -> Dict[str, Rule]:
                 name=rule_name,
                 pattern=re.compile(rule_definition["pattern"]),
                 path_pattern=re.compile(path_pattern) if path_pattern else None,
+                re_match_type="match",
             )
         except AttributeError:
             rule = Rule(
-                name=rule_name, pattern=re.compile(rule_definition), path_pattern=None
+                name=rule_name,
+                pattern=re.compile(rule_definition),
+                path_pattern=None,
+                re_match_type="match",
             )
         rules[rule_name] = rule
     return rules
@@ -255,10 +260,15 @@ def compile_rule(pattern: str) -> Rule:
         path, pattern = pattern.split("::", 1)
     except ValueError:  # Raised when the split separator is not found
         path = ".*"
-    return Rule(name=None, pattern=re.compile(pattern), path_pattern=re.compile(path))
+    return Rule(
+        name=None,
+        pattern=re.compile(pattern),
+        path_pattern=re.compile(path),
+        re_match_type="match",
+    )
 
 
-def compile_rules(patterns: Iterable[str]) -> List[Rule]:
+def compile_rules(patterns: Iterable[Union[str, Dict[str, str]]]) -> List[Rule]:
     """Take a list of regex string with paths and compile them into a List of Rule.
 
     Any line starting with `#` will be ignored.
@@ -266,9 +276,31 @@ def compile_rules(patterns: Iterable[str]) -> List[Rule]:
     :param patterns: The list of patterns to be compiled
     :return: List of Rule objects
     """
-    stripped = (p.strip() for p in patterns)
-    return [
-        compile_rule(pattern)
-        for pattern in stripped
-        if pattern and not pattern.startswith("#")
-    ]
+    try:
+        return list(
+            {
+                Rule(
+                    name=pattern.get("reason", None),  # type: ignore[union-attr]
+                    pattern=re.compile(pattern["pattern"]),  # type: ignore[index]
+                    path_pattern=re.compile(pattern.get("path-pattern", ".*")),  # type: ignore[union-attr]
+                    re_match_type="search",
+                )
+                for pattern in patterns
+            }
+        )
+    except KeyError as exc:
+        raise ConfigException(
+            f"Malformed exclude-entropy-patterns: {patterns}"
+        ) from exc
+    except AttributeError:
+        warnings.warn(
+            "Using old-style exclude-entropy-patterns; this behavior will be removed in v3.0",
+            DeprecationWarning,
+        )
+        stripped = (p.strip() for p in patterns)  # type: ignore[union-attr]
+        rules = [
+            compile_rule(pattern)
+            for pattern in stripped
+            if pattern and not pattern.startswith("#")
+        ]
+        return rules

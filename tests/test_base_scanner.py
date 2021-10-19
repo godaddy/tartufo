@@ -296,9 +296,21 @@ class RegexScanTests(ScannerTestCase):
         rule_3_path.match = mock.MagicMock(return_value=[])
         test_scanner = TestScanner(self.options)
         test_scanner._rules_regexes = {  # pylint: disable=protected-access
-            "foo": Rule(name=None, pattern=rule_1, path_pattern=None),
-            "bar": Rule(name=None, pattern=rule_2, path_pattern=rule_2_path),
-            "not-found": Rule(name=None, pattern=rule_3, path_pattern=rule_3_path),
+            "foo": Rule(
+                name=None, pattern=rule_1, path_pattern=None, re_match_type="match"
+            ),
+            "bar": Rule(
+                name=None,
+                pattern=rule_2,
+                path_pattern=rule_2_path,
+                re_match_type="match",
+            ),
+            "not-found": Rule(
+                name=None,
+                pattern=rule_3,
+                path_pattern=rule_3_path,
+                re_match_type="match",
+            ),
         }
         chunk = types.Chunk("foo", "/file/path", {})
         test_scanner.scan_regex(chunk)
@@ -315,7 +327,12 @@ class RegexScanTests(ScannerTestCase):
         mock_signature.return_value = True
         test_scanner = TestScanner(self.options)
         test_scanner._rules_regexes = {  # pylint: disable=protected-access
-            "foo": Rule(name=None, pattern=re.compile("foo"), path_pattern=None)
+            "foo": Rule(
+                name=None,
+                pattern=re.compile("foo"),
+                path_pattern=None,
+                re_match_type="match",
+            )
         }
         chunk = types.Chunk("foo", "bar", {})
         issues = test_scanner.scan_regex(chunk)
@@ -329,7 +346,12 @@ class RegexScanTests(ScannerTestCase):
         mock_signature.return_value = False
         test_scanner = TestScanner(self.options)
         test_scanner._rules_regexes = {  # pylint: disable=protected-access
-            "foo": Rule(name=None, pattern=re.compile("foo"), path_pattern=None)
+            "foo": Rule(
+                name=None,
+                pattern=re.compile("foo"),
+                path_pattern=None,
+                re_match_type="match",
+            )
         }
         chunk = types.Chunk("foo", "bar", {})
         issues = test_scanner.scan_regex(chunk)
@@ -356,24 +378,28 @@ class EntropyTests(ScannerTestCase):
 
     def test_entropy_string_is_excluded(self):
         self.options.exclude_entropy_patterns = [r"docs/.*\.md::f.*"]
-        excluded = self.scanner.entropy_string_is_excluded("foo", "docs/README.md")
+        excluded = self.scanner.entropy_string_is_excluded(
+            "foo", "bar", "docs/README.md"
+        )
         self.assertEqual(True, excluded)
 
     def test_entropy_string_is_excluded_given_partial_line_match(self):
-        self.options.exclude_entropy_patterns = [r"docs/.*\.md::line.+?foo"]
+        self.options.exclude_entropy_patterns = [
+            {"path-pattern": r"docs/.*\.md", "pattern": "line.+?foo"}
+        ]
         excluded = self.scanner.entropy_string_is_excluded(
-            "+a line that contains foo", "docs/README.md"
+            "foo", "+a line that contains foo", "docs/README.md"
         )
         self.assertEqual(True, excluded)
 
     def test_entropy_string_is_not_excluded(self):
         self.options.exclude_entropy_patterns = [r"foo\..*::f.*"]
-        excluded = self.scanner.entropy_string_is_excluded("bar", "foo.py")
+        excluded = self.scanner.entropy_string_is_excluded("bar", "foo", "foo.py")
         self.assertEqual(False, excluded)
 
     def test_entropy_string_is_not_excluded_given_different_path(self):
         self.options.exclude_entropy_patterns = [r"foo\..*::f.*"]
-        excluded = self.scanner.entropy_string_is_excluded("foo", "bar.py")
+        excluded = self.scanner.entropy_string_is_excluded("foo", "bar", "bar.py")
         self.assertEqual(False, excluded)
 
     def test_calculate_base64_entropy_calculation(self):
