@@ -15,8 +15,7 @@ import datetime
 import os
 import pathlib
 import sys
-
-import toml
+import tomlkit
 
 sys.path.insert(0, os.path.abspath("."))
 
@@ -35,9 +34,8 @@ if now.year > 2019:
     copyright_year = "%s-%s" % (copyright_year, now.year)
 copyright = "%s, GoDaddy.com, LLC" % copyright_year
 
-version = toml.load(str(DOCS_PATH.parent / "pyproject.toml"))["tool"]["poetry"][
-    "version"
-]
+with open(str(DOCS_PATH.parent / "pyproject.toml"), encoding="utf-8") as filename:
+    version = tomlkit.loads(filename.read())["tool"]["poetry"]["version"]  # type: ignore
 release = version
 
 # -- General configuration ---------------------------------------------------
