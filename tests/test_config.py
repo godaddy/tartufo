@@ -5,7 +5,7 @@ import unittest
 from unittest import mock
 
 import click
-import toml
+import tomlkit
 from click.testing import CliRunner
 
 from tartufo import config, types
@@ -185,13 +185,14 @@ class LoadConfigFromPathTests(unittest.TestCase):
         )
         self.assertEqual(config_path, self.data_dir / "config" / "other_config.toml")
 
-    @mock.patch("toml.load")
+    @mock.patch("tomlkit.loads")
     def test_config_exception_is_raised_if_trouble_reading_file(
         self, mock_toml: mock.MagicMock
     ):
-        mock_toml.side_effect = toml.TomlDecodeError("Bad TOML!", "foo", 42)
+        mock_toml.side_effect = tomlkit.exceptions.ParseError(21, 42)
         with self.assertRaisesRegex(
-            types.ConfigException, "Error reading configuration file: Bad TOML!"
+            types.ConfigException,
+            "TOML parse error at line 21 col 42",
         ):
             config.load_config_from_path(self.data_dir)
 
@@ -206,7 +207,7 @@ class LoadConfigFromPathTests(unittest.TestCase):
                 self.data_dir / "config", "pyproject.toml", False
             )
 
-    @mock.patch("toml.load")
+    @mock.patch("tomlkit.loads")
     def test_config_keys_are_normalized(self, mock_load: mock.MagicMock):
         mock_load.return_value = {"tool": {"tartufo": {"--repo-path": "."}}}
         (_, data) = config.load_config_from_path(self.data_dir)

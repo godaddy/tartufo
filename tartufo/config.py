@@ -17,7 +17,7 @@ from typing import (
 )
 
 import click
-import toml
+import tomlkit
 
 from tartufo import types, util
 from tartufo.types import ConfigException, Rule
@@ -85,10 +85,11 @@ def load_config_from_path(
         full_path = config_path / possibility
         if full_path.exists():
             try:
-                toml_file = toml.load(full_path)
-                config = toml_file.get("tool", {}).get("tartufo", {})
+                with open(full_path, encoding="utf8") as file:
+                    toml_file = tomlkit.loads(file.read())
+                    config = toml_file.get("tool", {}).get("tartufo", {})  # type: ignore
                 break
-            except (toml.TomlDecodeError, OSError) as exc:
+            except (tomlkit.exceptions.ParseError, OSError) as exc:
                 raise types.ConfigException(f"Error reading configuration file: {exc}")
     if not config and traverse and config_path.parent != config_path:
         return load_config_from_path(config_path.parent, filename, traverse)
