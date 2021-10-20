@@ -102,13 +102,13 @@ class Issue:
             self.matched_string, util.style_warning(self.matched_string)
         )
         output.append(self.OUTPUT_SEPARATOR)
-        output.append(util.style_ok("Reason: {}".format(self.issue_type.value)))  # type: ignore
+        output.append(util.style_ok(f"Reason: {self.issue_type.value}"))  # type: ignore
         if self.issue_detail:
-            output.append(util.style_ok("Detail: {}".format(self.issue_detail)))
-        output.append(util.style_ok("Filepath: {}".format(self.chunk.file_path)))
-        output.append(util.style_ok("Signature: {}".format(self.signature)))
+            output.append(util.style_ok(f"Detail: {self.issue_detail}"))
+        output.append(util.style_ok(f"Filepath: {self.chunk.file_path}"))
+        output.append(util.style_ok(f"Signature: {self.signature}"))
         output += [
-            util.style_ok("{}: {}".format(k.replace("_", " ").capitalize(), v))
+            util.style_ok(f"{k.replace('_', ' ').capitalize()}: {v}")
             for k, v in self.chunk.metadata.items()
         ]
 

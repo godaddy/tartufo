@@ -191,9 +191,7 @@ def configure_regexes(
                 loaded = load_rules_from_file(rules_file)
                 dupes = set(loaded.keys()).intersection(rules.keys())
                 if dupes:
-                    raise ValueError(
-                        "Rule(s) were defined multiple times: {}".format(dupes)
-                    )
+                    raise ValueError(f"Rule(s) were defined multiple times: {dupes}")
                 rules.update(loaded)
     finally:
         if cloned_repo:
@@ -212,9 +210,7 @@ def load_rules_from_file(rules_file: TextIO) -> Dict[str, Rule]:
     try:
         new_rules = json.load(rules_file)
     except json.JSONDecodeError as exc:
-        raise ValueError(
-            "Error loading rules from file: {}".format(rules_file.name)
-        ) from exc
+        raise ValueError(f"Error loading rules from file: {rules_file.name}") from exc
     for rule_name, rule_definition in new_rules.items():
         try:
             path_pattern = rule_definition.get("path_pattern", None)

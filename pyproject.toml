@@ -31,7 +31,7 @@ maintainers = ["GoDaddy <oss@godaddy.com>"]
 name = "tartufo"
 readme = "README.md"
 repository = "https://github.com/godaddy/tartufo/"
-version = "2.9.0"
+version = "3.0.0-dev.0"
 
 [tool.poetry.scripts]
 tartufo = "tartufo.cli:main"
@@ -180,7 +180,7 @@ ignore_missing_imports = true
 # R0914: Too many local variables
 # W0511: FIXME
 # E1136: Unsubscriptable object (Disabled due to Python 3.9 compatibility bug in pylint)
-disable = "C0111,C0301,C0330,R0201,R0801,R0903,R0912,R0914,W0511,E1136"
+disable = "C0111,C0301,C0330,R0201,R0801,R0903,R0912,R0914,W0511,E1136,W1514"
 
 [tool.pylint.BASIC]
 module-rgx = "(([a-z_][a-z0-9_]*)|([a-z][a-zA-Z0-9]+))$"
