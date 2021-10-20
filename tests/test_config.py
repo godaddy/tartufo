@@ -40,8 +40,7 @@ class ConfigureRegexTests(unittest.TestCase):
         self.assertEqual(
             expected_regexes,
             actual_regexes,
-            "The regexes dictionary should match the test rules "
-            "(expected: {}, actual: {})".format(expected_regexes, actual_regexes),
+            f"The regexes dictionary should match the test rules (expected: {expected_regexes}, actual: {actual_regexes})",
         )
 
     def test_configure_regexes_rules_files_with_defaults(self):
@@ -69,8 +68,7 @@ class ConfigureRegexTests(unittest.TestCase):
         self.assertEqual(
             expected_regexes,
             actual_regexes,
-            "The regexes dictionary should match the test rules "
-            "(expected: {}, actual: {})".format(expected_regexes, actual_regexes),
+            f"The regexes dictionary should match the test rules (expected: {expected_regexes}, actual: {actual_regexes})",
         )
 
     def test_configure_regexes_returns_just_default_regexes_by_default(self):
@@ -155,8 +153,7 @@ class ConfigureRegexTests(unittest.TestCase):
         self.assertEqual(
             expected_regexes,
             actual_regexes,
-            "The regexes dictionary should match the test rules "
-            "(expected: {}, actual: {})".format(expected_regexes, actual_regexes),
+            f"The regexes dictionary should match the test rules (expected: {expected_regexes}, actual: {actual_regexes})",
         )
 
 

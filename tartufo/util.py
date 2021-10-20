@@ -157,7 +157,7 @@ def generate_signature(snippet: str, filename: str) -> str:
     :param snippet: A string which was found as a potential issue during a scan
     :param filename: The file where the issue was found
     """
-    return blake2s("{}$${}".format(snippet, filename).encode("utf-8")).hexdigest()
+    return blake2s(f"{snippet}$${filename}".encode("utf-8")).hexdigest()
 
 
 def extract_commit_metadata(
