@@ -81,7 +81,7 @@ class ScanTests(ScannerTestCase):
         self.options.regex = True
         self.options.entropy = True
         test_scanner = TestScanner(self.options)
-        test_scanner._completed = True
+        test_scanner._completed = True  # pylint: disable=protected-access
         result = list(test_scanner.scan())
         mock_regex.assert_not_called()
         mock_entropy.assert_not_called()

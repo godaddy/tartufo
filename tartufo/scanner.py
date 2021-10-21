@@ -120,7 +120,7 @@ class Issue:
         return self.__str__().encode("utf8")
 
 
-class ScannerBase(abc.ABC):
+class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     """Provide the base, generic functionality needed by all scanners.
 
     In fact, this contains all of the actual scanning logic. This part of the
