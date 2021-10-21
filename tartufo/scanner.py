@@ -370,6 +370,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         """
 
         if self.completed:
+            yield from self._issues
             return
 
         if not any((self.global_options.entropy, self.global_options.regex)):

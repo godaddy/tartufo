@@ -82,10 +82,11 @@ class ScanTests(ScannerTestCase):
         self.options.entropy = True
         test_scanner = TestScanner(self.options)
         test_scanner._completed = True  # pylint: disable=protected-access
+        test_scanner._issues = [1, 2, 3]
         result = list(test_scanner.scan())
         mock_regex.assert_not_called()
         mock_entropy.assert_not_called()
-        self.assertEqual(result, [])
+        self.assertEqual(result, [1, 2, 3])
 
     @mock.patch("tartufo.scanner.ScannerBase.scan_entropy")
     def test_scan_checks_entropy_if_specified(self, mock_entropy: mock.MagicMock):
