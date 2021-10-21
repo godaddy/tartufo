@@ -74,6 +74,20 @@ class ScanTests(ScannerTestCase):
         )
 
     @mock.patch("tartufo.scanner.ScannerBase.scan_entropy")
+    @mock.patch("tartufo.scanner.ScannerBase.scan_regex")
+    def test_scan_does_not_rescan(self, mock_regex, mock_entropy):
+        """Make sure scan() does not rescan"""
+
+        self.options.regex = True
+        self.options.entropy = True
+        test_scanner = TestScanner(self.options)
+        test_scanner._completed = True
+        result = list(test_scanner.scan())
+        mock_regex.assert_not_called()
+        mock_entropy.assert_not_called()
+        self.assertEqual(result, [])
+
+    @mock.patch("tartufo.scanner.ScannerBase.scan_entropy")
     def test_scan_checks_entropy_if_specified(self, mock_entropy: mock.MagicMock):
         self.options.entropy = True
         test_scanner = TestScanner(self.options)

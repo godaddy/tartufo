@@ -369,6 +369,9 @@ class ScannerBase(abc.ABC):
           scanner's configuration
         """
 
+        if self.completed:
+            return
+
         if not any((self.global_options.entropy, self.global_options.regex)):
             self.logger.error("No analysis requested.")
             raise types.ConfigException("No analysis requested.")
@@ -377,7 +380,6 @@ class ScannerBase(abc.ABC):
             raise types.ConfigException("Regex checks requested, but no regexes found.")
 
         self.logger.info("Starting scan...")
-        self._completed = False
         self._issues = []
         for chunk in self.chunks:
             # Run regex scans first to trigger a potential fast fail for bad config
