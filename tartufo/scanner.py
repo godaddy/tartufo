@@ -537,13 +537,16 @@ class GitScanner(ScannerBase, abc.ABC):
 
         for patch in diff:
             delta: pygit2.DiffDelta = patch.delta
-            if delta.is_binary:
-                continue
-            printable_diff: str = patch.text
             file_path = (
                 delta.new_file.path if delta.new_file.path else delta.old_file.path
             )
+            if delta.is_binary:
+                self.logger.debug("Binary file skipped: %s", file_path)
+                continue
+            printable_diff: str = patch.text
             if self.should_scan(file_path):
+                # The `printable_diff` contains the full 4-line diff header,
+                # so we need to strip that before analyzing it
                 yield printable_diff.split("\n", 4)[4], file_path
 
     def filter_submodules(self, repo: pygit2.Repository) -> None:
