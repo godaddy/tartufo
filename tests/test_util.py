@@ -102,7 +102,7 @@ class OutputTests(unittest.TestCase):
     def test_echo_result_echos_all_when_not_json(self, mock_click, mock_scanner):
         options = generate_options(GlobalOptions, json=False, verbose=0)
         mock_scanner.exclude_signatures = []
-        mock_scanner.issues = [1, 2, 3, 4]
+        mock_scanner.scan.return_value = (1, 2, 3, 4)
         util.echo_result(options, mock_scanner, "", "")
         # Ensure that the issues are output as a byte stream
         mock_click.echo.assert_has_calls(
@@ -126,7 +126,7 @@ class OutputTests(unittest.TestCase):
             types.IssueType.RegEx, "bar", types.Chunk("fullfoobar", "/what/bar", {})
         )
         issue2.issue_detail = "Meets the bar"
-        mock_scanner.issues = [issue1, issue2]
+        mock_scanner.scan.return_value = (issue1, issue2)
         util.echo_result(options, mock_scanner, "", "")
 
         mock_click.echo.assert_has_calls(
@@ -222,8 +222,7 @@ class OutputTests(unittest.TestCase):
         issue_2 = scanner.Issue(
             types.IssueType.RegEx, "bar", types.Chunk("foo", "/bar", {})
         )
-        mock_scanner.issues = [issue_1, issue_2]
-        mock_scanner.issue_count = 2
+        mock_scanner.scan.return_value = (issue_1, issue_2)
         mock_scanner.excluded_paths = []
         options = generate_options(
             GlobalOptions, json=True, exclude_signatures=[], exclude_entropy_patterns=[]
@@ -278,7 +277,7 @@ class OutputTests(unittest.TestCase):
         issue_2 = scanner.Issue(
             types.IssueType.RegEx, "bar", types.Chunk("foo", "/bar", {})
         )
-        mock_scanner.issues = [issue_1, issue_2]
+        mock_scanner.scan.return_value = (issue_1, issue_2)
         mock_scanner.excluded_paths = [
             re.compile("package-lock.json"),
             re.compile("poetry.lock"),

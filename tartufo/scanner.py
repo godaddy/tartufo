@@ -131,7 +131,8 @@ class ScannerBase(abc.ABC):
     all the individual pieces of content to be scanned.
     """
 
-    _issue_count: int = -1
+    _issues: List[Issue] = []
+    _completed: bool = False
     _included_paths: Optional[List[Pattern]] = None
     _excluded_paths: Optional[List[Pattern]] = None
     _excluded_entropy: Optional[List[Rule]] = None
@@ -144,29 +145,30 @@ class ScannerBase(abc.ABC):
         self.logger = logging.getLogger(__name__)
 
     @property
-    def issue_count(self) -> int:
-        """Return the number of issues found during the scan (so far)
+    def completed(self) -> bool:
+        """Return True if scan has completed
 
-        This may be less that the (eventual) total number of issues if the scan
-        has not been run yet, or if not all output has been consumed and the
-        generator functions are still evaluating targets.
-
-        :returns: Number of reported issues
+        :returns: True if scan has completed; False if scan is in progress
         """
 
-        return self._issue_count if self._issue_count > 0 else 0
+        return self._completed
 
     @property
-    def issues(self) -> Generator[Issue, None, None]:
+    def issues(self) -> List[Issue]:
         """Get a list of issues found during the scan.
 
-        If a scan has not yet been run, run it.
+        If the scan is still in progress, force it to complete first.
 
-        :return: Any issues found during the scan.
+        :returns: Any issues found during the scan.
         """
-        if self._issue_count < 0:
-            self.logger.debug("Issues called before scan. Calling scan now.")
-            yield from self.scan()
+
+        if not self.completed:
+            self.logger.debug(
+                "Issues called before scan completed. Finishing scan now."
+            )
+            list(self.scan())
+
+        return self._issues
 
     @property
     def included_paths(self) -> List[Pattern]:
@@ -375,7 +377,8 @@ class ScannerBase(abc.ABC):
             raise types.ConfigException("Regex checks requested, but no regexes found.")
 
         self.logger.info("Starting scan...")
-        self._issue_count = 0
+        self._completed = False
+        self._issues = []
         for chunk in self.chunks:
             # Run regex scans first to trigger a potential fast fail for bad config
             if self.global_options.regex and self.rules_regexes:
@@ -386,7 +389,8 @@ class ScannerBase(abc.ABC):
                     self.global_options.b64_entropy_score,
                     self.global_options.hex_entropy_score,
                 )
-        self.logger.info("Found %d issues.", self._issue_count)
+        self._completed = True
+        self.logger.info("Found %d issues.", len(self._issues))
 
     def scan_entropy(
         self, chunk: types.Chunk, b64_entropy_score: float, hex_entropy_score: float
@@ -437,8 +441,9 @@ class ScannerBase(abc.ABC):
                 if self.entropy_string_is_excluded(string, line, chunk.file_path):
                     self.logger.debug("line containing entropy was excluded: %s", line)
                 else:
-                    self._issue_count += 1
-                    yield Issue(types.IssueType.Entropy, string, chunk)
+                    issue = Issue(types.IssueType.Entropy, string, chunk)
+                    self._issues.append(issue)
+                    yield issue
 
     def scan_regex(self, chunk: types.Chunk) -> Generator[Issue, None, None]:
         """Scan a chunk of data for matches against the configured regexes.
@@ -454,7 +459,7 @@ class ScannerBase(abc.ABC):
                     if not self.signature_is_excluded(match, chunk.file_path):
                         issue = Issue(types.IssueType.RegEx, match, chunk)
                         issue.issue_detail = key
-                        self._issue_count += 1
+                        self._issues.append(issue)
                         yield issue
 
     @property
