@@ -385,13 +385,17 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         for chunk in self.chunks:
             # Run regex scans first to trigger a potential fast fail for bad config
             if self.global_options.regex and self.rules_regexes:
-                yield from self.scan_regex(chunk)
+                for issue in self.scan_regex(chunk):
+                    self._issues.append(issue)
+                    yield issue
             if self.global_options.entropy:
-                yield from self.scan_entropy(
+                for issue in self.scan_entropy(
                     chunk,
                     self.global_options.b64_entropy_score,
                     self.global_options.hex_entropy_score,
-                )
+                ):
+                    self._issues.append(issue)
+                    yield issue
         self._completed = True
         self.logger.info("Found %d issues.", len(self._issues))
 
@@ -444,9 +448,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                 if self.entropy_string_is_excluded(string, line, chunk.file_path):
                     self.logger.debug("line containing entropy was excluded: %s", line)
                 else:
-                    issue = Issue(types.IssueType.Entropy, string, chunk)
-                    self._issues.append(issue)
-                    yield issue
+                    yield Issue(types.IssueType.Entropy, string, chunk)
 
     def scan_regex(self, chunk: types.Chunk) -> Generator[Issue, None, None]:
         """Scan a chunk of data for matches against the configured regexes.
@@ -462,7 +464,6 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                     if not self.signature_is_excluded(match, chunk.file_path):
                         issue = Issue(types.IssueType.RegEx, match, chunk)
                         issue.issue_detail = key
-                        self._issues.append(issue)
                         yield issue
 
     @property
