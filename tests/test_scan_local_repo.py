@@ -27,8 +27,8 @@ class ScanLocalRepoTests(unittest.TestCase):
     def test_scan_exits_gracefully_when_target_is_not_git_repo(self):
         runner = CliRunner()
         with runner.isolated_filesystem() as run_path:
-            result = runner.invoke(cli.main, ["scan-local-repo", run_path])
-            self.assertRegex(
+            result = runner.invoke(cli.main, ["scan-local-repo", "."])
+            self.assertEqual(
                 str(result.exception),
                 f"Repository not found at {Path(run_path).resolve()}",
             )

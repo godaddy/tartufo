@@ -183,7 +183,9 @@ def generate_signature(snippet: str, filename: str) -> str:
     return blake2s(f"{snippet}$${filename}".encode("utf-8")).hexdigest()
 
 
-def extract_commit_metadata(commit: pygit2.Commit, branch: str) -> Dict[str, Any]:
+def extract_commit_metadata(
+    commit: pygit2.Commit, branch: pygit2.Branch
+) -> Dict[str, Any]:
     """Grab a consistent set of metadata from a git commit, for user output.
 
     :param commit: The commit to extract the data from
@@ -195,7 +197,7 @@ def extract_commit_metadata(commit: pygit2.Commit, branch: str) -> Dict[str, Any
         ),
         "commit_message": commit.message,
         "commit_hash": commit.hex,
-        "branch": branch,
+        "branch": branch.branch_name,
     }
 
 
