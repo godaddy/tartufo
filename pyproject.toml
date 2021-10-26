@@ -38,6 +38,7 @@ tartufo = "tartufo.cli:main"
 
 [tool.poetry.dependencies]
 GitPython = "<3.1.20"
+pygit2 = "~1.6"
 click = "^7"
 colorama = {version = "*", markers = "sys_platform == 'win32'"}
 dataclasses = {version = "*", python = "< 3.7"}
@@ -193,6 +194,7 @@ max-args = "14"
 
 [tool.pylint.MASTER]
 ignore = "docs/"
+extension-pkg-whitelist = ["pygit2"]
 
 [tool.coverage.run]
 branch = true

@@ -71,7 +71,7 @@ class GitTests(unittest.TestCase):
         ):
             util.clone_git_repo("https://github.com/godaddy/tartufo.git")
 
-    @mock.patch("git.Repo")
+    @mock.patch("pygit2.Repository")
     def test_path_contains_git_should_return_false_given_giterror(
         self, mock_git_repo: mock.MagicMock
     ):
