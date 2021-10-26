@@ -684,7 +684,9 @@ class GitRepoScanner(GitScanner):
             ):
                 # If a commit doesn't have a parent skip diff generation since it is the first commit
                 if not curr_commit.parents:
-                    self.logger.debug(f"Skipping commit {curr_commit.hex} because it has no parents")
+                    self.logger.debug(
+                        "Skipping commit %s because it has no parents", curr_commit.hex
+                    )
                     continue
                 prev_commit = curr_commit.parents[0]
                 diff: pygit2.Diff = self._repo.diff(curr_commit, prev_commit)
