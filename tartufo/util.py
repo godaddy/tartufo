@@ -2,6 +2,7 @@
 import json
 import os
 import pathlib
+import platform
 import stat
 import tempfile
 import uuid
@@ -29,6 +30,8 @@ from tartufo.types import Rule
 if TYPE_CHECKING:
     from tartufo.scanner import Issue  # pylint: disable=cyclic-import
     from tartufo.scanner import ScannerBase  # pylint: disable=cyclic-import
+    from tartufo.config import OptionTypes  # pylint: disable=cyclic-import
+
 
 
 DATETIME_FORMAT: str = "%Y-%m-%d %H:%M:%S"
@@ -237,3 +240,24 @@ def path_contains_git(path: str) -> bool:
         return git.Repo(path) is not None
     except git.GitError:
         return False
+
+
+def process_issues(
+    repo_path: str,
+    scan: "ScannerBase",
+    options: types.GlobalOptions,
+):
+    now = datetime.now().isoformat("T", "microseconds")
+    output_dir = None
+    if options.output_dir:
+        if platform.system().lower() == "windows":  # pragma: no cover
+            # Make sure we aren't using illegal characters for Windows folder names
+            now = now.replace(":", "")
+        output_dir = pathlib.Path(options.output_dir) / f"tartufo-scan-results-{now}"
+        output_dir.mkdir(parents=True)
+
+    echo_result(options, scan, repo_path, output_dir)
+    if output_dir:
+        write_outputs(scan.issues, output_dir)
+        if not options.json:
+            click.echo(f"Results have been saved in {output_dir}")

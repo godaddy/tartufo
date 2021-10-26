@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import Optional
 
 import click
 
@@ -44,7 +44,7 @@ def main(
     branch: Optional[str],
     fetch: bool,
     include_submodules: bool,
-) -> Tuple[str, GitRepoScanner]:
+) -> GitRepoScanner:
     """Scan a repository already cloned to your local system."""
     git_options = types.GitOptions(
         since_commit=since_commit,
@@ -56,11 +56,11 @@ def main(
     scanner = None
     try:
         scanner = GitRepoScanner(options, git_options, str(repo_path))
-        scanner.scan()
+        util.process_issues(repo_path, scanner, options)
     except types.GitLocalException:
         util.fail(f"{repo_path} is not a valid git repository.", ctx)
     except types.GitRemoteException as exc:
         util.fail(f"There was an error fetching from the remote repository: {exc}", ctx)
     except types.TartufoException as exc:
         util.fail(str(exc), ctx)
-    return (str(repo_path), scanner)  # type: ignore
+    return scanner  # type: ignore
