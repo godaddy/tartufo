@@ -25,7 +25,7 @@ def main(
     scanner = None
     try:
         scanner = GitPreCommitScanner(options, str(repo_path), include_submodules)
-        util.process_issues(repo_path, scanner, options)
+        util.process_issues(str(repo_path), scanner, options)
     except types.ScanException as exc:
         util.fail(str(exc), ctx)
-    return scanner # type: ignore
+    return scanner  # type: ignore

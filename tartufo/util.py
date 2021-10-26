@@ -33,7 +33,6 @@ if TYPE_CHECKING:
     from tartufo.config import OptionTypes  # pylint: disable=cyclic-import
 
 
-
 DATETIME_FORMAT: str = "%Y-%m-%d %H:%M:%S"
 
 
