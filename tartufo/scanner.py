@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import abc
+from functools import lru_cache
 import hashlib
 import logging
 import math
 import pathlib
 import re
-import warnings
-from functools import lru_cache
+import threading
 from typing import (
     Any,
     Dict,
@@ -19,6 +19,7 @@ from typing import (
     Set,
     Tuple,
 )
+import warnings
 
 import click
 
@@ -139,6 +140,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     _rules_regexes: Optional[Dict[str, Rule]] = None
     global_options: types.GlobalOptions
     logger: logging.Logger
+    _scan_lock: threading.Lock = threading.Lock()
 
     def __init__(self, options: types.GlobalOptions) -> None:
         self.global_options = options
@@ -161,6 +163,12 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
 
         :returns: Any issues found during the scan.
         """
+
+        # Note there is no locking in this method (which is readonly). If the
+        # first scan is not completed (or even if we mistakenly believe it is
+        # not completed, due to a race), we call scan (which is protected) to
+        # ensure the issues list is complete. By the time we reach the return
+        # statement here, we know _issues is stable.
 
         if not self.completed:
             self.logger.debug(
@@ -365,39 +373,52 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         implementation, and run all requested scans against it, as specified in
         `self.global_options`.
 
+        The scan method is thread-safe; if multiple concurrent scans are requested,
+        the first will run to completion while other callers are blocked (after
+        which they will each execute in turn, yielding cached issues without
+        repeating the underlying repository scan).
+
         :raises types.TartufoConfigException: If there were problems with the
           scanner's configuration
         """
 
-        if self.completed:
-            yield from self._issues
-            return
+        # I cannot find any written description of the python memory model. The
+        # correctness of this code in multithreaded environments relies on the
+        # expectation that the write to _completed at the bottom of the critical
+        # section cannot be reordered to appear after the implicit release of
+        # _scan_lock (when viewed from a competing thread).
+        with self._scan_lock:
+            if self._completed:
+                yield from self._issues
+                return
 
-        if not any((self.global_options.entropy, self.global_options.regex)):
-            self.logger.error("No analysis requested.")
-            raise types.ConfigException("No analysis requested.")
-        if self.global_options.regex and not self.rules_regexes:
-            self.logger.error("Regex checks requested, but no regexes found.")
-            raise types.ConfigException("Regex checks requested, but no regexes found.")
+            if not any((self.global_options.entropy, self.global_options.regex)):
+                self.logger.error("No analysis requested.")
+                raise types.ConfigException("No analysis requested.")
+            if self.global_options.regex and not self.rules_regexes:
+                self.logger.error("Regex checks requested, but no regexes found.")
+                raise types.ConfigException(
+                    "Regex checks requested, but no regexes found."
+                )
 
-        self.logger.info("Starting scan...")
-        self._issues = []
-        for chunk in self.chunks:
-            # Run regex scans first to trigger a potential fast fail for bad config
-            if self.global_options.regex and self.rules_regexes:
-                for issue in self.scan_regex(chunk):
-                    self._issues.append(issue)
-                    yield issue
-            if self.global_options.entropy:
-                for issue in self.scan_entropy(
-                    chunk,
-                    self.global_options.b64_entropy_score,
-                    self.global_options.hex_entropy_score,
-                ):
-                    self._issues.append(issue)
-                    yield issue
-        self._completed = True
-        self.logger.info("Found %d issues.", len(self._issues))
+            self.logger.info("Starting scan...")
+            self._issues = []
+            for chunk in self.chunks:
+                # Run regex scans first to trigger a potential fast fail for bad config
+                if self.global_options.regex and self.rules_regexes:
+                    for issue in self.scan_regex(chunk):
+                        self._issues.append(issue)
+                        yield issue
+                if self.global_options.entropy:
+                    for issue in self.scan_entropy(
+                        chunk,
+                        self.global_options.b64_entropy_score,
+                        self.global_options.hex_entropy_score,
+                    ):
+                        self._issues.append(issue)
+                        yield issue
+            self._completed = True
+            self.logger.info("Found %d issues.", len(self._issues))
 
     def scan_entropy(
         self, chunk: types.Chunk, b64_entropy_score: float, hex_entropy_score: float
