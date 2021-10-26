@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import abc
+from functools import lru_cache
 import hashlib
 import logging
 import math
 import pathlib
 import re
-import warnings
-from functools import lru_cache
+import threading
 from typing import (
     Any,
     Dict,
@@ -19,6 +19,7 @@ from typing import (
     Set,
     Tuple,
 )
+import warnings
 
 import click
 
@@ -120,7 +121,7 @@ class Issue:
         return self.__str__().encode("utf8")
 
 
-class ScannerBase(abc.ABC):
+class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     """Provide the base, generic functionality needed by all scanners.
 
     In fact, this contains all of the actual scanning logic. This part of the
@@ -131,30 +132,50 @@ class ScannerBase(abc.ABC):
     all the individual pieces of content to be scanned.
     """
 
-    _issues: Optional[List[Issue]] = None
+    _issues: List[Issue] = []
+    _completed: bool = False
     _included_paths: Optional[List[Pattern]] = None
     _excluded_paths: Optional[List[Pattern]] = None
     _excluded_entropy: Optional[List[Rule]] = None
     _rules_regexes: Optional[Dict[str, Rule]] = None
     global_options: types.GlobalOptions
     logger: logging.Logger
+    _scan_lock: threading.Lock = threading.Lock()
 
     def __init__(self, options: types.GlobalOptions) -> None:
         self.global_options = options
         self.logger = logging.getLogger(__name__)
 
     @property
+    def completed(self) -> bool:
+        """Return True if scan has completed
+
+        :returns: True if scan has completed; False if scan is in progress
+        """
+
+        return self._completed
+
+    @property
     def issues(self) -> List[Issue]:
         """Get a list of issues found during the scan.
 
-        If a scan has not yet been run, run it.
+        If the scan is still in progress, force it to complete first.
 
-        :return: Any issues found during the scan.
-        :rtype: List[Issue]
+        :returns: Any issues found during the scan.
         """
-        if self._issues is None:
-            self.logger.debug("Issues called before scan. Calling scan now.")
-            self._issues = self.scan()
+
+        # Note there is no locking in this method (which is readonly). If the
+        # first scan is not completed (or even if we mistakenly believe it is
+        # not completed, due to a race), we call scan (which is protected) to
+        # ensure the issues list is complete. By the time we reach the return
+        # statement here, we know _issues is stable.
+
+        if not self.completed:
+            self.logger.debug(
+                "Issues called before scan completed. Finishing scan now."
+            )
+            list(self.scan())
+
         return self._issues
 
     @property
@@ -345,65 +366,84 @@ class ScannerBase(abc.ABC):
                 entropy += -prob_x * math.log2(prob_x)
         return entropy
 
-    def scan(self) -> List[Issue]:
+    def scan(self) -> Generator[Issue, None, None]:
         """Run the requested scans against the target data.
 
         This will iterate through all chunks of data as provided by the scanner
         implementation, and run all requested scans against it, as specified in
         `self.global_options`.
 
+        The scan method is thread-safe; if multiple concurrent scans are requested,
+        the first will run to completion while other callers are blocked (after
+        which they will each execute in turn, yielding cached issues without
+        repeating the underlying repository scan).
+
         :raises types.TartufoConfigException: If there were problems with the
           scanner's configuration
         """
-        issues: List[Issue] = []
-        if not any((self.global_options.entropy, self.global_options.regex)):
-            self.logger.error("No analysis requested.")
-            raise types.ConfigException("No analysis requested.")
-        if self.global_options.regex and not self.rules_regexes:
-            self.logger.error("Regex checks requested, but no regexes found.")
-            raise types.ConfigException("Regex checks requested, but no regexes found.")
 
-        self.logger.info("Starting scan...")
-        for chunk in self.chunks:
-            # Run regex scans first to trigger a potential fast fail for bad config
-            if self.global_options.regex and self.rules_regexes:
-                issues += self.scan_regex(chunk)
-            if self.global_options.entropy:
-                issues += self.scan_entropy(
-                    chunk,
-                    self.global_options.b64_entropy_score,
-                    self.global_options.hex_entropy_score,
+        # I cannot find any written description of the python memory model. The
+        # correctness of this code in multithreaded environments relies on the
+        # expectation that the write to _completed at the bottom of the critical
+        # section cannot be reordered to appear after the implicit release of
+        # _scan_lock (when viewed from a competing thread).
+        with self._scan_lock:
+            if self._completed:
+                yield from self._issues
+                return
+
+            if not any((self.global_options.entropy, self.global_options.regex)):
+                self.logger.error("No analysis requested.")
+                raise types.ConfigException("No analysis requested.")
+            if self.global_options.regex and not self.rules_regexes:
+                self.logger.error("Regex checks requested, but no regexes found.")
+                raise types.ConfigException(
+                    "Regex checks requested, but no regexes found."
                 )
-        self._issues = issues
-        self.logger.info("Found %d issues.", len(self._issues))
-        return self._issues
+
+            self.logger.info("Starting scan...")
+            self._issues = []
+            for chunk in self.chunks:
+                # Run regex scans first to trigger a potential fast fail for bad config
+                if self.global_options.regex and self.rules_regexes:
+                    for issue in self.scan_regex(chunk):
+                        self._issues.append(issue)
+                        yield issue
+                if self.global_options.entropy:
+                    for issue in self.scan_entropy(
+                        chunk,
+                        self.global_options.b64_entropy_score,
+                        self.global_options.hex_entropy_score,
+                    ):
+                        self._issues.append(issue)
+                        yield issue
+            self._completed = True
+            self.logger.info("Found %d issues.", len(self._issues))
 
     def scan_entropy(
         self, chunk: types.Chunk, b64_entropy_score: float, hex_entropy_score: float
-    ) -> List[Issue]:
+    ) -> Generator[Issue, None, None]:
         """Scan a chunk of data for apparent high entropy.
 
         :param chunk: The chunk of data to be scanned
         :param b64_entropy_score: Base64 entropy score
         :param hex_entropy_score: Hexadecimal entropy score
         """
-        issues: List[Issue] = []
+
         for line in chunk.contents.split("\n"):
             for word in line.split():
                 b64_strings = util.get_strings_of_set(word, BASE64_CHARS)
                 hex_strings = util.get_strings_of_set(word, HEX_CHARS)
 
                 for string in b64_strings:
-                    issues += self.evaluate_entropy_string(
+                    yield from self.evaluate_entropy_string(
                         chunk, line, string, BASE64_CHARS, b64_entropy_score
                     )
 
                 for string in hex_strings:
-                    issues += self.evaluate_entropy_string(
+                    yield from self.evaluate_entropy_string(
                         chunk, line, string, HEX_CHARS, hex_entropy_score
                     )
-
-        return issues
 
     def evaluate_entropy_string(
         self,
@@ -412,7 +452,7 @@ class ScannerBase(abc.ABC):
         string: str,
         chars: str,
         min_entropy_score: float,
-    ) -> List[Issue]:
+    ) -> Generator[Issue, None, None]:
         """
         Check entropy string using entropy characters and score.
 
@@ -421,7 +461,7 @@ class ScannerBase(abc.ABC):
         :param string: String to check
         :param chars: Characters to calculate score
         :param min_entropy_score: Minimum entropy score to flag
-        return: List of issues flagged
+        return: Iterator of issues flagged
         """
         if not self.signature_is_excluded(string, chunk.file_path):
             entropy_score = self.calculate_entropy(string, chars)
@@ -429,15 +469,14 @@ class ScannerBase(abc.ABC):
                 if self.entropy_string_is_excluded(string, line, chunk.file_path):
                     self.logger.debug("line containing entropy was excluded: %s", line)
                 else:
-                    return [Issue(types.IssueType.Entropy, string, chunk)]
-        return []
+                    yield Issue(types.IssueType.Entropy, string, chunk)
 
-    def scan_regex(self, chunk: types.Chunk) -> List[Issue]:
+    def scan_regex(self, chunk: types.Chunk) -> Generator[Issue, None, None]:
         """Scan a chunk of data for matches against the configured regexes.
 
         :param chunk: The chunk of data to be scanned
         """
-        issues: List[Issue] = []
+
         for key, rule in self.rules_regexes.items():
             if rule.path_pattern is None or rule.path_pattern.match(chunk.file_path):
                 found_strings = rule.pattern.findall(chunk.contents)
@@ -446,8 +485,7 @@ class ScannerBase(abc.ABC):
                     if not self.signature_is_excluded(match, chunk.file_path):
                         issue = Issue(types.IssueType.RegEx, match, chunk)
                         issue.issue_detail = key
-                        issues.append(issue)
-        return issues
+                        yield issue
 
     @property
     @abc.abstractmethod

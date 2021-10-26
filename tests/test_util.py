@@ -1,5 +1,7 @@
-import unittest
+from io import StringIO
+import json
 import re
+import unittest
 from pathlib import Path
 from unittest import mock
 
@@ -100,12 +102,18 @@ class OutputTests(unittest.TestCase):
     def test_echo_result_echos_all_when_not_json(self, mock_click, mock_scanner):
         options = generate_options(GlobalOptions, json=False, verbose=0)
         mock_scanner.exclude_signatures = []
-        mock_scanner.issues = [1, 2, 3, 4]
+        mock_scanner.scan.return_value = (1, 2, 3, 4)
         util.echo_result(options, mock_scanner, "", "")
         # Ensure that the issues are output as a byte stream
-        mock_click.echo.assert_called_once_with(
-            bytes(1) + b"\n" + bytes(2) + b"\n" + bytes(3) + b"\n" + bytes(4)
+        mock_click.echo.assert_has_calls(
+            [
+                mock.call(bytes(1)),
+                mock.call(bytes(2)),
+                mock.call(bytes(3)),
+                mock.call(bytes(4)),
+            ]
         )
+        self.assertEqual(mock_click.echo.call_count, 4)
 
     @mock.patch("tartufo.scanner.ScannerBase")
     @mock.patch("tartufo.util.click")
@@ -118,7 +126,7 @@ class OutputTests(unittest.TestCase):
             types.IssueType.RegEx, "bar", types.Chunk("fullfoobar", "/what/bar", {})
         )
         issue2.issue_detail = "Meets the bar"
-        mock_scanner.issues = [issue1, issue2]
+        mock_scanner.scan.return_value = (issue1, issue2)
         util.echo_result(options, mock_scanner, "", "")
 
         mock_click.echo.assert_has_calls(
@@ -141,9 +149,10 @@ class OutputTests(unittest.TestCase):
         mock_time.now.return_value.isoformat.return_value = "now:now:now"
         options = generate_options(GlobalOptions, json=False, quiet=False, verbose=0)
         mock_scanner.exclude_signatures = []
+        mock_scanner.issue_count = 0
         mock_scanner.issues = []
         util.echo_result(options, mock_scanner, "", "")
-        mock_click.echo.assert_called_with(
+        mock_click.echo.assert_called_once_with(
             "Time: now:now:now\nAll clear. No secrets detected."
         )
 
@@ -171,6 +180,7 @@ class OutputTests(unittest.TestCase):
             exclude_entropy_patterns=exclude_entropy_patterns,
         )
         mock_scanner.issues = []
+        mock_scanner.issue_count = 0
         mock_scanner.excluded_paths = [
             re.compile("package-lock.json"),
             re.compile("poetry.lock"),
@@ -199,13 +209,10 @@ class OutputTests(unittest.TestCase):
         mock_click.echo.assert_not_called()
 
     @mock.patch("tartufo.scanner.ScannerBase")
-    @mock.patch("tartufo.util.click", new=mock.MagicMock())
-    @mock.patch("tartufo.util.json")
     @mock.patch("tartufo.util.datetime")
     def test_echo_result_outputs_proper_json_when_requested(
         self,
         mock_time,
-        mock_json,
         mock_scanner,
     ):
         mock_time.now.return_value.isoformat.return_value = "now:now:now"
@@ -215,14 +222,21 @@ class OutputTests(unittest.TestCase):
         issue_2 = scanner.Issue(
             types.IssueType.RegEx, "bar", types.Chunk("foo", "/bar", {})
         )
-        mock_scanner.issues = [issue_1, issue_2]
+        mock_scanner.scan.return_value = (issue_1, issue_2)
         mock_scanner.excluded_paths = []
         options = generate_options(
             GlobalOptions, json=True, exclude_signatures=[], exclude_entropy_patterns=[]
         )
-        util.echo_result(options, mock_scanner, "/repo", "/output")
 
-        mock_json.dumps.assert_called_once_with(
+        # We're generating JSON piecemeal, so if we want to be safe we'll recover
+        # the entire output, deserialize it (to confirm it's valid syntax) and
+        # compare the result to the original input dictionary.
+        with mock.patch("sys.stdout", new=StringIO()) as mock_stdout:
+            util.echo_result(options, mock_scanner, "/repo", "/output")
+            actual_output = mock_stdout.getvalue()
+
+        self.assertEqual(
+            json.loads(actual_output),
             {
                 "scan_time": "now:now:now",
                 "project_path": "/repo",
@@ -248,15 +262,13 @@ class OutputTests(unittest.TestCase):
                         "file_path": "/bar",
                     },
                 ],
-            }
+            },
         )
 
     @mock.patch("tartufo.scanner.ScannerBase")
-    @mock.patch("tartufo.util.click", new=mock.MagicMock())
-    @mock.patch("tartufo.util.json")
     @mock.patch("tartufo.util.datetime")
     def test_echo_result_outputs_proper_json_when_requested_pathtype(
-        self, mock_time, mock_json, mock_scanner
+        self, mock_time, mock_scanner
     ):
         mock_time.now.return_value.isoformat.return_value = "now:now:now"
         issue_1 = scanner.Issue(
@@ -265,7 +277,7 @@ class OutputTests(unittest.TestCase):
         issue_2 = scanner.Issue(
             types.IssueType.RegEx, "bar", types.Chunk("foo", "/bar", {})
         )
-        mock_scanner.issues = [issue_1, issue_2]
+        mock_scanner.scan.return_value = (issue_1, issue_2)
         mock_scanner.excluded_paths = [
             re.compile("package-lock.json"),
             re.compile("poetry.lock"),
@@ -284,8 +296,15 @@ class OutputTests(unittest.TestCase):
             exclude_signatures=exclude_signatures,
             exclude_entropy_patterns=exclude_entropy_patterns,
         )
-        util.echo_result(options, mock_scanner, "/repo", Path("/tmp"))
-        mock_json.dumps.assert_called_once_with(
+
+        # We're generating JSON piecemeal, so if we want to be safe we'll recover
+        # the entire output, deserialize it (to confirm it's valid syntax) and
+        # compare the result to the original input dictionary.
+        with mock.patch("sys.stdout", new=StringIO()) as mock_stdout:
+            util.echo_result(options, mock_scanner, "/repo", Path("/tmp"))
+            actual_output = mock_stdout.getvalue()
+        self.assertEqual(
+            json.loads(actual_output),
             {
                 "scan_time": "now:now:now",
                 "project_path": "/repo",
@@ -317,7 +336,7 @@ class OutputTests(unittest.TestCase):
                         "file_path": "/bar",
                     },
                 ],
-            }
+            },
         )
 
 

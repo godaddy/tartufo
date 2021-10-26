@@ -8,7 +8,16 @@ import uuid
 from datetime import datetime
 from functools import lru_cache, partial
 from hashlib import blake2s
-from typing import Any, Callable, Dict, Iterable, List, Optional, TYPE_CHECKING, Pattern
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    TYPE_CHECKING,
+    Pattern,
+)
 
 import click
 import git
@@ -56,6 +65,7 @@ def echo_result(
     :param repo_path: The path to the repository the issues were found in
     :param output_dir: The directory that issue details were written out to
     """
+
     now = datetime.now().isoformat("T", "microseconds")
     if options.json:
         output = {
@@ -69,24 +79,36 @@ def echo_result(
             "exclude_entropy_patterns": [
                 str(pattern) for pattern in options.exclude_entropy_patterns
             ],
-            "found_issues": [
-                issue.as_dict(compact=options.compact) for issue in scanner.issues
-            ],
+            # This member is for reference. Read below...
+            # "found_issues": [
+            #     issue.as_dict(compact=options.compact) for issue in scanner.issues
+            # ],
         }
 
-        click.echo(json.dumps(output))
+        # Observation: We want to "stream" JSON; the only generator output is the
+        # "found_issues" list (which is at the top level). Dump the "static" part
+        # minus the closing "}", then generate issues individually, then emit the
+        # closing "}".
+        static_part = json.dumps(output)
+        click.echo(f'{static_part[:-1]}, "found_issues": [', nl=False)
+        delimiter = ""
+        for issue in scanner.scan():
+            live_part = json.dumps(issue.as_dict(compact=options.compact))
+            click.echo(f"{delimiter}{live_part}", nl=False)
+            delimiter = ", "
+        click.echo("]}")
     elif options.compact:
-        for issue in scanner.issues:
+        for issue in scanner.scan():
             click.echo(
                 f"[{issue.issue_type.value}] {issue.chunk.file_path}: {issue.matched_string} "
                 f"({issue.signature}, {issue.issue_detail})"
             )
     else:
+        for issue in scanner.scan():
+            click.echo(bytes(issue))
         if not scanner.issues:
             if not options.quiet:
                 click.echo(f"Time: {now}\nAll clear. No secrets detected.")
-        else:
-            click.echo(b"\n".join([bytes(issue) for issue in scanner.issues]))
         if options.verbose > 0:
             click.echo("\nExcluded paths:")
             click.echo("\n".join([path.pattern for path in scanner.excluded_paths]))
@@ -96,10 +118,10 @@ def echo_result(
             click.echo("\n".join(options.exclude_entropy_patterns))
 
 
-def write_outputs(found_issues: "List[Issue]", output_dir: pathlib.Path) -> List[str]:
+def write_outputs(found_issues: List["Issue"], output_dir: pathlib.Path) -> List[str]:
     """Write details of the issues to individual files in the specified directory.
 
-    :param found_issues: The list of issues to be written out
+    :param found_issues: A list of issues to be written out
     :param output_dir: The directory where the files should be written
     """
     result_files = []

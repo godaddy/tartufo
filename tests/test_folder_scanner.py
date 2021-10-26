@@ -23,7 +23,7 @@ class FolderScannerTestCase(unittest.TestCase):
         self.global_options.exclude_path_patterns = [r"donotscan\.txt"]
 
         test_scanner = scanner.FolderScanner(self.global_options, folder_path)
-        issues = test_scanner.scan()
+        issues = list(test_scanner.scan())
 
         self.assertEqual(1, len(issues))
         self.assertEqual("KQ0I97OBuPlGB9yPRxoSxnX52zE=", issues[0].matched_string)
@@ -37,7 +37,8 @@ class FolderScannerTestCase(unittest.TestCase):
         test_scanner = scanner.FolderScanner(self.global_options, folder_path)
 
         with patch("pathlib.Path.open", side_effect=OSError()):
-            self.assertRaises(click.FileError, test_scanner.scan)
+            with self.assertRaises(click.FileError):
+                list(test_scanner.scan())
 
 
 if __name__ == "__main__":
