@@ -85,7 +85,7 @@ class ProcessIssuesTest(unittest.TestCase):
     @unittest.skipIf(
         helpers.BROKEN_USER_PATHS, "Skipping due to truncated Windows usernames"
     )
-    @mock.patch("tartufo.cli.datetime")
+    @mock.patch("tartufo.util.datetime")
     @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
     @mock.patch("tartufo.util.echo_result", new=mock.MagicMock())
     @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
@@ -115,7 +115,7 @@ class ProcessIssuesTest(unittest.TestCase):
     @unittest.skipIf(
         helpers.BROKEN_USER_PATHS, "Skipping due to truncated Windows usernames"
     )
-    @mock.patch("tartufo.cli.datetime")
+    @mock.patch("tartufo.util.datetime")
     @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
     @mock.patch("tartufo.util.echo_result", new=mock.MagicMock())
     @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
