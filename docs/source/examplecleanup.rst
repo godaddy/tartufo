@@ -43,13 +43,10 @@ More on this later!)
 
    Scan your repo!
 
-   .. note:: The `--fetch/--no-fetch` option for local scans controls whether the local clone is refreshed before scan.
-      This should be set to `no-fetch` for this process. This is an argument to `scan-local-repo`, not the base `tartufo` command.
-
    .. code-block:: console
 
       # Run Tartufo on your repo and create a list of high entropy items to remove:
-      tartufo --regex --json scan-local-repo --no-fetch ${GITHUBREPO} | \
+      tartufo --regex --json scan-local-repo ${GITHUBREPO} | \
           jq -r '.found_issues[].matched_string' | \
           sort -u > remove.txt
 
@@ -99,7 +96,7 @@ More on this later!)
    .. code-block:: console
 
       # run tartufo again to check for any remaining potential secrets
-      leftovers=`tartufo --regex -od ~/temp scan-local-repo --no-fetch ${GITHUBREPO}`
+      leftovers=`tartufo --regex -od ~/temp scan-local-repo ${GITHUBREPO}`
       tmppath=`echo -e "$leftovers" | tail -n1 | awk '{print $6}'`
       # look through the remaining strings
       # if there's anything that looks like it shouldn't be there, dig into it and clear it out

@@ -8,6 +8,7 @@ Features:
   is a reimplementation of [#108](https://github.com/godaddy/tartufo/pull/108);
   thanks to @dclayton-godaddy for showing the way.
 
+
 v2.9.0 - 19 October 2021
 ------------------------
 

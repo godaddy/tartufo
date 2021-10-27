@@ -20,13 +20,6 @@ from tartufo.scanner import GitRepoScanner
     type=click.Path(exists=True, file_okay=False, resolve_path=True, allow_dash=False),
 )
 @click.option(
-    "--fetch/--no-fetch",
-    is_flag=True,
-    default=True,
-    show_default=True,
-    help="Controls whether or not the remote repo is fetched prior to local scanning",
-)
-@click.option(
     "--include-submodules/--exclude-submodules",
     is_flag=True,
     default=False,
@@ -42,7 +35,6 @@ def main(
     since_commit: Optional[str],
     max_depth: int,
     branch: Optional[str],
-    fetch: bool,
     include_submodules: bool,
 ) -> GitRepoScanner:
     """Scan a repository already cloned to your local system."""
@@ -50,7 +42,6 @@ def main(
         since_commit=since_commit,
         max_depth=max_depth,
         branch=branch,
-        fetch=fetch,
         include_submodules=include_submodules,
     )
     scanner = None
@@ -59,8 +50,6 @@ def main(
         util.process_issues(repo_path, scanner, options)
     except types.GitLocalException:
         util.fail(f"{repo_path} is not a valid git repository.", ctx)
-    except types.GitRemoteException as exc:
-        util.fail(f"There was an error fetching from the remote repository: {exc}", ctx)
     except types.TartufoException as exc:
         util.fail(str(exc), ctx)
     return scanner  # type: ignore
