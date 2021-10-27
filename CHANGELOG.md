@@ -7,7 +7,8 @@ Features:
   as scan progresses instead of holding all of them until it has completed. This
   is a reimplementation of [#108](https://github.com/godaddy/tartufo/pull/108);
   thanks to @dclayton-godaddy for showing the way.
-
+* [#244](https://github.com/godaddy/tartufo/pull/244) - Drops support for 
+  `--fetch/--no-fetch` option for local scans
 
 v2.9.0 - 19 October 2021
 ------------------------
