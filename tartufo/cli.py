@@ -278,7 +278,7 @@ def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
 
 @main.resultcallback()  # type: ignore
 @click.pass_context
-def process_issues(
+def process_exit(
     ctx: click.Context,
     scan: scanner.ScannerBase,
     **_kwargs: config.OptionTypes,
