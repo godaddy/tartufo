@@ -54,11 +54,10 @@ class GlobalOptions:
 
 @dataclass
 class GitOptions:
-    __slots__ = ("since_commit", "max_depth", "branch", "fetch", "include_submodules")
+    __slots__ = ("since_commit", "max_depth", "branch", "include_submodules")
     since_commit: Optional[str]
     max_depth: int
     branch: Optional[str]
-    fetch: bool
     include_submodules: bool
 
 

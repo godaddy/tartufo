@@ -148,56 +148,34 @@ class FilterSubmoduleTests(ScannerTestCase):
 
 
 class ChunkGeneratorTests(ScannerTestCase):
+    @mock.patch("tartufo.scanner.GitScanner._iter_diff_index")
     @mock.patch("pygit2.Repository")
-    def test_single_branch_is_loaded_if_specified(self, mock_repo: mock.MagicMock):
-        self.git_options.branch = "foo"
-        self.git_options.fetch = True
-        mock_fetch = mock.MagicMock()
-        mock_fetch.return_value = []
-        mock_repo.return_value.branches = {"foo": mock.MagicMock()}
-        mock_repo.return_value.remotes["origin"].fetch = mock_fetch
-        test_scanner = scanner.GitRepoScanner(
-            self.global_options, self.git_options, "."
-        )
-        for _ in test_scanner.chunks:
-            pass
-        mock_fetch.assert_called_once_with("foo")
-
-    @mock.patch("pygit2.Repository")
-    def test_all_branches_are_loaded_if_specified(self, mock_repo: mock.MagicMock):
-        mock_fetch = mock.MagicMock()
-        mock_fetch.return_value = []
-        mock_repo.return_value.remotes["origin"].fetch = mock_fetch
-        self.git_options.fetch = True
-        test_scanner = scanner.GitRepoScanner(
-            self.global_options, self.git_options, "."
-        )
-        for _ in test_scanner.chunks:
-            pass
-        mock_fetch.assert_called_once_with()
-
-    @mock.patch("pygit2.Repository")
-    def test_explicit_exception_is_raised_if_fetch_fails(
-        self, mock_repo: mock.MagicMock
+    def test_single_branch_is_loaded_if_specified(
+        self, mock_repo: mock.MagicMock, mock_iter_diff: mock.MagicMock
     ):
-        self.git_options.fetch = True
-        mock_repo.return_value.remotes["origin"].fetch.side_effect = pygit2.GitError(
-            "Fetch failed!"
-        )
+        self.git_options.branch = "foo"
+        mock_branch_foo = mock.MagicMock()
+        mock_branch_bar = mock.MagicMock()
+        mock_repo.return_value.branches = {
+            "foo": mock_branch_foo,
+            "bar": mock_branch_bar,
+        }
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
-        with self.assertRaisesRegex(types.GitRemoteException, "Fetch failed!"):
-            for _ in test_scanner.chunks:
-                pass
+
+        mock_iter_diff.return_value = []
+        for _ in test_scanner.chunks:
+            pass
+        mock_repo.return_value.walk.assert_called_once_with(
+            mock_branch_foo.resolve().target, pygit2.GIT_SORT_TOPOLOGICAL
+        )
 
     @mock.patch("tartufo.scanner.GitScanner._iter_diff_index")
     @mock.patch("pygit2.Repository")
     def test_all_branches_are_scanned_for_commits(
         self, mock_repo: mock.MagicMock, mock_iter_diff: mock.MagicMock
     ):
-        self.git_options.fetch = True
-        mock_repo.return_value.remotes["origin"].fetch.return_value = ["foo", "bar"]
         mock_branch_foo = mock.MagicMock()
         mock_branch_bar = mock.MagicMock()
         mock_repo.return_value.branches = {
@@ -243,8 +221,6 @@ class ChunkGeneratorTests(ScannerTestCase):
         mock_repo: mock.MagicMock,
         mock_iter_diff: mock.MagicMock,
     ):
-        self.git_options.fetch = True
-        mock_repo.return_value.remotes["origin"].fetch.return_value = ["foo"]
         mock_repo.return_value.branches = {"foo": mock.MagicMock()}
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
@@ -286,8 +262,6 @@ class ChunkGeneratorTests(ScannerTestCase):
         mock_extract: mock.MagicMock,
         mock_iter_diff: mock.MagicMock,
     ):
-        self.git_options.fetch = True
-        mock_repo.return_value.remotes["origin"].fetch.return_value = ["foo"]
         mock_repo.return_value.branches = {"foo": mock.MagicMock()}
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."

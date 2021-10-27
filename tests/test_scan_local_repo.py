@@ -32,19 +32,3 @@ class ScanLocalRepoTests(unittest.TestCase):
                 str(result.exception),
                 f"Repository not found at {Path(run_path).resolve()}",
             )
-
-    @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
-    def test_scan_exits_gracefully_when_remote_fetch_fails(
-        self, mock_scanner: mock.MagicMock
-    ):
-        mock_scanner.return_value.scan.side_effect = types.GitRemoteException(
-            "Fetch failed!"
-        )
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            result = runner.invoke(cli.main, ["scan-local-repo", "."])
-        self.assertGreater(result.exit_code, 0)
-        self.assertEqual(
-            result.output,
-            "There was an error fetching from the remote repository: Fetch failed!\n",
-        )
