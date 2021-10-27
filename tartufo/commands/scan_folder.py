@@ -1,7 +1,5 @@
 import sys
 
-from typing import Tuple
-
 import click
 
 from tartufo import types, util
@@ -17,7 +15,7 @@ from tartufo.scanner import FolderScanner
 @click.pass_context
 def main(
     ctx: click.Context, options: types.GlobalOptions, target: str
-) -> Tuple[str, FolderScanner]:
+) -> FolderScanner:
     """Scan a folder."""
     try:
         resume: bool = True
@@ -29,7 +27,7 @@ def main(
         if resume is False:
             sys.exit(0)
         scanner = FolderScanner(options, target)
-        scanner.scan()
+        util.process_issues(target, scanner, options)
     except types.TartufoException as exc:
         util.fail(str(exc), ctx)
-    return target, scanner
+    return scanner  # type: ignore
