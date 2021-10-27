@@ -63,6 +63,7 @@ tox = "^3.21.4"
 vulture = "^2.3"
 types-requests = "^2.25.2"
 types-click = "^7.1.2"
+cached-property = "^1.5.2"
 
 [tool.poetry.extras]
 docs = ["recommonmark", "sphinx", "sphinx-click", "sphinx-rtd-theme", "sphinxcontrib-spelling"]

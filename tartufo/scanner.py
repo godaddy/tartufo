@@ -689,7 +689,7 @@ class GitRepoScanner(GitScanner):
                     )
                     continue
                 prev_commit = curr_commit.parents[0]
-                diff: pygit2.Diff = self._repo.diff(curr_commit, prev_commit)
+                diff: pygit2.Diff = self._repo.diff(prev_commit, curr_commit)
                 diff_hash = hashlib.md5(
                     (str(prev_commit) + str(curr_commit)).encode("utf-8")
                 ).digest()
@@ -700,7 +700,7 @@ class GitRepoScanner(GitScanner):
                     yield types.Chunk(
                         blob,
                         file_path,
-                        util.extract_commit_metadata(prev_commit, branch),
+                        util.extract_commit_metadata(curr_commit, branch),
                     )
 
             # Finally, yield the first commit to the branch

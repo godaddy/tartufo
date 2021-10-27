@@ -3,14 +3,12 @@
 import importlib
 import logging
 import pathlib
-import platform
 import warnings
-from datetime import datetime
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 import click
 
-from tartufo import config, scanner, types, util
+from tartufo import config, scanner, types
 
 
 PLUGIN_DIR = pathlib.Path(__file__).parent / "commands"
@@ -280,28 +278,11 @@ def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
 
 @main.resultcallback()  # type: ignore
 @click.pass_context
-def process_issues(
+def process_exit(
     ctx: click.Context,
-    result: Tuple[str, scanner.ScannerBase],
-    **kwargs: config.OptionTypes,
+    scan: scanner.ScannerBase,
+    **_kwargs: config.OptionTypes,
 ):
-    repo_path, scan = result
-    options = types.GlobalOptions(**kwargs)  # type: ignore
-    now = datetime.now().isoformat("T", "microseconds")
-    output_dir = None
-    if options.output_dir:
-        if platform.system().lower() == "windows":  # pragma: no cover
-            # Make sure we aren't using illegal characters for Windows folder names
-            now = now.replace(":", "")
-        output_dir = pathlib.Path(options.output_dir) / f"tartufo-scan-results-{now}"
-        output_dir.mkdir(parents=True)
-
-    util.echo_result(options, scan, repo_path, output_dir)
-    if output_dir:
-        util.write_outputs(scan.issues, output_dir)
-        if not options.json:
-            click.echo(f"Results have been saved in {output_dir}")
-
     if scan.issues:
         ctx.exit(1)
 
