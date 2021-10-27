@@ -150,6 +150,29 @@ class FilterSubmoduleTests(ScannerTestCase):
 class ChunkGeneratorTests(ScannerTestCase):
     @mock.patch("tartufo.scanner.GitScanner._iter_diff_index")
     @mock.patch("pygit2.Repository")
+    def test_single_branch_is_loaded_if_specified(
+        self, mock_repo: mock.MagicMock, mock_iter_diff: mock.MagicMock
+    ):
+        self.git_options.branch = "foo"
+        mock_branch_foo = mock.MagicMock()
+        mock_branch_bar = mock.MagicMock()
+        mock_repo.return_value.branches = {
+            "foo": mock_branch_foo,
+            "bar": mock_branch_bar,
+        }
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+
+        mock_iter_diff.return_value = []
+        for _ in test_scanner.chunks:
+            pass
+        mock_repo.return_value.walk.assert_called_once_with(
+            mock_branch_foo.resolve().target, pygit2.GIT_SORT_TOPOLOGICAL
+        )
+
+    @mock.patch("tartufo.scanner.GitScanner._iter_diff_index")
+    @mock.patch("pygit2.Repository")
     def test_all_branches_are_scanned_for_commits(
         self, mock_repo: mock.MagicMock, mock_iter_diff: mock.MagicMock
     ):
