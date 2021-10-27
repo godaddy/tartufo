@@ -265,8 +265,8 @@ class ChunkGeneratorTests(ScannerTestCase):
             pass
         mock_repo.return_value.diff.assert_has_calls(
             (
-                mock.call(mock_commit_3, mock_commit_2),
-                mock.call(mock_commit_2, mock_commit_1),
+                mock.call(mock_commit_2, mock_commit_3),
+                mock.call(mock_commit_1, mock_commit_2),
             )
         )
         mock_iter_diff.assert_has_calls(
