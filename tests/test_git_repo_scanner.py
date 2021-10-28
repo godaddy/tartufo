@@ -266,7 +266,9 @@ class ChunkGeneratorTests(ScannerTestCase):
         mock_repo.return_value.diff.assert_has_calls(
             (
                 mock.call(mock_commit_2, mock_commit_3),
+                mock.call().find_similar(rename_threshold=100),
                 mock.call(mock_commit_1, mock_commit_2),
+                mock.call().find_similar(rename_threshold=100),
             )
         )
         mock_iter_diff.assert_has_calls(
@@ -360,6 +362,7 @@ class IterDiffIndexTests(ScannerTestCase):
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
+        test_scanner.update_printable_diff = mock.MagicMock(side_effect=[4, 4])
         diffs = list(test_scanner._iter_diff_index([mock_diff_1, mock_diff_2]))
         self.assertEqual(
             diffs,

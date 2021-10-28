@@ -534,8 +534,6 @@ class GitScanner(ScannerBase, abc.ABC):
 
         :param diff_index: The diff index / commit to be iterated over
         """
-
-        diff.find_similar(rename_threshold=100)
         for patch in diff:
             delta: pygit2.DiffDelta = patch.delta
             file_path = (
@@ -559,7 +557,7 @@ class GitScanner(ScannerBase, abc.ABC):
                 yield printable_diff.split("\n", lines_to_truncate)[lines_to_truncate], file_path
 
     def update_printable_diff(self, diff: str) -> int:
-        """Removes the unwanted content from printable diff"""
+        """Computes the git diff header length"""
         lines_to_remove: int = 0
         for line_no, data in enumerate(diff.split("\n")):
             if data.startswith("+++"):
@@ -715,6 +713,7 @@ class GitRepoScanner(GitScanner):
                 if diff_hash in already_searched:
                     continue
                 already_searched.add(diff_hash)
+                diff.find_similar(rename_threshold=100)
                 for blob, file_path in self._iter_diff_index(diff):
                     yield types.Chunk(
                         blob,
