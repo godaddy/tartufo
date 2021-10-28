@@ -535,6 +535,7 @@ class GitScanner(ScannerBase, abc.ABC):
         :param diff_index: The diff index / commit to be iterated over
         """
 
+        diff.find_similar(rename_threshold=100)
         for patch in diff:
             delta: pygit2.DiffDelta = patch.delta
             file_path = (
@@ -543,11 +544,29 @@ class GitScanner(ScannerBase, abc.ABC):
             if delta.is_binary:
                 self.logger.debug("Binary file skipped: %s", file_path)
                 continue
+            delta_patch_status = delta.status
+            if delta_patch_status == pygit2.GIT_DELTA_RENAMED:
+                self.logger.debug("Skipping as it is just a file rename")
+                continue
+            if delta_patch_status == pygit2.GIT_DELTA_DELETED:
+                self.logger.debug("Skipping as the file is deleted")
+                continue
             printable_diff: str = patch.text
+            lines_to_truncate = self.update_printable_diff(printable_diff)
             if self.should_scan(file_path):
                 # The `printable_diff` contains the full 4-line diff header,
                 # so we need to strip that before analyzing it
-                yield printable_diff.split("\n", 4)[4], file_path
+                yield printable_diff.split("\n", lines_to_truncate)[lines_to_truncate], file_path
+
+    def update_printable_diff(self, diff: str) -> int:
+        """Removes the unwanted content from printable diff"""
+        lines_to_remove: int = 0
+        for line_no, data in enumerate(diff.split("\n")):
+            if data.startswith("+++"):
+                lines_to_remove = line_no + 1
+                break
+
+        return lines_to_remove
 
     def filter_submodules(self, repo: pygit2.Repository) -> None:
         """Exclude all git submodules and their contents from being scanned."""
@@ -706,7 +725,7 @@ class GitRepoScanner(GitScanner):
             # Finally, yield the first commit to the branch
             if curr_commit:
                 tree: pygit2.Tree = self._repo.revparse_single(curr_commit.hex).tree
-                tree_diff: pygit2.Diff = tree.diff_to_tree()
+                tree_diff: pygit2.Diff = tree.diff_to_tree(swap=True)
                 iter_diff = self._iter_diff_index(tree_diff)
                 for blob, file_path in iter_diff:
                     yield types.Chunk(
