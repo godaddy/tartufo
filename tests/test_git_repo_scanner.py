@@ -350,13 +350,13 @@ class IterDiffIndexTests(ScannerTestCase):
         mock_diff_1 = mock.MagicMock()
         mock_diff_1.delta.is_binary = False
         mock_diff_1.text = (
-            "meta_line_1\nmeta_line_2\nmeta_line_3\nmeta_line_4\n+ Ford Prefect"
+            "meta_line_1\nmeta_line_2\nmeta_line_3\n+++ meta_line_4\n+ Ford Prefect"
         )
         mock_diff_1.delta.new_file.path = "/foo"
         mock_diff_2 = mock.MagicMock()
         mock_diff_2.delta.is_binary = False
         mock_diff_2.text = (
-            "meta_line_1\nmeta_line_2\nmeta_line_3\nmeta_line_4\n- Marvin"
+            "meta_line_1\nmeta_line_2\nmeta_line_3\n+++ meta_line_4\n- Marvin"
         )
         mock_diff_2.delta.new_file.path = "/bar"
         test_scanner = scanner.GitRepoScanner(
@@ -371,6 +371,32 @@ class IterDiffIndexTests(ScannerTestCase):
                 ("- Marvin", "/bar"),
             ],
         )
+
+
+class HeaderLineCountTests(ScannerTestCase):
+    def test_detects_there_are_four_header_lines(self):
+        diff = "meta_line_1\nmeta_line_2\nmeta_line_3\n+++ meta_line_4\n+ Ford Prefect"
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        actual_diff_header_length = test_scanner.header_line_count(diff)
+        self.assertEqual(4, actual_diff_header_length)
+
+    def test_detects_there_are_five_header_lines(self):
+        diff = "meta_line_1\nmeta_line_2\nmeta_line_3\nmeta_line_4\n+++ meta_line_4\n+ Ford Prefect"
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        actual_diff_header_length = test_scanner.header_line_count(diff)
+        self.assertEqual(5, actual_diff_header_length)
+
+    def test_returns_zero_when_no_header_match(self):
+        diff = "meta_line_1\nmeta_line_2\nmeta_line_3\nmeta_line_4\nmeta_line_4\n+ Ford Prefect"
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        actual_diff_header_length = test_scanner.header_line_count(diff)
+        self.assertEqual(0, actual_diff_header_length)
 
 
 if __name__ == "__main__":

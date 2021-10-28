@@ -550,13 +550,13 @@ class GitScanner(ScannerBase, abc.ABC):
                 self.logger.debug("Skipping as the file is deleted")
                 continue
             printable_diff: str = patch.text
-            lines_to_truncate = self.update_printable_diff(printable_diff)
+            lines_to_truncate = self.header_line_count(printable_diff)
             if self.should_scan(file_path):
                 # The `printable_diff` contains the full 4-line diff header,
                 # so we need to strip that before analyzing it
                 yield printable_diff.split("\n", lines_to_truncate)[lines_to_truncate], file_path
 
-    def update_printable_diff(self, diff: str) -> int:
+    def header_line_count(self, diff: str) -> int:
         """Computes the git diff header length"""
         lines_to_remove: int = 0
         for line_no, data in enumerate(diff.split("\n")):
