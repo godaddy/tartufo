@@ -55,7 +55,7 @@ class TartufoCLI(click.MultiCommand):
 @click.option(
     "--default-regexes/--no-default-regexes",
     is_flag=True,
-    default=True,
+    default="--default-regexes",
     show_default=True,
     help="Whether to include the default regex list when configuring"
     " search patterns. Only applicable if --rules is also specified.",
@@ -63,21 +63,21 @@ class TartufoCLI(click.MultiCommand):
 @click.option(
     "--compact/--no-compact",
     is_flag=True,
-    default=False,
+    default="--no-compact",
     show_default=True,
     help="Enable reduced output.",
 )
 @click.option(
     "--entropy/--no-entropy",
     is_flag=True,
-    default=True,
+    default="--entropy",
     show_default=True,
     help="Enable entropy checks.",
 )
 @click.option(
     "--regex/--no-regex",
     is_flag=True,
-    default=False,
+    default="--no-regex",
     show_default=True,
     help="Enable high signal regexes checks.",
 )
