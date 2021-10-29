@@ -56,7 +56,7 @@ def main(
     git_options = types.GitOptions(
         since_commit=since_commit,
         max_depth=max_depth,
-        branch=branch,
+        branch=f"origin/{branch}",
         include_submodules=include_submodules,
     )
     repo_path: Optional[Path] = None
