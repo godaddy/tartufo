@@ -266,9 +266,9 @@ class ChunkGeneratorTests(ScannerTestCase):
         mock_repo.return_value.diff.assert_has_calls(
             (
                 mock.call(mock_commit_2, mock_commit_3),
-                mock.call().find_similar(rename_threshold=100),
+                mock.call().find_similar(),
                 mock.call(mock_commit_1, mock_commit_2),
-                mock.call().find_similar(rename_threshold=100),
+                mock.call().find_similar(),
             )
         )
         mock_iter_diff.assert_has_calls(
@@ -344,6 +344,10 @@ class IterDiffIndexTests(ScannerTestCase):
         mock_should.assert_called_once()
 
     @mock.patch("pygit2.Repository", new=mock.MagicMock())
+    @mock.patch(
+        "tartufo.scanner.GitScanner.header_line_count",
+        mock.MagicMock(side_effect=[4, 4, 0]),
+    )
     @mock.patch("tartufo.scanner.ScannerBase.should_scan")
     def test_all_files_are_yielded(self, mock_should: mock.MagicMock):
         mock_should.return_value = True
@@ -359,10 +363,15 @@ class IterDiffIndexTests(ScannerTestCase):
             "meta_line_1\nmeta_line_2\nmeta_line_3\n+++ meta_line_4\n- Marvin"
         )
         mock_diff_2.delta.new_file.path = "/bar"
+        mock_diff_3 = mock.MagicMock()
+        mock_diff_3.delta.is_binary = False
+        mock_diff_3.text = (
+            "meta_line_1\nsimilarity index 100%\nrename from file1\nrename to file1"
+        )
+        mock_diff_3.delta.new_file.path = "/bar"
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
-        test_scanner.update_printable_diff = mock.MagicMock(side_effect=[4, 4])
         diffs = list(test_scanner._iter_diff_index([mock_diff_1, mock_diff_2]))
         self.assertEqual(
             diffs,
