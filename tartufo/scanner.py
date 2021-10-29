@@ -543,18 +543,20 @@ class GitScanner(ScannerBase, abc.ABC):
                 self.logger.debug("Binary file skipped: %s", file_path)
                 continue
             delta_patch_status = delta.status
-            if delta_patch_status == pygit2.GIT_DELTA_RENAMED:
-                self.logger.debug("Skipping as it is just a file rename")
-                continue
             if delta_patch_status == pygit2.GIT_DELTA_DELETED:
                 self.logger.debug("Skipping as the file is deleted")
                 continue
             printable_diff: str = patch.text
             lines_to_truncate = self.header_line_count(printable_diff)
+            printable_diff = (
+                printable_diff.split("\n", lines_to_truncate)[lines_to_truncate]
+                if lines_to_truncate > 0
+                else ""
+            )
             if self.should_scan(file_path):
                 # The `printable_diff` contains the full 4-line diff header,
                 # so we need to strip that before analyzing it
-                yield printable_diff.split("\n", lines_to_truncate)[lines_to_truncate], file_path
+                yield printable_diff, file_path
 
     def header_line_count(self, diff: str) -> int:
         """Computes the git diff header length"""
@@ -563,7 +565,6 @@ class GitScanner(ScannerBase, abc.ABC):
             if data.startswith("+++"):
                 lines_to_remove = line_no + 1
                 break
-
         return lines_to_remove
 
     def filter_submodules(self, repo: pygit2.Repository) -> None:
@@ -713,7 +714,7 @@ class GitRepoScanner(GitScanner):
                 if diff_hash in already_searched:
                     continue
                 already_searched.add(diff_hash)
-                diff.find_similar(rename_threshold=100)
+                diff.find_similar()
                 for blob, file_path in self._iter_diff_index(diff):
                     yield types.Chunk(
                         blob,
