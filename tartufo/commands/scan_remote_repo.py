@@ -53,10 +53,11 @@ def main(
     include_submodules: bool,
 ) -> GitRepoScanner:
     """Automatically clone and scan a remote git repository."""
+    target_branch = f"origin/{branch}" if branch else None
     git_options = types.GitOptions(
         since_commit=since_commit,
         max_depth=max_depth,
-        branch=f"origin/{branch}",
+        branch=target_branch,
         include_submodules=include_submodules,
     )
     repo_path: Optional[Path] = None
