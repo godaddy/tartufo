@@ -1,3 +1,14 @@
+vx.y.z - TBD
+------------
+
+Bug fixes:
+
+* [#247](https://github.com/godaddy/tartufo/issues/247) -- the `--branch` option
+  for `scan-remote-repo` has not worked since v2.0.2. Versions v2.2.0 through
+  v2.7.0 failed silently (not scanning the branch, and returning no error).
+  Versions v2.8.0 and later claimed the branch did not exist, even if it did.
+  This option now works correctly.
+
 v2.9.0 - 19 October 2021
 ------------------------
 
