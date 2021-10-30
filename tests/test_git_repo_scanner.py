@@ -148,6 +148,7 @@ class ChunkGeneratorTests(ScannerTestCase):
     def test_single_branch_is_loaded_if_specified(self, mock_repo: mock.MagicMock):
         self.git_options.branch = "foo"
         self.git_options.fetch = True
+        self.git_options.is_remote = False
         mock_fetch = mock.MagicMock()
         mock_fetch.return_value = []
         mock_branch = mock.MagicMock()
@@ -167,6 +168,7 @@ class ChunkGeneratorTests(ScannerTestCase):
         mock_fetch.return_value = []
         mock_repo.return_value.remotes.origin.fetch = mock_fetch
         self.git_options.fetch = True
+        self.git_options.is_remote = False
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
@@ -193,10 +195,11 @@ class ChunkGeneratorTests(ScannerTestCase):
 
     @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
     @mock.patch("git.Repo")
-    def test_all_branches_are_scanned_for_commits(
+    def test_all_local_branches_are_scanned_for_commits(
         self, mock_repo: mock.MagicMock, mock_iter_commits: mock.MagicMock
     ):
         self.git_options.fetch = True
+        self.git_options.is_remote = False
         mock_repo.return_value.remotes.origin.fetch.return_value = ["foo", "bar"]
         mock_repo.return_value.branches = ["foo", "bar"]
         test_scanner = scanner.GitRepoScanner(
@@ -214,10 +217,58 @@ class ChunkGeneratorTests(ScannerTestCase):
 
     @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
     @mock.patch("git.Repo")
-    def test_scan_all_branches_fetch_false(
+    def test_all_remote_branches_are_scanned_for_commits(
+        self, mock_repo: mock.MagicMock, mock_iter_commits: mock.MagicMock
+    ):
+        mock_foo = mock.MagicMock()
+        mock_foo.name = "origin/foo"
+        mock_bar = mock.MagicMock()
+        mock_bar.name = "origin/bar"
+
+        self.git_options.is_remote = True
+        mock_repo.return_value.remotes.origin.refs = [mock_foo, mock_bar]
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        mock_iter_commits.return_value = []
+        for _ in test_scanner.chunks:
+            pass
+        mock_iter_commits.assert_has_calls(
+            (
+                mock.call(mock_repo.return_value, mock_foo),
+                mock.call(mock_repo.return_value, mock_bar),
+            )
+        )
+
+    @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
+    @mock.patch("git.Repo")
+    def test_scan_all_local_branches_fetch_false(
         self, mock_repo: mock.MagicMock, mock_iter_commits: mock.MagicMock
     ):
         self.git_options.fetch = False
+        self.git_options.is_remote = False
+        mock_repo.return_value.remotes.origin.fetch.return_value = ["foo", "bar"]
+        mock_repo.return_value.branches = ["foo", "bar"]
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        mock_iter_commits.return_value = []
+        for _ in test_scanner.chunks:
+            pass
+        mock_iter_commits.assert_has_calls(
+            (
+                mock.call(mock_repo.return_value, "foo"),
+                mock.call(mock_repo.return_value, "bar"),
+            )
+        )
+
+    @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
+    @mock.patch("git.Repo")
+    def test_scan_all_local_branches_fetch_false(
+        self, mock_repo: mock.MagicMock, mock_iter_commits: mock.MagicMock
+    ):
+        self.git_options.fetch = False
+        self.git_options.is_remote = False
         mock_repo.return_value.remotes.origin.fetch.return_value = ["foo", "bar"]
         mock_repo.return_value.branches = ["foo", "bar"]
         test_scanner = scanner.GitRepoScanner(
@@ -259,10 +310,34 @@ class ChunkGeneratorTests(ScannerTestCase):
 
     @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
     @mock.patch("git.Repo")
-    def test_scan_single_branch_throws_exception_when_branch_not_found(
+    def test_scan_single_remote_branch(
+        self, mock_repo: mock.MagicMock, mock_iter_commits: mock.MagicMock
+    ):
+        self.git_options.is_remote = True
+        self.git_options.branch = "bar"
+        mock_foo = mock.MagicMock()
+        mock_foo.name = "origin/foo"
+        mock_bar = mock.MagicMock()
+        mock_bar.name = "origin/bar"
+        mock_repo.return_value.remotes.origin.refs = [mock_foo, mock_bar]
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        mock_iter_commits.return_value = []
+        for _ in test_scanner.chunks:
+            pass
+        mock_repo.return_value.remotes.branches.assert_not_called()
+        mock_iter_commits.assert_has_calls(
+            (mock.call(mock_repo.return_value, mock_bar),)
+        )
+
+    @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
+    @mock.patch("git.Repo")
+    def test_scan_single_local_branch_throws_exception_when_branch_not_found(
         self, mock_repo: mock.MagicMock, mock_iter_commits: mock.MagicMock
     ):
         self.git_options.fetch = True
+        self.git_options.is_remote = False
         self.git_options.branch = "not-found"
         self.global_options.entropy = True
         mock_foo = mock.MagicMock()
@@ -280,10 +355,31 @@ class ChunkGeneratorTests(ScannerTestCase):
 
     @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
     @mock.patch("git.Repo")
+    def test_scan_single_remote_branch_throws_exception_when_branch_not_found(
+        self, mock_repo: mock.MagicMock, mock_iter_commits: mock.MagicMock
+    ):
+        self.git_options.is_remote = True
+        self.git_options.branch = "not-found"
+        self.global_options.entropy = True
+        mock_foo = mock.MagicMock()
+        mock_foo.name = "foo"
+        mock_bar = mock.MagicMock()
+        mock_bar.name = "bar"
+        mock_repo.return_value.remotes.origin.refs = [mock_foo, mock_bar]
+
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        mock_iter_commits.return_value = []
+        self.assertRaises(types.BranchNotFoundException, test_scanner.scan)
+
+    @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
+    @mock.patch("git.Repo")
     def test_scan_single_branch_fetch_true(
         self, mock_repo: mock.MagicMock, mock_iter_commits: mock.MagicMock
     ):
         self.git_options.fetch = True
+        self.git_options.is_remote = False
         self.git_options.branch = "bar"
         mock_foo = mock.MagicMock()
         mock_foo.name = "foo"
@@ -312,6 +408,7 @@ class ChunkGeneratorTests(ScannerTestCase):
         mock_iter_commits: mock.MagicMock,
     ):
         self.git_options.fetch = True
+        self.git_options.is_remote = False
         mock_repo.return_value.remotes.origin.fetch.return_value = ["foo"]
         mock_repo.return_value.branches = ["foo"]
         test_scanner = scanner.GitRepoScanner(
@@ -354,6 +451,7 @@ class ChunkGeneratorTests(ScannerTestCase):
         mock_iter_commits: mock.MagicMock,
     ):
         self.git_options.fetch = True
+        self.git_options.is_remote = False
         mock_repo.return_value.remotes.origin.fetch.return_value = ["foo"]
         mock_repo.return_value.branches = ["foo"]
         test_scanner = scanner.GitRepoScanner(
