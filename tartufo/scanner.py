@@ -561,7 +561,7 @@ class GitScanner(ScannerBase, abc.ABC):
             b_file_pos = diff.index("\n+++")
             return diff.index("\n", b_file_pos + 4) + 1
         except ValueError:
-            # If no separator, diff is header only (pure rename)
+            # Diff is pure header as it is a pure rename(similarity index 100%)
             return len(diff)
 
     def filter_submodules(self, repo: pygit2.Repository) -> None:
