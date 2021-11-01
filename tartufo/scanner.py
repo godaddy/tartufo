@@ -542,30 +542,23 @@ class GitScanner(ScannerBase, abc.ABC):
             if delta.is_binary:
                 self.logger.debug("Binary file skipped: %s", file_path)
                 continue
-            delta_patch_status = delta.status
-            if delta_patch_status == pygit2.GIT_DELTA_DELETED:
+            if delta.status == pygit2.GIT_DELTA_DELETED:
                 self.logger.debug("Skipping as the file is deleted")
                 continue
             printable_diff: str = patch.text
-            lines_to_truncate = self.header_line_count(printable_diff)
-            printable_diff = (
-                printable_diff.split("\n", lines_to_truncate)[lines_to_truncate]
-                if lines_to_truncate > 0
-                else ""
-            )
+            header_length = GitScanner.header_length(printable_diff)
+            printable_diff = printable_diff[header_length:]
             if self.should_scan(file_path):
                 # The `printable_diff` contains the full 4-line diff header,
                 # so we need to strip that before analyzing it
                 yield printable_diff, file_path
 
-    def header_line_count(self, diff: str) -> int:
-        """Computes the git diff header length"""
-        lines_to_remove: int = 0
-        for line_no, data in enumerate(diff.split("\n")):
-            if data.startswith("+++"):
-                lines_to_remove = line_no + 1
-                break
-        return lines_to_remove
+    @staticmethod
+    def header_length(diff: str) -> int:
+        """Compute the length of the git diff header text"""
+        b_file_pos = diff.find("+++")
+        final_nl = diff.find("\n", b_file_pos)
+        return final_nl + 1
 
     def filter_submodules(self, repo: pygit2.Repository) -> None:
         """Exclude all git submodules and their contents from being scanned."""

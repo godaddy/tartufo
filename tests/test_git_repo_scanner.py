@@ -345,8 +345,8 @@ class IterDiffIndexTests(ScannerTestCase):
 
     @mock.patch("pygit2.Repository", new=mock.MagicMock())
     @mock.patch(
-        "tartufo.scanner.GitScanner.header_line_count",
-        mock.MagicMock(side_effect=[4, 4, 0]),
+        "tartufo.scanner.GitScanner.header_length",
+        mock.MagicMock(side_effect=[52, 52, 0]),
     )
     @mock.patch("tartufo.scanner.ScannerBase.should_scan")
     def test_all_files_are_yielded(self, mock_should: mock.MagicMock):
@@ -388,23 +388,23 @@ class HeaderLineCountTests(ScannerTestCase):
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
-        actual_diff_header_length = test_scanner.header_line_count(diff)
-        self.assertEqual(4, actual_diff_header_length)
+        actual_diff_header_length = test_scanner.header_length(diff)
+        self.assertEqual(52, actual_diff_header_length)
 
     def test_detects_there_are_five_header_lines(self):
         diff = "meta_line_1\nmeta_line_2\nmeta_line_3\nmeta_line_4\n+++ meta_line_4\n+ Ford Prefect"
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
-        actual_diff_header_length = test_scanner.header_line_count(diff)
-        self.assertEqual(5, actual_diff_header_length)
+        actual_diff_header_length = test_scanner.header_length(diff)
+        self.assertEqual(64, actual_diff_header_length)
 
     def test_returns_zero_when_no_header_match(self):
         diff = "meta_line_1\nmeta_line_2\nmeta_line_3\nmeta_line_4\nmeta_line_4\n+ Ford Prefect"
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
-        actual_diff_header_length = test_scanner.header_line_count(diff)
+        actual_diff_header_length = test_scanner.header_length(diff)
         self.assertEqual(0, actual_diff_header_length)
 
 
