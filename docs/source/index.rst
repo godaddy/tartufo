@@ -50,7 +50,7 @@ Getting started is easy!
       $ tartufo scan-remote-repo git@github.com:my_user/my_repo.git
 
       # Or, scan a local clone of a repo!
-      $ tartufo scan-local-repo /path/to/your/git/repo
+      $ tartufo scan-local-repo --no-fetch /path/to/your/git/repo
 
    .. code-block:: console
 
@@ -58,7 +58,7 @@ Getting started is easy!
       $ docker run --rm godaddy/tartufo scan-remote-repo https://github.com/my_user/my_repo.git
 
       # Mount a local clone of a repo and scan it using docker!
-      $ docker run --rm -v "/path/to/your/git/repo:/git" godaddy/tartufo scan-local-repo /git
+      $ docker run --rm -v "/path/to/your/git/repo:/git" godaddy/tartufo scan-local-repo --no-fetch /git
 
    For more detail on usage and options, see :doc:`usage` and :doc:`features`.
 
