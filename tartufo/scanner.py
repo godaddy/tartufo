@@ -546,7 +546,7 @@ class GitScanner(ScannerBase, abc.ABC):
                 self.logger.debug("Skipping as the file is deleted")
                 continue
             printable_diff: str = patch.text
-            # The `printable_diff` contains the full 4-line diff header,
+            # The `printable_diff` contains diff header,
             # so we need to strip that before analyzing it
             header_length = GitScanner.header_length(printable_diff)
             printable_diff = printable_diff[header_length:]
