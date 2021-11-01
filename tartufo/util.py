@@ -16,6 +16,7 @@ from typing import (
     Iterable,
     List,
     Optional,
+    Tuple,
     TYPE_CHECKING,
     Pattern,
 )
@@ -137,11 +138,12 @@ def write_outputs(found_issues: List["Issue"], output_dir: pathlib.Path) -> List
 
 def clone_git_repo(
     git_url: str, target_dir: Optional[pathlib.Path] = None
-) -> pathlib.Path:
+) -> Tuple[pathlib.Path, str]:
     """Clone a remote git repository and return its filesystem path.
 
     :param git_url: The URL of the git repository to be cloned
     :param target_dir: Where to clone the repository to
+    :returns: Filesystem path of local clone and name of remote source
     :raises types.GitRemoteException: If there was an error cloning the repository
     """
     if not target_dir:
@@ -150,10 +152,11 @@ def clone_git_repo(
         project_path = str(target_dir)
 
     try:
-        git.Repo.clone_from(git_url, project_path)
+        repo = git.Repo.clone_from(git_url, project_path)
+        origin = repo.remotes[0].name
     except git.GitCommandError as exc:
         raise types.GitRemoteException(exc.stderr.strip()) from exc
-    return pathlib.Path(project_path)
+    return pathlib.Path(project_path), origin
 
 
 style_ok = partial(click.style, fg="bright_green")  # pylint: disable=invalid-name
