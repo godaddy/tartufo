@@ -30,14 +30,14 @@ class ScanRemoteRepoTests(unittest.TestCase):
     def test_cloned_path_is_scanned(
         self, mock_scanner: mock.MagicMock, mock_clone: mock.MagicMock
     ):
-        mock_clone.return_value = (Path("/foo"), "origin")
         mock_scanner.return_value.scan.return_value = []
         runner = CliRunner()
-        with runner.isolated_filesystem():
+        with runner.isolated_filesystem() as dirname:
+            mock_clone.return_value = (Path(dirname), "origin")
             runner.invoke(
                 cli.main, ["scan-remote-repo", "git@github.com:godaddy/tartufo.git"]
             )
-        self.assertEqual(mock_scanner.call_args[0][2], "/foo")
+        self.assertEqual(mock_scanner.call_args[0][2], dirname)
 
     @mock.patch("tartufo.commands.scan_remote_repo.util.clone_git_repo")
     @mock.patch("tartufo.commands.scan_remote_repo.GitRepoScanner")
