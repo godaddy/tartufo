@@ -23,14 +23,14 @@ Scanning a Local Repository
 
 .. code-block:: sh
 
-   $ tartufo scan-local-repo /path/to/my/repo
+   $ tartufo scan-local-repo --no-fetch /path/to/my/repo
 
 To use ``docker``, mount the local clone to the ``/git`` folder in the docker
 image:
 
 .. code-block:: sh
 
-   $ docker run --rm -v "/path/to/my/repo:/git" godaddy/tartufo scan-local-repo /git
+   $ docker run --rm -v "/path/to/my/repo:/git" godaddy/tartufo scan-local-repo --no-fetch /git
 
 .. note::
 
@@ -95,7 +95,7 @@ Using Docker for Linux, that will look something like this:
 
     $ docker run --rm -v "/path/to/my/repo:/git" \
       -v $SSH_AUTH_SOCK:/agent -e SSH_AUTH_SOCK=/agent \
-      godaddy/tartufo scan-local-repo /git
+      godaddy/tartufo scan-local-repo --no-fetch /git
 
 
 When using Docker Desktop for Mac, use ``/run/host-services/ssh-auth.sock`` as
@@ -414,7 +414,7 @@ in the config file:
    > tartufo \
      --include-path-patterns 'src/' -ip 'gradle/' \
      --exclude-path-patterns '(.*/)?\.classpath$' -xp '.*\.jmx$' \
-     scan-local-repo file://path/to/my/repo.git
+     scan-local-repo --no-fetch file://path/to/my/repo.git
 
 
 Additional usage information is provided when calling ``tartufo`` with the
