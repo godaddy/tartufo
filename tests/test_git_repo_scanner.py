@@ -399,13 +399,13 @@ class HeaderLineCountTests(ScannerTestCase):
         actual_diff_header_length = test_scanner.header_length(diff)
         self.assertEqual(64, actual_diff_header_length)
 
-    def test_returns_zero_when_no_header_match(self):
+    def test_returns_entire_header_length_when_no_header_match(self):
         diff = "meta_line_1\nmeta_line_2\nmeta_line_3\nmeta_line_4\nmeta_line_4\n+ Ford Prefect"
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
         actual_diff_header_length = test_scanner.header_length(diff)
-        self.assertEqual(0, actual_diff_header_length)
+        self.assertEqual(len(diff), actual_diff_header_length)
 
 
 if __name__ == "__main__":

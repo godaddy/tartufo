@@ -546,19 +546,23 @@ class GitScanner(ScannerBase, abc.ABC):
                 self.logger.debug("Skipping as the file is deleted")
                 continue
             printable_diff: str = patch.text
+            # The `printable_diff` contains the full 4-line diff header,
+            # so we need to strip that before analyzing it
             header_length = GitScanner.header_length(printable_diff)
             printable_diff = printable_diff[header_length:]
             if self.should_scan(file_path):
-                # The `printable_diff` contains the full 4-line diff header,
-                # so we need to strip that before analyzing it
                 yield printable_diff, file_path
 
     @staticmethod
     def header_length(diff: str) -> int:
         """Compute the length of the git diff header text"""
-        b_file_pos = diff.find("+++")
-        final_nl = diff.find("\n", b_file_pos)
-        return final_nl + 1
+        try:
+            # Header ends after newline following line starting with "+++"
+            b_file_pos = diff.index("\n+++")
+            return diff.index("\n", b_file_pos + 4) + 1
+        except ValueError:
+            # If no separator, diff is header only (pure rename)
+            return len(diff)
 
     def filter_submodules(self, repo: pygit2.Repository) -> None:
         """Exclude all git submodules and their contents from being scanned."""
