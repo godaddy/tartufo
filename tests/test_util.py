@@ -37,12 +37,22 @@ class GitTests(unittest.TestCase):
             "https://github.com/godaddy/tartufo.git", "/foo"
         )
 
-    @mock.patch("git.Repo.clone_from", new=mock.MagicMock())
+    @mock.patch("git.Repo.clone_from")
     @mock.patch("tartufo.util.tempfile.mkdtemp")
-    def test_clone_git_repo_returns_path_to_clone(self, mock_mkdtemp: mock.MagicMock):
+    def test_clone_git_repo_returns_path_to_clone(
+        self, mock_mkdtemp: mock.MagicMock, mock_clone: mock.MagicMock
+    ):
+        mock_remote = mock.MagicMock()
+        mock_remote.name = "origin"
+        mock_repo = mock.MagicMock()
+        mock_repo.remotes = [mock_remote]
+        mock_clone.return_value = mock_repo
         mock_mkdtemp.return_value = "/foo"
-        repo_path = util.clone_git_repo("https://github.com/godaddy/tartufo.git")
+        repo_path, repo_origin = util.clone_git_repo(
+            "https://github.com/godaddy/tartufo.git"
+        )
         self.assertEqual(repo_path, Path("/foo"))
+        self.assertEqual(repo_origin, "origin")
 
     @mock.patch("git.Repo.clone_from")
     @mock.patch("tartufo.util.tempfile.mkdtemp")

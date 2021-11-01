@@ -56,7 +56,7 @@ def main(
     git_options = types.GitOptions(
         since_commit=since_commit,
         max_depth=max_depth,
-        branch=branch,
+        branch=None,
         include_submodules=include_submodules,
     )
     repo_path: Optional[Path] = None
@@ -68,7 +68,9 @@ def main(
         repo_path.mkdir(parents=True)
     scanner = None
     try:
-        repo_path = util.clone_git_repo(git_url, repo_path)
+        repo_path, origin = util.clone_git_repo(git_url, repo_path)
+        if branch:
+            git_options.branch = f"{origin}/{branch}"
         scanner = GitRepoScanner(options, git_options, str(repo_path))
         util.process_issues(git_url, scanner, options)
     except types.GitException as exc:
