@@ -82,6 +82,13 @@ class TartufoCLI(click.MultiCommand):
     help="Enable high signal regexes checks.",
 )
 @click.option(
+    "--scan-filename/--no-scan-filename",
+    is_flag=True,
+    default=False,
+    show_default="--no-scan-filename",
+    help="Enable filename checks.",
+)
+@click.option(
     "-i",
     "--include-paths",
     type=click.File("r"),

@@ -249,9 +249,18 @@ class ChunkGeneratorTests(ScannerTestCase):
         )
         mock_iter_diff.assert_has_calls(
             (
-                mock.call(mock_repo.return_value.diff(mock_commit_3, mock_commit_2)),
-                mock.call(mock_repo.return_value.diff(mock_commit_2, mock_commit_1)),
-                mock.call(mock_repo.return_value.revparse_single().tree.diff_to_tree()),
+                mock.call(
+                    mock_repo.return_value.diff(mock_commit_3, mock_commit_2),
+                    self.global_options.scan_filename,
+                ),
+                mock.call(
+                    mock_repo.return_value.diff(mock_commit_2, mock_commit_1),
+                    self.global_options.scan_filename,
+                ),
+                mock.call(
+                    mock_repo.return_value.revparse_single().tree.diff_to_tree(),
+                    self.global_options.scan_filename,
+                ),
             )
         )
 
@@ -301,7 +310,11 @@ class IterDiffIndexTests(ScannerTestCase):
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
-        diffs = list(test_scanner._iter_diff_index([mock_diff]))
+        diffs = list(
+            test_scanner._iter_diff_index(
+                [mock_diff], self.global_options.scan_filename
+            )
+        )
         self.assertEqual(diffs, [])
 
     @mock.patch("pygit2.Repository", new=mock.MagicMock())
@@ -313,7 +326,11 @@ class IterDiffIndexTests(ScannerTestCase):
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
-        diffs = list(test_scanner._iter_diff_index([mock_diff]))
+        diffs = list(
+            test_scanner._iter_diff_index(
+                [mock_diff], self.global_options.scan_filename
+            )
+        )
         self.assertEqual(diffs, [])
         mock_should.assert_called_once()
 
@@ -346,7 +363,11 @@ class IterDiffIndexTests(ScannerTestCase):
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
-        diffs = list(test_scanner._iter_diff_index([mock_diff_1, mock_diff_2]))
+        diffs = list(
+            test_scanner._iter_diff_index(
+                [mock_diff_1, mock_diff_2], self.global_options.scan_filename
+            )
+        )
         self.assertEqual(
             diffs,
             [

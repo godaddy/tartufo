@@ -520,7 +520,7 @@ class GitScanner(ScannerBase, abc.ABC):
         self._repo = self.load_repo(self.repo_path)
 
     def _iter_diff_index(
-        self, diff: pygit2.Diff
+        self, diff: pygit2.Diff, scan_filenames: bool
     ) -> Generator[Tuple[str, str], None, None]:
         """Iterate over a "diff index", yielding the individual file changes.
 
@@ -546,11 +546,12 @@ class GitScanner(ScannerBase, abc.ABC):
                 self.logger.debug("Skipping as the file is deleted")
                 continue
             printable_diff: str = patch.text
-            # The `printable_diff` contains diff header,
-            # so we need to strip that before analyzing it
             header_length = GitScanner.header_length(printable_diff)
-            printable_diff = printable_diff[header_length:]
+            if not scan_filenames:
+                printable_diff = printable_diff[header_length:]
             if self.should_scan(file_path):
+                # The `printable_diff` contains the variable length diff header,
+                # so we need to strip that before analyzing it
                 yield printable_diff, file_path
 
     @staticmethod
@@ -589,7 +590,6 @@ class GitScanner(ScannerBase, abc.ABC):
 
 
 class GitRepoScanner(GitScanner):
-
     git_options: types.GitOptions
 
     def __init__(
@@ -660,7 +660,6 @@ class GitRepoScanner(GitScanner):
         :raises types.GitRemoteException: If there was an error fetching branches
         """
         already_searched: Set[bytes] = set()
-
         try:
             if self.git_options.branch:
                 # Single branch only
@@ -708,7 +707,9 @@ class GitRepoScanner(GitScanner):
                     continue
                 already_searched.add(diff_hash)
                 diff.find_similar()
-                for blob, file_path in self._iter_diff_index(diff):
+                for blob, file_path in self._iter_diff_index(
+                    diff, self.global_options.scan_filename
+                ):
                     yield types.Chunk(
                         blob,
                         file_path,
@@ -719,7 +720,9 @@ class GitRepoScanner(GitScanner):
             if curr_commit:
                 tree: pygit2.Tree = self._repo.revparse_single(curr_commit.hex).tree
                 tree_diff: pygit2.Diff = tree.diff_to_tree(swap=True)
-                iter_diff = self._iter_diff_index(tree_diff)
+                iter_diff = self._iter_diff_index(
+                    tree_diff, self.global_options.scan_filename
+                )
                 for blob, file_path in iter_diff:
                     yield types.Chunk(
                         blob,
@@ -753,7 +756,9 @@ class GitPreCommitScanner(GitScanner):
         :rtype: Generator[Chunk, None, None]
         """
         diff_index = self._repo.diff("HEAD")
-        for blob, file_path in self._iter_diff_index(diff_index):
+        for blob, file_path in self._iter_diff_index(
+            diff_index, self.global_options.scan_filename
+        ):
             yield types.Chunk(blob, file_path, {})
 
 
