@@ -12,7 +12,7 @@ class GlobalOptions:
         "default_regexes",
         "entropy",
         "regex",
-        "scan_filename",
+        "scan_filenames",
         "include_paths",
         "include_path_patterns",
         "exclude_paths",
@@ -35,7 +35,7 @@ class GlobalOptions:
     default_regexes: bool
     entropy: bool
     regex: bool
-    scan_filename: bool
+    scan_filenames: bool
     include_paths: Optional[TextIO]
     include_path_patterns: Tuple[str, ...]
     exclude_paths: Optional[TextIO]

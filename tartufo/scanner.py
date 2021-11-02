@@ -520,7 +520,7 @@ class GitScanner(ScannerBase, abc.ABC):
         self._repo = self.load_repo(self.repo_path)
 
     def _iter_diff_index(
-        self, diff: pygit2.Diff, scan_filenames: bool
+        self, diff: pygit2.Diff, scan_filename: bool
     ) -> Generator[Tuple[str, str], None, None]:
         """Iterate over a "diff index", yielding the individual file changes.
 
@@ -546,8 +546,8 @@ class GitScanner(ScannerBase, abc.ABC):
                 self.logger.debug("Skipping as the file is deleted")
                 continue
             printable_diff: str = patch.text
-            header_length = GitScanner.header_length(printable_diff)
-            if not scan_filenames:
+            if not scan_filename:
+                header_length = GitScanner.header_length(printable_diff)
                 printable_diff = printable_diff[header_length:]
             if self.should_scan(file_path):
                 # The `printable_diff` contains the variable length diff header,
@@ -708,7 +708,7 @@ class GitRepoScanner(GitScanner):
                 already_searched.add(diff_hash)
                 diff.find_similar()
                 for blob, file_path in self._iter_diff_index(
-                    diff, self.global_options.scan_filename
+                    diff, self.global_options.scan_filenames
                 ):
                     yield types.Chunk(
                         blob,
@@ -721,7 +721,7 @@ class GitRepoScanner(GitScanner):
                 tree: pygit2.Tree = self._repo.revparse_single(curr_commit.hex).tree
                 tree_diff: pygit2.Diff = tree.diff_to_tree(swap=True)
                 iter_diff = self._iter_diff_index(
-                    tree_diff, self.global_options.scan_filename
+                    tree_diff, self.global_options.scan_filenames
                 )
                 for blob, file_path in iter_diff:
                     yield types.Chunk(
@@ -757,7 +757,7 @@ class GitPreCommitScanner(GitScanner):
         """
         diff_index = self._repo.diff("HEAD")
         for blob, file_path in self._iter_diff_index(
-            diff_index, self.global_options.scan_filename
+            diff_index, self.global_options.scan_filenames
         ):
             yield types.Chunk(blob, file_path, {})
 

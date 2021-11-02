@@ -251,15 +251,15 @@ class ChunkGeneratorTests(ScannerTestCase):
             (
                 mock.call(
                     mock_repo.return_value.diff(mock_commit_3, mock_commit_2),
-                    self.global_options.scan_filename,
+                    self.global_options.scan_filenames,
                 ),
                 mock.call(
                     mock_repo.return_value.diff(mock_commit_2, mock_commit_1),
-                    self.global_options.scan_filename,
+                    self.global_options.scan_filenames,
                 ),
                 mock.call(
                     mock_repo.return_value.revparse_single().tree.diff_to_tree(),
-                    self.global_options.scan_filename,
+                    self.global_options.scan_filenames,
                 ),
             )
         )
@@ -312,7 +312,7 @@ class IterDiffIndexTests(ScannerTestCase):
         )
         diffs = list(
             test_scanner._iter_diff_index(
-                [mock_diff], self.global_options.scan_filename
+                [mock_diff], self.global_options.scan_filenames
             )
         )
         self.assertEqual(diffs, [])
@@ -328,7 +328,7 @@ class IterDiffIndexTests(ScannerTestCase):
         )
         diffs = list(
             test_scanner._iter_diff_index(
-                [mock_diff], self.global_options.scan_filename
+                [mock_diff], self.global_options.scan_filenames
             )
         )
         self.assertEqual(diffs, [])
@@ -365,7 +365,7 @@ class IterDiffIndexTests(ScannerTestCase):
         )
         diffs = list(
             test_scanner._iter_diff_index(
-                [mock_diff_1, mock_diff_2], self.global_options.scan_filename
+                [mock_diff_1, mock_diff_2], self.global_options.scan_filenames
             )
         )
         self.assertEqual(
@@ -401,6 +401,42 @@ class HeaderLineCountTests(ScannerTestCase):
         )
         actual_diff_header_length = test_scanner.header_length(diff)
         self.assertEqual(len(diff), actual_diff_header_length)
+
+
+class ScanFilenameTests(ScannerTestCase):
+    @mock.patch("tartufo.scanner.GitScanner.header_length")
+    def test_scan_filename_disabled(self, mock_header_length):
+        mock_diff = mock.MagicMock()
+        mock_diff.delta.is_binary = False
+        mock_diff.text = "meta_line_1\nmeta_line_2\nmeta_line_3\nmeta_line_4\nmeta_line_4\n+ Ford Prefect"
+        self.global_options.scan_filenames = False
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+
+        for _ in test_scanner._iter_diff_index(
+            [mock_diff], self.global_options.scan_filenames
+        ):
+            pass
+
+        mock_header_length.assert_called_once_with(mock_diff.text)
+
+    @mock.patch("tartufo.scanner.GitScanner.header_length")
+    def test_scan_filename_enabled(self, mock_header_length):
+        mock_diff = mock.MagicMock()
+        mock_diff.delta.is_binary = False
+        mock_diff.text = "meta_line_1\nmeta_line_2\nmeta_line_3\nmeta_line_4\nmeta_line_4\n+ Ford Prefect"
+        self.global_options.scan_filenames = True
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+
+        for _ in test_scanner._iter_diff_index(
+            [mock_diff], self.global_options.scan_filenames
+        ):
+            pass
+
+        mock_header_length.assert_not_called()
 
 
 if __name__ == "__main__":
