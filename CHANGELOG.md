@@ -1,4 +1,4 @@
-vx.y.z - TBD
+v2.9.1 - 3 November 2021
 ------------
 
 Bug fixes:
@@ -8,6 +8,14 @@ Bug fixes:
   v2.7.0 failed silently (not scanning the branch, and returning no error).
   Versions v2.8.0 and later claimed the branch did not exist, even if it did.
   This option now works correctly.
+
+Features:
+
+* [#231](https://github.com/godaddy/tartufo/issues/231) Change toml parsing library to use tomlkit
+
+Other changes:
+
+* [#251](https://github.com/godaddy/tartufo/issues/251) Document update to use --no-fetch flag to all scan-local-repo
 
 v2.9.0 - 19 October 2021
 ------------------------
