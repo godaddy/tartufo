@@ -54,12 +54,20 @@ class GlobalOptions:
 
 @dataclass
 class GitOptions:
-    __slots__ = ("since_commit", "max_depth", "branch", "fetch", "include_submodules")
+    __slots__ = (
+        "since_commit",
+        "max_depth",
+        "branch",
+        "fetch",
+        "include_submodules",
+        "is_remote",
+    )
     since_commit: Optional[str]
     max_depth: int
     branch: Optional[str]
     fetch: bool
     include_submodules: bool
+    is_remote: bool
 
 
 class IssueType(enum.Enum):

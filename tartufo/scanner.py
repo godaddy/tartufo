@@ -632,24 +632,47 @@ class GitRepoScanner(GitScanner):
         already_searched: Set[bytes] = set()
 
         try:
-            if self.git_options.branch:
-                # Single branch only
-                if self.git_options.fetch:
-                    self._repo.remotes.origin.fetch(self.git_options.branch)
-                unfiltered_branches = list(self._repo.branches)
-                branches = [
-                    x for x in unfiltered_branches if x.name == self.git_options.branch
-                ]
+            if self.git_options.is_remote:
+                # Remote repository - local directory does not have branch info
+                # and we must follow remote references
+                unfiltered_branches = list(self._repo.remotes.origin.refs)
+                if self.git_options.branch:
+                    # Single branch only
+                    branches = [
+                        x
+                        for x in unfiltered_branches
+                        if x.name == f"origin/{self.git_options.branch}"
+                    ]
 
-                if len(branches) == 0:
-                    raise BranchNotFoundException(
-                        f"Branch {self.git_options.branch} was not found."
-                    )
+                    if len(branches) == 0:
+                        raise BranchNotFoundException(
+                            f"Branch {self.git_options.branch} was not found."
+                        )
+                else:
+                    # Everything
+                    branches = unfiltered_branches
             else:
-                # Everything
-                if self.git_options.fetch:
-                    self._repo.remotes.origin.fetch()
-                branches = list(self._repo.branches)
+                # Local repository
+                if self.git_options.branch:
+                    # Single branch only
+                    if self.git_options.fetch:
+                        self._repo.remotes.origin.fetch(self.git_options.branch)
+                    unfiltered_branches = list(self._repo.branches)
+                    branches = [
+                        x
+                        for x in unfiltered_branches
+                        if x.name == self.git_options.branch
+                    ]
+
+                    if len(branches) == 0:
+                        raise BranchNotFoundException(
+                            f"Branch {self.git_options.branch} was not found."
+                        )
+                else:
+                    # Everything
+                    if self.git_options.fetch:
+                        self._repo.remotes.origin.fetch()
+                    branches = list(self._repo.branches)
         except git.GitCommandError as exc:
             raise types.GitRemoteException(exc.stderr.strip()) from exc
 

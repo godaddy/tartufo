@@ -52,6 +52,7 @@ def main(
         branch=branch,
         fetch=fetch,
         include_submodules=include_submodules,
+        is_remote=False,
     )
     scanner = None
     try:

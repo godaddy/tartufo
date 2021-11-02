@@ -59,6 +59,7 @@ def main(
         branch=branch,
         fetch=False,
         include_submodules=include_submodules,
+        is_remote=True,
     )
     repo_path: Optional[Path] = None
     if work_dir:
