@@ -241,7 +241,7 @@ Congratulations, you've just issued a new release for `tartufo`. The automation 
 - [GitHub Pull Request documentation](https://help.github.com/send-pull-requests/)
 
 [black]: https://github.com/psf/black
-[black-editors]: https://github.com/psf/black#editor-integration
+[black-editors]: https://black.readthedocs.io/en/stable/integrations/editors.html
 [bump the version]: https://python-poetry.org/docs/cli/#version
 [issues]: https://github.com/godaddy/tartufo/issues
 [Install Poetry]: https://python-poetry.org/docs/#installation
