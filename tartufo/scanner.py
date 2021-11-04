@@ -590,6 +590,7 @@ class GitScanner(ScannerBase, abc.ABC):
 
 
 class GitRepoScanner(GitScanner):
+
     git_options: types.GitOptions
 
     def __init__(
@@ -660,6 +661,7 @@ class GitRepoScanner(GitScanner):
         :raises types.GitRemoteException: If there was an error fetching branches
         """
         already_searched: Set[bytes] = set()
+
         try:
             if self.git_options.branch:
                 # Single branch only
