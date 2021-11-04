@@ -1,6 +1,11 @@
 vx.x.x - TBD
 ------------
 
+Bug fixes:
+
+* [#247](https://github.com/godaddy/tartufo/issues/247) - The `--branch` qualifier
+  now works again when using `scan-remote-repo`.
+
 Features:
 
 * [#227](https://github.com/godaddy/tartufo/pull/227) - Report findings incrementally

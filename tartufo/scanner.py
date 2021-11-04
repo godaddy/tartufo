@@ -534,7 +534,6 @@ class GitScanner(ScannerBase, abc.ABC):
 
         :param diff_index: The diff index / commit to be iterated over
         """
-
         for patch in diff:
             delta: pygit2.DiffDelta = patch.delta
             file_path = (
@@ -543,11 +542,27 @@ class GitScanner(ScannerBase, abc.ABC):
             if delta.is_binary:
                 self.logger.debug("Binary file skipped: %s", file_path)
                 continue
+            if delta.status == pygit2.GIT_DELTA_DELETED:
+                self.logger.debug("Skipping as the file is deleted")
+                continue
             printable_diff: str = patch.text
+            # The `printable_diff` contains diff header,
+            # so we need to strip that before analyzing it
+            header_length = GitScanner.header_length(printable_diff)
+            printable_diff = printable_diff[header_length:]
             if self.should_scan(file_path):
-                # The `printable_diff` contains the full 4-line diff header,
-                # so we need to strip that before analyzing it
-                yield printable_diff.split("\n", 4)[4], file_path
+                yield printable_diff, file_path
+
+    @staticmethod
+    def header_length(diff: str) -> int:
+        """Compute the length of the git diff header text"""
+        try:
+            # Header ends after newline following line starting with "+++"
+            b_file_pos = diff.index("\n+++")
+            return diff.index("\n", b_file_pos + 4) + 1
+        except ValueError:
+            # Diff is pure header as it is a pure rename(similarity index 100%)
+            return len(diff)
 
     def filter_submodules(self, repo: pygit2.Repository) -> None:
         """Exclude all git submodules and their contents from being scanned."""
@@ -692,6 +707,7 @@ class GitRepoScanner(GitScanner):
                 if diff_hash in already_searched:
                     continue
                 already_searched.add(diff_hash)
+                diff.find_similar()
                 for blob, file_path in self._iter_diff_index(diff):
                     yield types.Chunk(
                         blob,
@@ -702,7 +718,7 @@ class GitRepoScanner(GitScanner):
             # Finally, yield the first commit to the branch
             if curr_commit:
                 tree: pygit2.Tree = self._repo.revparse_single(curr_commit.hex).tree
-                tree_diff: pygit2.Diff = tree.diff_to_tree()
+                tree_diff: pygit2.Diff = tree.diff_to_tree(swap=True)
                 iter_diff = self._iter_diff_index(tree_diff)
                 for blob, file_path in iter_diff:
                     yield types.Chunk(
