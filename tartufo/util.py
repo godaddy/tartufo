@@ -71,7 +71,7 @@ def echo_result(
     """
 
     now = datetime.now().isoformat("T", "microseconds")
-    if options.json:
+    if options.output_format == "json":
         output = {
             "scan_time": now,
             "project_path": repo_path,
@@ -97,11 +97,11 @@ def echo_result(
         click.echo(f'{static_part[:-1]}, "found_issues": [', nl=False)
         delimiter = ""
         for issue in scanner.scan():
-            live_part = json.dumps(issue.as_dict(compact=options.compact))
+            live_part = json.dumps(issue.as_dict(output_format=options.output_format))
             click.echo(f"{delimiter}{live_part}", nl=False)
             delimiter = ", "
         click.echo("]}")
-    elif options.compact:
+    elif options.output_format == "compact":
         for issue in scanner.scan():
             click.echo(
                 f"[{issue.issue_type.value}] {issue.chunk.file_path}: {issue.matched_string} "
@@ -261,5 +261,5 @@ def process_issues(
     echo_result(options, scan, repo_path, output_dir)
     if output_dir:
         write_outputs(scan.issues, output_dir)
-        if not options.json:
+        if options.output_format != "json":
             click.echo(f"Results have been saved in {output_dir}")

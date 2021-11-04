@@ -14,6 +14,8 @@ Features:
   thanks to @dclayton-godaddy for showing the way.
 * [#244](https://github.com/godaddy/tartufo/pull/244) - Drops support for 
   `--fetch/--no-fetch` option for local scans
+* [#253](https://github.com/godaddy/tartufo/issues/253) - Drops support for `--json` and `--compact`
+  and consolidates the two options into one `---output-format json/compact/text`
 
 v2.9.0 - 19 October 2021
 ------------------------

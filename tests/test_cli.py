@@ -155,7 +155,15 @@ class ProcessIssuesTest(unittest.TestCase):
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(
-                cli.main, ["--output-dir", "./foo", "--json", "scan-local-repo", "."]
+                cli.main,
+                [
+                    "--output-dir",
+                    "./foo",
+                    "--output-format",
+                    "json",
+                    "scan-local-repo",
+                    ".",
+                ],
             )
         # All other outputs are mocked, so this is ensuring that the
         #   "Results have been saved in ..." message is not output.
@@ -175,7 +183,15 @@ class ProcessIssuesTest(unittest.TestCase):
         runner = CliRunner()
         with runner.isolated_filesystem():
             runner.invoke(
-                cli.main, ["--output-dir", "./foo", "--json", "scan-local-repo", "."]
+                cli.main,
+                [
+                    "--output-dir",
+                    "./foo",
+                    "--output-format",
+                    "json",
+                    "scan-local-repo",
+                    ".",
+                ],
             )
             self.assertTrue(Path("./foo").exists())
 

@@ -68,12 +68,12 @@ class Issue:
         self.chunk = chunk
         self.logger = logging.getLogger(__name__)
 
-    def as_dict(self, compact=False) -> Dict[str, Optional[str]]:
+    def as_dict(self, output_format=None) -> Dict[str, Optional[str]]:
         """Return a dictionary representation of an issue.
 
         This is primarily meant to aid in JSON serialization.
 
-        :compact: True to return a dictionary with fewer fields.
+        :output_format: output_format option if compact to return a dictionary with fewer fields.
         :return: A JSON serializable dictionary representation of this issue
         """
 
@@ -84,7 +84,7 @@ class Issue:
             "issue_type": self.issue_type.value,
             "issue_detail": self.issue_detail,
         }
-        if not compact:
+        if output_format != "compact":
             output.update({"diff": self.chunk.contents, **self.chunk.metadata})
 
         return output

@@ -45,7 +45,6 @@ Usage: tartufo [OPTIONS] COMMAND [ARGS]...
   commit hook.
 
 Options:
-  --json / --no-json              Output in JSON format.
   --rules FILENAME                Path(s) to regex rules json list file(s).
   --default-regexes / --no-default-regexes
                                   Whether to include the default regex list
@@ -53,7 +52,6 @@ Options:
                                   applicable if --rules is also specified.
                                   [default: True]
 
-  --compact / --no-compact        Enable reduced output.  [default: False]
   --entropy / --no-entropy        Enable entropy checks.  [default: True]
   --regex / --no-regex            Enable high signal regexes checks.
                                   [default: False]
@@ -118,6 +116,12 @@ Options:
                                   directory under this one. This will help
                                   with keeping the results of individual runs
                                   of tartufo separated.
+
+  -of, --output-format TEXT       Specify the format in which the output needs
+                                  to be generated `--output-format json/compact/text`.
+                                  Either `json`, `compact` or `text` can be specified.
+                                  If not provided (default) the output will be generated
+                                  in `text` format.
 
   --git-rules-repo TEXT           A file path, or git URL, pointing to a git
                                   repository containing regex rules to be used
