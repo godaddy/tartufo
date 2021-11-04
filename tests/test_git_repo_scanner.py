@@ -251,15 +251,12 @@ class ChunkGeneratorTests(ScannerTestCase):
             (
                 mock.call(
                     mock_repo.return_value.diff(mock_commit_3, mock_commit_2),
-                    self.global_options.scan_filenames,
                 ),
                 mock.call(
                     mock_repo.return_value.diff(mock_commit_2, mock_commit_1),
-                    self.global_options.scan_filenames,
                 ),
                 mock.call(
                     mock_repo.return_value.revparse_single().tree.diff_to_tree(),
-                    self.global_options.scan_filenames,
                 ),
             )
         )
@@ -310,11 +307,7 @@ class IterDiffIndexTests(ScannerTestCase):
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
-        diffs = list(
-            test_scanner._iter_diff_index(
-                [mock_diff], self.global_options.scan_filenames
-            )
-        )
+        diffs = list(test_scanner._iter_diff_index([mock_diff]))
         self.assertEqual(diffs, [])
 
     @mock.patch("pygit2.Repository", new=mock.MagicMock())
@@ -326,11 +319,7 @@ class IterDiffIndexTests(ScannerTestCase):
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
-        diffs = list(
-            test_scanner._iter_diff_index(
-                [mock_diff], self.global_options.scan_filenames
-            )
-        )
+        diffs = list(test_scanner._iter_diff_index([mock_diff]))
         self.assertEqual(diffs, [])
         mock_should.assert_called_once()
 
@@ -363,11 +352,7 @@ class IterDiffIndexTests(ScannerTestCase):
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
-        diffs = list(
-            test_scanner._iter_diff_index(
-                [mock_diff_1, mock_diff_2], self.global_options.scan_filenames
-            )
-        )
+        diffs = list(test_scanner._iter_diff_index([mock_diff_1, mock_diff_2]))
         self.assertEqual(
             diffs,
             [
@@ -414,9 +399,7 @@ class ScanFilenameTests(ScannerTestCase):
             self.global_options, self.git_options, "."
         )
 
-        for _ in test_scanner._iter_diff_index(
-            [mock_diff], self.global_options.scan_filenames
-        ):
+        for _ in test_scanner._iter_diff_index([mock_diff]):
             pass
 
         mock_header_length.assert_called_once_with(mock_diff.text)
@@ -431,9 +414,7 @@ class ScanFilenameTests(ScannerTestCase):
             self.global_options, self.git_options, "."
         )
 
-        for _ in test_scanner._iter_diff_index(
-            [mock_diff], self.global_options.scan_filenames
-        ):
+        for _ in test_scanner._iter_diff_index([mock_diff]):
             pass
 
         mock_header_length.assert_not_called()

@@ -59,7 +59,7 @@ Options:
                                   [default: False]
   --scan-filenames / --no-scan-filenames            
                                   Enable scanning of file names.
-                                  [default: False]
+                                  [default: True]
 
   -i, --include-paths FILENAME    [DEPRECATED] Use `--include-path-patterns`.
                                   File with regular expressions (one per

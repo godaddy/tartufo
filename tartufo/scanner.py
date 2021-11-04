@@ -520,7 +520,7 @@ class GitScanner(ScannerBase, abc.ABC):
         self._repo = self.load_repo(self.repo_path)
 
     def _iter_diff_index(
-        self, diff: pygit2.Diff, scan_filename: bool
+        self, diff: pygit2.Diff
     ) -> Generator[Tuple[str, str], None, None]:
         """Iterate over a "diff index", yielding the individual file changes.
 
@@ -546,12 +546,12 @@ class GitScanner(ScannerBase, abc.ABC):
                 self.logger.debug("Skipping as the file is deleted")
                 continue
             printable_diff: str = patch.text
-            if not scan_filename:
+            if not self.global_options.scan_filenames:
+                # The `printable_diff` contains diff header,
+                # so we need to strip that before analyzing it
                 header_length = GitScanner.header_length(printable_diff)
                 printable_diff = printable_diff[header_length:]
             if self.should_scan(file_path):
-                # The `printable_diff` contains the variable length diff header,
-                # so we need to strip that before analyzing it
                 yield printable_diff, file_path
 
     @staticmethod
@@ -707,9 +707,7 @@ class GitRepoScanner(GitScanner):
                     continue
                 already_searched.add(diff_hash)
                 diff.find_similar()
-                for blob, file_path in self._iter_diff_index(
-                    diff, self.global_options.scan_filenames
-                ):
+                for blob, file_path in self._iter_diff_index(diff):
                     yield types.Chunk(
                         blob,
                         file_path,
@@ -720,9 +718,7 @@ class GitRepoScanner(GitScanner):
             if curr_commit:
                 tree: pygit2.Tree = self._repo.revparse_single(curr_commit.hex).tree
                 tree_diff: pygit2.Diff = tree.diff_to_tree(swap=True)
-                iter_diff = self._iter_diff_index(
-                    tree_diff, self.global_options.scan_filenames
-                )
+                iter_diff = self._iter_diff_index(tree_diff)
                 for blob, file_path in iter_diff:
                     yield types.Chunk(
                         blob,
@@ -756,9 +752,7 @@ class GitPreCommitScanner(GitScanner):
         :rtype: Generator[Chunk, None, None]
         """
         diff_index = self._repo.diff("HEAD")
-        for blob, file_path in self._iter_diff_index(
-            diff_index, self.global_options.scan_filenames
-        ):
+        for blob, file_path in self._iter_diff_index(diff_index):
             yield types.Chunk(blob, file_path, {})
 
 
@@ -803,6 +797,8 @@ class FolderScanner(ScannerBase):
 
                 try:
                     blob = data.decode("utf-8")
+                    if self.global_options.scan_filenames:
+                        blob = str(relative_path) + "\n" + blob
                 except UnicodeDecodeError:
                     # binary file, continue
                     continue

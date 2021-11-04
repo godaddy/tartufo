@@ -85,8 +85,8 @@ class TartufoCLI(click.MultiCommand):
     "--scan-filenames/--no-scan-filenames",
     is_flag=True,
     default=True,
-    show_default="--scan-filenames",
-    help="Enable filename checks.",
+    show_default=True,
+    help="Check the names of files being scanned as well as their contents.",
 )
 @click.option(
     "-i",
