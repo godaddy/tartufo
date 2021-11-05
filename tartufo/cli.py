@@ -69,9 +69,16 @@ class TartufoCLI(click.MultiCommand):
 @click.option(
     "--regex/--no-regex",
     is_flag=True,
-    default=False,
+    default=True,
     show_default=True,
     help="Enable high signal regexes checks.",
+)
+@click.option(
+    "--scan-filenames/--no-scan-filenames",
+    is_flag=True,
+    default=True,
+    show_default=True,
+    help="Check the names of files being scanned as well as their contents.",
 )
 @click.option(
     "-i",
