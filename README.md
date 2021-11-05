@@ -51,12 +51,12 @@ Options:
                                   Whether to include the default regex list
                                   when configuring search patterns. Only
                                   applicable if --rules is also specified.
-                                  [default: True]
+                                  [default: --default-regexes]
 
-  --compact / --no-compact        Enable reduced output.  [default: False]
-  --entropy / --no-entropy        Enable entropy checks.  [default: True]
+  --compact / --no-compact        Enable reduced output.  [default: --no-compact]
+  --entropy / --no-entropy        Enable entropy checks.  [default: --entropy]
   --regex / --no-regex            Enable high signal regexes checks.
-                                  [default: False]
+                                  [default: --no-regex ]
 
   -i, --include-paths FILENAME    [DEPRECATED] Use `--include-path-patterns`.
                                   File with regular expressions (one per
@@ -145,7 +145,7 @@ Options:
 
   --log-timestamps / --no-log-timestamps
                                   Enable or disable timestamps in logging
-                                  messages.  [default: True]
+                                  messages.  [default: log-timestamps]
 
   -b64, --b64-entropy-score FLOAT
                                   Modify the base64 entropy score. If you
@@ -187,4 +187,4 @@ the [truffleHog] project.
 
 [our contributing docs]: https://tartufo.readthedocs.io/en/latest/CONTRIBUTING.html
 [pre-commit]: https://pre-commit.com/
-[truffleHog]: https://github.com/dxa4481/truffleHog
+[trufflehog]: https://github.com/dxa4481/truffleHog
