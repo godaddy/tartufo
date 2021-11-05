@@ -45,7 +45,6 @@ class TartufoCLI(click.MultiCommand):
     name="tartufo",
     context_settings=dict(help_option_names=["-h", "--help"]),
 )
-@click.option("--json/--no-json", help="Output in JSON format.", is_flag=True)
 @click.option(
     "--rules",
     multiple=True,
@@ -59,13 +58,6 @@ class TartufoCLI(click.MultiCommand):
     show_default=True,
     help="Whether to include the default regex list when configuring"
     " search patterns. Only applicable if --rules is also specified.",
-)
-@click.option(
-    "--compact/--no-compact",
-    is_flag=True,
-    default=False,
-    show_default=True,
-    help="Enable reduced output.",
 )
 @click.option(
     "--entropy/--no-entropy",
@@ -128,6 +120,22 @@ class TartufoCLI(click.MultiCommand):
     exclude multiple patterns. If not provided (default), no Git object paths
     are excluded unless effectively excluded via the --include-path-patterns
     option.""",
+)
+@click.option(
+    "-of",
+    "--output-format",
+    type=click.Choice(
+        [
+            types.OutputFormat.Json.value,
+            types.OutputFormat.Compact.value,
+            types.OutputFormat.Text.value,
+        ]
+    ),
+    default="text",
+    help="""Specify the format in which the output needs to be generated
+    `--output-format json/compact/text`. Either `json`, `compact` or `text`
+    can be specified. If not provided (default) the output will be generated
+    in `text` format.""",
 )
 @click.option(
     "-xe",
