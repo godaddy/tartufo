@@ -93,6 +93,12 @@ class LogLevel(enum.IntEnum):
     DEBUG = 3
 
 
+class OutputFormat(enum.Enum):
+    Text = "text"  # pylint: disable=invalid-name
+    Json = "json"  # pylint: disable=invalid-name
+    Compact = "compact"  # pylint: disable=invalid-name
+
+
 class TartufoException(Exception):
     """Base class for all package exceptions"""
 

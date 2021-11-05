@@ -235,7 +235,7 @@ class OutputTests(unittest.TestCase):
         mock_scanner.excluded_paths = []
         options = generate_options(
             GlobalOptions,
-            output_format="json",
+            output_format=types.OutputFormat.Json.value,
             exclude_signatures=[],
             exclude_entropy_patterns=[],
         )
@@ -304,7 +304,7 @@ class OutputTests(unittest.TestCase):
         ]
         options = generate_options(
             GlobalOptions,
-            output_format="json",
+            output_format=types.OutputFormat.Json.value,
             exclude_signatures=exclude_signatures,
             exclude_entropy_patterns=exclude_entropy_patterns,
         )

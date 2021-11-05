@@ -117,9 +117,18 @@ class TartufoCLI(click.MultiCommand):
 @click.option(
     "-of",
     "--output-format",
-    type=click.Choice(["json", "compact", "text"]),
+    type=click.Choice(
+        [
+            types.OutputFormat.Json.value,
+            types.OutputFormat.Compact.value,
+            types.OutputFormat.Text.value,
+        ]
+    ),
     default="text",
-    help="Output can be in json/compact/text format. By default the output will be in text format.",
+    help="""Specify the format in which the output needs to be generated
+    `--output-format json/compact/text`. Either `json`, `compact` or `text`
+    can be specified. If not provided (default) the output will be generated
+    in `text` format.""",
 )
 @click.option(
     "-xe",

@@ -152,7 +152,7 @@ class IssueTests(unittest.TestCase):
             ),
         )
         issue.issue_detail = "issue-detail"
-        actual = issue.as_dict(output_format="compact")
+        actual = issue.as_dict(compact=True)
         self.assertEqual(
             {
                 "file_path": "test-file",
