@@ -14,7 +14,8 @@ Features:
   thanks to @dclayton-godaddy for showing the way.
 * [#244](https://github.com/godaddy/tartufo/pull/244) - Drops support for 
   `--fetch/--no-fetch` option for local scans
-
+* [#254](https://github.com/godaddy/tartufo/pull/260) - Changes the default value of 
+  `--regex/--no-regex` to True.
 v2.9.0 - 19 October 2021
 ------------------------
 

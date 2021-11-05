@@ -77,7 +77,7 @@ class TartufoCLI(click.MultiCommand):
 @click.option(
     "--regex/--no-regex",
     is_flag=True,
-    default=False,
+    default=True,
     show_default=True,
     help="Enable high signal regexes checks.",
 )
