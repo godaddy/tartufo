@@ -661,7 +661,12 @@ class GitRepoScanner(GitScanner):
                     )
             else:
                 # Everything
-                branches = list(self._repo.branches)
+                branches = self._repo.listall_branches()
+                if not branches:
+                    # If no branches are found, assume that this is a
+                    # shallow clone and examine the repo head as a single
+                    # commit to scan all files at once
+                    branches = ["HEAD"]
         except pygit2.GitError as exc:
             raise types.GitRemoteException(str(exc)) from exc
 
@@ -672,20 +677,25 @@ class GitRepoScanner(GitScanner):
 
         for branch_name in branches:
             self.logger.info("Scanning branch: %s", branch_name)
-            branch: pygit2.Branch = self._repo.branches.get(branch_name)
+            if branch_name == "HEAD":
+                commits = [self._repo.get(self._repo.head.target)]
+            else:
+                branch = self._repo.branches.get(branch_name)
+                commits = self._repo.walk(
+                    branch.resolve().target, pygit2.GIT_SORT_TOPOLOGICAL
+                )
             diff_hash: bytes
             curr_commit: pygit2.Commit = None
             prev_commit: pygit2.Commit = None
-            for curr_commit in self._repo.walk(
-                branch.resolve().target, pygit2.GIT_SORT_TOPOLOGICAL
-            ):
-                # If a commit doesn't have a parent skip diff generation since it is the first commit
-                if not curr_commit.parents:
+            for curr_commit in commits:
+                try:
+                    prev_commit = curr_commit.parents[0]
+                except KeyError:
+                    # If a commit doesn't have a parent skip diff generation since it is the first commit
                     self.logger.debug(
                         "Skipping commit %s because it has no parents", curr_commit.hex
                     )
                     continue
-                prev_commit = curr_commit.parents[0]
                 diff: pygit2.Diff = self._repo.diff(prev_commit, curr_commit)
                 diff_hash = hashlib.md5(
                     (str(prev_commit) + str(curr_commit)).encode("utf-8")
@@ -698,7 +708,7 @@ class GitRepoScanner(GitScanner):
                     yield types.Chunk(
                         blob,
                         file_path,
-                        util.extract_commit_metadata(curr_commit, branch),
+                        util.extract_commit_metadata(curr_commit, branch_name),
                     )
 
             # Finally, yield the first commit to the branch
@@ -710,7 +720,7 @@ class GitRepoScanner(GitScanner):
                     yield types.Chunk(
                         blob,
                         file_path,
-                        util.extract_commit_metadata(curr_commit, branch),
+                        util.extract_commit_metadata(curr_commit, branch_name),
                     )
 
 
