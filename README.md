@@ -57,6 +57,9 @@ Options:
   --entropy / --no-entropy        Enable entropy checks.  [default: True]
   --regex / --no-regex            Enable high signal regexes checks.
                                   [default: False]
+  --scan-filenames / --no-scan-filenames            
+                                  Check the names of files being scanned as well as their contents.
+                                  [default: True]
 
   -i, --include-paths FILENAME    [DEPRECATED] Use `--include-path-patterns`.
                                   File with regular expressions (one per
