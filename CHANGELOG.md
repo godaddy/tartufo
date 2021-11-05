@@ -16,6 +16,8 @@ Features:
   `--fetch/--no-fetch` option for local scans
 * [#259](https://github.com/godaddy/tartufo/pull/259) - Adds a new 
   `--scan-filenames/--no-scan-filenames` flag which allows users to enable or disable file name scanning.
+* [#254](https://github.com/godaddy/tartufo/pull/260) - Changes the default value of 
+  `--regex/--no-regex` to True.
 
 v2.9.0 - 19 October 2021
 ------------------------
