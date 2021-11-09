@@ -487,9 +487,8 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         Check entropy string using entropy characters and score.
 
         :param chunk: The chunk of data to check
-        :param issues: Issue list to append any strings flagged
+        :param line: Source line containing string of interest
         :param string: String to check
-        :param alphabet_size: How many characters available for representation?
         :param min_entropy_score: Minimum entropy score to flag
         return: Iterator of issues flagged
         """
