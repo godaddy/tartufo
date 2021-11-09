@@ -82,17 +82,6 @@ class TartufoCLI(click.MultiCommand):
     help="Enable high signal regexes checks.",
 )
 @click.option(
-    "-i",
-    "--include-paths",
-    type=click.File("r"),
-    help="""[DEPRECATED] Use `--include-path-patterns`. File with regular
-    expressions (one per line), at least one of which must match a Git object
-    path in order for it to be scanned; lines starting with '#' are treated as
-    comments and are ignored. If empty or not provided (default), all Git object
-    paths are included unless otherwise excluded via the --exclude-paths
-    option.""",
-)
-@click.option(
     "-ip",
     "--include-path-patterns",
     multiple=True,
@@ -101,16 +90,6 @@ class TartufoCLI(click.MultiCommand):
     multiple patterns. If not provided (default), all Git object paths are
     included unless otherwise excluded via the --exclude-path-patterns
     option.""",
-)
-@click.option(
-    "-x",
-    "--exclude-paths",
-    type=click.File("r"),
-    help="""[DEPRECATED] Use `--exclude-path-patterns`. File with regular
-    expressions (one per line), none of which may match a Git object path in
-    order for it to be scanned; lines starting with '#' are treated as comments
-    and are ignored. If empty or not provided (default), no Git object paths are
-    excluded unless effectively excluded via the --include-paths option.""",
 )
 @click.option(
     "-xp",

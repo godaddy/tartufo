@@ -12,9 +12,7 @@ class GlobalOptions:
         "default_regexes",
         "entropy",
         "regex",
-        "include_paths",
         "include_path_patterns",
-        "exclude_paths",
         "exclude_path_patterns",
         "exclude_entropy_patterns",
         "exclude_signatures",
@@ -34,9 +32,7 @@ class GlobalOptions:
     default_regexes: bool
     entropy: bool
     regex: bool
-    include_paths: Optional[TextIO]
     include_path_patterns: Tuple[str, ...]
-    exclude_paths: Optional[TextIO]
     exclude_path_patterns: Tuple[str, ...]
     exclude_entropy_patterns: Tuple[str, ...]
     exclude_signatures: Tuple[str, ...]

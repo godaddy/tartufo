@@ -15,6 +15,11 @@ Features:
 * [#244](https://github.com/godaddy/tartufo/pull/244) - Drops support for 
   `--fetch/--no-fetch` option for local scans
 
+Misc:
+
+* [#255](https://github.com/godaddy/tartufo/issues/255) -- Removed deprecated flags 
+  --include-paths and --exclude-paths
+
 v2.9.0 - 19 October 2021
 ------------------------
 
