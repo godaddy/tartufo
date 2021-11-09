@@ -5,6 +5,9 @@ Bug fixes:
 
 * [#247](https://github.com/godaddy/tartufo/issues/247) - The `--branch` qualifier
   now works again when using `scan-remote-repo`.
+* [#270](https://github.com/godaddy/tartufo/issues/270) - When no refs/branches
+  are found locally, tartufo will now scan the repo HEAD as a single commit,
+  effectively scanning the entire codebase at once.
 
 Features:
 
