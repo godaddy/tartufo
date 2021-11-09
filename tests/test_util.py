@@ -385,21 +385,29 @@ class GeneralUtilTests(unittest.TestCase):
 
     def test_find_string_encodings_recognizes_hexadecimal(self):
 
-        foo = """
+        sample_name_that_pylint_likes = """
         1111111111fffffCCCCC This is valid hexadecimal
         g111111111fffffCCCCC This is not because "g" is not in alphabet
         """
 
-        strings = list(util.find_string_encodings(foo, scanner.HEX_REGEX, 20))
+        strings = list(
+            util.find_string_encodings(
+                sample_name_that_pylint_likes, scanner.HEX_REGEX, 20
+            )
+        )
         self.assertEqual(strings, ["1111111111fffffCCCCC"])
 
     def test_find_string_encodings_recognizes_base64(self):
 
-        foo = """
+        sample_name_that_pylint_likes = """
         111111111+ffffCCCC== This is valid base64
         @111111111+ffffCCCC= This is not because "@" is not in alphabet
         _111111111+ffffCCCC= This is not because "_" is not in alphabet
         """
 
-        strings = list(util.find_string_encodings(foo, scanner.BASE64_REGEX, 20))
+        strings = list(
+            util.find_string_encodings(
+                sample_name_that_pylint_likes, scanner.BASE64_REGEX, 20
+            )
+        )
         self.assertEqual(strings, ["111111111+ffffCCCC=="])
