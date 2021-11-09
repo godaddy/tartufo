@@ -201,7 +201,7 @@ class TartufoCLI(click.MultiCommand):
     help="Enable or disable timestamps in logging messages.",
 )
 @click.option(
-    "--sensitivity",
+    "--entropy-sensitivity",
     type=click.IntRange(0, 100),
     default=25,
     show_default=True,
@@ -213,7 +213,7 @@ class TartufoCLI(click.MultiCommand):
 @click.option(
     "-b64",
     "--b64-entropy-score",
-    help="""[DEPRECATED] Use `--sensitivity`. Modify the base64 entropy score. If
+    help="""[DEPRECATED] Use `--entropy-sensitivity`. Modify the base64 entropy score. If
     a value greater than the default (4.5 in a range of 0.0-6.0) is specified,
     tartufo lists higher entropy base64 strings (longer or more randomized strings.
     A lower value lists lower entropy base64 strings (shorter or less randomized
@@ -222,7 +222,7 @@ class TartufoCLI(click.MultiCommand):
 @click.option(
     "-hex",
     "--hex-entropy-score",
-    help="""[DEPRECATED] Use `--sensitivity`. Modify the hexadecimal entropy score.
+    help="""[DEPRECATED] Use `--entropy-sensitivity`. Modify the hexadecimal entropy score.
     If a value greater than the default (3.0 in a range of 0.0-4.0) is specified,
     tartufo lists higher entropy hexadecimal strings (longer or more randomized
     strings). A lower value lists lower entropy hexadecimal strings (shorter or less

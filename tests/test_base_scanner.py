@@ -574,7 +574,7 @@ class EntropyTests(ScannerTestCase):
         self.assertEqual(len(issues), 0)
 
     def test_sensitivity_low_end_calculation(self):
-        self.options.sensitivity = 0
+        self.options.entropy_sensitivity = 0
         scanner = TestScanner(self.options)
 
         # 0% sensitivity means entropy rate must equal bit rate
@@ -582,7 +582,7 @@ class EntropyTests(ScannerTestCase):
         self.assertEqual(scanner._hex_entropy_score, 4.0)
 
     def test_sensitivity_high_end_calculation(self):
-        self.options.sensitivity = 100
+        self.options.entropy_sensitivity = 100
         scanner = TestScanner(self.options)
 
         # 100% sensitivity means required entropy rate will be zero

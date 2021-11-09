@@ -153,10 +153,10 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         # in findings. We convert this from "sensitivity" (0-100) which is inverted
         # so that intuitively "more sensitive" means "more likely to flag a given
         # string as suspicious."
-        if self.global_options.sensitivity is None:
+        if self.global_options.entropy_sensitivity is None:
             sensitivity = 25
         else:
-            sensitivity = self.global_options.sensitivity
+            sensitivity = self.global_options.entropy_sensitivity
         entropy_score = float(100 - sensitivity) / 100.0
 
         # We now compute an effective score for each type of entropy string by
@@ -171,13 +171,13 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         # these representation-specific scores directly (but complain about it).
         if self.global_options.hex_entropy_score:
             warnings.warn(
-                "--hex-entropy-score is deprecated. Use --sensitivity instead."
+                "--hex-entropy-score is deprecated. Use --entropy-sensitivity instead."
             )
             self._hex_entropy_score = self.global_options.hex_entropy_score
 
         if self.global_options.b64_entropy_score:
             warnings.warn(
-                "--b64-entropy-score is deprecated. Use --sensitivity instead."
+                "--b64-entropy-score is deprecated. Use --entropy-sensitivity instead."
             )
             self._b64_entropy_score = self.global_options.b64_entropy_score
 
