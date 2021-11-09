@@ -3,7 +3,6 @@ import json
 import os
 import pathlib
 import platform
-import re
 import stat
 import tempfile
 import uuid
