@@ -170,13 +170,10 @@ class IncludeExcludePathsTests(ScannerTestCase):
     def test_include_paths_are_calculated_if_specified(
         self, mock_compile: mock.MagicMock
     ):
-        mock_include = mock.MagicMock()
-        mock_include.readlines.return_value = ["bar"]
-        self.options.include_paths = mock_include
         self.options.include_path_patterns = ("foo",)
         test_scanner = TestScanner(self.options)
         test_scanner.included_paths  # pylint: disable=pointless-statement
-        mock_compile.assert_called_once_with({"foo", "bar"})
+        mock_compile.assert_called_once_with({"foo"})
 
     @mock.patch("tartufo.config.compile_path_rules")
     def test_populated_excluded_paths_list_does_not_recompute(
@@ -195,13 +192,10 @@ class IncludeExcludePathsTests(ScannerTestCase):
     def test_exclude_paths_are_calculated_if_specified(
         self, mock_compile: mock.MagicMock
     ):
-        mock_exclude = mock.MagicMock()
-        mock_exclude.readlines.return_value = ["Pipfile.lock\n"]
-        self.options.exclude_paths = mock_exclude
         self.options.exclude_path_patterns = ("foo",)
         test_scanner = TestScanner(self.options)
         test_scanner.excluded_paths  # pylint: disable=pointless-statement
-        mock_compile.assert_called_once_with({"foo", "Pipfile.lock\n"})
+        mock_compile.assert_called_once_with({"foo"})
 
     def test_should_scan_treats_included_paths_as_exclusive(self):
         test_scanner = TestScanner(self.options)
