@@ -205,10 +205,10 @@ class TartufoCLI(click.MultiCommand):
     type=click.IntRange(0, 100),
     default=25,
     show_default=True,
-    help="""Modify entropy detection sensitivity. This is expressed as the probability
-    (between 0 and 100) a given string is *not* random and should be ignored.
-    A higher value increases the likelihood a string will be considered suspicious
-    and result in a finding.""",
+    help="""Modify entropy detection sensitivity. This is expressed as a percentage
+    (between 0 and 100) that represents the amount of entropy in a given string
+    relative to a theoretical maximum. Strings that have higher entropy (are more
+    random) than this threshhold will result in findings.""",
 )
 @click.option(
     "-b64",
