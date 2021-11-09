@@ -650,12 +650,12 @@ class GitRepoScanner(GitScanner):
         try:
             if self.git_options.branch:
                 # Single branch only
-                branches = [self._repo.branches.get(self.git_options.branch)]
-
-                if len(branches) == 0:
+                branch = self._repo.branches.get(self.git_options.branch)
+                if not branch:
                     raise BranchNotFoundException(
                         f"Branch {self.git_options.branch} was not found."
                     )
+                branches = [self.git_options.branch]
             else:
                 # Everything
                 if not self._repo.listall_branches():
@@ -692,7 +692,7 @@ class GitRepoScanner(GitScanner):
             for curr_commit in commits:
                 try:
                     prev_commit = curr_commit.parents[0]
-                except KeyError:
+                except (KeyError, TypeError):
                     # If a commit doesn't have a parent skip diff generation since it is the first commit
                     self.logger.debug(
                         "Skipping commit %s because it has no parents", curr_commit.hex
