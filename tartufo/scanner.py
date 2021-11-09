@@ -666,8 +666,8 @@ class GitRepoScanner(GitScanner):
                 else:
                     # We use `self._repo.branches` here so that we make sure to
                     # scan not only the locally checked out branches (as provided
-                    # by self._repo.listall_branches(), but to also scan all
-                    # available remote refs)
+                    # by self._repo.listall_branches()), but to also scan all
+                    # available remote refs
                     branches = list(self._repo.branches)
         except pygit2.GitError as exc:
             raise types.GitRemoteException(str(exc)) from exc
