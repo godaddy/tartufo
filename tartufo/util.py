@@ -207,7 +207,7 @@ def extract_commit_metadata(commit: pygit2.Commit, branch_name: str) -> Dict[str
 
 
 def find_string_encodings(
-    text: str, regex: re.Pattern, threshold: int = 20
+    text: str, regex: Pattern, threshold: int = 20
 ) -> Generator[str, None, None]:
     """Locate binary encodings in input text
 
