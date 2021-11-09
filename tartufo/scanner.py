@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import abc
+from collections import Counter
 from functools import lru_cache
 import hashlib
 import logging
@@ -29,8 +30,8 @@ import pygit2
 from tartufo import config, types, util
 from tartufo.types import BranchNotFoundException, Rule, TartufoException
 
-BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
-HEX_CHARS = "1234567890abcdefABCDEF"
+BASE64_REGEX = re.compile(r"[A-Z0-9+/]+={,2}", re.IGNORECASE)
+HEX_REGEX = re.compile(r"[0-9A-F]+", re.IGNORECASE)
 
 
 class Issue:
@@ -381,26 +382,26 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         )
 
     @lru_cache(maxsize=None)
-    def calculate_entropy(self, data: str, char_set: str) -> float:
+    def calculate_entropy(self, data: str) -> float:
         """Calculate the Shannon entropy for a piece of data.
 
         This essentially calculates the overall probability for each character
-        in `data` to be to be present, based on the characters in `char_set`.
-        By doing this, we can tell how random a string appears to be.
+        in `data` to be to be present. By doing this, we can tell how random a
+        string appears to be.
 
         Borrowed from http://blog.dkbza.org/2007/05/scanning-data-for-entropy-anomalies.html
 
         :param data: The data to be scanned for its entropy
-        :param char_set: The character set used as a basis for the calculation
-        :return: The amount of entropy detected in the data.
+        :return: The amount of entropy detected in the data
         """
         if not data:
             return 0.0
+        frequency = Counter(data)
         entropy = 0.0
-        for char in char_set:
-            prob_x = float(data.count(char)) / len(data)
-            if prob_x > 0:
-                entropy += -prob_x * math.log2(prob_x)
+        float_size = float(len(data))
+        for count in frequency.values():
+            probability = float(count) / float_size
+            entropy += -probability * math.log2(probability)
         return entropy
 
     def scan(self) -> Generator[Issue, None, None]:
@@ -466,15 +467,11 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
 
         for line in chunk.contents.split("\n"):
             for word in line.split():
-                b64_strings = util.get_strings_of_set(word, BASE64_CHARS)
-                hex_strings = util.get_strings_of_set(word, HEX_CHARS)
-
-                for string in b64_strings:
+                for string in util.find_string_encodings(word, BASE64_REGEX):
                     yield from self.evaluate_entropy_string(
                         chunk, line, string, BASE64_CHARS, self.b64_entropy_limit
                     )
-
-                for string in hex_strings:
+                for string in util.find_string_encodings(word, HEX_REGEX):
                     yield from self.evaluate_entropy_string(
                         chunk, line, string, HEX_CHARS, self.hex_entropy_limit
                     )
@@ -484,7 +481,6 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         chunk: types.Chunk,
         line: str,
         string: str,
-        chars: str,
         min_entropy_score: float,
     ) -> Generator[Issue, None, None]:
         """
@@ -493,12 +489,12 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         :param chunk: The chunk of data to check
         :param issues: Issue list to append any strings flagged
         :param string: String to check
-        :param chars: Characters to calculate score
+        :param alphabet_size: How many characters available for representation?
         :param min_entropy_score: Minimum entropy score to flag
         return: Iterator of issues flagged
         """
         if not self.signature_is_excluded(string, chunk.file_path):
-            entropy_score = self.calculate_entropy(string, chars)
+            entropy_score = self.calculate_entropy(string)
             if entropy_score > min_entropy_score:
                 if self.entropy_string_is_excluded(string, line, chunk.file_path):
                     self.logger.debug("line containing entropy was excluded: %s", line)

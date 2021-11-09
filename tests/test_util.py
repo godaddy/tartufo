@@ -371,10 +371,14 @@ class GeneralUtilTests(unittest.TestCase):
         util.generate_signature("foo", "bar")
         mock_hash.assert_called_once_with(b"foo$$bar")
 
-    def test_get_strings_of_set_splits_string_by_chars_outside_charset(self):
-        strings = util.get_strings_of_set("asdf.qwer", "asdfqwer", 1)
+    def test_find_string_encodings_splits_string_by_chars_outside_charset(self):
+        strings = list(
+            util.find_string_encodings("asdf.qwer", re.compile(r"[asdfqwer]+"), 1)
+        )
         self.assertEqual(strings, ["asdf", "qwer"])
 
-    def test_get_strings_of_set_will_not_return_strings_below_threshold_length(self):
-        strings = util.get_strings_of_set("w.asdf.q", "asdfqwer", 3)
+    def test_find_string_encodings_will_not_return_strings_below_threshold_length(self):
+        strings = list(
+            util.find_string_encodings("w.asdf.q", re.compile(r"[asdfqwer]+"), 3)
+        )
         self.assertEqual(strings, ["asdf"])

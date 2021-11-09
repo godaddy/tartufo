@@ -414,19 +414,18 @@ class EntropyTests(ScannerTestCase):
             "ZWVTjPQSdhwRgl204Hc51YCsritMIzn8B=/p9UyeX7xu6KkAGqfm3FJ+oObLDNEva"
         )
         self.assertGreaterEqual(
-            self.scanner.calculate_entropy(random_string, scanner.BASE64_CHARS), 4.5
+            self.scanner.calculate_entropy(random_string),
+            4.5,
         )
 
     def test_calculate_hex_entropy_calculation(self):
         random_string = "b3A0a1FDfe86dcCE945B72"
-        self.assertGreaterEqual(
-            self.scanner.calculate_entropy(random_string, scanner.HEX_CHARS), 3
-        )
+        self.assertGreaterEqual(self.scanner.calculate_entropy(random_string), 3)
 
     def test_empty_string_has_no_entropy(self):
-        self.assertEqual(self.scanner.calculate_entropy("", ""), 0.0)
+        self.assertEqual(self.scanner.calculate_entropy(""), 0.0)
 
-    @mock.patch("tartufo.util.get_strings_of_set")
+    @mock.patch("tartufo.util.find_string_encodings")
     def test_scan_entropy_find_b64_strings_for_every_word_in_diff(
         self, mock_strings: mock.MagicMock
     ):
@@ -434,18 +433,18 @@ class EntropyTests(ScannerTestCase):
         list(self.scanner.scan_entropy(self.chunk))
         mock_strings.assert_has_calls(
             (
-                mock.call("foo", scanner.BASE64_CHARS),
-                mock.call("foo", scanner.HEX_CHARS),
-                mock.call("bar", scanner.BASE64_CHARS),
-                mock.call("bar", scanner.HEX_CHARS),
-                mock.call("asdfqwer", scanner.BASE64_CHARS),
-                mock.call("asdfqwer", scanner.HEX_CHARS),
+                mock.call("foo", scanner.BASE64_REGEX),
+                mock.call("foo", scanner.HEX_REGEX),
+                mock.call("bar", scanner.BASE64_REGEX),
+                mock.call("bar", scanner.HEX_REGEX),
+                mock.call("asdfqwer", scanner.BASE64_REGEX),
+                mock.call("asdfqwer", scanner.HEX_REGEX),
             )
         )
 
     @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
     @mock.patch("tartufo.scanner.ScannerBase.signature_is_excluded")
-    @mock.patch("tartufo.util.get_strings_of_set")
+    @mock.patch("tartufo.util.find_string_encodings")
     def test_issues_are_not_created_for_b64_string_excluded_signatures(
         self,
         mock_strings: mock.MagicMock,
@@ -460,7 +459,7 @@ class EntropyTests(ScannerTestCase):
 
     @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
     @mock.patch("tartufo.scanner.ScannerBase.signature_is_excluded")
-    @mock.patch("tartufo.util.get_strings_of_set")
+    @mock.patch("tartufo.util.find_string_encodings")
     def test_issues_are_not_created_for_hex_string_excluded_signatures(
         self,
         mock_strings: mock.MagicMock,
@@ -475,7 +474,7 @@ class EntropyTests(ScannerTestCase):
 
     @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
     @mock.patch("tartufo.scanner.ScannerBase.signature_is_excluded")
-    @mock.patch("tartufo.util.get_strings_of_set")
+    @mock.patch("tartufo.util.find_string_encodings")
     def test_issues_are_created_for_high_entropy_b64_strings(
         self,
         mock_strings: mock.MagicMock,
@@ -492,7 +491,7 @@ class EntropyTests(ScannerTestCase):
 
     @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
     @mock.patch("tartufo.scanner.ScannerBase.signature_is_excluded")
-    @mock.patch("tartufo.util.get_strings_of_set")
+    @mock.patch("tartufo.util.find_string_encodings")
     def test_issues_are_created_for_high_entropy_hex_strings(
         self,
         mock_strings: mock.MagicMock,
@@ -510,7 +509,7 @@ class EntropyTests(ScannerTestCase):
     @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
     @mock.patch("tartufo.scanner.ScannerBase.signature_is_excluded")
     @mock.patch("tartufo.scanner.ScannerBase.entropy_string_is_excluded")
-    @mock.patch("tartufo.util.get_strings_of_set")
+    @mock.patch("tartufo.util.find_string_encodings")
     def test_issues_are_not_created_for_high_entropy_hex_strings_given_entropy_is_excluded(
         self,
         mock_strings: mock.MagicMock,
@@ -528,7 +527,7 @@ class EntropyTests(ScannerTestCase):
     @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
     @mock.patch("tartufo.scanner.ScannerBase.signature_is_excluded")
     @mock.patch("tartufo.scanner.ScannerBase.entropy_string_is_excluded")
-    @mock.patch("tartufo.util.get_strings_of_set")
+    @mock.patch("tartufo.util.find_string_encodings")
     def test_issues_are_not_created_for_low_entropy_b64_strings_given_entropy_is_excluded(
         self,
         mock_strings: mock.MagicMock,
@@ -545,7 +544,7 @@ class EntropyTests(ScannerTestCase):
 
     @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
     @mock.patch("tartufo.scanner.ScannerBase.signature_is_excluded")
-    @mock.patch("tartufo.util.get_strings_of_set")
+    @mock.patch("tartufo.util.find_string_encodings")
     def test_issues_are_not_created_for_low_entropy_b64_strings(
         self,
         mock_strings: mock.MagicMock,
@@ -560,7 +559,7 @@ class EntropyTests(ScannerTestCase):
 
     @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
     @mock.patch("tartufo.scanner.ScannerBase.signature_is_excluded")
-    @mock.patch("tartufo.util.get_strings_of_set")
+    @mock.patch("tartufo.util.find_string_encodings")
     def test_issues_are_not_created_for_low_entropy_hex_strings(
         self,
         mock_strings: mock.MagicMock,

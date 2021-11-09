@@ -33,6 +33,9 @@ Features:
   `--scan-filenames/--no-scan-filenames` flag which allows users to enable or disable file name scanning.
 * [#254](https://github.com/godaddy/tartufo/pull/260) - Changes the default value of
   `--regex/--no-regex` to True.
+* [#273](https://github.com/godaddy/tartufo/inssues/273) - Entropy checking support
+  routines have been rewritten to utilize library abstractions and operate more
+  efficiently while returning effectively identical results.
 
 Misc:
 
