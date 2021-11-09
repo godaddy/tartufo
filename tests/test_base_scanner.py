@@ -66,9 +66,9 @@ class ScanTests(ScannerTestCase):
         list(test_scanner.scan())
         mock_entropy.assert_has_calls(
             (
-                mock.call("foo", 4.5, 3),
-                mock.call("bar", 4.5, 3),
-                mock.call("baz", 4.5, 3),
+                mock.call("foo"),
+                mock.call("bar"),
+                mock.call("baz"),
             ),
             any_order=True,
         )
@@ -431,11 +431,7 @@ class EntropyTests(ScannerTestCase):
         self, mock_strings: mock.MagicMock
     ):
         mock_strings.return_value = []
-        b64_entropy_score = 4.5
-        hex_entropy_score = 3
-        list(
-            self.scanner.scan_entropy(self.chunk, b64_entropy_score, hex_entropy_score)
-        )
+        list(self.scanner.scan_entropy(self.chunk))
         mock_strings.assert_has_calls(
             (
                 mock.call("foo", scanner.BASE64_CHARS),
@@ -458,11 +454,7 @@ class EntropyTests(ScannerTestCase):
     ):
         mock_strings.side_effect = (["foo"], [], [], [], [], [])
         mock_signature.return_value = True
-        b64_entropy_score = 4.5
-        hex_entropy_score = 3
-        issues = list(
-            self.scanner.scan_entropy(self.chunk, b64_entropy_score, hex_entropy_score)
-        )
+        issues = list(self.scanner.scan_entropy(self.chunk))
         mock_calculate.assert_not_called()
         self.assertEqual(issues, [])
 
@@ -477,11 +469,7 @@ class EntropyTests(ScannerTestCase):
     ):
         mock_strings.side_effect = ([], ["foo"], [], [], [], [])
         mock_signature.return_value = True
-        b64_entropy_score = 4.5
-        hex_entropy_score = 3
-        issues = list(
-            self.scanner.scan_entropy(self.chunk, b64_entropy_score, hex_entropy_score)
-        )
+        issues = list(self.scanner.scan_entropy(self.chunk))
         mock_calculate.assert_not_called()
         self.assertEqual(issues, [])
 
@@ -497,11 +485,7 @@ class EntropyTests(ScannerTestCase):
         mock_strings.side_effect = (["foo"], [], [], [], [], [])
         mock_signature.return_value = False
         mock_calculate.return_value = 9.0
-        b64_entropy_score = 4.5
-        hex_entropy_score = 3
-        issues = list(
-            self.scanner.scan_entropy(self.chunk, b64_entropy_score, hex_entropy_score)
-        )
+        issues = list(self.scanner.scan_entropy(self.chunk))
         self.assertEqual(len(issues), 1)
         self.assertEqual(issues[0].issue_type, types.IssueType.Entropy)
         self.assertEqual(issues[0].matched_string, "foo")
@@ -518,11 +502,7 @@ class EntropyTests(ScannerTestCase):
         mock_strings.side_effect = ([], ["foo"], [], [], [], [])
         mock_signature.return_value = False
         mock_calculate.return_value = 9.0
-        b64_entropy_score = 4.5
-        hex_entropy_score = 3
-        issues = list(
-            self.scanner.scan_entropy(self.chunk, b64_entropy_score, hex_entropy_score)
-        )
+        issues = list(self.scanner.scan_entropy(self.chunk))
         self.assertEqual(len(issues), 1)
         self.assertEqual(issues[0].issue_type, types.IssueType.Entropy)
         self.assertEqual(issues[0].matched_string, "foo")
@@ -542,11 +522,7 @@ class EntropyTests(ScannerTestCase):
         mock_entropy.return_value = True
         mock_signature.return_value = False
         mock_calculate.return_value = 9.0
-        b64_entropy_score = 4.5
-        hex_entropy_score = 3
-        issues = list(
-            self.scanner.scan_entropy(self.chunk, b64_entropy_score, hex_entropy_score)
-        )
+        issues = list(self.scanner.scan_entropy(self.chunk))
         self.assertEqual(len(issues), 0)
 
     @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
@@ -564,11 +540,7 @@ class EntropyTests(ScannerTestCase):
         mock_entropy.return_value = True
         mock_signature.return_value = False
         mock_calculate.return_value = 9.0
-        b64_entropy_score = 4.5
-        hex_entropy_score = 3
-        issues = list(
-            self.scanner.scan_entropy(self.chunk, b64_entropy_score, hex_entropy_score)
-        )
+        issues = list(self.scanner.scan_entropy(self.chunk))
         self.assertEqual(len(issues), 0)
 
     @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
@@ -583,11 +555,7 @@ class EntropyTests(ScannerTestCase):
         mock_strings.side_effect = (["foo"], [], [], [], [], [])
         mock_signature.return_value = False
         mock_calculate.return_value = 1.0
-        b64_entropy_score = 4.5
-        hex_entropy_score = 3
-        issues = list(
-            self.scanner.scan_entropy(self.chunk, b64_entropy_score, hex_entropy_score)
-        )
+        issues = list(self.scanner.scan_entropy(self.chunk))
         self.assertEqual(len(issues), 0)
 
     @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
@@ -602,12 +570,24 @@ class EntropyTests(ScannerTestCase):
         mock_strings.side_effect = ([], ["foo"], [], [], [], [])
         mock_signature.return_value = False
         mock_calculate.return_value = 1.0
-        b64_entropy_score = 4.5
-        hex_entropy_score = 3
-        issues = list(
-            self.scanner.scan_entropy(self.chunk, b64_entropy_score, hex_entropy_score)
-        )
+        issues = list(self.scanner.scan_entropy(self.chunk))
         self.assertEqual(len(issues), 0)
+
+    def test_sensitivity_low_end_calculation(self):
+        self.options.sensitivity = 0
+        scanner = TestScanner(self.options)
+
+        # 0% sensitivity means entropy rate must equal bit rate
+        self.assertEqual(scanner._b64_entropy_score, 6.0)
+        self.assertEqual(scanner._hex_entropy_score, 4.0)
+
+    def test_sensitivity_high_end_calculation(self):
+        self.options.sensitivity = 100
+        scanner = TestScanner(self.options)
+
+        # 100% sensitivity means required entropy rate will be zero
+        self.assertEqual(scanner._b64_entropy_score, 0.0)
+        self.assertEqual(scanner._hex_entropy_score, 0.0)
 
 
 if __name__ == "__main__":

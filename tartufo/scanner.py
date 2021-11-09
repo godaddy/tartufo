@@ -141,10 +141,45 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     global_options: types.GlobalOptions
     logger: logging.Logger
     _scan_lock: threading.Lock = threading.Lock()
+    _hex_entropy_score: float = 3.0
+    _b64_entropy_score: float = 4.5
 
     def __init__(self, options: types.GlobalOptions) -> None:
         self.global_options = options
         self.logger = logging.getLogger(__name__)
+
+        # entropy_score is a probability (between 0.0 and 1.0) that a given string
+        # is random. Strings that are at least this likely to be random will result
+        # in findings. We convert this from "sensitivity" (0-100) which is inverted
+        # so that intuitively "more sensitive" means "more likely to flag a given
+        # string as suspicious."
+        if self.global_options.sensitivity is None:
+            sensitivity = 25
+        else:
+            sensitivity = self.global_options.sensitivity
+        entropy_score = float(100 - sensitivity) / 100.0
+
+        # We now compute an effective score for each type of entropy string by
+        # multiplying by the number of bits expressed in each character of the
+        # string's character set:
+        # hex character 0-f is 16 digits = 2^4 digits = 4 bits/character
+        # base64 represents 24 bits using 4 characters = 6 bits/character
+        self._hex_entropy_score = entropy_score * 4.0
+        self._b64_entropy_score = entropy_score * 6.0
+
+        # For backwards compatibility, allow the caller to manipulate each of
+        # these representation-specific scores directly (but complain about it).
+        if self.global_options.hex_entropy_score:
+            warnings.warn(
+                "--hex-entropy-score is deprecated. Use --sensitivity instead."
+            )
+            self._hex_entropy_score = self.global_options.hex_entropy_score
+
+        if self.global_options.b64_entropy_score:
+            warnings.warn(
+                "--b64-entropy-score is deprecated. Use --sensitivity instead."
+            )
+            self._b64_entropy_score = self.global_options.b64_entropy_score
 
     @property
     def completed(self) -> bool:
@@ -398,8 +433,6 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                 if self.global_options.entropy:
                     for issue in self.scan_entropy(
                         chunk,
-                        self.global_options.b64_entropy_score,
-                        self.global_options.hex_entropy_score,
                     ):
                         self._issues.append(issue)
                         yield issue
@@ -407,13 +440,12 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             self.logger.info("Found %d issues.", len(self._issues))
 
     def scan_entropy(
-        self, chunk: types.Chunk, b64_entropy_score: float, hex_entropy_score: float
+        self,
+        chunk: types.Chunk,
     ) -> Generator[Issue, None, None]:
         """Scan a chunk of data for apparent high entropy.
 
         :param chunk: The chunk of data to be scanned
-        :param b64_entropy_score: Base64 entropy score
-        :param hex_entropy_score: Hexadecimal entropy score
         """
 
         for line in chunk.contents.split("\n"):
@@ -423,12 +455,12 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
 
                 for string in b64_strings:
                     yield from self.evaluate_entropy_string(
-                        chunk, line, string, BASE64_CHARS, b64_entropy_score
+                        chunk, line, string, BASE64_CHARS, self._b64_entropy_score
                     )
 
                 for string in hex_strings:
                     yield from self.evaluate_entropy_string(
-                        chunk, line, string, HEX_CHARS, hex_entropy_score
+                        chunk, line, string, HEX_CHARS, self._hex_entropy_score
                     )
 
     def evaluate_entropy_string(
