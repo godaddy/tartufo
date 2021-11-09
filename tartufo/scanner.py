@@ -650,10 +650,7 @@ class GitRepoScanner(GitScanner):
         try:
             if self.git_options.branch:
                 # Single branch only
-                unfiltered_branches = list(self._repo.branches)
-                branches = [
-                    x for x in unfiltered_branches if x == self.git_options.branch
-                ]
+                branches = [self._repo.branches.get(self.git_options.branch)]
 
                 if len(branches) == 0:
                     raise BranchNotFoundException(
@@ -661,12 +658,17 @@ class GitRepoScanner(GitScanner):
                     )
             else:
                 # Everything
-                branches = self._repo.listall_branches()
-                if not branches:
-                    # If no branches are found, assume that this is a
+                if not self._repo.listall_branches():
+                    # If no local branches are found, assume that this is a
                     # shallow clone and examine the repo head as a single
                     # commit to scan all files at once
                     branches = ["HEAD"]
+                else:
+                    # We use `self._repo.branches` here so that we make sure to
+                    # scan not only the locally checked out branches (as provided
+                    # by self._repo.listall_branches(), but to also scan all
+                    # available remote refs)
+                    branches = list(self._repo.branches)
         except pygit2.GitError as exc:
             raise types.GitRemoteException(str(exc)) from exc
 
