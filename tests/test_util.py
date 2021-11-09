@@ -382,3 +382,24 @@ class GeneralUtilTests(unittest.TestCase):
             util.find_string_encodings("w.asdf.q", re.compile(r"[asdfqwer]+"), 3)
         )
         self.assertEqual(strings, ["asdf"])
+
+    def test_find_string_encodings_recognizes_hexadecimal(self):
+
+        foo = """
+        1111111111fffffCCCCC This is valid hexadecimal
+        g111111111fffffCCCCC This is not because "g" is not in alphabet
+        """
+
+        strings = list(util.find_string_encodings(foo, scanner.HEX_REGEX, 20))
+        self.assertEqual(strings, ["1111111111fffffCCCCC"])
+
+    def test_find_string_encodings_recognizes_base64(self):
+
+        foo = """
+        111111111+ffffCCCC== This is valid base64
+        @111111111+ffffCCCC= This is not because "@" is not in alphabet
+        _111111111+ffffCCCC= This is not because "_" is not in alphabet
+        """
+
+        strings = list(util.find_string_encodings(foo, scanner.BASE64_REGEX, 20))
+        self.assertEqual(strings, ["111111111+ffffCCCC=="])
