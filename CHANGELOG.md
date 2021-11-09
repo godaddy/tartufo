@@ -9,6 +9,11 @@ Bug fixes:
   Versions v2.8.0 and later claimed the branch did not exist, even if it did.
   This option now works correctly.
 
+Misc:
+
+* [#255](https://github.com/godaddy/tartufo/issues/255) -- Removed deprecated flags 
+  --include-paths and --exclude-paths
+
 v2.9.0 - 19 October 2021
 ------------------------
 
