@@ -13,7 +13,7 @@ from tests.helpers import generate_options
 
 class ScannerTestCase(unittest.TestCase):
     def setUp(self) -> None:
-        self.global_options = generate_options(GlobalOptions)
+        self.global_options = generate_options(GlobalOptions, exclude_signatures=())
         self.git_options = generate_options(GitOptions)
 
 
@@ -96,7 +96,6 @@ class RepoLoadTests(ScannerTestCase):
     @mock.patch("pygit2.Repository", new=mock.MagicMock())
     @mock.patch("tartufo.config.load_config_from_path")
     def test_extra_signatures_get_added(self, mock_load: mock.MagicMock):
-        self.global_options.exclude_signatures = ()
         mock_load.return_value = (
             self.data_dir / "pyproject.toml",
             {"exclude_signatures": ["foo", "bar"]},
@@ -156,6 +155,7 @@ class ChunkGeneratorTests(ScannerTestCase):
         self.git_options.branch = "foo"
         mock_branch_foo = mock.MagicMock()
         mock_branch_bar = mock.MagicMock()
+        mock_repo.return_value.listall_branches.return_value = ["foo", "bar"]
         mock_repo.return_value.branches = {
             "foo": mock_branch_foo,
             "bar": mock_branch_bar,
@@ -178,6 +178,7 @@ class ChunkGeneratorTests(ScannerTestCase):
     ):
         mock_branch_foo = mock.MagicMock()
         mock_branch_bar = mock.MagicMock()
+        mock_repo.return_value.listall_branches.return_value = ["foo", "bar"]
         mock_repo.return_value.branches = {
             "foo": mock_branch_foo,
             "bar": mock_branch_bar,
