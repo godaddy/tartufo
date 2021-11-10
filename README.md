@@ -59,16 +59,6 @@ Options:
                                   Check the names of files being scanned as well as their contents.
                                   [default: True]
 
-  -i, --include-paths FILENAME    [DEPRECATED] Use `--include-path-patterns`.
-                                  File with regular expressions (one per
-                                  line), at least one of which must match a
-                                  Git object path in order for it to be
-                                  scanned; lines starting with '#' are treated
-                                  as comments and are ignored. If empty or not
-                                  provided (default), all Git object paths are
-                                  included unless otherwise excluded via the
-                                  --exclude-paths option.
-
   -ip, --include-path-patterns TEXT
                                   Specify a regular expression which matches
                                   Git object paths to include in the scan.
@@ -77,16 +67,6 @@ Options:
                                   provided (default), all Git object paths are
                                   included unless otherwise excluded via the
                                   --exclude-path-patterns option.
-
-  -x, --exclude-paths FILENAME    [DEPRECATED] Use `--exclude-path-patterns`.
-                                  File with regular expressions (one per
-                                  line), none of which may match a Git object
-                                  path in order for it to be scanned; lines
-                                  starting with '#' are treated as comments
-                                  and are ignored. If empty or not provided
-                                  (default), no Git object paths are excluded
-                                  unless effectively excluded via the
-                                  --include-paths option.
 
   -xp, --exclude-path-patterns TEXT
                                   Specify a regular expression which matches

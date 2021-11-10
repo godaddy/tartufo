@@ -21,6 +21,11 @@ Features:
 * [#254](https://github.com/godaddy/tartufo/pull/260) - Changes the default value of 
   `--regex/--no-regex` to True.
 
+Misc:
+
+* [#255](https://github.com/godaddy/tartufo/issues/255) -- Removed deprecated flags 
+  --include-paths and --exclude-paths
+
 v2.9.0 - 19 October 2021
 ------------------------
 
