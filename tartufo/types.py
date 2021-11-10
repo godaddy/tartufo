@@ -7,11 +7,11 @@ from typing import Any, Dict, Optional, TextIO, Tuple, Pattern
 @dataclass
 class GlobalOptions:
     __slots__ = (
-        "json",
         "rules",
         "default_regexes",
         "entropy",
         "regex",
+        "scan_filenames",
         "include_path_patterns",
         "exclude_path_patterns",
         "exclude_entropy_patterns",
@@ -23,15 +23,15 @@ class GlobalOptions:
         "verbose",
         "quiet",
         "log_timestamps",
-        "compact",
+        "output_format",
         "b64_entropy_score",
         "hex_entropy_score",
     )
-    json: bool
     rules: Tuple[TextIO, ...]
     default_regexes: bool
     entropy: bool
     regex: bool
+    scan_filenames: bool
     include_path_patterns: Tuple[str, ...]
     exclude_path_patterns: Tuple[str, ...]
     exclude_entropy_patterns: Tuple[str, ...]
@@ -43,7 +43,7 @@ class GlobalOptions:
     verbose: int
     quiet: bool
     log_timestamps: bool
-    compact: bool
+    output_format: Optional[str]
     b64_entropy_score: float
     hex_entropy_score: float
 
@@ -89,6 +89,12 @@ class LogLevel(enum.IntEnum):
     WARNING = 1
     INFO = 2
     DEBUG = 3
+
+
+class OutputFormat(enum.Enum):
+    Text = "text"  # pylint: disable=invalid-name
+    Json = "json"  # pylint: disable=invalid-name
+    Compact = "compact"  # pylint: disable=invalid-name
 
 
 class TartufoException(Exception):

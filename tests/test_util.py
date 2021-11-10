@@ -110,7 +110,7 @@ class OutputTests(unittest.TestCase):
     @mock.patch("tartufo.scanner.ScannerBase")
     @mock.patch("tartufo.util.click")
     def test_echo_result_echos_all_when_not_json(self, mock_click, mock_scanner):
-        options = generate_options(GlobalOptions, json=False, verbose=0)
+        options = generate_options(GlobalOptions, verbose=0)
         mock_scanner.exclude_signatures = []
         mock_scanner.scan.return_value = (1, 2, 3, 4)
         util.echo_result(options, mock_scanner, "", "")
@@ -128,7 +128,7 @@ class OutputTests(unittest.TestCase):
     @mock.patch("tartufo.scanner.ScannerBase")
     @mock.patch("tartufo.util.click")
     def test_echo_result_outputs_compact_format(self, mock_click, mock_scanner):
-        options = generate_options(GlobalOptions, json=False, verbose=0, compact=True)
+        options = generate_options(GlobalOptions, verbose=0, output_format="compact")
         issue1 = scanner.Issue(
             types.IssueType.Entropy, "foo", types.Chunk("fullfoobar", "/what/foo", {})
         )
@@ -157,7 +157,7 @@ class OutputTests(unittest.TestCase):
         self, mock_time, mock_click, mock_scanner
     ):
         mock_time.now.return_value.isoformat.return_value = "now:now:now"
-        options = generate_options(GlobalOptions, json=False, quiet=False, verbose=0)
+        options = generate_options(GlobalOptions, quiet=False, verbose=0)
         mock_scanner.exclude_signatures = []
         mock_scanner.issue_count = 0
         mock_scanner.issues = []
@@ -183,7 +183,6 @@ class OutputTests(unittest.TestCase):
         ]
         options = generate_options(
             GlobalOptions,
-            json=False,
             quiet=False,
             verbose=1,
             exclude_signatures=exclude_signatures,
@@ -212,7 +211,7 @@ class OutputTests(unittest.TestCase):
     @mock.patch("tartufo.scanner.ScannerBase")
     @mock.patch("tartufo.util.click")
     def test_echo_result_echos_no_message_when_quiet(self, mock_click, mock_scanner):
-        options = generate_options(GlobalOptions, json=False, quiet=True, verbose=0)
+        options = generate_options(GlobalOptions, quiet=True, verbose=0)
         mock_scanner.issues = []
         mock_scanner.exclude_signatures = []
         util.echo_result(options, mock_scanner, "", "")
@@ -235,7 +234,10 @@ class OutputTests(unittest.TestCase):
         mock_scanner.scan.return_value = (issue_1, issue_2)
         mock_scanner.excluded_paths = []
         options = generate_options(
-            GlobalOptions, json=True, exclude_signatures=[], exclude_entropy_patterns=[]
+            GlobalOptions,
+            output_format=types.OutputFormat.Json.value,
+            exclude_signatures=[],
+            exclude_entropy_patterns=[],
         )
 
         # We're generating JSON piecemeal, so if we want to be safe we'll recover
@@ -302,7 +304,7 @@ class OutputTests(unittest.TestCase):
         ]
         options = generate_options(
             GlobalOptions,
-            json=True,
+            output_format=types.OutputFormat.Json.value,
             exclude_signatures=exclude_signatures,
             exclude_entropy_patterns=exclude_entropy_patterns,
         )

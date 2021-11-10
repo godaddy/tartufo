@@ -46,7 +46,7 @@ More on this later!)
    .. code-block:: console
 
       # Run Tartufo on your repo and create a list of high entropy items to remove:
-      tartufo --regex --json scan-local-repo ${GITHUBREPO} | \
+      tartufo --regex --output-format json scan-local-repo ${GITHUBREPO} | \
           jq -r '.found_issues[].matched_string' | \
           sort -u > remove.txt
 

@@ -531,10 +531,11 @@ class GitScanner(ScannerBase, abc.ABC):
                 self.logger.debug("Skipping as the file is deleted")
                 continue
             printable_diff: str = patch.text
-            # The `printable_diff` contains diff header,
-            # so we need to strip that before analyzing it
-            header_length = GitScanner.header_length(printable_diff)
-            printable_diff = printable_diff[header_length:]
+            if not self.global_options.scan_filenames:
+                # The `printable_diff` contains diff header,
+                # so we need to strip that before analyzing it
+                header_length = GitScanner.header_length(printable_diff)
+                printable_diff = printable_diff[header_length:]
             if self.should_scan(file_path):
                 yield printable_diff, file_path
 
@@ -783,6 +784,8 @@ class FolderScanner(ScannerBase):
 
                 try:
                     blob = data.decode("utf-8")
+                    if self.global_options.scan_filenames:
+                        blob = str(relative_path) + "\n" + blob
                 except UnicodeDecodeError:
                     # binary file, continue
                     continue
