@@ -171,13 +171,15 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         # these representation-specific scores directly (but complain about it).
         if self.global_options.hex_entropy_score:
             warnings.warn(
-                "--hex-entropy-score is deprecated. Use --entropy-sensitivity instead."
+                "--hex-entropy-score is deprecated. Use --entropy-sensitivity instead.",
+                DeprecationWarning,
             )
             self._hex_entropy_score = self.global_options.hex_entropy_score
 
         if self.global_options.b64_entropy_score:
             warnings.warn(
-                "--b64-entropy-score is deprecated. Use --entropy-sensitivity instead."
+                "--b64-entropy-score is deprecated. Use --entropy-sensitivity instead.",
+                DeprecationWarning,
             )
             self._b64_entropy_score = self.global_options.b64_entropy_score
 
