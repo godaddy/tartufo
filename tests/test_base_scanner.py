@@ -305,19 +305,25 @@ class RegexScanTests(ScannerTestCase):
         test_scanner = TestScanner(self.options)
         test_scanner._rules_regexes = {  # pylint: disable=protected-access
             "foo": Rule(
-                name=None, pattern=rule_1, path_pattern=None, re_match_type="match"
+                name=None,
+                pattern=rule_1,
+                path_pattern=None,
+                re_match_type="match",
+                re_match_scope=None,
             ),
             "bar": Rule(
                 name=None,
                 pattern=rule_2,
                 path_pattern=rule_2_path,
                 re_match_type="match",
+                re_match_scope=None,
             ),
             "not-found": Rule(
                 name=None,
                 pattern=rule_3,
                 path_pattern=rule_3_path,
                 re_match_type="match",
+                re_match_scope=None,
             ),
         }
         chunk = types.Chunk("foo", "/file/path", {})
@@ -340,6 +346,7 @@ class RegexScanTests(ScannerTestCase):
                 pattern=re.compile("foo"),
                 path_pattern=None,
                 re_match_type="match",
+                re_match_scope=None,
             )
         }
         chunk = types.Chunk("foo", "bar", {})
@@ -359,6 +366,7 @@ class RegexScanTests(ScannerTestCase):
                 pattern=re.compile("foo"),
                 path_pattern=None,
                 re_match_type="match",
+                re_match_scope=None,
             )
         }
         chunk = types.Chunk("foo", "bar", {})
@@ -385,9 +393,16 @@ class EntropyManagementTests(ScannerTestCase):
         self.scanner = TestScanner(self.options)
 
     def test_entropy_string_is_excluded(self):
-        self.options.exclude_entropy_patterns = [r"docs/.*\.md::f.*"]
+        self.options.exclude_entropy_patterns = [
+            {
+                "path-pattern": r"docs/.*\.md",
+                "pattern": "f.*",
+                "match-type": "search",
+                "scope": "line",
+            }
+        ]
         excluded = self.scanner.entropy_string_is_excluded(
-            "foo", "bar", "docs/README.md"
+            "bar", "foo", "docs/README.md"
         )
         self.assertEqual(True, excluded)
 
@@ -401,12 +416,16 @@ class EntropyManagementTests(ScannerTestCase):
         self.assertEqual(True, excluded)
 
     def test_entropy_string_is_not_excluded(self):
-        self.options.exclude_entropy_patterns = [r"foo\..*::f.*"]
-        excluded = self.scanner.entropy_string_is_excluded("bar", "foo", "foo.py")
+        self.options.exclude_entropy_patterns = [
+            {"path-pattern": r"foo\..*", "pattern": "f.*", "match-type": "match"}
+        ]
+        excluded = self.scanner.entropy_string_is_excluded("foo", "bar", "foo.py")
         self.assertEqual(False, excluded)
 
     def test_entropy_string_is_not_excluded_given_different_path(self):
-        self.options.exclude_entropy_patterns = [r"foo\..*::f.*"]
+        self.options.exclude_entropy_patterns = [
+            {"path-pattern": r"foo\..*", "pattern": "f.*", "match-type": "match"}
+        ]
         excluded = self.scanner.entropy_string_is_excluded("foo", "bar", "bar.py")
         self.assertEqual(False, excluded)
 

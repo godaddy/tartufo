@@ -351,18 +351,23 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
 
         :param rule: Rule to perform match
         :param string: string to match against rule pattern
+        :param line: Source line containing string of interest
         :param path: path to match against rule path_pattern
         :return: True if string and path matched, False otherwise.
         """
         match = False
+        if rule.re_match_scope == "word":
+            scope = string
+        else:
+            scope = line
         if rule.re_match_type == "match":
             if rule.pattern:
-                match = rule.pattern.match(string) is not None
+                match = rule.pattern.match(scope) is not None
             if rule.path_pattern:
                 match = match and rule.path_pattern.match(path) is not None
         elif rule.re_match_type == "search":
             if rule.pattern:
-                match = rule.pattern.search(line) is not None
+                match = rule.pattern.search(scope) is not None
             if rule.path_pattern:
                 match = match and rule.path_pattern.search(path) is not None
 
@@ -372,6 +377,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         """Find whether the signature of some data has been excluded in configuration.
 
         :param string: String to check against rule pattern
+        :param line: Source line containing string of interest
         :param path: Path to check against rule path pattern
         :return: True if excluded, False otherwise
         """

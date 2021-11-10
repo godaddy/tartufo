@@ -2,7 +2,6 @@ import json
 import pathlib
 import re
 import shutil
-import warnings
 from typing import (
     Any,
     Dict,
@@ -217,8 +216,11 @@ def load_rules_from_file(rules_file: TextIO) -> Dict[str, Rule]:
             rule = Rule(
                 name=rule_name,
                 pattern=re.compile(rule_definition["pattern"]),
-                path_pattern=re.compile(path_pattern) if path_pattern else None,
+                path_pattern=re.compile(path_pattern)
+                if path_pattern
+                else re.compile(""),
                 re_match_type="match",
+                re_match_scope=None,
             )
         except AttributeError:
             rule = Rule(
@@ -226,6 +228,7 @@ def load_rules_from_file(rules_file: TextIO) -> Dict[str, Rule]:
                 pattern=re.compile(rule_definition),
                 path_pattern=None,
                 re_match_type="match",
+                re_match_scope=None,
             )
         rules[rule_name] = rule
     return rules
@@ -246,29 +249,8 @@ def compile_path_rules(patterns: Iterable[str]) -> List[Pattern]:
     ]
 
 
-def compile_rule(pattern: str) -> Rule:
-    """
-    Compile pattern string to Rule.
-
-    :param pattern: Rule pattern with {path_pattern}::{pattern}
-    :return Rule: Rule object with pattern and path_pattern
-    """
-    try:
-        path, pattern = pattern.split("::", 1)
-    except ValueError:  # Raised when the split separator is not found
-        path = ".*"
-    return Rule(
-        name=None,
-        pattern=re.compile(pattern),
-        path_pattern=re.compile(path),
-        re_match_type="match",
-    )
-
-
 def compile_rules(patterns: Iterable[Union[str, Dict[str, str]]]) -> List[Rule]:
     """Take a list of regex string with paths and compile them into a List of Rule.
-
-    Any line starting with `#` will be ignored.
 
     :param patterns: The list of patterns to be compiled
     :return: List of Rule objects
@@ -279,25 +261,12 @@ def compile_rules(patterns: Iterable[Union[str, Dict[str, str]]]) -> List[Rule]:
                 Rule(
                     name=pattern.get("reason", None),  # type: ignore[union-attr]
                     pattern=re.compile(pattern["pattern"]),  # type: ignore[index]
-                    path_pattern=re.compile(pattern.get("path-pattern", ".*")),  # type: ignore[union-attr]
-                    re_match_type="search",
+                    path_pattern=re.compile(pattern.get("path-pattern", "")),  # type: ignore[union-attr]
+                    re_match_type=pattern.get("match-type", "search"),  # type: ignore[union-attr]
+                    re_match_scope=pattern.get("scope", "line"),  # type: ignore[union-attr]
                 )
                 for pattern in patterns
             }
         )
-    except KeyError as exc:
-        raise ConfigException(
-            f"Malformed exclude-entropy-patterns: {patterns}"
-        ) from exc
-    except AttributeError:
-        warnings.warn(
-            "Using old-style exclude-entropy-patterns; this behavior will be removed in v3.0",
-            DeprecationWarning,
-        )
-        stripped = (p.strip() for p in patterns)  # type: ignore[union-attr]
-        rules = [
-            compile_rule(pattern)
-            for pattern in stripped
-            if pattern and not pattern.startswith("#")
-        ]
-        return rules
+    except (KeyError, AttributeError) as exc:
+        raise ConfigException(f"Invalid exclude-entropy-patterns: {patterns}") from exc

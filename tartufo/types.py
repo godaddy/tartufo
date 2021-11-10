@@ -74,16 +74,27 @@ class Chunk:
 
 @dataclass
 class Rule:
-    __slots__ = ("name", "pattern", "path_pattern", "re_match_type")
+    __slots__ = ("name", "pattern", "path_pattern", "re_match_type", "re_match_scope")
     name: Optional[str]
     pattern: Pattern
     path_pattern: Optional[Pattern]
     re_match_type: str
+    re_match_scope: Optional[str]
 
     def __hash__(self) -> int:
         if self.path_pattern:
             return hash(f"{self.pattern.pattern}::{self.path_pattern.pattern}")
         return hash(self.pattern.pattern)
+
+
+class MatchType(enum.Enum):
+    Match = "match"  # pylint: disable=invalid-name
+    Search = "search"  # pylint: disable=invalid-name
+
+
+class Scope(enum.Enum):
+    Word = "word"  # pylint: disable=invalid-name
+    Line = "line"  # pylint: disable=invalid-name
 
 
 class LogLevel(enum.IntEnum):
