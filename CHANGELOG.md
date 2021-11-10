@@ -27,7 +27,7 @@ Features:
   `--scan-filenames/--no-scan-filenames` flag which allows users to enable or disable file name scanning.
 * [#254](https://github.com/godaddy/tartufo/pull/260) - Changes the default value of
   `--regex/--no-regex` to True.
-* [#265](https://github.com/godaddy/tartufo/issues/265) - Adds new `--sensitivity`
+* [#265](https://github.com/godaddy/tartufo/issues/265) - Adds new `--entropy-sensitivity`
   option which provides a friendlier way to adjust entropy detection sensitivity.
   This replaces `--b64-entropy-score` and `--hex-entropy-score`, which now are
   marked as deprecated.
