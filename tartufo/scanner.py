@@ -142,12 +142,14 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     global_options: types.GlobalOptions
     logger: logging.Logger
     _scan_lock: threading.Lock = threading.Lock()
-    _hex_entropy_score: float = 3.0
-    _b64_entropy_score: float = 4.5
 
     def __init__(self, options: types.GlobalOptions) -> None:
         self.global_options = options
         self.logger = logging.getLogger(__name__)
+
+    @lru_cache(maxsize=None)
+    def compute_hex_entropy_limit(self) -> float:
+        """Determine low limit for suspicious hexadecimal encodings"""
 
         # entropy_score is a probability (between 0.0 and 1.0) that a given string
         # is random. Strings that are at least this likely to be random will result
@@ -160,41 +162,65 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             sensitivity = self.global_options.entropy_sensitivity
         entropy_score = float(100 - sensitivity) / 100.0
 
-        # We now compute an effective score for each type of entropy string by
-        # multiplying by the number of bits expressed in each character of the
-        # string's character set:
-        # hex character 0-f is 16 digits = 2^4 digits = 4 bits/character
-        # base64 represents 24 bits using 4 characters = 6 bits/character
-        self._hex_entropy_score = entropy_score * 4.0
-        self._b64_entropy_score = entropy_score * 6.0
+        # Each hexadecimal digit represents a 4-bit number, so we want to scale
+        # the base score by this amount to account for the efficiency of the
+        # string representation we're examining.
+        hex_entropy_score = entropy_score * 4.0
 
-        # For backwards compatibility, allow the caller to manipulate each of
-        # these representation-specific scores directly (but complain about it).
+        # For backwards compatibility, allow the caller to manipulate this score
+        # # directly (but complain about it).
         if self.global_options.hex_entropy_score:
             warnings.warn(
                 "--hex-entropy-score is deprecated. Use --entropy-sensitivity instead.",
                 DeprecationWarning,
             )
-            self._hex_entropy_score = self.global_options.hex_entropy_score
+            hex_entropy_score = self.global_options.hex_entropy_score
 
-        if self.global_options.b64_entropy_score:
-            warnings.warn(
-                "--b64-entropy-score is deprecated. Use --entropy-sensitivity instead.",
-                DeprecationWarning,
-            )
-            self._b64_entropy_score = self.global_options.b64_entropy_score
+        return hex_entropy_score
 
     @property
     def hex_entropy_limit(self) -> float:
         """Returns low limit for suspicious hexadecimal encodings"""
 
-        return self._hex_entropy_score
+        return self.compute_hex_entropy_limit()
+
+    @lru_cache(maxsize=None)
+    def compute_b64_entropy_limit(self) -> float:
+        """Returns low limit for suspicious base64 encodings"""
+
+        # entropy_score is a probability (between 0.0 and 1.0) that a given string
+        # is random. Strings that are at least this likely to be random will result
+        # in findings. We convert this from "sensitivity" (0-100) which is inverted
+        # so that intuitively "more sensitive" means "more likely to flag a given
+        # string as suspicious."
+        if self.global_options.entropy_sensitivity is None:
+            sensitivity = 25
+        else:
+            sensitivity = self.global_options.entropy_sensitivity
+        entropy_score = float(100 - sensitivity) / 100.0
+
+        # Each 4-character base64 group represents 3 8-bit bytes, i.e. an effective
+        # bit rate of 24/4 = 6 bits per character. We want to scale the base score
+        # by this amount to account for the efficiency of the string representation
+        # we're examining.
+        b64_entropy_score = entropy_score * 6.0
+
+        # For backwards compatibility, allow the caller to manipulate this score
+        # # directly (but complain about it).
+        if self.global_options.b64_entropy_score:
+            warnings.warn(
+                "--b64-entropy-score is deprecated. Use --entropy-sensitivity instead.",
+                DeprecationWarning,
+            )
+            b64_entropy_score = self.global_options.b64_entropy_score
+
+        return b64_entropy_score
 
     @property
     def b64_entropy_limit(self) -> float:
         """Returns low limit for suspicious base64 encodings"""
 
-        return self._b64_entropy_score
+        return self.compute_b64_entropy_limit()
 
     @property
     def completed(self) -> bool:
