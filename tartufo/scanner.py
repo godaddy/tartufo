@@ -184,6 +184,18 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             self._b64_entropy_score = self.global_options.b64_entropy_score
 
     @property
+    def hex_entropy_limit(self) -> float:
+        """Returns low limit for suspicious hexadecimal encodings"""
+
+        return self._hex_entropy_score
+
+    @property
+    def b64_entropy_limit(self) -> float:
+        """Returns low limit for suspicious base64 encodings"""
+
+        return self._b64_entropy_score
+
+    @property
     def completed(self) -> bool:
         """Return True if scan has completed
 
@@ -457,12 +469,12 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
 
                 for string in b64_strings:
                     yield from self.evaluate_entropy_string(
-                        chunk, line, string, BASE64_CHARS, self._b64_entropy_score
+                        chunk, line, string, BASE64_CHARS, self.b64_entropy_limit
                     )
 
                 for string in hex_strings:
                     yield from self.evaluate_entropy_string(
-                        chunk, line, string, HEX_CHARS, self._hex_entropy_score
+                        chunk, line, string, HEX_CHARS, self.hex_entropy_limit
                     )
 
     def evaluate_entropy_string(

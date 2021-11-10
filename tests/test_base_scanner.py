@@ -573,23 +573,21 @@ class EntropyTests(ScannerTestCase):
         issues = list(self.scanner.scan_entropy(self.chunk))
         self.assertEqual(len(issues), 0)
 
-    # pylint: disable=protected-access
     def test_sensitivity_low_end_calculation(self):
         self.options.entropy_sensitivity = 0
         test_scanner = TestScanner(self.options)
 
         # 0% sensitivity means entropy rate must equal bit rate
-        self.assertEqual(test_scanner._b64_entropy_score, 6.0)
-        self.assertEqual(test_scanner._hex_entropy_score, 4.0)
+        self.assertEqual(test_scanner.b64_entropy_limit, 6.0)
+        self.assertEqual(test_scanner.hex_entropy_limit, 4.0)
 
-    # pylint: disable=protected-access
     def test_sensitivity_high_end_calculation(self):
         self.options.entropy_sensitivity = 100
         test_scanner = TestScanner(self.options)
 
         # 100% sensitivity means required entropy rate will be zero
-        self.assertEqual(test_scanner._b64_entropy_score, 0.0)
-        self.assertEqual(test_scanner._hex_entropy_score, 0.0)
+        self.assertEqual(test_scanner.b64_entropy_limit, 0.0)
+        self.assertEqual(test_scanner.hex_entropy_limit, 0.0)
 
 
 if __name__ == "__main__":
