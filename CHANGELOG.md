@@ -1,5 +1,5 @@
-vx.x.x - TBD
-------------
+v3.0.0-alpha.1 - 11 November 2021
+---------------------------------
 
 Bug fixes:
 
@@ -12,18 +12,18 @@ Features:
   as scan progresses instead of holding all of them until it has completed. This
   is a reimplementation of [#108](https://github.com/godaddy/tartufo/pull/108);
   thanks to @dclayton-godaddy for showing the way.
-* [#244](https://github.com/godaddy/tartufo/pull/244) - Drops support for 
+* [#244](https://github.com/godaddy/tartufo/pull/244) - Drops support for
   `--fetch/--no-fetch` option for local scans
 * [#253](https://github.com/godaddy/tartufo/issues/253) - Drops support for `--json` and `--compact`
   and consolidates the two options into one `---output-format json/compact/text`
-* [#259](https://github.com/godaddy/tartufo/pull/259) - Adds a new 
+* [#259](https://github.com/godaddy/tartufo/pull/259) - Adds a new
   `--scan-filenames/--no-scan-filenames` flag which allows users to enable or disable file name scanning.
-* [#254](https://github.com/godaddy/tartufo/pull/260) - Changes the default value of 
+* [#254](https://github.com/godaddy/tartufo/pull/260) - Changes the default value of
   `--regex/--no-regex` to True.
 
 Misc:
 
-* [#255](https://github.com/godaddy/tartufo/issues/255) -- Removed deprecated flags 
+* [#255](https://github.com/godaddy/tartufo/issues/255) -- Removed deprecated flags
   --include-paths and --exclude-paths
 
 v2.10.0 - 3 November 2021
