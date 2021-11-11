@@ -51,8 +51,9 @@ Features:
 
 Misc:
 
-* [#255](https://github.com/godaddy/tartufo/issues/255) -- Removed deprecated flags
+* [#255](https://github.com/godaddy/tartufo/issues/255) - Removed deprecated flags
   --include-paths and --exclude-paths
+* [#282](https://github.com/godaddy/tartufo/pull/282) - Remove old style config for `exclude-entropy-patterns`
 
 v2.10.0 - 3 November 2021
 ------------

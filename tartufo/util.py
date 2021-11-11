@@ -18,7 +18,6 @@ from typing import (
     Optional,
     Tuple,
     TYPE_CHECKING,
-    Pattern,
 )
 
 import click
@@ -26,12 +25,10 @@ import git
 import pygit2
 
 from tartufo import types
-from tartufo.types import Rule
 
 if TYPE_CHECKING:
     from tartufo.scanner import Issue  # pylint: disable=cyclic-import
     from tartufo.scanner import ScannerBase  # pylint: disable=cyclic-import
-    from tartufo.config import OptionTypes  # pylint: disable=cyclic-import
 
 
 DATETIME_FORMAT: str = "%Y-%m-%d %H:%M:%S"
@@ -48,13 +45,6 @@ def del_rw(_func: Callable, name: str, _exc: Exception) -> None:
     """
     os.chmod(name, stat.S_IWRITE)
     os.remove(name)
-
-
-def convert_regexes_to_rules(regexes: Dict[str, Pattern]) -> Dict[str, Rule]:
-    return {
-        name: Rule(name=name, pattern=pattern, path_pattern=None, re_match_type="match")
-        for name, pattern in regexes.items()
-    }
 
 
 def echo_result(

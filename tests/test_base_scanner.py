@@ -397,12 +397,10 @@ class EntropyManagementTests(ScannerTestCase):
             {
                 "path-pattern": r"docs/.*\.md",
                 "pattern": "f.*",
-                "match-type": "search",
-                "scope": "line",
             }
         ]
         excluded = self.scanner.entropy_string_is_excluded(
-            "bar", "foo", "docs/README.md"
+            "foo", "barfoo", "docs/README.md"
         )
         self.assertEqual(True, excluded)
 
