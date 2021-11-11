@@ -26,6 +26,28 @@ Misc:
 * [#255](https://github.com/godaddy/tartufo/issues/255) -- Removed deprecated flags 
   --include-paths and --exclude-paths
 
+v2.10.0 - 3 November 2021
+------------
+
+Bug fixes:
+
+* [#247](https://github.com/godaddy/tartufo/issues/247) All versions of tartufo from
+  v2.2.0 through v2.9.0 inclusive mishandle `scan-remote-repo`. Only the repository's
+  default branch was scanned, and secrets present in other branches would not be
+  discovered. Additionally, the `--branch branch-name` option did not operate correctly
+  for remote repositories. Some versions would scan nothing and report no errors, and
+  other versions aborted immediately, claiming the branch did not exist (even if it did).
+  v2.10.0 corrects these problems and may detect secrets that were not reported by previous versions.
+
+Features:
+
+* [#231](https://github.com/godaddy/tartufo/issues/231) Change toml parsing library to use tomlkit
+
+Other changes:
+
+* [#251](https://github.com/godaddy/tartufo/issues/251) Document update to use --no-fetch flag
+  to all scan-local-repo
+
 v2.9.0 - 19 October 2021
 ------------------------
 
