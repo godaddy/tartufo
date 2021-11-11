@@ -16,29 +16,57 @@ class FolderScannerTestCase(unittest.TestCase):
 
     def test_scan_should_detect_entropy_and_not_binary(self):
         folder_path = pathlib.Path(__file__).parent / "data/scan_folder"
+        recurse = True
         self.global_options.entropy = True
         self.global_options.b64_entropy_score = 4.5
         self.global_options.hex_entropy_score = 3
         self.global_options.exclude_signatures = []
         self.global_options.exclude_path_patterns = [r"donotscan\.txt"]
 
-        test_scanner = scanner.FolderScanner(self.global_options, folder_path)
+        test_scanner = scanner.FolderScanner(self.global_options, folder_path, recurse)
         issues = list(test_scanner.scan())
 
-        self.assertEqual(1, len(issues))
+        self.assertEqual(2, len(issues))
         self.assertEqual("KQ0I97OBuPlGB9yPRxoSxnX52zE=", issues[0].matched_string)
         self.assertEqual(IssueType.Entropy, issues[0].issue_type)
 
     def test_scan_should_raise_click_error_on_file_permissions_issues(self):
         folder_path = pathlib.Path(__file__).parent / "data/scan_folder"
+        recurse = True
         self.global_options.entropy = True
         self.global_options.exclude_signatures = []
 
-        test_scanner = scanner.FolderScanner(self.global_options, folder_path)
+        test_scanner = scanner.FolderScanner(self.global_options, folder_path, recurse)
 
         with patch("pathlib.Path.open", side_effect=OSError()):
             with self.assertRaises(click.FileError):
                 list(test_scanner.scan())
+
+    def test_scan_all_the_files_recursively(self):
+        folder_path = pathlib.Path(__file__).parent / "data/scan_folder"
+        recurse = True
+        self.global_options.entropy = True
+        self.global_options.exclude_signatures = []
+        self.global_options.b64_entropy_score = 4.5
+        self.global_options.hex_entropy_score = 3
+
+        test_scanner = scanner.FolderScanner(self.global_options, folder_path, recurse)
+        issues = list(test_scanner.scan())
+
+        self.assertEqual(3, len(issues))
+
+    def test_scan_only_root_level_files(self):
+        folder_path = pathlib.Path(__file__).parent / "data/scan_folder"
+        recurse = False
+        self.global_options.entropy = True
+        self.global_options.exclude_signatures = []
+        self.global_options.b64_entropy_score = 4.5
+        self.global_options.hex_entropy_score = 3
+
+        test_scanner = scanner.FolderScanner(self.global_options, folder_path, recurse)
+        issues = list(test_scanner.scan())
+
+        self.assertEqual(2, len(issues))
 
 
 if __name__ == "__main__":

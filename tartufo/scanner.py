@@ -761,9 +761,7 @@ class FolderScanner(ScannerBase):
     target: str
 
     def __init__(
-        self,
-        global_options: types.GlobalOptions,
-        target: str,
+        self, global_options: types.GlobalOptions, target: str, recurse: bool
     ) -> None:
         """Used for scanning a folder.
 
@@ -771,6 +769,7 @@ class FolderScanner(ScannerBase):
         :param target: The local filesystem path to scan
         """
         self.target = target
+        self.recurse = recurse
         super().__init__(global_options)
 
     @property
@@ -785,7 +784,8 @@ class FolderScanner(ScannerBase):
 
     def _iter_folder(self) -> Generator[Tuple[str, str], None, None]:
         folder_path = pathlib.Path(self.target)
-        for file_path in folder_path.rglob("**/*"):
+        files = folder_path.rglob("**/*") if self.recurse else folder_path.glob("*")
+        for file_path in files:
             relative_path = file_path.relative_to(folder_path)
             if file_path.is_file() and self.should_scan(str(relative_path)):
                 try:

@@ -37,7 +37,7 @@ class ScanFolderTests(unittest.TestCase):
     def test_filename_added_to_chunk_when_scan_filename_enabled(self):
         path = pathlib.Path(__file__).parent / "data" / "scan_folder"
         options = generate_options(GlobalOptions, scan_filenames=True)
-        scanner = FolderScanner(options, str(path))
+        scanner = FolderScanner(options, str(path), True)
         for chunk in scanner.chunks:
             file_path = chunk.file_path
             try:
@@ -50,7 +50,7 @@ class ScanFolderTests(unittest.TestCase):
     def test_filename_not_added_to_chunk_when_scan_filename_disabled(self):
         path = pathlib.Path(__file__).parent / "data" / "scan_folder"
         options = generate_options(GlobalOptions, scan_filenames=False)
-        scanner = FolderScanner(options, str(path))
+        scanner = FolderScanner(options, str(path), True)
         for chunk in scanner.chunks:
             file_path = chunk.file_path
             try:

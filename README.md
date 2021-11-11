@@ -159,6 +159,7 @@ Commands:
   pre-commit        Scan staged changes in a pre-commit hook.
   scan-local-repo   Scan a repository already cloned to your local system.
   scan-remote-repo  Automatically clone and scan a remote git repository.
+  scan-folder       Scan a folder.
 
 ```
 
