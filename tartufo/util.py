@@ -205,24 +205,24 @@ def extract_commit_metadata(commit: pygit2.Commit, branch_name: str) -> Dict[str
     }
 
 
-def find_string_encodings(
+def find_strings_by_regex(
     text: str, regex: Pattern, threshold: int = 20
 ) -> Generator[str, None, None]:
-    """Locate binary encodings in input text
+    """Locate strings ("words") of interest in input text
 
-    Each returned encoding must have a length, at minimum, equal to `threshold`.
+    Each returned string must have a length, at minimum, equal to `threshold`.
     This is meant to return longer strings which are likely to be things like
     auto-generated passwords, tokens, hashes, etc.
 
     :param text: The text string to be analyzed
-    :param regex: A pattern which matches all valid encodings of a given type
-    :param threshold: The minimum acceptable length of an encoding
+    :param regex: A pattern which matches all character sequences of interest
+    :param threshold: The minimum acceptable length of a matching string
     """
 
     for match in regex.finditer(text):
-        encoding = match.group()
-        if len(encoding) >= threshold:
-            yield encoding
+        substring = match.group()
+        if len(substring) >= threshold:
+            yield substring
 
 
 def path_contains_git(path: str) -> bool:

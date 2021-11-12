@@ -465,39 +465,13 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         :param chunk: The chunk of data to be scanned
         """
 
-        # If you have thought about this too much :) you might ask yourself,
-        # "can't this produce duplicate findings?" After all, a hexadecimal
-        # encoding uses a strict subset of the base64 alphabet, so any string
-        # that matches HEX_REGEX will match BASE64_REGEX too, and be found by
-        # both inner loops below.
-        #
-        # The reason this doesn't (with default settings) is because the maximum
-        # entropy you can get with a hexadecimal encoding is 4.46. (Hint: you
-        # get maximum entropy if you use every character in the encoding alphabet
-        # exactly the same number of times -- such as once. Such a string would
-        # be 22 characters long. Spelling it out here would generate a finding.)
-        #
-        # By default, `b64_entropy_score` is 4.5, which means it is impossible for
-        # any hexadecimal encoding to trigger a base64 entropy finding. The only
-        # way to make the entropy higher is to add more (unique) characters, but
-        # doing so means the string would no longer be recognized as hexadecimal
-        # encoding; thus it is impossible for anything that could trigger a base64
-        # entropy finding to also trigger a hexadecimal entropy finding (because
-        # such a string won't be recognized by the hex loop).
-        #
-        # It's never been written anywhere that I've found, but this behavior
-        # might explain how the tartufo (and TruffleHog before it) defaults were
-        # chosen -- they are the smallest "roundish" entropy cutoffs you can
-        # choose that are mutually consistent and prevent duplicate findings.
-        # Just a theory.
-
         for line in chunk.contents.split("\n"):
             for word in line.split():
-                for string in util.find_string_encodings(word, BASE64_REGEX):
+                for string in util.find_strings_by_regex(word, BASE64_REGEX):
                     yield from self.evaluate_entropy_string(
                         chunk, line, string, BASE64_CHARS, self.b64_entropy_limit
                     )
-                for string in util.find_string_encodings(word, HEX_REGEX):
+                for string in util.find_strings_by_regex(word, HEX_REGEX):
                     yield from self.evaluate_entropy_string(
                         chunk, line, string, HEX_CHARS, self.hex_entropy_limit
                     )

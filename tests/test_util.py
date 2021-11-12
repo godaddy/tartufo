@@ -371,43 +371,37 @@ class GeneralUtilTests(unittest.TestCase):
         util.generate_signature("foo", "bar")
         mock_hash.assert_called_once_with(b"foo$$bar")
 
-    def test_find_string_encodings_splits_string_by_chars_outside_charset(self):
+    def test_find_strings_by_regex_splits_string_by_chars_outside_charset(self):
         strings = list(
-            util.find_string_encodings("asdf.qwer", re.compile(r"[asdfqwer]+"), 1)
+            util.find_strings_by_regex("asdf.qwer", re.compile(r"[asdfqwer]+"), 1)
         )
         self.assertEqual(strings, ["asdf", "qwer"])
 
-    def test_find_string_encodings_will_not_return_strings_below_threshold_length(self):
+    def test_find_strings_by_regex_will_not_return_strings_below_threshold_length(self):
         strings = list(
-            util.find_string_encodings("w.asdf.q", re.compile(r"[asdfqwer]+"), 3)
+            util.find_strings_by_regex("w.asdf.q", re.compile(r"[asdfqwer]+"), 3)
         )
         self.assertEqual(strings, ["asdf"])
 
-    def test_find_string_encodings_recognizes_hexadecimal(self):
+    def test_find_strings_by_regex_recognizes_hexadecimal(self):
 
-        sample_name_that_pylint_likes = """
+        sample_input = """
         1111111111fffffCCCCC This is valid hexadecimal
         g111111111fffffCCCCC This is not because "g" is not in alphabet
         """
 
-        strings = list(
-            util.find_string_encodings(
-                sample_name_that_pylint_likes, scanner.HEX_REGEX, 20
-            )
-        )
+        strings = list(util.find_strings_by_regex(sample_input, scanner.HEX_REGEX, 20))
         self.assertEqual(strings, ["1111111111fffffCCCCC"])
 
-    def test_find_string_encodings_recognizes_base64(self):
+    def test_find_strings_by_regex_recognizes_base64(self):
 
-        sample_name_that_pylint_likes = """
+        sample_input = """
         111111111+ffffCCCC== This is valid base64
         @111111111+ffffCCCC= This is not because "@" is not in alphabet
         _111111111+ffffCCCC= This is not because "_" is not in alphabet
         """
 
         strings = list(
-            util.find_string_encodings(
-                sample_name_that_pylint_likes, scanner.BASE64_REGEX, 20
-            )
+            util.find_strings_by_regex(sample_input, scanner.BASE64_REGEX, 20)
         )
         self.assertEqual(strings, ["111111111+ffffCCCC=="])
