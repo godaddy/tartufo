@@ -578,16 +578,24 @@ class EntropyTests(ScannerTestCase):
         test_scanner = TestScanner(self.options)
 
         # 0% sensitivity means entropy rate must equal bit rate
-        self.assertEqual(test_scanner.b64_entropy_limit, 6.0)
-        self.assertEqual(test_scanner.hex_entropy_limit, 4.0)
+        self.assertEqual(test_scanner.b64_entropy_limit, 0.0)
+        self.assertEqual(test_scanner.hex_entropy_limit, 0.0)
 
     def test_sensitivity_high_end_calculation(self):
         self.options.entropy_sensitivity = 100
         test_scanner = TestScanner(self.options)
 
         # 100% sensitivity means required entropy rate will be zero
-        self.assertEqual(test_scanner.b64_entropy_limit, 0.0)
-        self.assertEqual(test_scanner.hex_entropy_limit, 0.0)
+        self.assertEqual(test_scanner.b64_entropy_limit, 6.0)
+        self.assertEqual(test_scanner.hex_entropy_limit, 4.0)
+
+    def test_sensitivity_deprecated_overrides(self):
+        self.options.b64_entropy_score = 11.1
+        self.options.hex_entropy_score = 22.2
+        test_scanner = TestScanner(self.options)
+
+        self.assertEqual(test_scanner.b64_entropy_limit, 11.1)
+        self.assertEqual(test_scanner.hex_entropy_limit, 22.2)
 
 
 if __name__ == "__main__":

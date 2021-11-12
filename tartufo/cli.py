@@ -203,11 +203,11 @@ class TartufoCLI(click.MultiCommand):
 @click.option(
     "--entropy-sensitivity",
     type=click.IntRange(0, 100),
-    default=25,
+    default=75,
     show_default=True,
     help="""Modify entropy detection sensitivity. This is expressed as on a scale
-    of 0 to 100, where 0 means "totally random" and 100 means "totally nonrandom".
-    Increasing the scanner's sensitivity increases the likelihood that a given
+    of 0 to 100, where 0 means "totally nonrandom" and 100 means "totally random".
+    Decreasing the scanner's sensitivity increases the likelihood that a given
     string will be identified as suspicious.""",
 )
 @click.option(

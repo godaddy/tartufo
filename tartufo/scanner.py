@@ -21,9 +21,9 @@ from typing import (
 )
 import warnings
 
+from cached_property import cached_property
 import click
 import git
-
 import pygit2
 
 from tartufo import config, types, util
@@ -147,25 +147,22 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         self.global_options = options
         self.logger = logging.getLogger(__name__)
 
-    @lru_cache(maxsize=None)
-    def compute_hex_entropy_limit(self) -> float:
-        """Determine low limit for suspicious hexadecimal encodings"""
+    def compute_scaled_entropy_limit(self, maximum_bitrate: float) -> float:
+        """Determine low entropy cutoff for specified bitrate
 
-        # entropy_score is a probability (between 0.0 and 1.0) that a given string
-        # is random. Strings that are at least this likely to be random will result
-        # in findings. We convert this from "sensitivity" (0-100) which is inverted
-        # so that intuitively "more sensitive" means "more likely to flag a given
-        # string as suspicious."
+        :param maximum_bitrate: How many bits does each character represent?
+        :returns: Entropy detection threshold scaled to the input bitrate
+        """
+
         if self.global_options.entropy_sensitivity is None:
-            sensitivity = 25
+            sensitivity = 75
         else:
             sensitivity = self.global_options.entropy_sensitivity
-        entropy_score = float(100 - sensitivity) / 100.0
+        return float(sensitivity) / 100.0 * maximum_bitrate
 
-        # Each hexadecimal digit represents a 4-bit number, so we want to scale
-        # the base score by this amount to account for the efficiency of the
-        # string representation we're examining.
-        hex_entropy_score = entropy_score * 4.0
+    @cached_property
+    def hex_entropy_limit(self) -> float:
+        """Returns low entropy limit for suspicious hexadecimal encodings"""
 
         # For backwards compatibility, allow the caller to manipulate this score
         # # directly (but complain about it).
@@ -174,36 +171,16 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                 "--hex-entropy-score is deprecated. Use --entropy-sensitivity instead.",
                 DeprecationWarning,
             )
-            hex_entropy_score = self.global_options.hex_entropy_score
+            return self.global_options.hex_entropy_score
 
-        return hex_entropy_score
+        # Each hexadecimal digit represents a 4-bit number, so we want to scale
+        # the base score by this amount to account for the efficiency of the
+        # string representation we're examining.
+        return self.compute_scaled_entropy_limit(4.0)
 
-    @property
-    def hex_entropy_limit(self) -> float:
-        """Returns low limit for suspicious hexadecimal encodings"""
-
-        return self.compute_hex_entropy_limit()
-
-    @lru_cache(maxsize=None)
-    def compute_b64_entropy_limit(self) -> float:
-        """Returns low limit for suspicious base64 encodings"""
-
-        # entropy_score is a probability (between 0.0 and 1.0) that a given string
-        # is random. Strings that are at least this likely to be random will result
-        # in findings. We convert this from "sensitivity" (0-100) which is inverted
-        # so that intuitively "more sensitive" means "more likely to flag a given
-        # string as suspicious."
-        if self.global_options.entropy_sensitivity is None:
-            sensitivity = 25
-        else:
-            sensitivity = self.global_options.entropy_sensitivity
-        entropy_score = float(100 - sensitivity) / 100.0
-
-        # Each 4-character base64 group represents 3 8-bit bytes, i.e. an effective
-        # bit rate of 24/4 = 6 bits per character. We want to scale the base score
-        # by this amount to account for the efficiency of the string representation
-        # we're examining.
-        b64_entropy_score = entropy_score * 6.0
+    @cached_property
+    def b64_entropy_limit(self) -> float:
+        """Returns low entropy limit for suspicious base64 encodings"""
 
         # For backwards compatibility, allow the caller to manipulate this score
         # # directly (but complain about it).
@@ -212,15 +189,13 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                 "--b64-entropy-score is deprecated. Use --entropy-sensitivity instead.",
                 DeprecationWarning,
             )
-            b64_entropy_score = self.global_options.b64_entropy_score
+            return self.global_options.b64_entropy_score
 
-        return b64_entropy_score
-
-    @property
-    def b64_entropy_limit(self) -> float:
-        """Returns low limit for suspicious base64 encodings"""
-
-        return self.compute_b64_entropy_limit()
+        # Each 4-character base64 group represents 3 8-bit bytes, i.e. an effective
+        # bit rate of 24/4 = 6 bits per character. We want to scale the base score
+        # by this amount to account for the efficiency of the string representation
+        # we're examining.
+        return self.compute_scaled_entropy_limit(6.0)
 
     @property
     def completed(self) -> bool:

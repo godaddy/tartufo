@@ -136,11 +136,11 @@ Options:
   --entropy-sensitivity INTEGER RANGE
                                   Modify entropy detection sensitivity. This
                                   is expressed as on a scale of 0 to 100,
-                                  where 0 means "totally random" and 100 means
-                                  "totally nonrandom". Increasing the
+                                  where 0 means "totally nonrandom" and 100
+                                  means "totally random". Decreasing the
                                   scanner's sensitivity increases the
                                   likelihood that a given string will be
-                                  identified as suspicious.  [default: 25]
+                                  identified as suspicious.  [default: 75]
 
   -b64, --b64-entropy-score TEXT  [DEPRECATED] Use `--entropy-sensitivity`.
                                   Modify the base64 entropy score. If a value
