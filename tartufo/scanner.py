@@ -30,7 +30,7 @@ import pygit2
 from tartufo import config, types, util
 from tartufo.types import BranchNotFoundException, Rule, TartufoException
 
-BASE64_REGEX = re.compile(r"[A-Z0-9+/]+={,2}", re.IGNORECASE)
+BASE64_REGEX = re.compile(r"[A-Z0-9+/_-]+={,2}", re.IGNORECASE)
 HEX_REGEX = re.compile(r"[0-9A-F]+", re.IGNORECASE)
 
 
