@@ -759,6 +759,7 @@ class FolderScanner(ScannerBase):
     """Used to scan a folder."""
 
     target: str
+    recurse: bool
 
     def __init__(
         self, global_options: types.GlobalOptions, target: str, recurse: bool

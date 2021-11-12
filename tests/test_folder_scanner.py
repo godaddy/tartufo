@@ -54,6 +54,15 @@ class FolderScannerTestCase(unittest.TestCase):
         issues = list(test_scanner.scan())
 
         self.assertEqual(3, len(issues))
+        actual_issues = []
+        for issue in issues:
+            actual_issues.append(issue.matched_string)
+        self.assertIn("KQ0I97OBuPlGB9yPRxoSxnX52zE=", actual_issues)
+        self.assertIn("KQ0I97OBuPlGB9yPRxoSxnX52zE=", actual_issues)
+        self.assertIn(
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
+            actual_issues,
+        )
 
     def test_scan_only_root_level_files(self):
         folder_path = pathlib.Path(__file__).parent / "data/scan_folder"
@@ -67,6 +76,11 @@ class FolderScannerTestCase(unittest.TestCase):
         issues = list(test_scanner.scan())
 
         self.assertEqual(2, len(issues))
+        actual_issues = []
+        for issue in issues:
+            actual_issues.append(issue.matched_string)
+        self.assertIn("KQ0I97OBuPlGB9yPRxoSxnX52zE=", actual_issues)
+        self.assertIn("KQ0I97OBuPlGB9yPRxoSxnX52zE=", actual_issues)
 
 
 if __name__ == "__main__":

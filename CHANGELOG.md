@@ -28,7 +28,8 @@ Features:
 * [#254](https://github.com/godaddy/tartufo/pull/260) - Changes the default value of
   `--regex/--no-regex` to True.
 * [#268](https://github.com/godaddy/tartufo/issues/268) - Adds a new
-  `--recurse / --no-recurse` flag which allows users scan entire directory or just the root directory
+  `--recurse / --no-recurse` flag which allows users to recursively scan the entire directory or just
+  the root directory
 
 Misc:
 

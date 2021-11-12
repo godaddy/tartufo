@@ -143,6 +143,7 @@ exclude-signatures = [
   "d26b223efb2087d4a3db7b3ff0f65362372c46190fd74b8061db8099f4a2ee60", # tests/data/scan_folder/donotscan.txt
   "94c45f9acae0551a2438fa8932fac466e903fd9a09bd2e11897198b133937ccd", # tests/data/scan_folder/test.txt
   "743b893e30777d9c4e28d3d341ca4ba1c2541a9c62b497dece75c2a64420e770", # tests/test_folder_scanner.py
+  "9d1b278fa384c9dc58d607130d97740910309d13b29f13f7ed6348738ea4f32c", # tests/data/scan_folder/scan_sub_folder/sub_folder_test.txt
 ]
 json = false
 regex = true
