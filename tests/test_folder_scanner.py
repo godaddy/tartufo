@@ -64,8 +64,7 @@ class FolderScannerTestCase(unittest.TestCase):
         actual_issues = []
         for issue in issues:
             actual_issues.append(issue.matched_string)
-        self.assertIn("KQ0I97OBuPlGB9yPRxoSxnX52zE=", actual_issues)
-        self.assertIn("KQ0I97OBuPlGB9yPRxoSxnX52zE=", actual_issues)
+        self.assertEqual(2, actual_issues.count("KQ0I97OBuPlGB9yPRxoSxnX52zE="))
         self.assertIn(
             "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
             actual_issues,
@@ -86,8 +85,7 @@ class FolderScannerTestCase(unittest.TestCase):
         actual_issues = []
         for issue in issues:
             actual_issues.append(issue.matched_string)
-        self.assertIn("KQ0I97OBuPlGB9yPRxoSxnX52zE=", actual_issues)
-        self.assertIn("KQ0I97OBuPlGB9yPRxoSxnX52zE=", actual_issues)
+        self.assertEqual(2, actual_issues.count("KQ0I97OBuPlGB9yPRxoSxnX52zE="))
 
 
 if __name__ == "__main__":
