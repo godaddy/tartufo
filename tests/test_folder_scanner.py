@@ -27,7 +27,14 @@ class FolderScannerTestCase(unittest.TestCase):
         issues = list(test_scanner.scan())
 
         self.assertEqual(2, len(issues))
-        self.assertEqual("KQ0I97OBuPlGB9yPRxoSxnX52zE=", issues[0].matched_string)
+        actual_issues = []
+        for issue in issues:
+            actual_issues.append(issue.matched_string)
+        self.assertIn("KQ0I97OBuPlGB9yPRxoSxnX52zE=", actual_issues)
+        self.assertIn(
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
+            actual_issues,
+        )
         self.assertEqual(IssueType.Entropy, issues[0].issue_type)
 
     def test_scan_should_raise_click_error_on_file_permissions_issues(self):
