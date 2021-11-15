@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import abc
+from collections import Counter
 from functools import lru_cache
 import hashlib
 import logging
@@ -19,17 +20,18 @@ from typing import (
     Set,
     Tuple,
 )
+import warnings
 
+from cached_property import cached_property
 import click
 import git
-
 import pygit2
 
 from tartufo import config, types, util
 from tartufo.types import BranchNotFoundException, Rule, TartufoException
 
-BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
-HEX_CHARS = "1234567890abcdefABCDEF"
+BASE64_REGEX = re.compile(r"[A-Z0-9+/_-]+={,2}", re.IGNORECASE)
+HEX_REGEX = re.compile(r"[0-9A-F]+", re.IGNORECASE)
 
 
 class Issue:
@@ -145,6 +147,56 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     def __init__(self, options: types.GlobalOptions) -> None:
         self.global_options = options
         self.logger = logging.getLogger(__name__)
+
+    def compute_scaled_entropy_limit(self, maximum_bitrate: float) -> float:
+        """Determine low entropy cutoff for specified bitrate
+
+        :param maximum_bitrate: How many bits does each character represent?
+        :returns: Entropy detection threshold scaled to the input bitrate
+        """
+
+        if self.global_options.entropy_sensitivity is None:
+            sensitivity = 75
+        else:
+            sensitivity = self.global_options.entropy_sensitivity
+        return float(sensitivity) / 100.0 * maximum_bitrate
+
+    @cached_property
+    def hex_entropy_limit(self) -> float:
+        """Returns low entropy limit for suspicious hexadecimal encodings"""
+
+        # For backwards compatibility, allow the caller to manipulate this score
+        # # directly (but complain about it).
+        if self.global_options.hex_entropy_score:
+            warnings.warn(
+                "--hex-entropy-score is deprecated. Use --entropy-sensitivity instead.",
+                DeprecationWarning,
+            )
+            return self.global_options.hex_entropy_score
+
+        # Each hexadecimal digit represents a 4-bit number, so we want to scale
+        # the base score by this amount to account for the efficiency of the
+        # string representation we're examining.
+        return self.compute_scaled_entropy_limit(4.0)
+
+    @cached_property
+    def b64_entropy_limit(self) -> float:
+        """Returns low entropy limit for suspicious base64 encodings"""
+
+        # For backwards compatibility, allow the caller to manipulate this score
+        # # directly (but complain about it).
+        if self.global_options.b64_entropy_score:
+            warnings.warn(
+                "--b64-entropy-score is deprecated. Use --entropy-sensitivity instead.",
+                DeprecationWarning,
+            )
+            return self.global_options.b64_entropy_score
+
+        # Each 4-character base64 group represents 3 8-bit bytes, i.e. an effective
+        # bit rate of 24/4 = 6 bits per character. We want to scale the base score
+        # by this amount to account for the efficiency of the string representation
+        # we're examining.
+        return self.compute_scaled_entropy_limit(6.0)
 
     @property
     def completed(self) -> bool:
@@ -330,26 +382,26 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         )
 
     @lru_cache(maxsize=None)
-    def calculate_entropy(self, data: str, char_set: str) -> float:
+    def calculate_entropy(self, data: str) -> float:
         """Calculate the Shannon entropy for a piece of data.
 
         This essentially calculates the overall probability for each character
-        in `data` to be to be present, based on the characters in `char_set`.
-        By doing this, we can tell how random a string appears to be.
+        in `data` to be to be present. By doing this, we can tell how random a
+        string appears to be.
 
         Borrowed from http://blog.dkbza.org/2007/05/scanning-data-for-entropy-anomalies.html
 
         :param data: The data to be scanned for its entropy
-        :param char_set: The character set used as a basis for the calculation
-        :return: The amount of entropy detected in the data.
+        :return: The amount of entropy detected in the data
         """
         if not data:
             return 0.0
+        frequency = Counter(data)
         entropy = 0.0
-        for char in char_set:
-            prob_x = float(data.count(char)) / len(data)
-            if prob_x > 0:
-                entropy += -prob_x * math.log2(prob_x)
+        float_size = float(len(data))
+        for count in frequency.values():
+            probability = float(count) / float_size
+            entropy += -probability * math.log2(probability)
         return entropy
 
     def scan(self) -> Generator[Issue, None, None]:
@@ -398,8 +450,6 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                 if self.global_options.entropy:
                     for issue in self.scan_entropy(
                         chunk,
-                        self.global_options.b64_entropy_score,
-                        self.global_options.hex_entropy_score,
                     ):
                         self._issues.append(issue)
                         yield issue
@@ -407,28 +457,23 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             self.logger.info("Found %d issues.", len(self._issues))
 
     def scan_entropy(
-        self, chunk: types.Chunk, b64_entropy_score: float, hex_entropy_score: float
+        self,
+        chunk: types.Chunk,
     ) -> Generator[Issue, None, None]:
         """Scan a chunk of data for apparent high entropy.
 
         :param chunk: The chunk of data to be scanned
-        :param b64_entropy_score: Base64 entropy score
-        :param hex_entropy_score: Hexadecimal entropy score
         """
 
         for line in chunk.contents.split("\n"):
             for word in line.split():
-                b64_strings = util.get_strings_of_set(word, BASE64_CHARS)
-                hex_strings = util.get_strings_of_set(word, HEX_CHARS)
-
-                for string in b64_strings:
+                for string in util.find_strings_by_regex(word, BASE64_REGEX):
                     yield from self.evaluate_entropy_string(
-                        chunk, line, string, BASE64_CHARS, b64_entropy_score
+                        chunk, line, string, self.b64_entropy_limit
                     )
-
-                for string in hex_strings:
+                for string in util.find_strings_by_regex(word, HEX_REGEX):
                     yield from self.evaluate_entropy_string(
-                        chunk, line, string, HEX_CHARS, hex_entropy_score
+                        chunk, line, string, self.hex_entropy_limit
                     )
 
     def evaluate_entropy_string(
@@ -436,21 +481,19 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         chunk: types.Chunk,
         line: str,
         string: str,
-        chars: str,
         min_entropy_score: float,
     ) -> Generator[Issue, None, None]:
         """
         Check entropy string using entropy characters and score.
 
         :param chunk: The chunk of data to check
-        :param issues: Issue list to append any strings flagged
+        :param line: Source line containing string of interest
         :param string: String to check
-        :param chars: Characters to calculate score
         :param min_entropy_score: Minimum entropy score to flag
         return: Iterator of issues flagged
         """
         if not self.signature_is_excluded(string, chunk.file_path):
-            entropy_score = self.calculate_entropy(string, chars)
+            entropy_score = self.calculate_entropy(string)
             if entropy_score > min_entropy_score:
                 if self.entropy_string_is_excluded(string, line, chunk.file_path):
                     self.logger.debug("line containing entropy was excluded: %s", line)
@@ -692,7 +735,9 @@ class GitRepoScanner(GitScanner):
             for curr_commit in commits:
                 try:
                     prev_commit = curr_commit.parents[0]
-                except (KeyError, TypeError):
+                except (IndexError, KeyError, TypeError):
+                    # IndexError: current commit has no parents
+                    # KeyError: current commit has parents which are not local
                     # If a commit doesn't have a parent skip diff generation since it is the first commit
                     self.logger.debug(
                         "Skipping commit %s because it has no parents", curr_commit.hex

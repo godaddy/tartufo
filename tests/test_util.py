@@ -371,10 +371,61 @@ class GeneralUtilTests(unittest.TestCase):
         util.generate_signature("foo", "bar")
         mock_hash.assert_called_once_with(b"foo$$bar")
 
-    def test_get_strings_of_set_splits_string_by_chars_outside_charset(self):
-        strings = util.get_strings_of_set("asdf.qwer", "asdfqwer", 1)
+    def test_find_strings_by_regex_splits_string_by_chars_outside_charset(self):
+        strings = list(
+            util.find_strings_by_regex("asdf.qwer", re.compile(r"[asdfqwer]+"), 1)
+        )
         self.assertEqual(strings, ["asdf", "qwer"])
 
-    def test_get_strings_of_set_will_not_return_strings_below_threshold_length(self):
-        strings = util.get_strings_of_set("w.asdf.q", "asdfqwer", 3)
+    def test_find_strings_by_regex_will_not_return_strings_below_threshold_length(self):
+        strings = list(
+            util.find_strings_by_regex("w.asdf.q", re.compile(r"[asdfqwer]+"), 3)
+        )
         self.assertEqual(strings, ["asdf"])
+
+    def test_find_strings_by_regex_recognizes_hexadecimal(self):
+
+        sample_input = """
+        1111111111fffffCCCCC This is valid hexadecimal
+        g111111111fffffCCCCC This is not because "g" is not in alphabet
+        """
+
+        strings = list(util.find_strings_by_regex(sample_input, scanner.HEX_REGEX, 20))
+        self.assertEqual(strings, ["1111111111fffffCCCCC"])
+
+    def test_find_strings_by_regex_recognizes_base64(self):
+
+        sample_input = """
+        111111111+ffffCCCC== This is valid base64
+        @111111111+ffffCCCC= This is not because "@" is not in alphabet
+        """
+
+        strings = list(
+            util.find_strings_by_regex(sample_input, scanner.BASE64_REGEX, 20)
+        )
+        self.assertEqual(strings, ["111111111+ffffCCCC=="])
+
+    def test_find_strings_by_regex_recognizes_base64url(self):
+
+        sample_input = """
+        111111111-ffffCCCC== This is valid base64url
+        @111111111-ffffCCCC= This is not because "@" is not in alphabet
+        """
+
+        strings = list(
+            util.find_strings_by_regex(sample_input, scanner.BASE64_REGEX, 20)
+        )
+        self.assertEqual(strings, ["111111111-ffffCCCC=="])
+
+    def test_find_strings_by_regex_recognizes_mutant_base64(self):
+
+        sample_input = """
+        +111111111-ffffCCCC= Can't mix + and - but both are in regex
+        111111111111111111111== Not a valid length but we don't care
+        ==111111111111111111 Not recognized, = can only be at the end
+        """
+
+        strings = list(
+            util.find_strings_by_regex(sample_input, scanner.BASE64_REGEX, 20)
+        )
+        self.assertEqual(strings, ["+111111111-ffffCCCC=", "111111111111111111111=="])

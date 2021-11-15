@@ -201,24 +201,32 @@ class TartufoCLI(click.MultiCommand):
     help="Enable or disable timestamps in logging messages.",
 )
 @click.option(
+    "--entropy-sensitivity",
+    type=click.IntRange(0, 100),
+    default=75,
+    show_default=True,
+    help="""Modify entropy detection sensitivity. This is expressed as on a scale
+    of 0 to 100, where 0 means "totally nonrandom" and 100 means "totally random".
+    Decreasing the scanner's sensitivity increases the likelihood that a given
+    string will be identified as suspicious.""",
+)
+@click.option(
     "-b64",
     "--b64-entropy-score",
-    default=4.5,
-    show_default=True,
-    help="Modify the base64 entropy score. If a value greater than the default is "
-    "specified, tartufo lists higher entropy base64 strings (longer or more randomized "
-    "strings). A lower value lists lower entropy base64 strings (shorter or less "
-    "randomized strings).",
+    help="""[DEPRECATED] Use `--entropy-sensitivity`. Modify the base64 entropy score. If
+    a value greater than the default (4.5 in a range of 0.0-6.0) is specified,
+    tartufo lists higher entropy base64 strings (longer or more randomized strings.
+    A lower value lists lower entropy base64 strings (shorter or less randomized
+    strings).""",
 )
 @click.option(
     "-hex",
     "--hex-entropy-score",
-    default=3.0,
-    show_default=True,
-    help="Modify the hexadecimal entropy score. If a value greater than the default is "
-    "specified, tartufo lists higher entropy hexadecimal strings (longer or more randomized "
-    "strings). A lower value lists lower entropy hexadecimal strings (shorter or less "
-    "randomized strings).",
+    help="""[DEPRECATED] Use `--entropy-sensitivity`. Modify the hexadecimal entropy score.
+    If a value greater than the default (3.0 in a range of 0.0-4.0) is specified,
+    tartufo lists higher entropy hexadecimal strings (longer or more randomized
+    strings). A lower value lists lower entropy hexadecimal strings (shorter or less
+    randomized strings).""",
 )
 # The first positional argument here would be a hard-coded version, hence the `None`
 @click.version_option(None, "-V", "--version")

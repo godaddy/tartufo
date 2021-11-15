@@ -105,7 +105,7 @@ uvloop = ["uvloop (>=0.15.2)"]
 name = "cached-property"
 version = "1.5.2"
 description = "A decorator for caching properties in classes."
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -963,7 +963,7 @@ docs = ["recommonmark", "sphinx", "sphinx-click", "sphinx-rtd-theme", "sphinxcon
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6.2"
-content-hash = "9f04bb49f0605b7c6606f6f15640a2d3231eaa01506afbe253f32521b5a669b5"
+content-hash = "1a280535a4c13f09a63bf8763ab5fc32b1975c7fd4eacc06dc7526373f9099f7"
 
 [metadata.files]
 alabaster = [

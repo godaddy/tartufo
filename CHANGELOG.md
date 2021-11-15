@@ -1,9 +1,30 @@
 vx.y.z - TBD
 ------------
 
+Bug fixes:
+
+* [#284](https://github.com/godaddy/tartufo/pull/284) - Fix handling of first
+  commit during local scans; an exception was raised instead of processing the
+  commit.
+
+Features:
+
 * [#270](https://github.com/godaddy/tartufo/issues/270) - When no refs/branches
   are found locally, tartufo will now scan the repo HEAD as a single commit,
   effectively scanning the entire codebase at once.
+* [#265](https://github.com/godaddy/tartufo/issues/265) - Adds new `--entropy-sensitivity`
+  option which provides a friendlier way to adjust entropy detection sensitivity.
+  This replaces `--b64-entropy-score` and `--hex-entropy-score`, which now are
+  marked as deprecated.
+* [#273](https://github.com/godaddy/tartufo/inssues/273) - Entropy checking support
+  routines have been rewritten to utilize library abstractions and operate more
+  efficiently while returning effectively identical results.
+* [#177](https://github.com/godaddy/tartufo/issues/177) -
+  [base64url](https://datatracker.ietf.org/doc/html/rfc4648#section-5) encodings
+  are now recognized and scanned for entropy.
+* [#268](https://github.com/godaddy/tartufo/issues/268) - Adds a new
+  `--recurse / --no-recurse` flag which allows users to recursively scan the entire directory or just
+  the root directory
 
 v3.0.0-alpha.1 - 11 November 2021
 ---------------------------------
@@ -27,9 +48,6 @@ Features:
   `--scan-filenames/--no-scan-filenames` flag which allows users to enable or disable file name scanning.
 * [#254](https://github.com/godaddy/tartufo/pull/260) - Changes the default value of
   `--regex/--no-regex` to True.
-* [#268](https://github.com/godaddy/tartufo/issues/268) - Adds a new
-  `--recurse / --no-recurse` flag which allows users to recursively scan the entire directory or just
-  the root directory
 
 Misc:
 
