@@ -13,7 +13,7 @@ from typing import (
     Any,
     Callable,
     Dict,
-    Iterable,
+    Generator,
     List,
     Optional,
     Tuple,
@@ -205,35 +205,24 @@ def extract_commit_metadata(commit: pygit2.Commit, branch_name: str) -> Dict[str
     }
 
 
-def get_strings_of_set(
-    word: str, char_set: Iterable[str], threshold: int = 20
-) -> List[str]:
-    """Split a "word" into a set of "strings", based on a given character set.
+def find_strings_by_regex(
+    text: str, regex: Pattern, threshold: int = 20
+) -> Generator[str, None, None]:
+    """Locate strings ("words") of interest in input text
 
-    The returned strings must have a length, at minimum, equal to `threshold`.
-    This is meant for extracting long strings which are likely to be things like
+    Each returned string must have a length, at minimum, equal to `threshold`.
+    This is meant to return longer strings which are likely to be things like
     auto-generated passwords, tokens, hashes, etc.
 
-    :param word: The word to be analyzed
-    :param char_set: The set of characters used to compose the strings (i.e. hex)
-    :param threshold: The minimum length for what is accepted as a string
+    :param text: The text string to be analyzed
+    :param regex: A pattern which matches all character sequences of interest
+    :param threshold: The minimum acceptable length of a matching string
     """
-    count: int = 0
-    letters: str = ""
-    strings: List[str] = []
 
-    for char in word:
-        if char in char_set:
-            letters += char
-            count += 1
-        else:
-            if count > threshold:
-                strings.append(letters)
-            letters = ""
-            count = 0
-    if count > threshold:
-        strings.append(letters)
-    return strings
+    for match in regex.finditer(text):
+        substring = match.group()
+        if len(substring) >= threshold:
+            yield substring
 
 
 def path_contains_git(path: str) -> bool:

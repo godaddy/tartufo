@@ -10,6 +10,12 @@ Features:
   option which provides a friendlier way to adjust entropy detection sensitivity.
   This replaces `--b64-entropy-score` and `--hex-entropy-score`, which now are
   marked as deprecated.
+* [#273](https://github.com/godaddy/tartufo/inssues/273) - Entropy checking support
+  routines have been rewritten to utilize library abstractions and operate more
+  efficiently while returning effectively identical results.
+* [#177](https://github.com/godaddy/tartufo/issues/177) -
+  [base64url](https://datatracker.ietf.org/doc/html/rfc4648#section-5) encodings
+  are now recognized and scanned for entropy.
 
 v3.0.0-alpha.1 - 11 November 2021
 ---------------------------------

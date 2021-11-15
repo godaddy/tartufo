@@ -1,4 +1,5 @@
 import re
+import string
 import unittest
 from unittest import mock
 
@@ -369,7 +370,7 @@ class RegexScanTests(ScannerTestCase):
         self.assertEqual(issues[0].matched_string, "foo")
 
 
-class EntropyTests(ScannerTestCase):
+class EntropyManagementTests(ScannerTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.options.entropy = True
@@ -409,43 +410,9 @@ class EntropyTests(ScannerTestCase):
         excluded = self.scanner.entropy_string_is_excluded("foo", "bar", "bar.py")
         self.assertEqual(False, excluded)
 
-    def test_calculate_base64_entropy_calculation(self):
-        random_string = (
-            "ZWVTjPQSdhwRgl204Hc51YCsritMIzn8B=/p9UyeX7xu6KkAGqfm3FJ+oObLDNEva"
-        )
-        self.assertGreaterEqual(
-            self.scanner.calculate_entropy(random_string, scanner.BASE64_CHARS), 4.5
-        )
-
-    def test_calculate_hex_entropy_calculation(self):
-        random_string = "b3A0a1FDfe86dcCE945B72"
-        self.assertGreaterEqual(
-            self.scanner.calculate_entropy(random_string, scanner.HEX_CHARS), 3
-        )
-
-    def test_empty_string_has_no_entropy(self):
-        self.assertEqual(self.scanner.calculate_entropy("", ""), 0.0)
-
-    @mock.patch("tartufo.util.get_strings_of_set")
-    def test_scan_entropy_find_b64_strings_for_every_word_in_diff(
-        self, mock_strings: mock.MagicMock
-    ):
-        mock_strings.return_value = []
-        list(self.scanner.scan_entropy(self.chunk))
-        mock_strings.assert_has_calls(
-            (
-                mock.call("foo", scanner.BASE64_CHARS),
-                mock.call("foo", scanner.HEX_CHARS),
-                mock.call("bar", scanner.BASE64_CHARS),
-                mock.call("bar", scanner.HEX_CHARS),
-                mock.call("asdfqwer", scanner.BASE64_CHARS),
-                mock.call("asdfqwer", scanner.HEX_CHARS),
-            )
-        )
-
     @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
     @mock.patch("tartufo.scanner.ScannerBase.signature_is_excluded")
-    @mock.patch("tartufo.util.get_strings_of_set")
+    @mock.patch("tartufo.util.find_strings_by_regex")
     def test_issues_are_not_created_for_b64_string_excluded_signatures(
         self,
         mock_strings: mock.MagicMock,
@@ -460,7 +427,7 @@ class EntropyTests(ScannerTestCase):
 
     @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
     @mock.patch("tartufo.scanner.ScannerBase.signature_is_excluded")
-    @mock.patch("tartufo.util.get_strings_of_set")
+    @mock.patch("tartufo.util.find_strings_by_regex")
     def test_issues_are_not_created_for_hex_string_excluded_signatures(
         self,
         mock_strings: mock.MagicMock,
@@ -475,7 +442,7 @@ class EntropyTests(ScannerTestCase):
 
     @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
     @mock.patch("tartufo.scanner.ScannerBase.signature_is_excluded")
-    @mock.patch("tartufo.util.get_strings_of_set")
+    @mock.patch("tartufo.util.find_strings_by_regex")
     def test_issues_are_created_for_high_entropy_b64_strings(
         self,
         mock_strings: mock.MagicMock,
@@ -492,7 +459,7 @@ class EntropyTests(ScannerTestCase):
 
     @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
     @mock.patch("tartufo.scanner.ScannerBase.signature_is_excluded")
-    @mock.patch("tartufo.util.get_strings_of_set")
+    @mock.patch("tartufo.util.find_strings_by_regex")
     def test_issues_are_created_for_high_entropy_hex_strings(
         self,
         mock_strings: mock.MagicMock,
@@ -510,7 +477,7 @@ class EntropyTests(ScannerTestCase):
     @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
     @mock.patch("tartufo.scanner.ScannerBase.signature_is_excluded")
     @mock.patch("tartufo.scanner.ScannerBase.entropy_string_is_excluded")
-    @mock.patch("tartufo.util.get_strings_of_set")
+    @mock.patch("tartufo.util.find_strings_by_regex")
     def test_issues_are_not_created_for_high_entropy_hex_strings_given_entropy_is_excluded(
         self,
         mock_strings: mock.MagicMock,
@@ -528,7 +495,7 @@ class EntropyTests(ScannerTestCase):
     @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
     @mock.patch("tartufo.scanner.ScannerBase.signature_is_excluded")
     @mock.patch("tartufo.scanner.ScannerBase.entropy_string_is_excluded")
-    @mock.patch("tartufo.util.get_strings_of_set")
+    @mock.patch("tartufo.util.find_strings_by_regex")
     def test_issues_are_not_created_for_low_entropy_b64_strings_given_entropy_is_excluded(
         self,
         mock_strings: mock.MagicMock,
@@ -545,7 +512,7 @@ class EntropyTests(ScannerTestCase):
 
     @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
     @mock.patch("tartufo.scanner.ScannerBase.signature_is_excluded")
-    @mock.patch("tartufo.util.get_strings_of_set")
+    @mock.patch("tartufo.util.find_strings_by_regex")
     def test_issues_are_not_created_for_low_entropy_b64_strings(
         self,
         mock_strings: mock.MagicMock,
@@ -560,7 +527,7 @@ class EntropyTests(ScannerTestCase):
 
     @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
     @mock.patch("tartufo.scanner.ScannerBase.signature_is_excluded")
-    @mock.patch("tartufo.util.get_strings_of_set")
+    @mock.patch("tartufo.util.find_strings_by_regex")
     def test_issues_are_not_created_for_low_entropy_hex_strings(
         self,
         mock_strings: mock.MagicMock,
@@ -572,6 +539,54 @@ class EntropyTests(ScannerTestCase):
         mock_calculate.return_value = 1.0
         issues = list(self.scanner.scan_entropy(self.chunk))
         self.assertEqual(len(issues), 0)
+
+
+class EntropyDetectionTests(ScannerTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.options.entropy = True
+        self.chunk = types.Chunk(
+            """
+        foo bar
+        asdfqwer
+        """,
+            "foo.py",
+            {},
+        )
+        self.scanner = TestScanner(self.options)
+
+    def test_calculate_base64_entropy_calculation(self):
+        random_string = (
+            "ZWVTjPQSdhwRgl204Hc51YCsritMIzn8B=/p9UyeX7xu6KkAGqfm3FJ+oObLDNEva"
+        )
+        self.assertGreaterEqual(
+            self.scanner.calculate_entropy(random_string),
+            4.5,
+        )
+
+    def test_calculate_hex_entropy_calculation(self):
+        random_string = "b3A0a1FDfe86dcCE945B72"
+        self.assertGreaterEqual(self.scanner.calculate_entropy(random_string), 3)
+
+    def test_empty_string_has_no_entropy(self):
+        self.assertEqual(self.scanner.calculate_entropy(""), 0.0)
+
+    @mock.patch("tartufo.util.find_strings_by_regex")
+    def test_scan_entropy_find_b64_strings_for_every_word_in_diff(
+        self, mock_strings: mock.MagicMock
+    ):
+        mock_strings.return_value = []
+        list(self.scanner.scan_entropy(self.chunk))
+        mock_strings.assert_has_calls(
+            (
+                mock.call("foo", scanner.BASE64_REGEX),
+                mock.call("foo", scanner.HEX_REGEX),
+                mock.call("bar", scanner.BASE64_REGEX),
+                mock.call("bar", scanner.HEX_REGEX),
+                mock.call("asdfqwer", scanner.BASE64_REGEX),
+                mock.call("asdfqwer", scanner.HEX_REGEX),
+            )
+        )
 
     def test_sensitivity_low_end_calculation(self):
         self.options.entropy_sensitivity = 0
@@ -596,6 +611,36 @@ class EntropyTests(ScannerTestCase):
 
         self.assertEqual(test_scanner.b64_entropy_limit, 11.1)
         self.assertEqual(test_scanner.hex_entropy_limit, 22.2)
+
+    def test_calculate_entropy_minimum_calculation(self):
+
+        # We already know an empty string trivially has zero entropy.
+        # Doing the math, a one-character string also should have zero entropy.
+        self.assertEqual(self.scanner.calculate_entropy("a"), 0.0)
+
+    def test_calculate_entropy_maximum_hexadecimal(self):
+
+        # We reach maximum entropy when every character in the alphabet appears
+        # once in the input string (order doesn't matter). Each character represents
+        # 4 bits (has 2^4 = 16 possible values).
+        #
+        # Try to avoid causing a finding ourselves. :)
+        #
+        # Note there is no requirement that the test alphabet actually is the
+        # same as the hexadecimal representation, as long as the size is identical.
+        # However, it is convenient to use the real thing to avoid errors. Note
+        # that representation is case-insensitive so we do not include uppercase
+        # letters in this alphabet.
+        alphabet = string.hexdigits[:16]
+        self.assertEqual(self.scanner.calculate_entropy(alphabet), 4.0)
+
+    def test_calculate_entropy_maximum_base64(self):
+
+        # See above. base64 uses 4 characters to represent 3 bytes, so the
+        # underlying bit rate is 24 / 4 = 6 bits per character. Unlike above,
+        # case matters, so we include both upper- and lowercase letters.
+        alphabet = string.ascii_letters + string.digits + "+/"
+        self.assertEqual(self.scanner.calculate_entropy(alphabet), 6.0)
 
 
 if __name__ == "__main__":
