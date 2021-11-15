@@ -735,7 +735,9 @@ class GitRepoScanner(GitScanner):
             for curr_commit in commits:
                 try:
                     prev_commit = curr_commit.parents[0]
-                except (KeyError, TypeError):
+                except (IndexError, KeyError, TypeError):
+                    # IndexError: current commit has no parents
+                    # KeyError: current commit has parents which are not local
                     # If a commit doesn't have a parent skip diff generation since it is the first commit
                     self.logger.debug(
                         "Skipping commit %s because it has no parents", curr_commit.hex
