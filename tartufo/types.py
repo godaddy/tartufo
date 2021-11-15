@@ -26,6 +26,7 @@ class GlobalOptions:
         "output_format",
         "b64_entropy_score",
         "hex_entropy_score",
+        "entropy_sensitivity",
     )
     rules: Tuple[TextIO, ...]
     default_regexes: bool
@@ -46,6 +47,7 @@ class GlobalOptions:
     output_format: Optional[str]
     b64_entropy_score: float
     hex_entropy_score: float
+    entropy_sensitivity: int
 
 
 @dataclass

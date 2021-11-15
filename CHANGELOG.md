@@ -1,9 +1,15 @@
 vx.y.z - TBD
 ------------
 
+Features:
+
 * [#270](https://github.com/godaddy/tartufo/issues/270) - When no refs/branches
   are found locally, tartufo will now scan the repo HEAD as a single commit,
   effectively scanning the entire codebase at once.
+* [#265](https://github.com/godaddy/tartufo/issues/265) - Adds new `--entropy-sensitivity`
+  option which provides a friendlier way to adjust entropy detection sensitivity.
+  This replaces `--b64-entropy-score` and `--hex-entropy-score`, which now are
+  marked as deprecated.
 
 v3.0.0-alpha.1 - 11 November 2021
 ---------------------------------

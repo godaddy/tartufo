@@ -19,10 +19,11 @@ from typing import (
     Set,
     Tuple,
 )
+import warnings
 
+from cached_property import cached_property
 import click
 import git
-
 import pygit2
 
 from tartufo import config, types, util
@@ -145,6 +146,56 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     def __init__(self, options: types.GlobalOptions) -> None:
         self.global_options = options
         self.logger = logging.getLogger(__name__)
+
+    def compute_scaled_entropy_limit(self, maximum_bitrate: float) -> float:
+        """Determine low entropy cutoff for specified bitrate
+
+        :param maximum_bitrate: How many bits does each character represent?
+        :returns: Entropy detection threshold scaled to the input bitrate
+        """
+
+        if self.global_options.entropy_sensitivity is None:
+            sensitivity = 75
+        else:
+            sensitivity = self.global_options.entropy_sensitivity
+        return float(sensitivity) / 100.0 * maximum_bitrate
+
+    @cached_property
+    def hex_entropy_limit(self) -> float:
+        """Returns low entropy limit for suspicious hexadecimal encodings"""
+
+        # For backwards compatibility, allow the caller to manipulate this score
+        # # directly (but complain about it).
+        if self.global_options.hex_entropy_score:
+            warnings.warn(
+                "--hex-entropy-score is deprecated. Use --entropy-sensitivity instead.",
+                DeprecationWarning,
+            )
+            return self.global_options.hex_entropy_score
+
+        # Each hexadecimal digit represents a 4-bit number, so we want to scale
+        # the base score by this amount to account for the efficiency of the
+        # string representation we're examining.
+        return self.compute_scaled_entropy_limit(4.0)
+
+    @cached_property
+    def b64_entropy_limit(self) -> float:
+        """Returns low entropy limit for suspicious base64 encodings"""
+
+        # For backwards compatibility, allow the caller to manipulate this score
+        # # directly (but complain about it).
+        if self.global_options.b64_entropy_score:
+            warnings.warn(
+                "--b64-entropy-score is deprecated. Use --entropy-sensitivity instead.",
+                DeprecationWarning,
+            )
+            return self.global_options.b64_entropy_score
+
+        # Each 4-character base64 group represents 3 8-bit bytes, i.e. an effective
+        # bit rate of 24/4 = 6 bits per character. We want to scale the base score
+        # by this amount to account for the efficiency of the string representation
+        # we're examining.
+        return self.compute_scaled_entropy_limit(6.0)
 
     @property
     def completed(self) -> bool:
@@ -398,8 +449,6 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                 if self.global_options.entropy:
                     for issue in self.scan_entropy(
                         chunk,
-                        self.global_options.b64_entropy_score,
-                        self.global_options.hex_entropy_score,
                     ):
                         self._issues.append(issue)
                         yield issue
@@ -407,13 +456,12 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             self.logger.info("Found %d issues.", len(self._issues))
 
     def scan_entropy(
-        self, chunk: types.Chunk, b64_entropy_score: float, hex_entropy_score: float
+        self,
+        chunk: types.Chunk,
     ) -> Generator[Issue, None, None]:
         """Scan a chunk of data for apparent high entropy.
 
         :param chunk: The chunk of data to be scanned
-        :param b64_entropy_score: Base64 entropy score
-        :param hex_entropy_score: Hexadecimal entropy score
         """
 
         for line in chunk.contents.split("\n"):
@@ -423,12 +471,12 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
 
                 for string in b64_strings:
                     yield from self.evaluate_entropy_string(
-                        chunk, line, string, BASE64_CHARS, b64_entropy_score
+                        chunk, line, string, BASE64_CHARS, self.b64_entropy_limit
                     )
 
                 for string in hex_strings:
                     yield from self.evaluate_entropy_string(
-                        chunk, line, string, HEX_CHARS, hex_entropy_score
+                        chunk, line, string, HEX_CHARS, self.hex_entropy_limit
                     )
 
     def evaluate_entropy_string(

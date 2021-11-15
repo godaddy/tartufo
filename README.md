@@ -54,9 +54,6 @@ Options:
 
   --entropy / --no-entropy        Enable entropy checks.  [default: True]
   --regex / --no-regex            Enable high signal regexes checks.
-                                  [default: False]
-  --scan-filenames / --no-scan-filenames            
-                                  Check the names of files being scanned as well as their contents.
                                   [default: True]
 
   -ip, --include-path-patterns TEXT
@@ -76,6 +73,14 @@ Options:
                                   provided (default), no Git object paths are
                                   excluded unless effectively excluded via the
                                   --include-path-patterns option.
+
+  -of, --output-format [json|compact|text]
+                                  Specify the format in which the output needs
+                                  to be generated `--output-format
+                                  json/compact/text`. Either `json`, `compact`
+                                  or `text` can be specified. If not provided
+                                  (default) the output will be generated in
+                                  `text` format.
 
   -xe, --exclude-entropy-patterns TEXT
                                   Specify a regular expression which matches
@@ -99,12 +104,6 @@ Options:
                                   directory under this one. This will help
                                   with keeping the results of individual runs
                                   of tartufo separated.
-
-  -of, --output-format TEXT       Specify the format in which the output needs
-                                  to be generated `--output-format json/compact/text`.
-                                  Either `json`, `compact` or `text` can be specified.
-                                  If not provided (default) the output will be generated
-                                  in `text` format.
 
   --git-rules-repo TEXT           A file path, or git URL, pointing to a git
                                   repository containing regex rules to be used
@@ -134,31 +133,42 @@ Options:
                                   Enable or disable timestamps in logging
                                   messages.  [default: True]
 
-  -b64, --b64-entropy-score FLOAT
-                                  Modify the base64 entropy score. If you
-                                  specify a value greater than the default,
-                                  tartufo lists higher entropy base64 strings
-                                  (longer or more randomized strings). A lower
-                                  value lists lower entropy base64 strings
-                                  (shorter or less randomized strings).
-                                  [default: 4.5]
+  --entropy-sensitivity INTEGER RANGE
+                                  Modify entropy detection sensitivity. This
+                                  is expressed as on a scale of 0 to 100,
+                                  where 0 means "totally nonrandom" and 100
+                                  means "totally random". Decreasing the
+                                  scanner's sensitivity increases the
+                                  likelihood that a given string will be
+                                  identified as suspicious.  [default: 75]
 
-  -hex, --hex-entropy-score FLOAT
-                                  Modify the hexadecimal entropy score. If you
-                                  specify a value greater than the default,
-                                  tartufo lists higher entropy hexadecimal
-                                  strings (longer or more randomized strings).
-                                  A lower value lists lower entropy
-                                  hexadecimal strings (shorter or less
-                                  randomized strings).  [default: 3.0]
+  -b64, --b64-entropy-score TEXT  [DEPRECATED] Use `--entropy-sensitivity`.
+                                  Modify the base64 entropy score. If a value
+                                  greater than the default (4.5 in a range of
+                                  0.0-6.0) is specified, tartufo lists higher
+                                  entropy base64 strings (longer or more
+                                  randomized strings. A lower value lists
+                                  lower entropy base64 strings (shorter or
+                                  less randomized strings).
+
+  -hex, --hex-entropy-score TEXT  [DEPRECATED] Use `--entropy-sensitivity`.
+                                  Modify the hexadecimal entropy score. If a
+                                  value greater than the default (3.0 in a
+                                  range of 0.0-4.0) is specified, tartufo
+                                  lists higher entropy hexadecimal strings
+                                  (longer or more randomized strings). A lower
+                                  value lists lower entropy hexadecimal
+                                  strings (shorter or less randomized
+                                  strings).
 
   -V, --version                   Show the version and exit.
   -h, --help                      Show this message and exit.
 
 Commands:
+  scan-folder       Scan a folder.
+  scan-remote-repo  Automatically clone and scan a remote git repository.
   pre-commit        Scan staged changes in a pre-commit hook.
   scan-local-repo   Scan a repository already cloned to your local system.
-  scan-remote-repo  Automatically clone and scan a remote git repository.
 
 ```
 
