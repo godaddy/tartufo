@@ -1,6 +1,12 @@
 vx.y.z - TBD
 ------------
 
+Bug fixes:
+
+* [#284](https://github.com/godaddy/tartufo/pull/284) - Fix handling of first
+  commit during local scans; an exception was raised instead of processing the
+  commit correctly.
+
 Features:
 
 * [#270](https://github.com/godaddy/tartufo/issues/270) - When no refs/branches
