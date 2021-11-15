@@ -5,7 +5,7 @@ Bug fixes:
 
 * [#284](https://github.com/godaddy/tartufo/pull/284) - Fix handling of first
   commit during local scans; an exception was raised instead of processing the
-  commit correctly.
+  commit.
 
 Features:
 
