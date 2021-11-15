@@ -18,6 +18,7 @@ from typing import (
     Optional,
     Tuple,
     TYPE_CHECKING,
+    Pattern,
 )
 
 import click
