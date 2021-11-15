@@ -596,6 +596,7 @@ class EntropyTests(ScannerTestCase):
 
         self.assertEqual(test_scanner.b64_entropy_limit, 11.1)
         self.assertEqual(test_scanner.hex_entropy_limit, 22.2)
+
     def test_calculate_entropy_minimum_calculation(self):
 
         # We already know an empty string trivially has zero entropy.
