@@ -22,6 +22,9 @@ Features:
 * [#177](https://github.com/godaddy/tartufo/issues/177) -
   [base64url](https://datatracker.ietf.org/doc/html/rfc4648#section-5) encodings
   are now recognized and scanned for entropy.
+* [#268](https://github.com/godaddy/tartufo/issues/268) - Adds a new
+  `--recurse / --no-recurse` flag which allows users to recursively scan the entire directory or just
+  the root directory
 
 v3.0.0-alpha.1 - 11 November 2021
 ---------------------------------
