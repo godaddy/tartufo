@@ -4,6 +4,34 @@ from dataclasses import dataclass
 from typing import Any, Dict, Optional, TextIO, Tuple, Pattern, Union
 
 
+class IssueType(enum.Enum):
+    Entropy = "High Entropy"  # pylint: disable=invalid-name
+    RegEx = "Regular Expression Match"  # pylint: disable=invalid-name
+
+
+class MatchType(enum.Enum):
+    Match = "match"  # pylint: disable=invalid-name
+    Search = "search"  # pylint: disable=invalid-name
+
+
+class Scope(enum.Enum):
+    Word = "word"  # pylint: disable=invalid-name
+    Line = "line"  # pylint: disable=invalid-name
+
+
+class LogLevel(enum.IntEnum):
+    ERROR = 0
+    WARNING = 1
+    INFO = 2
+    DEBUG = 3
+
+
+class OutputFormat(enum.Enum):
+    Text = "text"  # pylint: disable=invalid-name
+    Json = "json"  # pylint: disable=invalid-name
+    Compact = "compact"  # pylint: disable=invalid-name
+
+
 @dataclass
 class GlobalOptions:
     __slots__ = (
@@ -59,27 +87,12 @@ class GitOptions:
     include_submodules: bool
 
 
-class IssueType(enum.Enum):
-    Entropy = "High Entropy"  # pylint: disable=invalid-name
-    RegEx = "Regular Expression Match"  # pylint: disable=invalid-name
-
-
 @dataclass
 class Chunk:
     __slots__ = ("contents", "file_path", "metadata")
     contents: str
     file_path: str
     metadata: Dict[str, Any]
-
-
-class MatchType(enum.Enum):
-    Match = "match"  # pylint: disable=invalid-name
-    Search = "search"  # pylint: disable=invalid-name
-
-
-class Scope(enum.Enum):
-    Word = "word"  # pylint: disable=invalid-name
-    Line = "line"  # pylint: disable=invalid-name
 
 
 @dataclass
@@ -95,19 +108,6 @@ class Rule:
         if self.path_pattern:
             return hash(f"{self.pattern.pattern}::{self.path_pattern.pattern}")
         return hash(self.pattern.pattern)
-
-
-class LogLevel(enum.IntEnum):
-    ERROR = 0
-    WARNING = 1
-    INFO = 2
-    DEBUG = 3
-
-
-class OutputFormat(enum.Enum):
-    Text = "text"  # pylint: disable=invalid-name
-    Json = "json"  # pylint: disable=invalid-name
-    Compact = "compact"  # pylint: disable=invalid-name
 
 
 class TartufoException(Exception):
