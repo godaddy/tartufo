@@ -19,11 +19,12 @@ import click
 import tomlkit
 
 from tartufo import types, util
-from tartufo.types import ConfigException, Rule
+from tartufo.types import ConfigException, Rule, MatchType, Scope
 
 OptionTypes = Union[str, int, bool, None, TextIO, Tuple[TextIO, ...]]
 
 DEFAULT_PATTERN_FILE = pathlib.Path(__file__).parent / "data" / "default_regexes.json"
+EMPTY_PATTERN = re.compile("")
 
 
 def load_config_from_path(
@@ -218,8 +219,8 @@ def load_rules_from_file(rules_file: TextIO) -> Dict[str, Rule]:
                 pattern=re.compile(rule_definition["pattern"]),
                 path_pattern=re.compile(path_pattern)
                 if path_pattern
-                else re.compile(""),
-                re_match_type="match",
+                else EMPTY_PATTERN,
+                re_match_type=MatchType.Match,
                 re_match_scope=None,
             )
         except AttributeError:
@@ -227,7 +228,7 @@ def load_rules_from_file(rules_file: TextIO) -> Dict[str, Rule]:
                 name=rule_name,
                 pattern=re.compile(rule_definition),
                 path_pattern=None,
-                re_match_type="match",
+                re_match_type=MatchType.Match,
                 re_match_scope=None,
             )
         rules[rule_name] = rule
@@ -262,8 +263,8 @@ def compile_rules(patterns: Iterable[Union[str, Dict[str, str]]]) -> List[Rule]:
                     name=pattern.get("reason", None),  # type: ignore[union-attr]
                     pattern=re.compile(pattern["pattern"]),  # type: ignore[index]
                     path_pattern=re.compile(pattern.get("path-pattern", "")),  # type: ignore[union-attr]
-                    re_match_type=pattern.get("match-type", "search"),  # type: ignore[union-attr]
-                    re_match_scope=pattern.get("scope", "line"),  # type: ignore[union-attr]
+                    re_match_type=pattern.get("match-type", MatchType.Search),  # type: ignore[union-attr]
+                    re_match_scope=pattern.get("scope", Scope.Line),  # type: ignore[union-attr]
                 )
                 for pattern in patterns
             }

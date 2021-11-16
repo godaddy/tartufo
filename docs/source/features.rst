@@ -280,7 +280,8 @@ digests. To avoid these false positives, enable ``exclude-entropy-patterns``. Ex
 apply to any strings flagged by entropy checks. This option is not available on the command line,
 and must be specified in your config file.
 
-For example, if ``docs/README.md`` contains a git SHA, this would be flagged by entropy.
+For example, if ``docs/README.md`` contains a git SHA and `.github/workflows/*.yml` containes pinned git SHAs
+this would be flagged by entropy.
 To exclude this, add an entry to ``exclude-entropy-patterns`` in the config file.
 
 .. code-block:: toml
@@ -288,6 +289,7 @@ To exclude this, add an entry to ``exclude-entropy-patterns`` in the config file
     [tool.tartufo]
     exclude-entropy-patterns = [
         {path-pattern = 'docs/.*\.md$', pattern = '^[a-zA-Z0-9]$', reason = 'exclude all git SHAs in the docs'},
+        {path-pattern = '\.github/workflows/.*\.yml', pattern = 'uses: .*@[a-zA-Z0-9]{40}', reason = 'GitHub Actions'}
     ]
 
 Thanks to the magic of TOML, you could also split these out into their own tables

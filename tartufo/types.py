@@ -1,7 +1,7 @@
 # pylint: disable=too-many-instance-attributes
 import enum
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, TextIO, Tuple, Pattern
+from typing import Any, Dict, Optional, TextIO, Tuple, Pattern, Union
 
 
 @dataclass
@@ -72,21 +72,6 @@ class Chunk:
     metadata: Dict[str, Any]
 
 
-@dataclass
-class Rule:
-    __slots__ = ("name", "pattern", "path_pattern", "re_match_type", "re_match_scope")
-    name: Optional[str]
-    pattern: Pattern
-    path_pattern: Optional[Pattern]
-    re_match_type: str
-    re_match_scope: Optional[str]
-
-    def __hash__(self) -> int:
-        if self.path_pattern:
-            return hash(f"{self.pattern.pattern}::{self.path_pattern.pattern}")
-        return hash(self.pattern.pattern)
-
-
 class MatchType(enum.Enum):
     Match = "match"  # pylint: disable=invalid-name
     Search = "search"  # pylint: disable=invalid-name
@@ -95,6 +80,21 @@ class MatchType(enum.Enum):
 class Scope(enum.Enum):
     Word = "word"  # pylint: disable=invalid-name
     Line = "line"  # pylint: disable=invalid-name
+
+
+@dataclass
+class Rule:
+    __slots__ = ("name", "pattern", "path_pattern", "re_match_type", "re_match_scope")
+    name: Optional[str]
+    pattern: Pattern
+    path_pattern: Optional[Pattern]
+    re_match_type: Union[str, MatchType]
+    re_match_scope: Optional[Union[str, Scope]]
+
+    def __hash__(self) -> int:
+        if self.path_pattern:
+            return hash(f"{self.pattern.pattern}::{self.path_pattern.pattern}")
+        return hash(self.pattern.pattern)
 
 
 class LogLevel(enum.IntEnum):

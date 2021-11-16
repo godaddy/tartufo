@@ -5,7 +5,7 @@ from unittest import mock
 
 from tartufo import scanner, types
 from tartufo.scanner import Issue
-from tartufo.types import GlobalOptions, Rule
+from tartufo.types import GlobalOptions, Rule, MatchType
 
 from tests.helpers import generate_options
 
@@ -308,21 +308,21 @@ class RegexScanTests(ScannerTestCase):
                 name=None,
                 pattern=rule_1,
                 path_pattern=None,
-                re_match_type="match",
+                re_match_type=MatchType.Match,
                 re_match_scope=None,
             ),
             "bar": Rule(
                 name=None,
                 pattern=rule_2,
                 path_pattern=rule_2_path,
-                re_match_type="match",
+                re_match_type=MatchType.Match,
                 re_match_scope=None,
             ),
             "not-found": Rule(
                 name=None,
                 pattern=rule_3,
                 path_pattern=rule_3_path,
-                re_match_type="match",
+                re_match_type=MatchType.Match,
                 re_match_scope=None,
             ),
         }
@@ -345,7 +345,7 @@ class RegexScanTests(ScannerTestCase):
                 name=None,
                 pattern=re.compile("foo"),
                 path_pattern=None,
-                re_match_type="match",
+                re_match_type=MatchType.Match,
                 re_match_scope=None,
             )
         }
@@ -365,7 +365,7 @@ class RegexScanTests(ScannerTestCase):
                 name=None,
                 pattern=re.compile("foo"),
                 path_pattern=None,
-                re_match_type="match",
+                re_match_type=MatchType.Match,
                 re_match_scope=None,
             )
         }

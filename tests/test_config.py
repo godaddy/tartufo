@@ -9,7 +9,7 @@ import tomlkit
 from click.testing import CliRunner
 
 from tartufo import config, types
-from tartufo.types import Rule
+from tartufo.types import Rule, MatchType, Scope
 
 from tests import helpers
 
@@ -23,14 +23,14 @@ class ConfigureRegexTests(unittest.TestCase):
                 name="RSA private key 2",
                 pattern=re.compile("-----BEGIN EC PRIVATE KEY-----"),
                 path_pattern=None,
-                re_match_type="match",
+                re_match_type=MatchType.Match,
                 re_match_scope=None,
             ),
             "Complex Rule": Rule(
                 name="Complex Rule",
                 pattern=re.compile("complex-rule"),
                 path_pattern=re.compile("/tmp/[a-z0-9A-Z]+\\.(py|js|json)"),
-                re_match_type="match",
+                re_match_type=MatchType.Match,
                 re_match_scope=None,
             ),
         }
@@ -54,14 +54,14 @@ class ConfigureRegexTests(unittest.TestCase):
             name="RSA private key 2",
             pattern=re.compile("-----BEGIN EC PRIVATE KEY-----"),
             path_pattern=None,
-            re_match_type="match",
+            re_match_type=MatchType.Match,
             re_match_scope=None,
         )
         expected_regexes["Complex Rule"] = Rule(
             name="Complex Rule",
             pattern=re.compile("complex-rule"),
             path_pattern=re.compile("/tmp/[a-z0-9A-Z]+\\.(py|js|json)"),
-            re_match_type="match",
+            re_match_type=MatchType.Match,
             re_match_scope=None,
         )
 
@@ -144,14 +144,14 @@ class ConfigureRegexTests(unittest.TestCase):
                 name="RSA private key 2",
                 pattern=re.compile("-----BEGIN EC PRIVATE KEY-----"),
                 path_pattern=None,
-                re_match_type="match",
+                re_match_type=MatchType.Match,
                 re_match_scope=None,
             ),
             "Complex Rule": Rule(
                 name="Complex Rule",
                 pattern=re.compile("complex-rule"),
                 path_pattern=re.compile("/tmp/[a-z0-9A-Z]+\\.(py|js|json)"),
-                re_match_type="match",
+                re_match_type=MatchType.Match,
                 re_match_scope=None,
             ),
         }
@@ -320,22 +320,22 @@ class CompileRulesTests(unittest.TestCase):
                         None,
                         re.compile(r"^[a-zA-Z0-9]{26}$"),
                         re.compile(r"src/.*"),
-                        re_match_type="search",
-                        re_match_scope="line",
+                        re_match_type=MatchType.Search,
+                        re_match_scope=Scope.Line,
                     ),
                     Rule(
                         None,
                         re.compile(r"^[a-zA-Z0-9]test$"),
                         re.compile(r""),
-                        re_match_type="search",
-                        re_match_scope="line",
+                        re_match_type=MatchType.Search,
+                        re_match_scope=Scope.Line,
                     ),
                     Rule(
                         None,
                         re.compile(r"^[a-zA-Z0-9]{26}::test$"),
                         re.compile(r"src/.*"),
-                        re_match_type="search",
-                        re_match_scope="line",
+                        re_match_type=MatchType.Search,
+                        re_match_scope=Scope.Line,
                     ),
                 }
             ),
@@ -354,8 +354,8 @@ class CompileRulesTests(unittest.TestCase):
                     None,
                     re.compile(r"^[a-zA-Z0-9]::test$"),
                     re.compile(r""),
-                    re_match_type="search",
-                    re_match_scope="line",
+                    re_match_type=MatchType.Search,
+                    re_match_scope=Scope.Line,
                 )
             ],
         )

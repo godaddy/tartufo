@@ -28,7 +28,13 @@ import git
 import pygit2
 
 from tartufo import config, types, util
-from tartufo.types import BranchNotFoundException, Rule, TartufoException
+from tartufo.types import (
+    BranchNotFoundException,
+    Rule,
+    TartufoException,
+    MatchType,
+    Scope,
+)
 
 BASE64_REGEX = re.compile(r"[A-Z0-9+/_-]+={,2}", re.IGNORECASE)
 HEX_REGEX = re.compile(r"[0-9A-F]+", re.IGNORECASE)
@@ -356,16 +362,16 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         :return: True if string and path matched, False otherwise.
         """
         match = False
-        if rule.re_match_scope == "word":
+        if rule.re_match_scope == Scope.Word:
             scope = string
         else:
             scope = line
-        if rule.re_match_type == "match":
+        if rule.re_match_type == MatchType.Match:
             if rule.pattern:
                 match = rule.pattern.match(scope) is not None
             if rule.path_pattern:
                 match = match and rule.path_pattern.match(path) is not None
-        elif rule.re_match_type == "search":
+        elif rule.re_match_type == MatchType.Search:
             if rule.pattern:
                 match = rule.pattern.search(scope) is not None
             if rule.path_pattern:
