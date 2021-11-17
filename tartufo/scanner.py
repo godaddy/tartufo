@@ -364,7 +364,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         match = False
         if rule.re_match_scope == Scope.Word:
             scope = string
-        else:
+        elif rule.re_match_scope == Scope.Line:
             scope = line
         if rule.re_match_type == MatchType.Match:
             if rule.pattern:
@@ -663,7 +663,9 @@ class GitRepoScanner(GitScanner):
                 self.global_options.exclude_signatures = tuple(
                     set(self.global_options.exclude_signatures + tuple(signatures))
                 )
-
+            entropy_patterns = data.get("exclude_entropy_patterns", None)
+            if entropy_patterns:
+                self.global_options.exclude_entropy_patterns += tuple(entropy_patterns)
             include_patterns = list(data.get("include_path_patterns", ()))
             repo_include_file = data.get("include_paths", None)
             if repo_include_file:

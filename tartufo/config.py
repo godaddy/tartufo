@@ -250,24 +250,38 @@ def compile_path_rules(patterns: Iterable[str]) -> List[Pattern]:
     ]
 
 
-def compile_rules(patterns: Iterable[Union[str, Dict[str, str]]]) -> List[Rule]:
+def compile_rules(patterns: Iterable[Dict[str, str]]) -> List[Rule]:
     """Take a list of regex string with paths and compile them into a List of Rule.
 
     :param patterns: The list of patterns to be compiled
     :return: List of Rule objects
     """
-    try:
-        return list(
-            {
+    rules: List[Rule] = []
+    for pattern in patterns:
+        try:
+            match_type = MatchType(pattern.get("match-type", MatchType.Search.value))
+        except ValueError as exc:
+            raise ConfigException(
+                f"Invalid value for match-type: {pattern.get('match-type')}"
+            ) from exc
+        try:
+            scope = Scope(pattern.get("scope", Scope.Line.value))
+        except ValueError as exc:
+            raise ConfigException(
+                f"Invalid value for scope: {pattern.get('scope')}"
+            ) from exc
+        try:
+            rules.append(
                 Rule(
                     name=pattern.get("reason", None),  # type: ignore[union-attr]
                     pattern=re.compile(pattern["pattern"]),  # type: ignore[index]
                     path_pattern=re.compile(pattern.get("path-pattern", "")),  # type: ignore[union-attr]
-                    re_match_type=pattern.get("match-type", MatchType.Search),  # type: ignore[union-attr]
-                    re_match_scope=pattern.get("scope", Scope.Line),  # type: ignore[union-attr]
+                    re_match_type=match_type,
+                    re_match_scope=scope,
                 )
-                for pattern in patterns
-            }
-        )
-    except (KeyError, AttributeError) as exc:
-        raise ConfigException(f"Invalid exclude-entropy-patterns: {patterns}") from exc
+            )
+        except (KeyError, AttributeError) as exc:
+            raise ConfigException(
+                f"Invalid exclude-entropy-patterns: {patterns}"
+            ) from exc
+    return rules

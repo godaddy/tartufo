@@ -63,7 +63,7 @@ class GlobalOptions:
     scan_filenames: bool
     include_path_patterns: Tuple[str, ...]
     exclude_path_patterns: Tuple[str, ...]
-    exclude_entropy_patterns: Tuple[str, ...]
+    exclude_entropy_patterns: Tuple[Dict[str, str], ...]
     exclude_signatures: Tuple[str, ...]
     output_dir: Optional[str]
     git_rules_repo: Optional[str]

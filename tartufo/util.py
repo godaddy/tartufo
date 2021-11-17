@@ -107,11 +107,11 @@ def echo_result(
                 click.echo(f"Time: {now}\nAll clear. No secrets detected.")
         if options.verbose > 0:
             click.echo("\nExcluded paths:")
-            click.echo("\n".join([path.pattern for path in scanner.excluded_paths]))
+            click.echo("\n".join([str(path) for path in scanner.excluded_paths]))
             click.echo("\nExcluded signatures:")
             click.echo("\n".join(options.exclude_signatures))
             click.echo("\nExcluded entropy patterns:")
-            click.echo("\n".join(options.exclude_entropy_patterns))
+            click.echo("\n".join(str(path) for path in scanner.excluded_entropy))
 
 
 def write_outputs(found_issues: List["Issue"], output_dir: pathlib.Path) -> List[str]:
