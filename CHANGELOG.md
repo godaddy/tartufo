@@ -18,7 +18,7 @@ Features:
   marked as deprecated.
 * [#273](https://github.com/godaddy/tartufo/inssues/273) - Entropy checking support
   routines have been rewritten to utilize library abstractions and operate more
-  efficiently while returning effectively identical results.
+  efficiently while returning identical results.
 * [#177](https://github.com/godaddy/tartufo/issues/177) -
   [base64url](https://datatracker.ietf.org/doc/html/rfc4648#section-5) encodings
   are now recognized and scanned for entropy.
