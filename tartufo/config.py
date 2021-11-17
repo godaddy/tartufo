@@ -148,7 +148,7 @@ def read_pyproject_toml(
 def configure_regexes(
     include_default: bool = True,
     rules_files: Optional[Iterable[TextIO]] = None,
-    rule_patterns: Optional[Iterable[str]] = None,
+    rule_patterns: Optional[Iterable[Dict[str, str]]] = None,
     rules_repo: Optional[str] = None,
     rules_repo_files: Optional[Iterable[str]] = None,
 ) -> Dict[str, Rule]:
@@ -156,6 +156,7 @@ def configure_regexes(
 
     :param include_default: Whether to include the built-in set of regexes
     :param rules_files: A list of files to load rules from
+    :param rule_patterns: A set of previously-collected rules
     :param rules_repo: A separate git repository to load rules from
     :param rules_repo_files: A set of patterns used to find files in the rules repo
     """
@@ -168,11 +169,12 @@ def configure_regexes(
     if rule_patterns:
         try:
             for pattern in rule_patterns:
-                rules[pattern["name"]] = Rule(
-                    name=pattern["name"],
-                    pattern=pattern["pattern"],
+                pattern_name = pattern.get("reason", "FIXME")
+                rules[pattern_name] = Rule(
+                    name=pattern_name,
+                    pattern=re.compile(pattern["pattern"]),
                     path_pattern=re.compile(pattern.get("path-pattern", "")),
-                    re_match_type=None,
+                    re_match_type="search",
                 )
         except KeyError as exc:
             raise ConfigException(

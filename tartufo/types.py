@@ -58,7 +58,7 @@ class GlobalOptions:
         "entropy_sensitivity",
     )
     rules: Tuple[TextIO, ...]
-    rule_patterns: Tuple[str, ...]
+    rule_patterns: Tuple[Dict[str, str], ...]
     default_regexes: bool
     entropy: bool
     regex: bool

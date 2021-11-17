@@ -256,11 +256,12 @@ class RegexRulesTests(ScannerTestCase):
     ):
         self.options.default_regexes = True
         self.options.rules = "foo"  # type: ignore
+        self.options.rule_patterns = "oof"  # type: ignore
         self.options.git_rules_repo = "bar"
         self.options.git_rules_files = "baz"  # type: ignore
         test_scanner = TestScanner(self.options)
         test_scanner.rules_regexes  # pylint: disable=pointless-statement
-        mock_configure.assert_called_once_with(True, "foo", "bar", "baz")
+        mock_configure.assert_called_once_with(True, "foo", "oof", "bar", "baz")
 
 
 class SignatureTests(ScannerTestCase):
