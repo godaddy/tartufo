@@ -145,7 +145,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     _included_paths: Optional[List[Pattern]] = None
     _excluded_paths: Optional[List[Pattern]] = None
     _excluded_entropy: Optional[List[Rule]] = None
-    _rules_regexes: Optional[Dict[str, Rule]] = None
+    _rules_regexes: Optional[Set[Rule]] = None
     global_options: types.GlobalOptions
     logger: logging.Logger
     _scan_lock: threading.Lock = threading.Lock()
@@ -286,11 +286,10 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         return self._excluded_paths
 
     @property
-    def rules_regexes(self) -> Dict[str, Rule]:
-        """Get a dictionary of regular expressions to scan the code for.
+    def rules_regexes(self) -> Set[Rule]:
+        """Get a set of regular expressions to scan the code for.
 
         :raises types.TartufoConfigException: If there was a problem compiling the rules
-        :rtype: Dict[str, Pattern]
         """
         if self._rules_regexes is None:
             self.logger.info("Initializing regex rules")
@@ -521,14 +520,14 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         :param chunk: The chunk of data to be scanned
         """
 
-        for key, rule in self.rules_regexes.items():
+        for rule in self.rules_regexes:
             if rule.path_pattern is None or rule.path_pattern.match(chunk.file_path):
                 found_strings = rule.pattern.findall(chunk.contents)
                 for match in found_strings:
                     # Filter out any explicitly "allowed" match signatures
                     if not self.signature_is_excluded(match, chunk.file_path):
                         issue = Issue(types.IssueType.RegEx, match, chunk)
-                        issue.issue_detail = key
+                        issue.issue_detail = rule.name
                         yield issue
 
     @property

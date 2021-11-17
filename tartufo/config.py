@@ -2,6 +2,7 @@ import json
 import pathlib
 import re
 import shutil
+import warnings
 from typing import (
     Any,
     Dict,
@@ -10,6 +11,7 @@ from typing import (
     MutableMapping,
     Optional,
     Pattern,
+    Set,
     TextIO,
     Tuple,
     Union,
@@ -151,7 +153,7 @@ def configure_regexes(
     rule_patterns: Optional[Iterable[Dict[str, str]]] = None,
     rules_repo: Optional[str] = None,
     rules_repo_files: Optional[Iterable[str]] = None,
-) -> Dict[str, Rule]:
+) -> Set[Rule]:
     """Build a set of regular expressions to be used during a regex scan.
 
     :param include_default: Whether to include the built-in set of regexes
@@ -159,23 +161,26 @@ def configure_regexes(
     :param rule_patterns: A set of previously-collected rules
     :param rules_repo: A separate git repository to load rules from
     :param rules_repo_files: A set of patterns used to find files in the rules repo
+    :returns: Set of `Rule` objects to be used for regex scans
     """
+
     if include_default:
         with DEFAULT_PATTERN_FILE.open() as handle:
             rules = load_rules_from_file(handle)
     else:
-        rules = {}
+        rules = set()
 
     if rule_patterns:
         try:
             for pattern in rule_patterns:
-                pattern_name = pattern.get("reason", "FIXME")
-                rules[pattern_name] = Rule(
-                    name=pattern_name,
+                rule = Rule(
+                    name=pattern.get("reason"),
                     pattern=re.compile(pattern["pattern"]),
                     path_pattern=re.compile(pattern.get("path-pattern", "")),
                     re_match_type="search",
+                    re_match_scope=None,
                 )
+                rules.add(rule)
         except KeyError as exc:
             raise ConfigException(
                 f"Invalid rule-pattern; required field missing. Rule: {pattern}"
@@ -211,11 +216,7 @@ def configure_regexes(
                 all_files.extend([path.open("r") for path in repo_path.glob(repo_file)])
         if all_files:
             for rules_file in all_files:
-                loaded = load_rules_from_file(rules_file)
-                dupes = set(loaded.keys()).intersection(rules.keys())
-                if dupes:
-                    raise ValueError(f"Rule(s) were defined multiple times: {dupes}")
-                rules.update(loaded)
+                rules.update(load_rules_from_file(rules_file))
     finally:
         if cloned_repo:
             shutil.rmtree(repo_path, onerror=util.del_rw)  # type: ignore
@@ -223,13 +224,14 @@ def configure_regexes(
     return rules
 
 
-def load_rules_from_file(rules_file: TextIO) -> Dict[str, Rule]:
+def load_rules_from_file(rules_file: TextIO) -> Set[Rule]:
     """Load a set of JSON rules from a file and return them as compiled patterns.
 
     :param rules_file: An open file handle containing a JSON dictionary of regexes
     :raises ValueError: If the rules contain invalid JSON
     """
-    rules: Dict[str, Rule] = {}
+
+    rules: Set[Rule] = set()
     try:
         new_rules = json.load(rules_file)
     except json.JSONDecodeError as exc:
@@ -254,7 +256,7 @@ def load_rules_from_file(rules_file: TextIO) -> Dict[str, Rule]:
                 re_match_type=MatchType.Match,
                 re_match_scope=None,
             )
-        rules[rule_name] = rule
+        rules.add(rule)
     return rules
 
 

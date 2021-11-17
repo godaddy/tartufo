@@ -19,14 +19,14 @@ class ConfigureRegexTests(unittest.TestCase):
         rules_path = pathlib.Path(__file__).parent / "data" / "testRules.json"
         rules_files = (rules_path.open(),)
         expected_regexes = {
-            "RSA private key 2": Rule(
+            Rule(
                 name="RSA private key 2",
                 pattern=re.compile("-----BEGIN EC PRIVATE KEY-----"),
                 path_pattern=None,
                 re_match_type=MatchType.Match,
                 re_match_scope=None,
             ),
-            "Complex Rule": Rule(
+            Rule(
                 name="Complex Rule",
                 pattern=re.compile("complex-rule"),
                 path_pattern=re.compile("/tmp/[a-z0-9A-Z]+\\.(py|js|json)"),
@@ -50,19 +50,23 @@ class ConfigureRegexTests(unittest.TestCase):
         rules_files = (rules_path.open(),)
         with config.DEFAULT_PATTERN_FILE.open() as handle:
             expected_regexes = config.load_rules_from_file(handle)
-        expected_regexes["RSA private key 2"] = Rule(
-            name="RSA private key 2",
-            pattern=re.compile("-----BEGIN EC PRIVATE KEY-----"),
-            path_pattern=None,
-            re_match_type=MatchType.Match,
-            re_match_scope=None,
+        expected_regexes.add(
+            Rule(
+                name="RSA private key 2",
+                pattern=re.compile("-----BEGIN EC PRIVATE KEY-----"),
+                path_pattern=None,
+                re_match_type=MatchType.Match,
+                re_match_scope=None,
+            )
         )
-        expected_regexes["Complex Rule"] = Rule(
-            name="Complex Rule",
-            pattern=re.compile("complex-rule"),
-            path_pattern=re.compile("/tmp/[a-z0-9A-Z]+\\.(py|js|json)"),
-            re_match_type=MatchType.Match,
-            re_match_scope=None,
+        expected_regexes.add(
+            Rule(
+                name="Complex Rule",
+                pattern=re.compile("complex-rule"),
+                path_pattern=re.compile("/tmp/[a-z0-9A-Z]+\\.(py|js|json)"),
+                re_match_type=MatchType.Match,
+                re_match_scope=None,
+            )
         )
 
         actual_regexes = config.configure_regexes(
@@ -140,14 +144,14 @@ class ConfigureRegexTests(unittest.TestCase):
             rules_repo_files=["testRules.json"],
         )
         expected_regexes = {
-            "RSA private key 2": Rule(
+            Rule(
                 name="RSA private key 2",
                 pattern=re.compile("-----BEGIN EC PRIVATE KEY-----"),
                 path_pattern=None,
                 re_match_type=MatchType.Match,
                 re_match_scope=None,
             ),
-            "Complex Rule": Rule(
+            Rule(
                 name="Complex Rule",
                 pattern=re.compile("complex-rule"),
                 path_pattern=re.compile("/tmp/[a-z0-9A-Z]+\\.(py|js|json)"),
@@ -312,7 +316,7 @@ class CompileRulesTests(unittest.TestCase):
                 {"path-pattern": r"src/.*", "pattern": r"^[a-zA-Z0-9]{26}::test$"},
             ]
         )
-        self.assertEqual(
+        self.assertCountEqual(
             rules,
             list(
                 {
