@@ -49,7 +49,14 @@ class TartufoCLI(click.MultiCommand):
     "--rules",
     multiple=True,
     type=click.File("r"),
-    help="Path(s) to regex rules json list file(s).",
+    help="[DEPRECATED] Use the rule-patterns config options instead. Path(s) to regex "
+    "rules json list file(s).",
+)
+@click.option(
+    "--rule-patterns",
+    multiple=True,
+    type=str,
+    help="Regex rule patterns to be detected",
 )
 @click.option(
     "--default-regexes/--no-default-regexes",

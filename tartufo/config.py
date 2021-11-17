@@ -148,6 +148,7 @@ def read_pyproject_toml(
 def configure_regexes(
     include_default: bool = True,
     rules_files: Optional[Iterable[TextIO]] = None,
+    rule_patterns: Optional[Iterable[str]] = None,
     rules_repo: Optional[str] = None,
     rules_repo_files: Optional[Iterable[str]] = None,
 ) -> Dict[str, Rule]:
@@ -164,7 +165,27 @@ def configure_regexes(
     else:
         rules = {}
 
+    if rule_patterns:
+        try:
+            for pattern in rule_patterns:
+                rules[pattern["name"]] = Rule(
+                    name=pattern["name"],
+                    pattern=pattern["pattern"],
+                    path_pattern=re.compile(pattern.get("path-pattern", "")),
+                    re_match_type=None,
+                )
+        except KeyError as exc:
+            raise ConfigException(
+                f"Invalid rule-pattern; required field missing. Rule: {pattern}"
+            ) from exc
+
     if rules_files:
+        warnings.warn(
+            "Storing rules in a separate file has been deprecated and will be removed "
+            "in a future release. You should be using the 'rule-patterns' config "
+            " option instead.",
+            DeprecationWarning,
+        )
         all_files: List[TextIO] = list(rules_files)
     else:
         all_files = []

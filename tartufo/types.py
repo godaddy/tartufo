@@ -36,6 +36,7 @@ class OutputFormat(enum.Enum):
 class GlobalOptions:
     __slots__ = (
         "rules",
+        "rule_patterns",
         "default_regexes",
         "entropy",
         "regex",
@@ -57,6 +58,7 @@ class GlobalOptions:
         "entropy_sensitivity",
     )
     rules: Tuple[TextIO, ...]
+    rule_patterns: Tuple[str, ...]
     default_regexes: bool
     entropy: bool
     regex: bool

@@ -298,6 +298,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                 self._rules_regexes = config.configure_regexes(
                     self.global_options.default_regexes,
                     self.global_options.rules,
+                    self.global_options.rule_patterns,
                     self.global_options.git_rules_repo,
                     self.global_options.git_rules_files,
                 )
