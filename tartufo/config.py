@@ -280,7 +280,7 @@ def compile_rules(patterns: Iterable[Dict[str, str]]) -> List[Rule]:
                     re_match_scope=scope,
                 )
             )
-        except (KeyError, AttributeError) as exc:
+        except KeyError as exc:
             raise ConfigException(
                 f"Invalid exclude-entropy-patterns: {patterns}"
             ) from exc

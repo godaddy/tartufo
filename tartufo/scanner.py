@@ -366,6 +366,8 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             scope = string
         elif rule.re_match_scope == Scope.Line:
             scope = line
+        else:
+            raise TartufoException(f"Invalid value for scope: {rule.re_match_scope}")
         if rule.re_match_type == MatchType.Match:
             if rule.pattern:
                 match = rule.pattern.match(scope) is not None
