@@ -280,7 +280,7 @@ digests. To avoid these false positives, enable ``exclude-entropy-patterns``. Ex
 apply to any strings flagged by entropy checks. This option is not available on the command line,
 and must be specified in your config file.
 
-For example, if ``docs/README.md`` contains a git SHA and `.github/workflows/*.yml` contains pinned git SHAs
+For example, if ``docs/README.md`` contains a git SHA and ``.github/workflows/*.yml`` contains pinned git SHAs
 this would be flagged by entropy.
 To exclude these, add the following entries to ``exclude-entropy-patterns`` in the config file.
 
