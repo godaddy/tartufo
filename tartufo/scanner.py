@@ -646,12 +646,27 @@ class GitRepoScanner(GitScanner):
         except (FileNotFoundError, types.ConfigException):
             config_file = None
         if config_file and config_file != self.global_options.config:
+            configured_signatures = []
             signatures = data.get("exclude_signatures", None)
             if signatures:
-                self.global_options.exclude_signatures = tuple(
-                    set(self.global_options.exclude_signatures + tuple(signatures))
+                warnings.warn(
+                    "--exclude-signatures will be deprecated. Make sure all the exclusions are moved to "
+                    "exclude-findings section with new format.",
+                    DeprecationWarning,
+                )
+                configured_signatures.extend(signatures)
+            findings = data.get("exclude_findings", None)
+            if findings:
+                configured_signatures.extend(
+                    [finding["signature"] for finding in findings]
                 )
 
+            self.global_options.exclude_signatures = tuple(
+                set(
+                    self.global_options.exclude_signatures
+                    + tuple(configured_signatures)
+                )
+            )
             include_patterns = list(data.get("include_path_patterns", ()))
             repo_include_file = data.get("include_paths", None)
             if repo_include_file:
