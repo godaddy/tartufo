@@ -1,7 +1,35 @@
 # pylint: disable=too-many-instance-attributes
 import enum
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, TextIO, Tuple, Pattern
+from typing import Any, Dict, Optional, TextIO, Tuple, Pattern, Union
+
+
+class IssueType(enum.Enum):
+    Entropy = "High Entropy"  # pylint: disable=invalid-name
+    RegEx = "Regular Expression Match"  # pylint: disable=invalid-name
+
+
+class MatchType(enum.Enum):
+    Match = "match"  # pylint: disable=invalid-name
+    Search = "search"  # pylint: disable=invalid-name
+
+
+class Scope(enum.Enum):
+    Word = "word"  # pylint: disable=invalid-name
+    Line = "line"  # pylint: disable=invalid-name
+
+
+class LogLevel(enum.IntEnum):
+    ERROR = 0
+    WARNING = 1
+    INFO = 2
+    DEBUG = 3
+
+
+class OutputFormat(enum.Enum):
+    Text = "text"  # pylint: disable=invalid-name
+    Json = "json"  # pylint: disable=invalid-name
+    Compact = "compact"  # pylint: disable=invalid-name
 
 
 @dataclass
@@ -35,7 +63,7 @@ class GlobalOptions:
     scan_filenames: bool
     include_path_patterns: Tuple[str, ...]
     exclude_path_patterns: Tuple[str, ...]
-    exclude_entropy_patterns: Tuple[str, ...]
+    exclude_entropy_patterns: Tuple[Dict[str, str], ...]
     exclude_signatures: Tuple[str, ...]
     output_dir: Optional[str]
     git_rules_repo: Optional[str]
@@ -59,11 +87,6 @@ class GitOptions:
     include_submodules: bool
 
 
-class IssueType(enum.Enum):
-    Entropy = "High Entropy"  # pylint: disable=invalid-name
-    RegEx = "Regular Expression Match"  # pylint: disable=invalid-name
-
-
 @dataclass
 class Chunk:
     __slots__ = ("contents", "file_path", "metadata")
@@ -74,29 +97,17 @@ class Chunk:
 
 @dataclass
 class Rule:
-    __slots__ = ("name", "pattern", "path_pattern", "re_match_type")
+    __slots__ = ("name", "pattern", "path_pattern", "re_match_type", "re_match_scope")
     name: Optional[str]
     pattern: Pattern
     path_pattern: Optional[Pattern]
-    re_match_type: str
+    re_match_type: Union[str, MatchType]
+    re_match_scope: Optional[Union[str, Scope]]
 
     def __hash__(self) -> int:
         if self.path_pattern:
             return hash(f"{self.pattern.pattern}::{self.path_pattern.pattern}")
         return hash(self.pattern.pattern)
-
-
-class LogLevel(enum.IntEnum):
-    ERROR = 0
-    WARNING = 1
-    INFO = 2
-    DEBUG = 3
-
-
-class OutputFormat(enum.Enum):
-    Text = "text"  # pylint: disable=invalid-name
-    Json = "json"  # pylint: disable=invalid-name
-    Compact = "compact"  # pylint: disable=invalid-name
 
 
 class TartufoException(Exception):

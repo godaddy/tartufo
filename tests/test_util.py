@@ -8,7 +8,7 @@ from unittest import mock
 import git
 
 from tartufo import scanner, types, util
-from tartufo.types import GlobalOptions
+from tartufo.types import GlobalOptions, Rule, MatchType, Scope
 
 from tests.helpers import generate_options
 
@@ -177,16 +177,12 @@ class OutputTests(unittest.TestCase):
             "fffffffffffff",
             "ooooooooooooo",
         ]
-        exclude_entropy_patterns = [
-            "aaaa::bbbb",
-            "cccc::dddd",
-        ]
+
         options = generate_options(
             GlobalOptions,
             quiet=False,
             verbose=1,
             exclude_signatures=exclude_signatures,
-            exclude_entropy_patterns=exclude_entropy_patterns,
         )
         mock_scanner.issues = []
         mock_scanner.issue_count = 0
@@ -194,16 +190,36 @@ class OutputTests(unittest.TestCase):
             re.compile("package-lock.json"),
             re.compile("poetry.lock"),
         ]
+
+        rule_1 = (
+            Rule(
+                name="Rule-1",
+                pattern="aaaa",
+                path_pattern="bbbb",
+                re_match_type=MatchType.Search,
+                re_match_scope=Scope.Line,
+            ),
+        )
+        rule_2 = (
+            Rule(
+                name="Rule-1",
+                pattern="cccc",
+                path_pattern="dddd",
+                re_match_type=MatchType.Search,
+                re_match_scope=Scope.Line,
+            ),
+        )
+        mock_scanner.excluded_entropy = [rule_1, rule_2]
         util.echo_result(options, mock_scanner, "", "")
         mock_click.echo.assert_has_calls(
             (
                 mock.call("Time: now:now:now\nAll clear. No secrets detected."),
                 mock.call("\nExcluded paths:"),
-                mock.call("package-lock.json\npoetry.lock"),
+                mock.call("re.compile('package-lock.json')\nre.compile('poetry.lock')"),
                 mock.call("\nExcluded signatures:"),
                 mock.call("fffffffffffff\nooooooooooooo"),
                 mock.call("\nExcluded entropy patterns:"),
-                mock.call("aaaa::bbbb\ncccc::dddd"),
+                mock.call(f"{rule_1}\n{rule_2}"),
             ),
             any_order=False,
         )
