@@ -123,6 +123,7 @@ class Issue:
         return self.__str__().encode("utf8")
 
 
+# pylint: disable=too-many-public-methods
 class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     """Provide the base, generic functionality needed by all scanners.
 
@@ -143,6 +144,8 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     global_options: types.GlobalOptions
     logger: logging.Logger
     _scan_lock: threading.Lock = threading.Lock()
+    _excluded_findings: tuple = ()
+    _config_data: MutableMapping[str, Any] = {}
 
     def __init__(self, options: types.GlobalOptions) -> None:
         self.global_options = options
@@ -330,6 +333,35 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             return False
         return True
 
+    @property
+    def config_data(self):
+        return self._config_data
+
+    @config_data.setter
+    def config_data(self, data) -> MutableMapping[str, Any]:
+        self._config_data = data
+        return self._config_data
+
+    @cached_property
+    def excluded_findings(self) -> tuple:
+        configured_signatures = []
+        signatures = self.config_data.get("exclude_signatures", None)
+        if signatures:
+            warnings.warn(
+                "--exclude-signatures will be deprecated. Make sure all the exclusions are moved to "
+                "exclude-findings section with new format.",
+                DeprecationWarning,
+            )
+            configured_signatures.extend(signatures)
+        findings = self.config_data.get("exclude_findings", None)
+        if findings:
+            configured_signatures.extend([finding["signature"] for finding in findings])
+
+        self._excluded_findings = tuple(
+            set(self.global_options.exclude_signatures + tuple(configured_signatures))
+        )
+        return self._excluded_findings
+
     def signature_is_excluded(self, blob: str, file_path: str) -> bool:
         """Find whether the signature of some data has been excluded in configuration.
 
@@ -338,9 +370,8 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         """
         return (
             blob
-            in self.global_options.exclude_signatures  # Signatures themselves pop up as entropy matches
-            or util.generate_signature(blob, file_path)
-            in self.global_options.exclude_signatures
+            in self.excluded_findings  # Signatures themselves pop up as entropy matches
+            or util.generate_signature(blob, file_path) in self.excluded_findings
         )
 
     @staticmethod
@@ -646,27 +677,7 @@ class GitRepoScanner(GitScanner):
         except (FileNotFoundError, types.ConfigException):
             config_file = None
         if config_file and config_file != self.global_options.config:
-            configured_signatures = []
-            signatures = data.get("exclude_signatures", None)
-            if signatures:
-                warnings.warn(
-                    "--exclude-signatures will be deprecated. Make sure all the exclusions are moved to "
-                    "exclude-findings section with new format.",
-                    DeprecationWarning,
-                )
-                configured_signatures.extend(signatures)
-            findings = data.get("exclude_findings", None)
-            if findings:
-                configured_signatures.extend(
-                    [finding["signature"] for finding in findings]
-                )
-
-            self.global_options.exclude_signatures = tuple(
-                set(
-                    self.global_options.exclude_signatures
-                    + tuple(configured_signatures)
-                )
-            )
+            self.config_data = data
             include_patterns = list(data.get("include_path_patterns", ()))
             repo_include_file = data.get("include_paths", None)
             if repo_include_file:

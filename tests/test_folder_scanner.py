@@ -27,7 +27,6 @@ class FolderScannerTestCase(unittest.TestCase):
         issues = list(test_scanner.scan())
 
         self.assertEqual(2, len(issues))
-        actual_issues = []
         actual_issues = [issue.matched_string for issue in issues]
         self.assertIn("KQ0I97OBuPlGB9yPRxoSxnX52zE=", actual_issues)
         self.assertIn(
@@ -60,7 +59,6 @@ class FolderScannerTestCase(unittest.TestCase):
         issues = list(test_scanner.scan())
 
         self.assertEqual(3, len(issues))
-        actual_issues = []
         actual_issues = [issue.matched_string for issue in issues]
         self.assertEqual(2, actual_issues.count("KQ0I97OBuPlGB9yPRxoSxnX52zE="))
         self.assertIn(
@@ -80,7 +78,6 @@ class FolderScannerTestCase(unittest.TestCase):
         issues = list(test_scanner.scan())
 
         self.assertEqual(2, len(issues))
-        actual_issues = []
         actual_issues = [issue.matched_string for issue in issues]
         self.assertEqual(2, actual_issues.count("KQ0I97OBuPlGB9yPRxoSxnX52zE="))
 
