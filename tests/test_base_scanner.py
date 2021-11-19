@@ -269,7 +269,7 @@ class SignatureTests(ScannerTestCase):
         mock_signature.return_value = "foo"
         test_scanner = TestScanner(self.options)
         self.options.exclude_signatures = ()
-        test_scanner.excluded_findings = {
+        test_scanner.config_data = {
             "exclude_findings": [{"signature": "foo", "reason": "foo finding"}]
         }
         self.assertTrue(test_scanner.signature_is_excluded("bar", "blah"))
@@ -281,7 +281,7 @@ class SignatureTests(ScannerTestCase):
         mock_signature.return_value = "bar"
         test_scanner = TestScanner(self.options)
         self.options.exclude_signatures = ()
-        test_scanner.excluded_findings = {
+        test_scanner.config_data = {
             "exclude_findings": [{"signature": "foo", "reason": "foo finding"}]
         }
         self.assertFalse(test_scanner.signature_is_excluded("blah", "stuff"))
@@ -289,7 +289,7 @@ class SignatureTests(ScannerTestCase):
     def test_signature_found_as_scan_match_is_excluded(self):
         test_scanner = TestScanner(self.options)
         self.options.exclude_signatures = ()
-        test_scanner.excluded_findings = {
+        test_scanner.config_data = {
             "exclude_findings": [
                 {"signature": "ford_prefect", "reason": "ford_prefect finding"}
             ]
