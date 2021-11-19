@@ -26,12 +26,10 @@ import git
 import pygit2
 
 from tartufo import types
-from tartufo.types import Rule
 
 if TYPE_CHECKING:
     from tartufo.scanner import Issue  # pylint: disable=cyclic-import
     from tartufo.scanner import ScannerBase  # pylint: disable=cyclic-import
-    from tartufo.config import OptionTypes  # pylint: disable=cyclic-import
 
 
 DATETIME_FORMAT: str = "%Y-%m-%d %H:%M:%S"
@@ -48,13 +46,6 @@ def del_rw(_func: Callable, name: str, _exc: Exception) -> None:
     """
     os.chmod(name, stat.S_IWRITE)
     os.remove(name)
-
-
-def convert_regexes_to_rules(regexes: Dict[str, Pattern]) -> Dict[str, Rule]:
-    return {
-        name: Rule(name=name, pattern=pattern, path_pattern=None, re_match_type="match")
-        for name, pattern in regexes.items()
-    }
 
 
 def echo_result(
@@ -116,11 +107,11 @@ def echo_result(
                 click.echo(f"Time: {now}\nAll clear. No secrets detected.")
         if options.verbose > 0:
             click.echo("\nExcluded paths:")
-            click.echo("\n".join([path.pattern for path in scanner.excluded_paths]))
+            click.echo("\n".join([str(path) for path in scanner.excluded_paths]))
             click.echo("\nExcluded signatures:")
             click.echo("\n".join(options.exclude_signatures))
             click.echo("\nExcluded entropy patterns:")
-            click.echo("\n".join(options.exclude_entropy_patterns))
+            click.echo("\n".join(str(path) for path in scanner.excluded_entropy))
 
 
 def write_outputs(found_issues: List["Issue"], output_dir: pathlib.Path) -> List[str]:

@@ -9,7 +9,7 @@ import tomlkit
 from click.testing import CliRunner
 
 from tartufo import config, types
-from tartufo.types import Rule
+from tartufo.types import Rule, MatchType, Scope
 
 from tests import helpers
 
@@ -23,13 +23,15 @@ class ConfigureRegexTests(unittest.TestCase):
                 name="RSA private key 2",
                 pattern=re.compile("-----BEGIN EC PRIVATE KEY-----"),
                 path_pattern=None,
-                re_match_type="match",
+                re_match_type=MatchType.Match,
+                re_match_scope=None,
             ),
             "Complex Rule": Rule(
                 name="Complex Rule",
                 pattern=re.compile("complex-rule"),
                 path_pattern=re.compile("/tmp/[a-z0-9A-Z]+\\.(py|js|json)"),
-                re_match_type="match",
+                re_match_type=MatchType.Match,
+                re_match_scope=None,
             ),
         }
 
@@ -52,13 +54,15 @@ class ConfigureRegexTests(unittest.TestCase):
             name="RSA private key 2",
             pattern=re.compile("-----BEGIN EC PRIVATE KEY-----"),
             path_pattern=None,
-            re_match_type="match",
+            re_match_type=MatchType.Match,
+            re_match_scope=None,
         )
         expected_regexes["Complex Rule"] = Rule(
             name="Complex Rule",
             pattern=re.compile("complex-rule"),
             path_pattern=re.compile("/tmp/[a-z0-9A-Z]+\\.(py|js|json)"),
-            re_match_type="match",
+            re_match_type=MatchType.Match,
+            re_match_scope=None,
         )
 
         actual_regexes = config.configure_regexes(
@@ -140,13 +144,15 @@ class ConfigureRegexTests(unittest.TestCase):
                 name="RSA private key 2",
                 pattern=re.compile("-----BEGIN EC PRIVATE KEY-----"),
                 path_pattern=None,
-                re_match_type="match",
+                re_match_type=MatchType.Match,
+                re_match_scope=None,
             ),
             "Complex Rule": Rule(
                 name="Complex Rule",
                 pattern=re.compile("complex-rule"),
                 path_pattern=re.compile("/tmp/[a-z0-9A-Z]+\\.(py|js|json)"),
-                re_match_type="match",
+                re_match_type=MatchType.Match,
+                re_match_scope=None,
             ),
         }
 
@@ -298,98 +304,65 @@ class CompilePathRulesTests(unittest.TestCase):
 
 
 class CompileRulesTests(unittest.TestCase):
-    def test_commented_lines_are_ignored(self):
-        rules = config.compile_rules(["# Poetry lock file", r"^[a-zA-Z0-9]{26}$"])
-        self.assertEqual(
-            rules,
-            [
-                Rule(
-                    None,
-                    re.compile(r"^[a-zA-Z0-9]{26}$"),
-                    re.compile(r".*"),
-                    re_match_type="match",
-                )
-            ],
-        )
-
-    def test_whitespace_lines_are_ignored(self):
-        rules = config.compile_rules(
-            [
-                "# Poetry lock file",
-                r"poetry\.lock::^[a-zA-Z0-9]{40}$",
-                "",
-                "\t\n",
-                "# NPM files",
-                r"^[a-zA-Z0-9]{26}$",
-            ]
-        )
-        self.assertEqual(
-            rules,
-            [
-                Rule(
-                    None,
-                    re.compile(r"^[a-zA-Z0-9]{40}$"),
-                    re.compile(r"poetry\.lock"),
-                    re_match_type="match",
-                ),
-                Rule(
-                    None,
-                    re.compile(r"^[a-zA-Z0-9]{26}$"),
-                    re.compile(r".*"),
-                    re_match_type="match",
-                ),
-            ],
-        )
-
     def test_path_is_used(self):
         rules = config.compile_rules(
             [
-                r"src/.*::^[a-zA-Z0-9]{26}$",
-                r"^[a-zA-Z0-9]test$",
-                r"src/.*::^[a-zA-Z0-9]{26}::test$",
+                {"path-pattern": r"src/.*", "pattern": r"^[a-zA-Z0-9]{26}$"},
+                {"pattern": r"^[a-zA-Z0-9]test$"},
+                {"path-pattern": r"src/.*", "pattern": r"^[a-zA-Z0-9]{26}::test$"},
             ]
         )
         self.assertEqual(
             rules,
-            [
-                Rule(
-                    None,
-                    re.compile(r"^[a-zA-Z0-9]{26}$"),
-                    re.compile(r"src/.*"),
-                    re_match_type="match",
-                ),
-                Rule(
-                    None,
-                    re.compile(r"^[a-zA-Z0-9]test$"),
-                    re.compile(r".*"),
-                    re_match_type="match",
-                ),
-                Rule(
-                    None,
-                    re.compile(r"^[a-zA-Z0-9]{26}::test$"),
-                    re.compile(r"src/.*"),
-                    re_match_type="match",
-                ),
-            ],
+            list(
+                {
+                    Rule(
+                        None,
+                        re.compile(r"^[a-zA-Z0-9]{26}$"),
+                        re.compile(r"src/.*"),
+                        re_match_type=MatchType.Search,
+                        re_match_scope=Scope.Line,
+                    ),
+                    Rule(
+                        None,
+                        re.compile(r"^[a-zA-Z0-9]test$"),
+                        re.compile(r""),
+                        re_match_type=MatchType.Search,
+                        re_match_scope=Scope.Line,
+                    ),
+                    Rule(
+                        None,
+                        re.compile(r"^[a-zA-Z0-9]{26}::test$"),
+                        re.compile(r"src/.*"),
+                        re_match_type=MatchType.Search,
+                        re_match_scope=Scope.Line,
+                    ),
+                }
+            ),
         )
 
     def test_match_can_contain_delimiter(self):
-        rules = config.compile_rules([r".*::^[a-zA-Z0-9]::test$"])
+        rules = config.compile_rules(
+            [
+                {"pattern": r"^[a-zA-Z0-9]::test$"},
+            ]
+        )
         self.assertEqual(
             rules,
             [
                 Rule(
                     None,
                     re.compile(r"^[a-zA-Z0-9]::test$"),
-                    re.compile(r".*"),
-                    re_match_type="match",
+                    re.compile(r""),
+                    re_match_type=MatchType.Search,
+                    re_match_scope=Scope.Line,
                 )
             ],
         )
 
     def test_config_exception_is_raised_if_no_match_field_found(self):
         with self.assertRaisesRegex(
-            types.ConfigException, "Malformed exclude-entropy-patterns: "
+            types.ConfigException, "Invalid exclude-entropy-patterns: "
         ):
             config.compile_rules([{"foo": "bar"}])
 
