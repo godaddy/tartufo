@@ -355,7 +355,8 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         if signatures:
             warnings.warn(
                 "--exclude-signatures will be deprecated. Make sure all the exclusions are moved to "
-                "exclude-findings section with new format.",
+                "exclude-findings section with new format. Example: "
+                "exclude-findings = [{signature='signature', reason='The reason of excluding the signature'}]",
                 DeprecationWarning,
             )
             configured_signatures.extend(signatures)
