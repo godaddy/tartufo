@@ -174,16 +174,16 @@ def configure_regexes(
         try:
             for pattern in rule_patterns:
                 rule = Rule(
-                    name=pattern.get("reason"),
+                    name=pattern["reason"],
                     pattern=re.compile(pattern["pattern"]),
                     path_pattern=re.compile(pattern.get("path-pattern", "")),
-                    re_match_type="search",
+                    re_match_type=MatchType.Search,
                     re_match_scope=None,
                 )
                 rules.add(rule)
         except KeyError as exc:
             raise ConfigException(
-                f"Invalid rule-pattern; required field missing. Rule: {pattern}"
+                f"Invalid rule-pattern; both reason and pattern are required fields. Rule: {pattern}"
             ) from exc
 
     if rules_files:
