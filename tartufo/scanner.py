@@ -742,9 +742,15 @@ class GitRepoScanner(GitScanner):
                 commits = [self._repo.get(self._repo.head.target)]
             else:
                 branch = self._repo.branches.get(branch_name)
-                commits = self._repo.walk(
-                    branch.resolve().target, pygit2.GIT_SORT_TOPOLOGICAL
-                )
+                try:
+                    commits = self._repo.walk(
+                        branch.resolve().target, pygit2.GIT_SORT_TOPOLOGICAL
+                    )
+                except AttributeError:
+                    self.logger.debug(
+                        "Skipping branch %s because it cannot be resolved.", branch_name
+                    )
+                    continue
             diff_hash: bytes
             curr_commit: pygit2.Commit = None
             prev_commit: pygit2.Commit = None
