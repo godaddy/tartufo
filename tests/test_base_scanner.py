@@ -241,19 +241,20 @@ class IncludeExcludePathsTests(ScannerTestCase):
 
 
 class RegexRulesTests(ScannerTestCase):
-    @mock.patch("tartufo.config.configure_regexes")
-    def test_populated_regex_list_does_not_recompute(
-        self, mock_configure: mock.MagicMock
-    ):
+    def setUp(self) -> None:
+        self.config_patcher = mock.patch("tartufo.config.configure_regexes")
+        self.mock_configure = self.config_patcher.start()
+
+        self.addCleanup(self.config_patcher.stop)
+        return super().setUp()
+
+    def test_populated_regex_list_does_not_recompute(self):
         test_scanner = TestScanner(self.options)
         test_scanner._rules_regexes = set()  # pylint: disable=protected-access
         test_scanner.rules_regexes  # pylint: disable=pointless-statement
-        mock_configure.assert_not_called()
+        self.mock_configure.assert_not_called()
 
-    @mock.patch("tartufo.config.configure_regexes")
-    def test_regex_rules_are_computed_when_first_accessed(
-        self, mock_configure: mock.MagicMock
-    ):
+    def test_regex_rules_are_computed_when_first_accessed(self):
         self.options.default_regexes = True
         self.options.rules = "foo"  # type: ignore
         self.options.rule_patterns = "oof"  # type: ignore
@@ -261,7 +262,13 @@ class RegexRulesTests(ScannerTestCase):
         self.options.git_rules_files = "baz"  # type: ignore
         test_scanner = TestScanner(self.options)
         test_scanner.rules_regexes  # pylint: disable=pointless-statement
-        mock_configure.assert_called_once_with(True, "foo", "oof", "bar", "baz")
+        self.mock_configure.assert_called_once_with(
+            include_default=True,
+            rules_files="foo",
+            rule_patterns="oof",
+            rules_repo="bar",
+            rules_repo_files="baz",
+        )
 
 
 class SignatureTests(ScannerTestCase):

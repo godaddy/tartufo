@@ -9,7 +9,7 @@ import tomlkit
 from click.testing import CliRunner
 
 from tartufo import config, types
-from tartufo.types import Rule, MatchType, Scope
+from tartufo.types import ConfigException, Rule, MatchType, Scope
 
 from tests import helpers
 
@@ -165,6 +165,55 @@ class ConfigureRegexTests(unittest.TestCase):
             actual_regexes,
             f"The regexes dictionary should match the test rules (expected: {expected_regexes}, actual: {actual_regexes})",
         )
+
+    def test_loading_rules_from_file_raises_deprecation_warning(self):
+        rules_path = pathlib.Path(__file__).parent / "data" / "testRules.json"
+        rules_files = (rules_path.open(),)
+        with self.assertWarnsRegex(
+            DeprecationWarning, "has been deprecated and will be removed."
+        ):
+            config.configure_regexes(rules_files=rules_files)
+
+    def test_rule_patterns_without_defaults(self):
+        rule_patterns = [
+            {
+                "reason": "RSA private key 2",
+                "pattern": "-----BEGIN EC PRIVATE KEY-----",
+            },
+            {
+                "reason": "Complex Rule",
+                "pattern": "complex-rule",
+                "path-pattern": "/tmp/[a-z0-9A-Z]+\\.(py|js|json)",
+            },
+        ]
+        expected = {
+            Rule(
+                name="RSA private key 2",
+                pattern=re.compile("-----BEGIN EC PRIVATE KEY-----"),
+                path_pattern=re.compile(""),
+                re_match_type=MatchType.Search,
+                re_match_scope=None,
+            ),
+            Rule(
+                name="Complex Rule",
+                pattern=re.compile("complex-rule"),
+                path_pattern=re.compile("/tmp/[a-z0-9A-Z]+\\.(py|js|json)"),
+                re_match_type=MatchType.Search,
+                re_match_scope=None,
+            ),
+        }
+        actual = config.configure_regexes(
+            rule_patterns=rule_patterns, include_default=False
+        )
+        self.assertEqual(actual, expected)
+
+    def test_config_exception_is_raised_if_reason_is_missing(self):
+        with self.assertRaisesRegex(ConfigException, "Invalid rule-pattern"):
+            config.configure_regexes(rule_patterns=[{"pattern": "foo"}])
+
+    def test_config_exception_is_raised_if_pattern_is_missing(self):
+        with self.assertRaisesRegex(ConfigException, "Invalid rule-pattern"):
+            config.configure_regexes(rule_patterns=[{"reason": "foo"}])
 
 
 class LoadConfigFromPathTests(unittest.TestCase):
