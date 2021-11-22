@@ -56,7 +56,8 @@ class TartufoCLI(click.MultiCommand):
     "--rule-patterns",
     multiple=True,
     type=str,
-    help="Regex rule patterns to be detected",
+    hidden=True,
+    help="Regular expression patterns to search the target for. May be specified multiple times.",
 )
 @click.option(
     "--default-regexes/--no-default-regexes",
