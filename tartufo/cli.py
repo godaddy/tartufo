@@ -84,7 +84,7 @@ class TartufoCLI(click.MultiCommand):
     "-ip",
     "--include-path-patterns",
     multiple=True,
-    help="""Specify a regular expression which matches Git object paths to
+    help="""[DEPRECATED] Specify a regular expression which matches Git object paths to
     include in the scan. This option can be specified multiple times to include
     multiple patterns. If not provided (default), all Git object paths are
     included unless otherwise excluded via the --exclude-path-patterns
@@ -94,6 +94,28 @@ class TartufoCLI(click.MultiCommand):
     "-xp",
     "--exclude-path-patterns",
     multiple=True,
+    help="""[DEPRECATED] Specify a regular expression which matches Git object paths to
+    exclude from the scan. This option can be specified multiple times to
+    exclude multiple patterns. If not provided (default), no Git object paths
+    are excluded unless effectively excluded via the --include-path-patterns
+    option.""",
+)
+@click.option(
+    "-i",
+    "--include-path",
+    multiple=True,
+    hidden=True,
+    help="""Specify a regular expression which matches Git object paths to
+    include in the scan. This option can be specified multiple times to include
+    multiple patterns. If not provided (default), all Git object paths are
+    included unless otherwise excluded via the --exclude-path-patterns
+    option.""",
+)
+@click.option(
+    "-x",
+    "--exclude-path",
+    multiple=True,
+    hidden=True,
     help="""Specify a regular expression which matches Git object paths to
     exclude from the scan. This option can be specified multiple times to
     exclude multiple patterns. If not provided (default), no Git object paths

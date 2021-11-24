@@ -42,6 +42,8 @@ class GlobalOptions:
         "scan_filenames",
         "include_path_patterns",
         "exclude_path_patterns",
+        "include_path",
+        "exclude_path",
         "exclude_entropy_patterns",
         "exclude_signatures",
         "output_dir",
@@ -63,6 +65,8 @@ class GlobalOptions:
     scan_filenames: bool
     include_path_patterns: Tuple[str, ...]
     exclude_path_patterns: Tuple[str, ...]
+    include_path: Tuple[Dict[str, str], ...]
+    exclude_path: Tuple[Dict[str, str], ...]
     exclude_entropy_patterns: Tuple[Dict[str, str], ...]
     exclude_signatures: Tuple[str, ...]
     output_dir: Optional[str]

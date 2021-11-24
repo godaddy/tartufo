@@ -149,6 +149,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     global_options: types.GlobalOptions
     logger: logging.Logger
     _scan_lock: threading.Lock = threading.Lock()
+    _config_data: MutableMapping[str, Any] = {}
 
     def __init__(self, options: types.GlobalOptions) -> None:
         self.global_options = options
@@ -335,6 +336,15 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             self.logger.info("%s excluded - matched excluded paths", file_path)
             return False
         return True
+
+    @property
+    def config_data(self):
+        return self._config_data
+
+    @config_data.setter
+    def config_data(self, data) -> MutableMapping[str, Any]:
+        self._config_data = data
+        return self._config_data
 
     def signature_is_excluded(self, blob: str, file_path: str) -> bool:
         """Find whether the signature of some data has been excluded in configuration.
@@ -650,6 +660,32 @@ class GitRepoScanner(GitScanner):
         self.git_options = git_options
         super().__init__(global_options, repo_path)
 
+    def include_path_patterns(self):
+        include_patterns = list(self.config_data.get("include_path_patterns", ()))
+        include_paths = self.config_data.get("include_path", None)
+        if include_patterns:
+            include_patterns = config.compile_path_rules(include_patterns)
+            self._included_paths = list(set(self.included_paths + include_patterns))
+        if include_paths:
+            include_paths = [
+                include_path["path-pattern"] for include_path in include_paths
+            ]
+            include_paths = config.compile_path_rules(include_paths)
+            self._included_paths = list(set(self.included_paths + include_paths))
+
+    def exclude_path_patterns(self):
+        exclude_patterns = list(self.config_data.get("exclude_path_patterns", ()))
+        exclude_paths = self.config_data.get("exclude_path", None)
+        if exclude_patterns:
+            exclude_patterns = config.compile_path_rules(exclude_patterns)
+            self._excluded_paths = list(set(self.excluded_paths + exclude_patterns))
+        if exclude_paths:
+            exclude_paths = [
+                exclude_path["path-pattern"] for exclude_path in exclude_paths
+            ]
+            exclude_paths = config.compile_path_rules(exclude_paths)
+            self._excluded_paths = list(set(self.excluded_paths + exclude_paths))
+
     def load_repo(self, repo_path: str) -> pygit2.Repository:
         config_file: Optional[pathlib.Path] = None
         data: MutableMapping[str, Any] = {}
@@ -660,6 +696,7 @@ class GitRepoScanner(GitScanner):
         except (FileNotFoundError, types.ConfigException):
             config_file = None
         if config_file and config_file != self.global_options.config:
+            self.config_data = data
             signatures = data.get("exclude_signatures", None)
             if signatures:
                 self.global_options.exclude_signatures = tuple(
@@ -668,27 +705,8 @@ class GitRepoScanner(GitScanner):
             entropy_patterns = data.get("exclude_entropy_patterns", None)
             if entropy_patterns:
                 self.global_options.exclude_entropy_patterns += tuple(entropy_patterns)
-            include_patterns = list(data.get("include_path_patterns", ()))
-            repo_include_file = data.get("include_paths", None)
-            if repo_include_file:
-                repo_include_file = pathlib.Path(repo_path, repo_include_file)
-                if repo_include_file.exists():
-                    with repo_include_file.open() as handle:
-                        include_patterns += handle.readlines()
-            if include_patterns:
-                include_patterns = config.compile_path_rules(include_patterns)
-                self._included_paths = list(set(self.included_paths + include_patterns))
-
-            exclude_patterns = list(data.get("exclude_path_patterns", ()))
-            repo_exclude_file = data.get("exclude_paths", None)
-            if repo_exclude_file:
-                repo_exclude_file = pathlib.Path(repo_path, repo_exclude_file)
-                if repo_exclude_file.exists():
-                    with repo_exclude_file.open() as handle:
-                        exclude_patterns += handle.readlines()
-            if exclude_patterns:
-                exclude_patterns = config.compile_path_rules(exclude_patterns)
-                self._excluded_paths = list(set(self.excluded_paths + exclude_patterns))
+            self.include_path_patterns()
+            self.exclude_path_patterns()
         try:
             repo = pygit2.Repository(repo_path)
             if not self.git_options.include_submodules:
