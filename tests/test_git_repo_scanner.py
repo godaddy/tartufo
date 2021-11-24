@@ -61,7 +61,13 @@ class RepoLoadTests(ScannerTestCase):
     def test_extra_inclusions_get_added(self, mock_load: mock.MagicMock):
         mock_load.return_value = (
             self.data_dir / "pyproject.toml",
-            {"include_paths": "include-files", "include_path_patterns": ("foo/",)},
+            {
+                "include_path_patterns": ("foo/",),
+                "include_path": (
+                    {"path-pattern": "tartufo/", "reason": "tartufo test path"},
+                    {"path-pattern": "scripts/", "reason": "scripts test path"},
+                ),
+            },
         )
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, str(self.data_dir)
@@ -77,7 +83,17 @@ class RepoLoadTests(ScannerTestCase):
     def test_extra_exclusions_get_added(self, mock_load: mock.MagicMock):
         mock_load.return_value = (
             self.data_dir / "pyproject.toml",
-            {"exclude_paths": "exclude-files", "exclude_path_patterns": ("bar/",)},
+            {
+                "exclude_path_patterns": ("bar/",),
+                "exclude_path": (
+                    {"path-pattern": "tests/", "reason": "tests test path"},
+                    {"path-pattern": r"\.venv/", "reason": "venv test path"},
+                    {
+                        "path-pattern": r".*\.egg-info/",
+                        "reason": "egg-info test path",
+                    },
+                ),
+            },
         )
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, str(self.data_dir)
