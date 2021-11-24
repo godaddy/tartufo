@@ -150,7 +150,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     global_options: types.GlobalOptions
     logger: logging.Logger
     _scan_lock: threading.Lock = threading.Lock()
-    _excluded_findings: tuple = ()
+    _excluded_findings: Tuple[str, ...] = ()
     _config_data: MutableMapping[str, Any] = {}
 
     def __init__(self, options: types.GlobalOptions) -> None:
@@ -344,9 +344,8 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         return self._config_data
 
     @config_data.setter
-    def config_data(self, data) -> MutableMapping[str, Any]:
+    def config_data(self, data: MutableMapping[str, Any]) -> None:
         self._config_data = data
-        return self._config_data
 
     @cached_property
     def excluded_findings(self) -> tuple:
