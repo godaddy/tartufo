@@ -32,6 +32,8 @@ Features:
 * [#256](https://github.com/godaddy/tartufo/issues/256) - Deprecated `--rules` in
   favor of a new `rule-patterns` config option. This is the final piece of config
   that was still stored in an external file.
+* [#202](https://github.com/godaddy/tartufo/issues/202) - Supports new format of exclusions in config file 
+  with the ability to specify the reason along with exclusion
 
 v3.0.0-alpha.1 - 11 November 2021
 ---------------------------------

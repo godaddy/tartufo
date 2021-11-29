@@ -141,11 +141,18 @@ exclude-signatures = [
   "d039c652f27c4d42026c5b5c9be31bfe368b283b24248e98d92f131272580053",
 
   # test secrets
-  "d26b223efb2087d4a3db7b3ff0f65362372c46190fd74b8061db8099f4a2ee60", # tests/data/scan_folder/donotscan.txt
-  "94c45f9acae0551a2438fa8932fac466e903fd9a09bd2e11897198b133937ccd", # tests/data/scan_folder/test.txt
+  "6c70b4a712ada69f2a6c919edc783cf485b6637e3c5429de376ef1a451a042e4", # tests/data/scan_folder/donotscan.txt
+  "357841766ca69979608e4e7fb1da2addeafe6d15cade15466c39d903cc0488a8", # tests/data/scan_folder/test.txt
   "743b893e30777d9c4e28d3d341ca4ba1c2541a9c62b497dece75c2a64420e770", # tests/test_folder_scanner.py
-  "9d1b278fa384c9dc58d607130d97740910309d13b29f13f7ed6348738ea4f32c", # tests/data/scan_folder/scan_sub_folder/sub_folder_test.txt
+  "358a1ae040ab71b3aafeb4318e5d9e318ff1b681c5bf0e99d381584a33ee7833", # tests/data/scan_folder/scan_sub_folder/sub_folder_test.txt
 ]
+
+exclude-findings = [
+  {signature="9d1b278fa384c9dc58d607130d97740910309d13b29f13f7ed6348738ea4f32c", reason="High entropy string added in test_folder_scanner file on 16th November 2021"},
+  {signature="9f675d4d7f43e484e07fb199a1e7ec372ef204631c1f4ec054acc3119fbde4cf", reason="High entropy string added in build_and_publish_docker file on 13th June 2019"},
+  {signature="88152f1d10077f417ee5aea5fa86adaa5b74d3f2de2e87ce4b4aa5cd79c7b2f5", reason="High entropy string added in nothing file on 30th December 2016"},
+]
+
 json = false
 regex = true
 repo-path = "."
