@@ -22,6 +22,8 @@ to [GoDaddy's Open Source Software Slack][slack], or the
   * [Setting Up A Development Environment](#setting-up-a-development-environment)
   * [Code Style](#code-style)
 * [Running tests](#running-tests)
+* [Contributing as a Maintainer](#contributing-as-a-maintainer)
+  * [Issuing a New Release](#issuing-a-new-release)
 * [Additional Resources](#additional-resources)
 
 ## Answering Questions
