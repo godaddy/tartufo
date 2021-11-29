@@ -89,7 +89,7 @@ Misc:
   --include-paths and --exclude-paths
 
 v2.10.0 - 3 November 2021
-------------
+-------------------------
 
 Bug fixes:
 
@@ -126,7 +126,7 @@ Features:
   This is now done via a TOML table, rather than a specifically patterned string.
   Users who have the old style configuration will now receive a
   `DeprecationWarning` stating that the old behavior will go away with v3.0.
-* Fixed up warning handling so that we can display `DeprecationWarning`s to users
+* Fixed up warning handling so that we can display `DeprecationWarnings` to users
   more easily.
 * [#223](https://github.com/godaddy/tartufo/pull/223) New flags
   (`-b64`/`--b64-entropy-score` and `-hex`/`--hex-entropy-score`) allow for user

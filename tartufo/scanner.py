@@ -576,14 +576,13 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         string: str,
         min_entropy_score: float,
     ) -> Generator[Issue, None, None]:
-        """
-        Check entropy string using entropy characters and score.
+        """Check entropy string using entropy characters and score.
 
         :param chunk: The chunk of data to check
         :param line: Source line containing string of interest
         :param string: String to check
         :param min_entropy_score: Minimum entropy score to flag
-        return: Iterator of issues flagged
+        :return: Iterator of issues flagged
         """
         if not self.signature_is_excluded(string, chunk.file_path):
             entropy_score = self.calculate_entropy(string)
