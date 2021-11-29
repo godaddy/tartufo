@@ -29,6 +29,9 @@ Features:
 * [#268](https://github.com/godaddy/tartufo/issues/268) - Adds a new
   `--recurse / --no-recurse` flag which allows users to recursively scan the entire directory or just
   the root directory
+* [#256](https://github.com/godaddy/tartufo/issues/256) - Deprecated `--rules` in
+  favor of a new `rule-patterns` config option. This is the final piece of config
+  that was still stored in an external file.
 * [#202](https://github.com/godaddy/tartufo/issues/202) - Supports new format of exclusions in config file 
   with the ability to specify the reason along with exclusion
 

@@ -241,26 +241,34 @@ class IncludeExcludePathsTests(ScannerTestCase):
 
 
 class RegexRulesTests(ScannerTestCase):
-    @mock.patch("tartufo.config.configure_regexes")
-    def test_populated_regex_list_does_not_recompute(
-        self, mock_configure: mock.MagicMock
-    ):
-        test_scanner = TestScanner(self.options)
-        test_scanner._rules_regexes = {}  # pylint: disable=protected-access
-        test_scanner.rules_regexes  # pylint: disable=pointless-statement
-        mock_configure.assert_not_called()
+    def setUp(self) -> None:
+        self.config_patcher = mock.patch("tartufo.config.configure_regexes")
+        self.mock_configure = self.config_patcher.start()
 
-    @mock.patch("tartufo.config.configure_regexes")
-    def test_regex_rules_are_computed_when_first_accessed(
-        self, mock_configure: mock.MagicMock
-    ):
+        self.addCleanup(self.config_patcher.stop)
+        return super().setUp()
+
+    def test_populated_regex_list_does_not_recompute(self):
+        test_scanner = TestScanner(self.options)
+        test_scanner._rules_regexes = set()  # pylint: disable=protected-access
+        test_scanner.rules_regexes  # pylint: disable=pointless-statement
+        self.mock_configure.assert_not_called()
+
+    def test_regex_rules_are_computed_when_first_accessed(self):
         self.options.default_regexes = True
         self.options.rules = "foo"  # type: ignore
+        self.options.rule_patterns = "oof"  # type: ignore
         self.options.git_rules_repo = "bar"
         self.options.git_rules_files = "baz"  # type: ignore
         test_scanner = TestScanner(self.options)
         test_scanner.rules_regexes  # pylint: disable=pointless-statement
-        mock_configure.assert_called_once_with(True, "foo", "bar", "baz")
+        self.mock_configure.assert_called_once_with(
+            include_default=True,
+            rules_files="foo",
+            rule_patterns="oof",
+            rules_repo="bar",
+            rules_repo_files="baz",
+        )
 
 
 class SignatureTests(ScannerTestCase):
@@ -315,22 +323,22 @@ class RegexScanTests(ScannerTestCase):
         rule_3_path.match = mock.MagicMock(return_value=[])
         test_scanner = TestScanner(self.options)
         test_scanner._rules_regexes = {  # pylint: disable=protected-access
-            "foo": Rule(
-                name=None,
+            Rule(
+                name="foo",
                 pattern=rule_1,
                 path_pattern=None,
                 re_match_type=MatchType.Match,
                 re_match_scope=None,
             ),
-            "bar": Rule(
-                name=None,
+            Rule(
+                name="bar",
                 pattern=rule_2,
                 path_pattern=rule_2_path,
                 re_match_type=MatchType.Match,
                 re_match_scope=None,
             ),
-            "not-found": Rule(
-                name=None,
+            Rule(
+                name="not-found",
                 pattern=rule_3,
                 path_pattern=rule_3_path,
                 re_match_type=MatchType.Match,
@@ -352,8 +360,8 @@ class RegexScanTests(ScannerTestCase):
         mock_signature.return_value = True
         test_scanner = TestScanner(self.options)
         test_scanner._rules_regexes = {  # pylint: disable=protected-access
-            "foo": Rule(
-                name=None,
+            Rule(
+                name="foo",
                 pattern=re.compile("foo"),
                 path_pattern=None,
                 re_match_type=MatchType.Match,
@@ -372,8 +380,8 @@ class RegexScanTests(ScannerTestCase):
         mock_signature.return_value = False
         test_scanner = TestScanner(self.options)
         test_scanner._rules_regexes = {  # pylint: disable=protected-access
-            "foo": Rule(
-                name=None,
+            Rule(
+                name="foo",
                 pattern=re.compile("foo"),
                 path_pattern=None,
                 re_match_type=MatchType.Match,

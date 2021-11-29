@@ -146,7 +146,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     _included_paths: Optional[List[Pattern]] = None
     _excluded_paths: Optional[List[Pattern]] = None
     _excluded_entropy: Optional[List[Rule]] = None
-    _rules_regexes: Optional[Dict[str, Rule]] = None
+    _rules_regexes: Optional[Set[Rule]] = None
     global_options: types.GlobalOptions
     logger: logging.Logger
     _scan_lock: threading.Lock = threading.Lock()
@@ -289,20 +289,20 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         return self._excluded_paths
 
     @property
-    def rules_regexes(self) -> Dict[str, Rule]:
-        """Get a dictionary of regular expressions to scan the code for.
+    def rules_regexes(self) -> Set[Rule]:
+        """Get a set of regular expressions to scan the code for.
 
         :raises types.TartufoConfigException: If there was a problem compiling the rules
-        :rtype: Dict[str, Pattern]
         """
         if self._rules_regexes is None:
             self.logger.info("Initializing regex rules")
             try:
                 self._rules_regexes = config.configure_regexes(
-                    self.global_options.default_regexes,
-                    self.global_options.rules,
-                    self.global_options.git_rules_repo,
-                    self.global_options.git_rules_files,
+                    include_default=self.global_options.default_regexes,
+                    rules_files=self.global_options.rules,
+                    rule_patterns=self.global_options.rule_patterns,
+                    rules_repo=self.global_options.git_rules_repo,
+                    rules_repo_files=self.global_options.git_rules_files,
                 )
             except (ValueError, re.error) as exc:
                 self.logger.exception("Error loading regex rules", exc_info=exc)
@@ -551,14 +551,14 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         :param chunk: The chunk of data to be scanned
         """
 
-        for key, rule in self.rules_regexes.items():
+        for rule in self.rules_regexes:
             if rule.path_pattern is None or rule.path_pattern.match(chunk.file_path):
                 found_strings = rule.pattern.findall(chunk.contents)
                 for match in found_strings:
                     # Filter out any explicitly "allowed" match signatures
                     if not self.signature_is_excluded(match, chunk.file_path):
                         issue = Issue(types.IssueType.RegEx, match, chunk)
-                        issue.issue_detail = key
+                        issue.issue_detail = rule.name
                         yield issue
 
     @property
@@ -766,9 +766,15 @@ class GitRepoScanner(GitScanner):
                 commits = [self._repo.get(self._repo.head.target)]
             else:
                 branch = self._repo.branches.get(branch_name)
-                commits = self._repo.walk(
-                    branch.resolve().target, pygit2.GIT_SORT_TOPOLOGICAL
-                )
+                try:
+                    commits = self._repo.walk(
+                        branch.resolve().target, pygit2.GIT_SORT_TOPOLOGICAL
+                    )
+                except AttributeError:
+                    self.logger.debug(
+                        "Skipping branch %s because it cannot be resolved.", branch_name
+                    )
+                    continue
             diff_hash: bytes
             curr_commit: pygit2.Commit = None
             prev_commit: pygit2.Commit = None
