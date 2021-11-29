@@ -48,6 +48,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
+    "sphinx_autodoc_typehints",
 ]
 autodoc_typehints = "description"  # show type hints in doc body instead of signature
 autoclass_content = "both"  # get docstring from class level and init simultaneously
@@ -91,6 +92,6 @@ html_use_index = False
 # Set up linking to external Sphinx documetation
 intersphinx_mapping = {
     "click": ("https://click.palletsprojects.com/en/7.x/", None),
-    "gitpython": ("https://gitpython.readthedocs.io/en/stable/", None),
     "python": ("https://docs.python.org/3", None),
+    "pygit2": ("https://pygit2.readthedocs.io/en/stable/", None),
 }
