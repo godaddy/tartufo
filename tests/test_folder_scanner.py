@@ -20,14 +20,13 @@ class FolderScannerTestCase(unittest.TestCase):
         self.global_options.entropy = True
         self.global_options.b64_entropy_score = 4.5
         self.global_options.hex_entropy_score = 3
-        self.global_options.exclude_signatures = []
+        self.global_options.exclude_signatures = ()
         self.global_options.exclude_path_patterns = [r"donotscan\.txt"]
 
         test_scanner = scanner.FolderScanner(self.global_options, folder_path, recurse)
         issues = list(test_scanner.scan())
 
         self.assertEqual(2, len(issues))
-        actual_issues = []
         actual_issues = [issue.matched_string for issue in issues]
         self.assertIn("KQ0I97OBuPlGB9yPRxoSxnX52zE=", actual_issues)
         self.assertIn(
@@ -40,7 +39,7 @@ class FolderScannerTestCase(unittest.TestCase):
         folder_path = pathlib.Path(__file__).parent / "data" / "scan_folder"
         recurse = True
         self.global_options.entropy = True
-        self.global_options.exclude_signatures = []
+        self.global_options.exclude_signatures = ()
 
         test_scanner = scanner.FolderScanner(self.global_options, folder_path, recurse)
 
@@ -52,7 +51,7 @@ class FolderScannerTestCase(unittest.TestCase):
         folder_path = pathlib.Path(__file__).parent / "data" / "scan_folder"
         recurse = True
         self.global_options.entropy = True
-        self.global_options.exclude_signatures = []
+        self.global_options.exclude_signatures = ()
         self.global_options.b64_entropy_score = 4.5
         self.global_options.hex_entropy_score = 3
 
@@ -60,7 +59,6 @@ class FolderScannerTestCase(unittest.TestCase):
         issues = list(test_scanner.scan())
 
         self.assertEqual(3, len(issues))
-        actual_issues = []
         actual_issues = [issue.matched_string for issue in issues]
         self.assertEqual(2, actual_issues.count("KQ0I97OBuPlGB9yPRxoSxnX52zE="))
         self.assertIn(
@@ -72,7 +70,7 @@ class FolderScannerTestCase(unittest.TestCase):
         folder_path = pathlib.Path(__file__).parent / "data" / "scan_folder"
         recurse = False
         self.global_options.entropy = True
-        self.global_options.exclude_signatures = []
+        self.global_options.exclude_signatures = ()
         self.global_options.b64_entropy_score = 4.5
         self.global_options.hex_entropy_score = 3
 
@@ -80,7 +78,6 @@ class FolderScannerTestCase(unittest.TestCase):
         issues = list(test_scanner.scan())
 
         self.assertEqual(2, len(issues))
-        actual_issues = []
         actual_issues = [issue.matched_string for issue in issues]
         self.assertEqual(2, actual_issues.count("KQ0I97OBuPlGB9yPRxoSxnX52zE="))
 

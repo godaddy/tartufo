@@ -130,11 +130,24 @@ class TartufoCLI(click.MultiCommand):
     "-e",
     "--exclude-signatures",
     multiple=True,
-    help="Specify signatures of matches that you explicitly want to exclude "
+    help="[DEPRECATED] Use the exclude-findings config option instead. "
+    "Specify signatures of matches that you explicitly want to exclude "
     "from the scan, and mark as okay. These signatures are generated during "
     "the scan process, and reported out with each individual match. This "
     "option can be specified multiple times, to exclude as many signatures as "
     "you would like.",
+)
+@click.option(
+    "-ef",
+    "--exclude-findings",
+    hidden=True,
+    multiple=True,
+    help="Specify signatures of matches that you explicitly want to exclude "
+    "from the scan along with the reason, and mark as okay. These signatures "
+    "are generated during the scan process, and reported out with each"
+    "individual match. This option can be specified multiple times, "
+    "to exclude as many signatures as you would like. "
+    "{signature='signature', reason='The reason of excluding the signature'}",
 )
 @click.option(
     "-od",

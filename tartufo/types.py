@@ -44,6 +44,7 @@ class GlobalOptions:
         "exclude_path_patterns",
         "exclude_entropy_patterns",
         "exclude_signatures",
+        "exclude_findings",
         "output_dir",
         "git_rules_repo",
         "git_rules_files",
@@ -65,6 +66,7 @@ class GlobalOptions:
     exclude_path_patterns: Tuple[str, ...]
     exclude_entropy_patterns: Tuple[Dict[str, str], ...]
     exclude_signatures: Tuple[str, ...]
+    exclude_findings: Tuple[Dict[str, str], ...]
     output_dir: Optional[str]
     git_rules_repo: Optional[str]
     git_rules_files: Tuple[str, ...]
