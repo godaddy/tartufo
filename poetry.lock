@@ -210,7 +210,7 @@ python-versions = "*"
 
 [[package]]
 name = "docutils"
-version = "0.16"
+version = "0.17.1"
 description = "Docutils -- Python Documentation Utilities"
 category = "main"
 optional = true
@@ -422,14 +422,6 @@ description = "Utility library for gitignore style pattern matching of file path
 category = "dev"
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
-
-[[package]]
-name = "pbr"
-version = "5.8.0"
-description = "Python Build Reasonableness"
-category = "main"
-optional = true
-python-versions = ">=2.6"
 
 [[package]]
 name = "platformdirs"
@@ -679,17 +671,17 @@ python-versions = "*"
 
 [[package]]
 name = "sphinx"
-version = "3.5.4"
+version = "4.3.1"
 description = "Python documentation generator"
 category = "main"
 optional = true
-python-versions = ">=3.5"
+python-versions = ">=3.6"
 
 [package.dependencies]
 alabaster = ">=0.7,<0.8"
 babel = ">=1.3"
 colorama = {version = ">=0.3.5", markers = "sys_platform == \"win32\""}
-docutils = ">=0.12,<0.17"
+docutils = ">=0.14,<0.18"
 imagesize = "*"
 Jinja2 = ">=2.3"
 packaging = "*"
@@ -698,14 +690,14 @@ requests = ">=2.5.0"
 snowballstemmer = ">=1.1"
 sphinxcontrib-applehelp = "*"
 sphinxcontrib-devhelp = "*"
-sphinxcontrib-htmlhelp = "*"
+sphinxcontrib-htmlhelp = ">=2.0.0"
 sphinxcontrib-jsmath = "*"
 sphinxcontrib-qthelp = "*"
-sphinxcontrib-serializinghtml = "*"
+sphinxcontrib-serializinghtml = ">=1.1.5"
 
 [package.extras]
 docs = ["sphinxcontrib-websupport"]
-lint = ["flake8 (>=3.5.0)", "isort", "mypy (>=0.800)", "docutils-stubs"]
+lint = ["flake8 (>=3.5.0)", "isort", "mypy (>=0.900)", "docutils-stubs", "types-typed-ast", "types-pkg-resources", "types-requests"]
 test = ["pytest", "pytest-cov", "html5lib", "cython", "typed-ast"]
 
 [[package]]
@@ -725,27 +717,28 @@ type_comments = ["typed-ast (>=1.4.0)"]
 
 [[package]]
 name = "sphinx-click"
-version = "2.5.0"
+version = "3.0.2"
 description = "Sphinx extension that automatically documents click applications"
 category = "main"
 optional = true
-python-versions = "*"
+python-versions = ">=3.6"
 
 [package.dependencies]
-pbr = ">=2.0"
-sphinx = ">=1.5,<4.0"
+click = ">=7.0"
+docutils = "*"
+sphinx = ">=2.0"
 
 [[package]]
 name = "sphinx-rtd-theme"
-version = "0.5.2"
+version = "1.0.0"
 description = "Read the Docs theme for Sphinx"
 category = "main"
 optional = true
-python-versions = "*"
+python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*"
 
 [package.dependencies]
-docutils = "<0.17"
-sphinx = "*"
+docutils = "<0.18"
+sphinx = ">=1.6"
 
 [package.extras]
 dev = ["transifex-client", "sphinxcontrib-httpdomain", "bump2version"]
@@ -823,11 +816,11 @@ test = ["pytest"]
 
 [[package]]
 name = "sphinxcontrib-spelling"
-version = "5.4.0"
+version = "7.3.0"
 description = "Sphinx spelling extension"
 category = "main"
 optional = true
-python-versions = ">=3.5"
+python-versions = ">=3.6"
 
 [package.dependencies]
 importlib-metadata = {version = ">=1.7.0", markers = "python_version < \"3.8\""}
@@ -835,9 +828,7 @@ PyEnchant = ">=3.1.1"
 Sphinx = ">=3.0.0"
 
 [package.extras]
-docs = ["reno"]
-linter = ["flake8 (==3.8.2)"]
-test = ["pytest", "pytest-cov", "fixtures (>=3.0.0)", "coverage (>=4.0,!=4.4)"]
+test = ["pytest", "pytest-cov", "coverage (>=4.0,!=4.4)"]
 
 [[package]]
 name = "termcolor"
@@ -989,7 +980,7 @@ docs = ["recommonmark", "sphinx", "sphinx-autodoc-typehints", "sphinx-click", "s
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6.2"
-content-hash = "8510c15a1973ab51ae24d7d5d3853b5f29d2f52932c2960971411ee57c214c00"
+content-hash = "074ef0da202adaa6aee31c2a8b1062cc81b1e8a62b7044362838adfcdbc8aaa5"
 
 [metadata.files]
 alabaster = [
@@ -1167,8 +1158,8 @@ distlib = [
     {file = "distlib-0.3.4.zip", hash = "sha256:e4b58818180336dc9c529bfb9a0b58728ffc09ad92027a3f30b7cd91e3458579"},
 ]
 docutils = [
-    {file = "docutils-0.16-py2.py3-none-any.whl", hash = "sha256:0c5b78adfbf7762415433f5515cd5c9e762339e23369dbe8000d84a4bf4ab3af"},
-    {file = "docutils-0.16.tar.gz", hash = "sha256:c2de3a60e9e7d07be26b7f2b00ca0309c207e06c100f9cc2a94931fc75a478fc"},
+    {file = "docutils-0.17.1-py2.py3-none-any.whl", hash = "sha256:cf316c8370a737a022b72b56874f6602acf974a37a9fba42ec2876387549fc61"},
+    {file = "docutils-0.17.1.tar.gz", hash = "sha256:686577d2e4c32380bb50cbb22f575ed742d58168cee37e99117a854bcd88f125"},
 ]
 filelock = [
     {file = "filelock-3.4.0-py3-none-any.whl", hash = "sha256:2e139a228bcf56dd8b2274a65174d005c4a6b68540ee0bdbb92c76f43f29f7e8"},
@@ -1333,10 +1324,6 @@ packaging = [
 pathspec = [
     {file = "pathspec-0.9.0-py2.py3-none-any.whl", hash = "sha256:7d15c4ddb0b5c802d161efc417ec1a2558ea2653c2e8ad9c19098201dc1c993a"},
     {file = "pathspec-0.9.0.tar.gz", hash = "sha256:e564499435a2673d586f6b2130bb5b95f04a3ba06f81b8f895b651a3c76aabb1"},
-]
-pbr = [
-    {file = "pbr-5.8.0-py2.py3-none-any.whl", hash = "sha256:176e8560eaf61e127817ef93d8a844803abb27a4d4637f0ff3bb783129be2e0a"},
-    {file = "pbr-5.8.0.tar.gz", hash = "sha256:672d8ebee84921862110f23fcec2acea191ef58543d34dfe9ef3d9f13c31cddf"},
 ]
 platformdirs = [
     {file = "platformdirs-2.4.0-py3-none-any.whl", hash = "sha256:8868bbe3c3c80d42f20156f22e7131d2fb321f5bc86a2a345375c6481a67021d"},
@@ -1546,20 +1533,20 @@ snowballstemmer = [
     {file = "snowballstemmer-2.2.0.tar.gz", hash = "sha256:09b16deb8547d3412ad7b590689584cd0fe25ec8db3be37788be3810cbf19cb1"},
 ]
 sphinx = [
-    {file = "Sphinx-3.5.4-py3-none-any.whl", hash = "sha256:2320d4e994a191f4b4be27da514e46b3d6b420f2ff895d064f52415d342461e8"},
-    {file = "Sphinx-3.5.4.tar.gz", hash = "sha256:19010b7b9fa0dc7756a6e105b2aacd3a80f798af3c25c273be64d7beeb482cb1"},
+    {file = "Sphinx-4.3.1-py3-none-any.whl", hash = "sha256:048dac56039a5713f47a554589dc98a442b39226a2b9ed7f82797fcb2fe9253f"},
+    {file = "Sphinx-4.3.1.tar.gz", hash = "sha256:32a5b3e9a1b176cc25ed048557d4d3d01af635e6b76c5bc7a43b0a34447fbd45"},
 ]
 sphinx-autodoc-typehints = [
     {file = "sphinx-autodoc-typehints-1.12.0.tar.gz", hash = "sha256:193617d9dbe0847281b1399d369e74e34cd959c82e02c7efde077fca908a9f52"},
     {file = "sphinx_autodoc_typehints-1.12.0-py3-none-any.whl", hash = "sha256:5e81776ec422dd168d688ab60f034fccfafbcd94329e9537712c93003bddc04a"},
 ]
 sphinx-click = [
-    {file = "sphinx-click-2.5.0.tar.gz", hash = "sha256:8ba44ca446ba4bb0585069b8aabaa81e833472d6669b36924a398405311d206f"},
-    {file = "sphinx_click-2.5.0-py2.py3-none-any.whl", hash = "sha256:6848ba2d084ef2feebae0ce3603c1c02a2ba5ded54fb6c0cf24fd01204a945f3"},
+    {file = "sphinx-click-3.0.2.tar.gz", hash = "sha256:29896dd12bfaacb566a8c7af2e2b675d010d69b0c5aad3b52495d4842358b15b"},
+    {file = "sphinx_click-3.0.2-py3-none-any.whl", hash = "sha256:8529a02bea8cd2cd47daba2f71d7935c727c89d70baabec7fca31af49a0c379f"},
 ]
 sphinx-rtd-theme = [
-    {file = "sphinx_rtd_theme-0.5.2-py2.py3-none-any.whl", hash = "sha256:4a05bdbe8b1446d77a01e20a23ebc6777c74f43237035e76be89699308987d6f"},
-    {file = "sphinx_rtd_theme-0.5.2.tar.gz", hash = "sha256:32bd3b5d13dc8186d7a42fc816a23d32e83a4827d7d9882948e7b837c232da5a"},
+    {file = "sphinx_rtd_theme-1.0.0-py2.py3-none-any.whl", hash = "sha256:4d35a56f4508cfee4c4fb604373ede6feae2a306731d533f409ef5c3496fdbd8"},
+    {file = "sphinx_rtd_theme-1.0.0.tar.gz", hash = "sha256:eec6d497e4c2195fa0e8b2016b337532b8a699a68bcb22a512870e16925c6a5c"},
 ]
 sphinxcontrib-applehelp = [
     {file = "sphinxcontrib-applehelp-1.0.2.tar.gz", hash = "sha256:a072735ec80e7675e3f432fcae8610ecf509c5f1869d17e2eecff44389cdbc58"},
@@ -1586,8 +1573,8 @@ sphinxcontrib-serializinghtml = [
     {file = "sphinxcontrib_serializinghtml-1.1.5-py2.py3-none-any.whl", hash = "sha256:352a9a00ae864471d3a7ead8d7d79f5fc0b57e8b3f95e9867eb9eb28999b92fd"},
 ]
 sphinxcontrib-spelling = [
-    {file = "sphinxcontrib-spelling-5.4.0.tar.gz", hash = "sha256:3e832c2b863f0f71df04a98e5976cf4da005ee6e9c03be41b3618d95a5fbfeb4"},
-    {file = "sphinxcontrib_spelling-5.4.0-py3-none-any.whl", hash = "sha256:bc076508b66d78c079889be367423fdaceeb6c14d137e05eb013cf14627a921b"},
+    {file = "sphinxcontrib-spelling-7.3.0.tar.gz", hash = "sha256:a11799366f02fbd3390abf6aa2d4f0fe34df9be6e5ac0b1c8139dbd6c7fb0c99"},
+    {file = "sphinxcontrib_spelling-7.3.0-py3-none-any.whl", hash = "sha256:1af647e1d9fc7df0e08e327addbd69613bf751cb90aba0d531e69aee1e636133"},
 ]
 termcolor = [
     {file = "termcolor-1.1.0.tar.gz", hash = "sha256:1d6d69ce66211143803fbc56652b41d73b4a400a2891d7bf7a1cdf4c02de613b"},
