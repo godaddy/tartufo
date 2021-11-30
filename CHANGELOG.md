@@ -72,7 +72,7 @@ Features:
 
 * [#227](https://github.com/godaddy/tartufo/pull/227) - Report findings incrementally
   as scan progresses instead of holding all of them until it has completed. This
-  is a reimplementation of [#108](https://github.com/godaddy/tartufo/pull/108);
+  is a re-implementation of [#108](https://github.com/godaddy/tartufo/pull/108);
   thanks to @dclayton-godaddy for showing the way.
 * [#244](https://github.com/godaddy/tartufo/pull/244) - Drops support for
   `--fetch/--no-fetch` option for local scans
