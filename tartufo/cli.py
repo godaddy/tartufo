@@ -84,45 +84,24 @@ class TartufoCLI(click.MultiCommand):
     "-ip",
     "--include-path-patterns",
     multiple=True,
-    help="""[DEPRECATED] Specify a regular expression which matches Git object paths to
-    include in the scan. This option can be specified multiple times to include
-    multiple patterns. If not provided (default), all Git object paths are
-    included unless otherwise excluded via the --exclude-path-patterns
-    option.""",
+    hidden=True,
+    help="""Specify a regular expression which matches Git object paths to
+    include in the scan. Multiple patterns can be included in the config file using
+    include-path-patterns = [{path-pattern="pattern", reason="reason to include pattern},].
+    If not provided (default), all Git object paths are included unless otherwise excluded using
+    exclude-path-patterns""",
 )
 @click.option(
     "-xp",
     "--exclude-path-patterns",
     multiple=True,
-    help="""[DEPRECATED] Specify a regular expression which matches Git object paths to
-    exclude from the scan. This option can be specified multiple times to
-    exclude multiple patterns. If not provided (default), no Git object paths
+    hidden=True,
+    help="""Specify a regular expression which matches Git object paths to
+    exclude from the scan. Multiple patterns can be excluded in the config file using
+    exclude-path-patterns = [{path-pattern="pattern", reason="reason to exclude pattern},].
+    If not provided (default), no Git object paths
     are excluded unless effectively excluded via the --include-path-patterns
     option.""",
-)
-@click.option(
-    "-i",
-    "--include-path",
-    multiple=True,
-    hidden=True,
-    help="""Specify a regular expression which matches Git object paths to
-    include in the scan along with the reason. This option can be specified
-    multiple times to include multiple patterns. If not provided (default),
-    all Git object paths are included unless otherwise excluded via the
-    --include-path=[{path_pattern='path_pattern', reason='Test path pattern
-    that needs to be included'}] option.""",
-)
-@click.option(
-    "-x",
-    "--exclude-path",
-    multiple=True,
-    hidden=True,
-    help="""Specify a regular expression which matches Git object paths to
-    exclude from the scan along with the reason. This option can be specified
-    multiple times to exclude multiple patterns. If not provided (default),
-    no Git object paths are excluded unless effectively excluded via the
-    --exclude-path=[{path_pattern='path_pattern', reason='Test path pattern
-    that needs to be excluded'}] option.""",
 )
 @click.option(
     "-of",

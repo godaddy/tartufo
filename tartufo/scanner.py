@@ -19,6 +19,7 @@ from typing import (
     Pattern,
     Set,
     Tuple,
+    cast,
 )
 import warnings
 
@@ -245,10 +246,37 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         """
         if self._included_paths is None:
             self.logger.info("Initializing included paths")
-            patterns = list(self.global_options.include_path_patterns or ())
-            self._included_paths = (
-                config.compile_path_rules(set(patterns)) if patterns else []
-            )
+            patterns = list(self.global_options.include_path_patterns or ())  # type: ignore
+            if all(isinstance(pattern, str) for pattern in patterns):
+                warnings.warn(
+                    "Old format of --include-path-patterns option and config file setup include-path-patterns "
+                    "= ['inclusion pattern'] has been deprecated and will be removed in a future version. "
+                    "Make sure all the inclusions are set up using new pattern i.e. include-path-patterns = "
+                    "[path-pattern='inclusion pattern',reason='reason for inclusion'] in the config file",
+                    DeprecationWarning,
+                )
+                self._included_paths = (
+                    config.compile_path_rules(set(cast(List[str], patterns)))
+                    if patterns
+                    else []
+                )
+            elif all(isinstance(pattern, dict) for pattern in patterns):
+                patterns = [
+                    pattern["path-pattern"]
+                    for pattern in cast(List[Dict[str, str]], patterns)
+                ]
+                self._included_paths = (
+                    config.compile_path_rules(set(cast(List[str], patterns)))
+                    if patterns
+                    else []
+                )
+            else:
+                self.logger.error(
+                    "Combination of old and new format of include-path-patterns will not be supported."
+                )
+                raise types.ConfigException(
+                    "Combination of old and new format of include-path-patterns will not be supported."
+                )
             self.logger.debug(
                 "Included paths was initialized as: %s", self._included_paths
             )
@@ -278,9 +306,36 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         if self._excluded_paths is None:
             self.logger.info("Initializing excluded paths")
             patterns = list(self.global_options.exclude_path_patterns or ())
-            self._excluded_paths = (
-                config.compile_path_rules(set(patterns)) if patterns else []
-            )
+            if all(isinstance(x, str) for x in patterns):
+                warnings.warn(
+                    "Old format of '--exclude-path-patterns option' and config file setup 'exclude-path-patterns "
+                    "= ['exclusion pattern']' has been deprecated and will be removed in a future version. "
+                    "Make sure all the exclusions are set up using new pattern i.e. exclude-path-patterns = "
+                    "[path-pattern='exclusion pattern',reason='reason for exclusion'] in the config file",
+                    DeprecationWarning,
+                )
+                self._excluded_paths = (
+                    config.compile_path_rules(set(cast(List[str], patterns)))
+                    if patterns
+                    else []
+                )
+            elif all(isinstance(x, dict) for x in patterns):
+                patterns = [
+                    pattern["path-pattern"]
+                    for pattern in cast(List[Dict[str, str]], patterns)
+                ]
+                self._excluded_paths = (
+                    config.compile_path_rules(set(cast(List[str], patterns)))
+                    if patterns
+                    else []
+                )
+            else:
+                self.logger.error(
+                    "Combination of old and new format of exclude-path-patterns will not be supported."
+                )
+                raise types.ConfigException(
+                    "Combination of old and new format of exclude-path-patterns will not be supported."
+                )
             self.logger.debug(
                 "Excluded paths was initialized as: %s", self._excluded_paths
             )
@@ -336,15 +391,6 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             self.logger.info("%s excluded - matched excluded paths", file_path)
             return False
         return True
-
-    @property
-    def config_data(self):
-        return self._config_data
-
-    @config_data.setter
-    def config_data(self, data) -> MutableMapping[str, Any]:
-        self._config_data = data
-        return self._config_data
 
     def signature_is_excluded(self, blob: str, file_path: str) -> bool:
         """Find whether the signature of some data has been excluded in configuration.
@@ -660,32 +706,6 @@ class GitRepoScanner(GitScanner):
         self.git_options = git_options
         super().__init__(global_options, repo_path)
 
-    def include_path_patterns(self):
-        include_patterns = list(self.config_data.get("include_path_patterns", ()))
-        include_paths = self.config_data.get("include_path", None)
-        if include_patterns:
-            include_patterns = config.compile_path_rules(include_patterns)
-            self._included_paths = list(set(self.included_paths + include_patterns))
-        if include_paths:
-            include_paths = [
-                include_path["path-pattern"] for include_path in include_paths
-            ]
-            include_paths = config.compile_path_rules(include_paths)
-            self._included_paths = list(set(self.included_paths + include_paths))
-
-    def exclude_path_patterns(self):
-        exclude_patterns = list(self.config_data.get("exclude_path_patterns", ()))
-        exclude_paths = self.config_data.get("exclude_path", None)
-        if exclude_patterns:
-            exclude_patterns = config.compile_path_rules(exclude_patterns)
-            self._excluded_paths = list(set(self.excluded_paths + exclude_patterns))
-        if exclude_paths:
-            exclude_paths = [
-                exclude_path["path-pattern"] for exclude_path in exclude_paths
-            ]
-            exclude_paths = config.compile_path_rules(exclude_paths)
-            self._excluded_paths = list(set(self.excluded_paths + exclude_paths))
-
     def load_repo(self, repo_path: str) -> pygit2.Repository:
         config_file: Optional[pathlib.Path] = None
         data: MutableMapping[str, Any] = {}
@@ -696,7 +716,6 @@ class GitRepoScanner(GitScanner):
         except (FileNotFoundError, types.ConfigException):
             config_file = None
         if config_file and config_file != self.global_options.config:
-            self.config_data = data
             signatures = data.get("exclude_signatures", None)
             if signatures:
                 self.global_options.exclude_signatures = tuple(
@@ -705,8 +724,6 @@ class GitRepoScanner(GitScanner):
             entropy_patterns = data.get("exclude_entropy_patterns", None)
             if entropy_patterns:
                 self.global_options.exclude_entropy_patterns += tuple(entropy_patterns)
-            self.include_path_patterns()
-            self.exclude_path_patterns()
         try:
             repo = pygit2.Repository(repo_path)
             if not self.git_options.include_submodules:
