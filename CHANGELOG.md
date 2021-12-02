@@ -34,6 +34,8 @@ Features:
   that was still stored in an external file.
 * [#202](https://github.com/godaddy/tartufo/issues/202) - Supports new format of exclusions in config file 
   with the ability to specify the reason along with exclusion
+* [#257](https://github.com/godaddy/tartufo/issues/257) - Supports new format of include-path-patterns and
+  exclude-path-patterns in config file with the ability to specify the reason along with the path-patterns.
 
 v3.0.0-alpha.1 - 11 November 2021
 ---------------------------------
