@@ -150,7 +150,6 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     global_options: types.GlobalOptions
     logger: logging.Logger
     _scan_lock: threading.Lock = threading.Lock()
-    _config_data: MutableMapping[str, Any] = {}
 
     def __init__(self, options: types.GlobalOptions) -> None:
         self.global_options = options
@@ -277,9 +276,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                 raise types.ConfigException(
                     f"Combination of old and new format of include-path-patterns will not be supported.\n{exc}"
                 )
-            self.logger.debug(
-                "Included paths was initialized as: %s", self._included_paths
-            )
+        self.logger.debug("Included paths was initialized as: %s", self._included_paths)
         return self._included_paths
 
     @property
@@ -336,9 +333,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                 raise types.ConfigException(
                     f"Combination of old and new format of exclude-path-patterns will not be supported.\n{exc}"
                 )
-            self.logger.debug(
-                "Excluded paths was initialized as: %s", self._excluded_paths
-            )
+        self.logger.debug("Excluded paths was initialized as: %s", self._excluded_paths)
         return self._excluded_paths
 
     @property

@@ -88,8 +88,9 @@ class TartufoCLI(click.MultiCommand):
     help="""Specify a regular expression which matches Git object paths to
     include in the scan. Multiple patterns can be included in the config file using
     include-path-patterns = [{path-pattern="pattern", reason="reason to include pattern},].
-    If not provided (default), all Git object paths are included unless otherwise excluded using
-    exclude-path-patterns""",
+    If not provided (default), all Git object paths
+    are included unless otherwise excluded via the --exclude-path-patterns
+    option.""",
 )
 @click.option(
     "-xp",
