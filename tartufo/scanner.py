@@ -247,20 +247,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         if self._included_paths is None:
             self.logger.info("Initializing included paths")
             patterns = list(self.global_options.include_path_patterns or ())  # type: ignore
-            if all(isinstance(pattern, str) for pattern in patterns):
-                warnings.warn(
-                    "Old format of --include-path-patterns option and config file setup include-path-patterns "
-                    "= ['inclusion pattern'] has been deprecated and will be removed in a future version. "
-                    "Make sure all the inclusions are set up using new pattern i.e. include-path-patterns = "
-                    "[path-pattern='inclusion pattern',reason='reason for inclusion'] in the config file",
-                    DeprecationWarning,
-                )
-                self._included_paths = (
-                    config.compile_path_rules(set(cast(List[str], patterns)))
-                    if patterns
-                    else []
-                )
-            elif all(isinstance(pattern, dict) for pattern in patterns):
+            try:
                 patterns = [
                     pattern["path-pattern"]
                     for pattern in cast(List[Dict[str, str]], patterns)
@@ -270,12 +257,25 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                     if patterns
                     else []
                 )
-            else:
-                self.logger.error(
-                    "Combination of old and new format of include-path-patterns will not be supported."
+                return self._included_paths
+            except TypeError:
+                warnings.warn(
+                    "Old format of --include-path-patterns option and config file setup include-path-patterns "
+                    "= ['inclusion pattern'] has been deprecated and will be removed in a future version. "
+                    "Make sure all the inclusions are set up using new pattern i.e. include-path-patterns = "
+                    "[path-pattern='inclusion pattern',reason='reason for inclusion'] in the config file",
+                    DeprecationWarning,
                 )
+            try:
+                self._included_paths = (
+                    config.compile_path_rules(set(cast(List[str], patterns)))
+                    if patterns
+                    else []
+                )
+                return self._included_paths
+            except TypeError as exc:
                 raise types.ConfigException(
-                    "Combination of old and new format of include-path-patterns will not be supported."
+                    f"Combination of old and new format of include-path-patterns will not be supported.\n{exc}"
                 )
             self.logger.debug(
                 "Included paths was initialized as: %s", self._included_paths
@@ -306,20 +306,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         if self._excluded_paths is None:
             self.logger.info("Initializing excluded paths")
             patterns = list(self.global_options.exclude_path_patterns or ())
-            if all(isinstance(x, str) for x in patterns):
-                warnings.warn(
-                    "Old format of '--exclude-path-patterns option' and config file setup 'exclude-path-patterns "
-                    "= ['exclusion pattern']' has been deprecated and will be removed in a future version. "
-                    "Make sure all the exclusions are set up using new pattern i.e. exclude-path-patterns = "
-                    "[path-pattern='exclusion pattern',reason='reason for exclusion'] in the config file",
-                    DeprecationWarning,
-                )
-                self._excluded_paths = (
-                    config.compile_path_rules(set(cast(List[str], patterns)))
-                    if patterns
-                    else []
-                )
-            elif all(isinstance(x, dict) for x in patterns):
+            try:
                 patterns = [
                     pattern["path-pattern"]
                     for pattern in cast(List[Dict[str, str]], patterns)
@@ -329,12 +316,25 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                     if patterns
                     else []
                 )
-            else:
-                self.logger.error(
-                    "Combination of old and new format of exclude-path-patterns will not be supported."
+                return self._excluded_paths
+            except TypeError:
+                warnings.warn(
+                    "Old format of '--exclude-path-patterns option' and config file setup 'exclude-path-patterns "
+                    "= ['exclusion pattern']' has been deprecated and will be removed in a future version. "
+                    "Make sure all the exclusions are set up using new pattern i.e. exclude-path-patterns = "
+                    "[path-pattern='exclusion pattern',reason='reason for exclusion'] in the config file",
+                    DeprecationWarning,
                 )
+            try:
+                self._excluded_paths = (
+                    config.compile_path_rules(set(cast(List[str], patterns)))
+                    if patterns
+                    else []
+                )
+                return self._excluded_paths
+            except TypeError as exc:
                 raise types.ConfigException(
-                    "Combination of old and new format of exclude-path-patterns will not be supported."
+                    f"Combination of old and new format of exclude-path-patterns will not be supported.\n{exc}"
                 )
             self.logger.debug(
                 "Excluded paths was initialized as: %s", self._excluded_paths
