@@ -130,6 +130,7 @@ class Issue:
         return self.__str__().encode("utf8")
 
 
+# pylint: disable=too-many-public-methods
 class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     """Provide the base, generic functionality needed by all scanners.
 
@@ -146,10 +147,12 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     _included_paths: Optional[List[Pattern]] = None
     _excluded_paths: Optional[List[Pattern]] = None
     _excluded_entropy: Optional[List[Rule]] = None
-    _rules_regexes: Optional[Dict[str, Rule]] = None
+    _rules_regexes: Optional[Set[Rule]] = None
     global_options: types.GlobalOptions
     logger: logging.Logger
     _scan_lock: threading.Lock = threading.Lock()
+    _excluded_findings: Tuple[str, ...] = ()
+    _config_data: MutableMapping[str, Any] = {}
 
     def __init__(self, options: types.GlobalOptions) -> None:
         self.global_options = options
@@ -337,20 +340,20 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         return self._excluded_paths
 
     @property
-    def rules_regexes(self) -> Dict[str, Rule]:
-        """Get a dictionary of regular expressions to scan the code for.
+    def rules_regexes(self) -> Set[Rule]:
+        """Get a set of regular expressions to scan the code for.
 
         :raises types.TartufoConfigException: If there was a problem compiling the rules
-        :rtype: Dict[str, Pattern]
         """
         if self._rules_regexes is None:
             self.logger.info("Initializing regex rules")
             try:
                 self._rules_regexes = config.configure_regexes(
-                    self.global_options.default_regexes,
-                    self.global_options.rules,
-                    self.global_options.git_rules_repo,
-                    self.global_options.git_rules_files,
+                    include_default=self.global_options.default_regexes,
+                    rules_files=self.global_options.rules,
+                    rule_patterns=self.global_options.rule_patterns,
+                    rules_repo=self.global_options.git_rules_repo,
+                    rules_repo_files=self.global_options.git_rules_files,
                 )
             except (ValueError, re.error) as exc:
                 self.logger.exception("Error loading regex rules", exc_info=exc)
@@ -387,6 +390,35 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             return False
         return True
 
+    @property
+    def config_data(self):
+        return self._config_data
+
+    @config_data.setter
+    def config_data(self, data: MutableMapping[str, Any]) -> None:
+        self._config_data = data
+
+    @cached_property
+    def excluded_findings(self) -> tuple:
+        configured_signatures = []
+        signatures = self.config_data.get("exclude_signatures", None)
+        if signatures:
+            warnings.warn(
+                "--exclude-signatures has been deprecated and will be removed in a future version. "
+                "Make sure all the exclusions are moved to exclude-findings section with new format. Example: "
+                "exclude-findings = [{signature='signature', reason='The reason of excluding the signature'}]",
+                DeprecationWarning,
+            )
+            configured_signatures.extend(signatures)
+        findings = self.config_data.get("exclude_findings", None)
+        if findings:
+            configured_signatures.extend([finding["signature"] for finding in findings])
+
+        self._excluded_findings = tuple(
+            set(self.global_options.exclude_signatures + tuple(configured_signatures))
+        )
+        return self._excluded_findings
+
     def signature_is_excluded(self, blob: str, file_path: str) -> bool:
         """Find whether the signature of some data has been excluded in configuration.
 
@@ -395,9 +427,8 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         """
         return (
             blob
-            in self.global_options.exclude_signatures  # Signatures themselves pop up as entropy matches
-            or util.generate_signature(blob, file_path)
-            in self.global_options.exclude_signatures
+            in self.excluded_findings  # Signatures themselves pop up as entropy matches
+            or util.generate_signature(blob, file_path) in self.excluded_findings
         )
 
     @staticmethod
@@ -571,14 +602,14 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         :param chunk: The chunk of data to be scanned
         """
 
-        for key, rule in self.rules_regexes.items():
+        for rule in self.rules_regexes:
             if rule.path_pattern is None or rule.path_pattern.match(chunk.file_path):
                 found_strings = rule.pattern.findall(chunk.contents)
                 for match in found_strings:
                     # Filter out any explicitly "allowed" match signatures
                     if not self.signature_is_excluded(match, chunk.file_path):
                         issue = Issue(types.IssueType.RegEx, match, chunk)
-                        issue.issue_detail = key
+                        issue.issue_detail = rule.name
                         yield issue
 
     @property
@@ -711,14 +742,7 @@ class GitRepoScanner(GitScanner):
         except (FileNotFoundError, types.ConfigException):
             config_file = None
         if config_file and config_file != self.global_options.config:
-            signatures = data.get("exclude_signatures", None)
-            if signatures:
-                self.global_options.exclude_signatures = tuple(
-                    set(self.global_options.exclude_signatures + tuple(signatures))
-                )
-            entropy_patterns = data.get("exclude_entropy_patterns", None)
-            if entropy_patterns:
-                self.global_options.exclude_entropy_patterns += tuple(entropy_patterns)
+            self.config_data = data
         try:
             repo = pygit2.Repository(repo_path)
             if not self.git_options.include_submodules:
@@ -772,9 +796,15 @@ class GitRepoScanner(GitScanner):
                 commits = [self._repo.get(self._repo.head.target)]
             else:
                 branch = self._repo.branches.get(branch_name)
-                commits = self._repo.walk(
-                    branch.resolve().target, pygit2.GIT_SORT_TOPOLOGICAL
-                )
+                try:
+                    commits = self._repo.walk(
+                        branch.resolve().target, pygit2.GIT_SORT_TOPOLOGICAL
+                    )
+                except AttributeError:
+                    self.logger.debug(
+                        "Skipping branch %s because it cannot be resolved.", branch_name
+                    )
+                    continue
             diff_hash: bytes
             curr_commit: pygit2.Commit = None
             prev_commit: pygit2.Commit = None

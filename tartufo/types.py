@@ -36,6 +36,7 @@ class OutputFormat(enum.Enum):
 class GlobalOptions:
     __slots__ = (
         "rules",
+        "rule_patterns",
         "default_regexes",
         "entropy",
         "regex",
@@ -44,6 +45,7 @@ class GlobalOptions:
         "exclude_path_patterns",
         "exclude_entropy_patterns",
         "exclude_signatures",
+        "exclude_findings",
         "output_dir",
         "git_rules_repo",
         "git_rules_files",
@@ -57,6 +59,7 @@ class GlobalOptions:
         "entropy_sensitivity",
     )
     rules: Tuple[TextIO, ...]
+    rule_patterns: Tuple[Dict[str, str], ...]
     default_regexes: bool
     entropy: bool
     regex: bool
@@ -65,6 +68,7 @@ class GlobalOptions:
     exclude_path_patterns: Union[Tuple[str, ...], Tuple[Dict[str, str], ...]]
     exclude_entropy_patterns: Tuple[Dict[str, str], ...]
     exclude_signatures: Tuple[str, ...]
+    exclude_findings: Tuple[Dict[str, str], ...]
     output_dir: Optional[str]
     git_rules_repo: Optional[str]
     git_rules_files: Tuple[str, ...]

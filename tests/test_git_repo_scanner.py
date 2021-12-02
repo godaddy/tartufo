@@ -97,14 +97,17 @@ class RepoLoadTests(ScannerTestCase):
     def test_extra_signatures_get_added(self, mock_load: mock.MagicMock):
         mock_load.return_value = (
             self.data_dir / "pyproject.toml",
-            {"exclude_signatures": ["foo", "bar"]},
+            {
+                "exclude_signatures": ["foo", "bar"],
+                "exclude_findings": [{"signature": "foo/bar", "reason": "test reason"}],
+            },
         )
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, str(self.data_dir)
         )
         test_scanner.load_repo("../tartufo")
         self.assertEqual(
-            sorted(test_scanner.global_options.exclude_signatures), ["bar", "foo"]
+            sorted(test_scanner.excluded_findings), ["bar", "foo", "foo/bar"]
         )
 
 
