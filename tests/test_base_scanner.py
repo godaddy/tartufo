@@ -276,10 +276,7 @@ class SignatureTests(ScannerTestCase):
     def test_matched_signatures_are_excluded(self, mock_signature: mock.MagicMock):
         mock_signature.return_value = "foo"
         test_scanner = TestScanner(self.options)
-        self.options.exclude_signatures = ()
-        test_scanner.config_data = {
-            "exclude_findings": [{"signature": "foo", "reason": "foo finding"}]
-        }
+        self.options.exclude_signatures = ("foo",)
         self.assertTrue(test_scanner.signature_is_excluded("bar", "blah"))
 
     @mock.patch("tartufo.util.generate_signature")
@@ -288,20 +285,12 @@ class SignatureTests(ScannerTestCase):
     ):
         mock_signature.return_value = "bar"
         test_scanner = TestScanner(self.options)
-        self.options.exclude_signatures = ()
-        test_scanner.config_data = {
-            "exclude_findings": [{"signature": "foo", "reason": "foo finding"}]
-        }
+        self.options.exclude_signatures = ("foo",)
         self.assertFalse(test_scanner.signature_is_excluded("blah", "stuff"))
 
     def test_signature_found_as_scan_match_is_excluded(self):
         test_scanner = TestScanner(self.options)
-        self.options.exclude_signatures = ()
-        test_scanner.config_data = {
-            "exclude_findings": [
-                {"signature": "ford_prefect", "reason": "ford_prefect finding"}
-            ]
-        }
+        self.options.exclude_signatures = ("ford_prefect",)
         self.assertTrue(test_scanner.signature_is_excluded("ford_prefect", "/earth"))
 
 
