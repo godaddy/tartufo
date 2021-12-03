@@ -173,22 +173,21 @@ class OutputTests(unittest.TestCase):
         self, mock_time, mock_click, mock_scanner
     ):
         mock_time.now.return_value.isoformat.return_value = "now:now:now"
-        exclude_signatures = [
-            "fffffffffffff",
-            "ooooooooooooo",
-        ]
 
         options = generate_options(
             GlobalOptions,
             quiet=False,
             verbose=1,
-            exclude_signatures=exclude_signatures,
         )
         mock_scanner.issues = []
         mock_scanner.issue_count = 0
         mock_scanner.excluded_paths = [
             re.compile("package-lock.json"),
             re.compile("poetry.lock"),
+        ]
+        mock_scanner.excluded_signatures = [
+            "fffffffffffff",
+            "ooooooooooooo",
         ]
 
         rule_1 = (
@@ -310,7 +309,7 @@ class OutputTests(unittest.TestCase):
             re.compile("package-lock.json"),
             re.compile("poetry.lock"),
         ]
-        exclude_signatures = [
+        mock_scanner.excluded_signatures = [
             "fffffffffffff",
             "ooooooooooooo",
         ]
@@ -321,7 +320,6 @@ class OutputTests(unittest.TestCase):
         options = generate_options(
             GlobalOptions,
             output_format=types.OutputFormat.Json.value,
-            exclude_signatures=exclude_signatures,
             exclude_entropy_patterns=exclude_entropy_patterns,
         )
 
