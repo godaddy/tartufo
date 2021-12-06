@@ -362,7 +362,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             for signature in signatures:
                 if not isinstance(signature, str):
                     raise types.ConfigException(
-                        "Combination of old and new format of exclude-signatures will not be supported."
+                        "Combination of old and new format of exclude-signatures will is not supported."
                     )
             self._excluded_signatures = tuple(cast(List[str], signatures))
         return self._excluded_signatures
