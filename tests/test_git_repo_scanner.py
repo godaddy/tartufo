@@ -473,7 +473,7 @@ class ExcludedSignaturesTests(ScannerTestCase):
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
-        error_msg = "Combination of old and new format of include-path-patterns will not be supported."
+        error_msg = "Combination of old and new format of exclude-signatures will not be supported."
         with self.assertRaisesRegex(types.ConfigException, error_msg):
             list(test_scanner.excluded_signatures)
 
