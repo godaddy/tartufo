@@ -20,7 +20,6 @@ from typing import (
     Set,
     Tuple,
     cast,
-    Union,
 )
 import warnings
 
@@ -152,7 +151,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     global_options: types.GlobalOptions
     logger: logging.Logger
     _scan_lock: threading.Lock = threading.Lock()
-    _excluded_signatures: Union[Tuple[Dict[str, str], ...], Tuple[str, ...]] = ()
+    _excluded_signatures: Tuple[str, ...] = ()
     _config_data: MutableMapping[str, Any] = {}
 
     def __init__(self, options: types.GlobalOptions) -> None:
@@ -354,15 +353,16 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                 return self._excluded_signatures
             except TypeError:
                 warnings.warn(
-                    "--exclude-signatures has been deprecated and will be removed in a future version. "
-                    "Make sure all the exclusions are moved to exclude-findings section with new format. Example: "
-                    "exclude-findings = [{signature='signature', reason='The reason of excluding the signature'}]",
+                    "Configuring exclude-signatures as string has been deprecated and support for this format will "
+                    "be removed in the future. Please make sure to update your exclude-signatures configuration to "
+                    "an array of tables. For example: exclude-signatures = [{signature='signature', reason='The "
+                    "reason of excluding the signature'}]",
                     DeprecationWarning,
                 )
             for signature in signatures:
                 if not isinstance(signature, str):
                     raise types.ConfigException(
-                        "Combination of old and new format of include-path-patterns will not be supported."
+                        "Combination of old and new format of exclude-signatures will not be supported."
                     )
             self._excluded_signatures = tuple(cast(List[str], signatures))
         return self._excluded_signatures
