@@ -10,6 +10,8 @@ Bug fixes:
 Misc:
 
 * [#282](https://github.com/godaddy/tartufo/pull/282) - Remove old style config for `exclude-entropy-patterns`
+* [#291](https://github.com/godaddy/tartufo/pull/291) - Use the latest `click`
+  to provide better output on boolean flag defaults
 
 Features:
 
