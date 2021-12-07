@@ -101,14 +101,14 @@ class ProcessIssuesTest(unittest.TestCase):
         mock_dt.now.return_value.isoformat.return_value = "nownownow"
         runner = CliRunner()
         with runner.isolated_filesystem() as dirname:
+            # Perform a little bit of trickery to make absolutely certain we get a full absolute path
+            # Adapted from https://github.com/pallets/click/pull/2094/files
+            output_dir = os.fsdecode(
+                (Path(dirname) / "foo" / "tartufo-scan-results-nownownow").resolve()
+            )
             result = runner.invoke(
                 cli.main, ["--output-dir", "./foo", "scan-local-repo", "."]
             )
-        # Perform a little bit of trickery to make absolutely certain we get a full absolute path
-        # Adapted from https://github.com/pallets/click/pull/2094/files
-        output_dir = os.fsdecode(
-            (Path(dirname) / "foo" / "tartufo-scan-results-nownownow").resolve()
-        )
         self.assertEqual(
             result.output,
             f"Results have been saved in {output_dir}\n",
@@ -133,14 +133,14 @@ class ProcessIssuesTest(unittest.TestCase):
         mock_dt.now.return_value.isoformat.return_value = "now:now:now"
         runner = CliRunner()
         with runner.isolated_filesystem() as dirname:
+            # Perform a little bit of trickery to make absolutely certain we get a full absolute path
+            # Adapted from https://github.com/pallets/click/pull/2094/files
+            output_dir = os.fsdecode(
+                (Path(dirname) / "foo" / "tartufo-scan-results-nownownow").resolve()
+            )
             result = runner.invoke(
                 cli.main, ["--output-dir", "./foo", "scan-local-repo", "."]
             )
-        # Perform a little bit of trickery to make absolutely certain we get a full absolute path
-        # Adapted from https://github.com/pallets/click/pull/2094/files
-        output_dir = os.fsdecode(
-            (Path(dirname) / "foo" / "tartufo-scan-results-nownownow").resolve()
-        )
         self.assertEqual(
             result.output,
             f"Results have been saved in {output_dir}\n",
