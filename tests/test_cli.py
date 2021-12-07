@@ -1,6 +1,5 @@
 import logging
 import os
-import os.path
 import unittest
 from collections import namedtuple
 from pathlib import Path
@@ -106,14 +105,10 @@ class ProcessIssuesTest(unittest.TestCase):
                 cli.main, ["--output-dir", "./foo", "scan-local-repo", "."]
             )
         # Perform a little bit of trickery to make absolutely certain we get a full absolute path
-        # Adapted from https://github.com/pallets/click/pull/2006/files
-        output_dir = (
-            Path(dirname) / "foo" / "tartufo-scan-results-nownownow"
-        ).resolve()
-        dirname = os.path.dirname(os.path.abspath(output_dir))
-        if os.path.islink(output_dir):
-            output_dir = os.readlink(output_dir)  # type: ignore
-        output_dir = os.path.join(dirname, output_dir)  # type: ignore
+        # Adapted from https://github.com/pallets/click/pull/2094/files
+        output_dir = os.fsdecode(
+            (Path(dirname) / "foo" / "tartufo-scan-results-nownownow").resolve()
+        )
         self.assertEqual(
             result.output,
             f"Results have been saved in {output_dir}\n",
@@ -142,14 +137,10 @@ class ProcessIssuesTest(unittest.TestCase):
                 cli.main, ["--output-dir", "./foo", "scan-local-repo", "."]
             )
         # Perform a little bit of trickery to make absolutely certain we get a full absolute path
-        # Adapted from https://github.com/pallets/click/pull/2006/files
-        output_dir = (
-            Path(dirname) / "foo" / "tartufo-scan-results-nownownow"
-        ).resolve()
-        dirname = os.path.dirname(os.path.abspath(output_dir))
-        if os.path.islink(output_dir):
-            output_dir = os.readlink(output_dir)  # type: ignore
-        output_dir = os.path.join(dirname, output_dir)  # type: ignore
+        # Adapted from https://github.com/pallets/click/pull/2094/files
+        output_dir = os.fsdecode(
+            (Path(dirname) / "foo" / "tartufo-scan-results-nownownow").resolve()
+        )
         self.assertEqual(
             result.output,
             f"Results have been saved in {output_dir}\n",
