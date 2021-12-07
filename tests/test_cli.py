@@ -103,9 +103,11 @@ class ProcessIssuesTest(unittest.TestCase):
             result = runner.invoke(
                 cli.main, ["--output-dir", "./foo", "scan-local-repo", "."]
             )
+        # Perform a little bit of trickery to make absolutely certain we get a full absolute path
         output_dir = (
-            Path(dirname) / "foo" / "tartufo-scan-results-nownownow"
-        ).resolve()
+            Path.cwd()
+            / (Path(dirname) / "foo" / "tartufo-scan-results-nownownow").resolve()
+        )
         self.assertEqual(
             result.output,
             f"Results have been saved in {output_dir}\n",
@@ -133,9 +135,11 @@ class ProcessIssuesTest(unittest.TestCase):
             result = runner.invoke(
                 cli.main, ["--output-dir", "./foo", "scan-local-repo", "."]
             )
+        # Perform a little bit of trickery to make absolutely certain we get a full absolute path
         output_dir = (
-            Path(dirname) / "foo" / "tartufo-scan-results-nownownow"
-        ).resolve()
+            Path.cwd()
+            / (Path(dirname) / "foo" / "tartufo-scan-results-nownownow").resolve()
+        )
         self.assertEqual(
             result.output,
             f"Results have been saved in {output_dir}\n",
