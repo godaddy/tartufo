@@ -241,6 +241,14 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         return self._issues
 
     @property
+    def config_data(self):
+        return self._config_data
+
+    @config_data.setter
+    def config_data(self, data: MutableMapping[str, Any]) -> None:
+        self._config_data = data
+
+    @property
     def included_paths(self) -> List[Pattern]:
         """Get a list of regexes used as an exclusive list of paths to scan.
 
@@ -249,6 +257,8 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         if self._included_paths is None:
             self.logger.info("Initializing included paths")
             patterns = list(self.global_options.include_path_patterns or ())  # type: ignore
+            include_patterns = list(self.config_data.get("include_path_patterns", ()))
+            patterns = list(patterns + include_patterns)
             try:
                 patterns = [
                     pattern["path-pattern"]
@@ -258,6 +268,9 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                     config.compile_path_rules(set(cast(List[str], patterns)))
                     if patterns
                     else []
+                )
+                self.logger.debug(
+                    "Included paths was initialized as: %s", self._included_paths
                 )
                 return self._included_paths
             except TypeError:
@@ -274,12 +287,14 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                     if patterns
                     else []
                 )
+                self.logger.debug(
+                    "Included paths was initialized as: %s", self._included_paths
+                )
                 return self._included_paths
             except TypeError as exc:
                 raise types.ConfigException(
                     f"Combination of old and new format of include-path-patterns will not be supported.\n{exc}"
                 )
-        self.logger.debug("Included paths was initialized as: %s", self._included_paths)
         return self._included_paths
 
     @property
@@ -305,8 +320,10 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         """
         if self._excluded_paths is None:
             self.logger.info("Initializing excluded paths")
-            patterns = list(self.global_options.exclude_path_patterns or ())
+            patterns = list(self.global_options.exclude_path_patterns or ())  # type: ignore
+            exclude_patterns = list(self.config_data.get("exclude_path_patterns", ()))
             try:
+                patterns = patterns + [x for x in exclude_patterns if x not in patterns]
                 patterns = [
                     pattern["path-pattern"]
                     for pattern in cast(List[Dict[str, str]], patterns)
@@ -315,6 +332,9 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                     config.compile_path_rules(set(cast(List[str], patterns)))
                     if patterns
                     else []
+                )
+                self.logger.debug(
+                    "Excluded paths was initialized as: %s", self._excluded_paths
                 )
                 return self._excluded_paths
             except TypeError:
@@ -326,17 +346,20 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                     DeprecationWarning,
                 )
             try:
+                patterns = list(set(patterns + exclude_patterns))
                 self._excluded_paths = (
                     config.compile_path_rules(set(cast(List[str], patterns)))
                     if patterns
                     else []
+                )
+                self.logger.debug(
+                    "Excluded paths was initialized as: %s", self._excluded_paths
                 )
                 return self._excluded_paths
             except TypeError as exc:
                 raise types.ConfigException(
                     f"Combination of old and new format of exclude-path-patterns will not be supported.\n{exc}"
                 )
-        self.logger.debug("Excluded paths was initialized as: %s", self._excluded_paths)
         return self._excluded_paths
 
     @property
@@ -389,14 +412,6 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             self.logger.info("%s excluded - matched excluded paths", file_path)
             return False
         return True
-
-    @property
-    def config_data(self):
-        return self._config_data
-
-    @config_data.setter
-    def config_data(self, data: MutableMapping[str, Any]) -> None:
-        self._config_data = data
 
     @cached_property
     def excluded_findings(self) -> tuple:
@@ -714,7 +729,6 @@ class GitScanner(ScannerBase, abc.ABC):
 
 
 class GitRepoScanner(GitScanner):
-
     git_options: types.GitOptions
 
     def __init__(
