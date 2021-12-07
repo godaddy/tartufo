@@ -258,8 +258,8 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             self.logger.info("Initializing included paths")
             patterns = list(self.global_options.include_path_patterns or ())  # type: ignore
             include_patterns = list(self.config_data.get("include_path_patterns", ()))
-            patterns = list(patterns + include_patterns)
             try:
+                patterns = patterns + [x for x in include_patterns if x not in patterns]
                 patterns = [
                     pattern["path-pattern"]
                     for pattern in cast(List[Dict[str, str]], patterns)
@@ -282,6 +282,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                     DeprecationWarning,
                 )
             try:
+                patterns = list(set(patterns + include_patterns))
                 self._included_paths = (
                     config.compile_path_rules(set(cast(List[str], patterns)))
                     if patterns
