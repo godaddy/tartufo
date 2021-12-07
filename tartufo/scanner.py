@@ -340,11 +340,23 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             return False
         return True
 
+    @property
+    def config_data(self):
+        return self._config_data
+
+    @config_data.setter
+    def config_data(self, data: MutableMapping[str, Any]) -> None:
+        self._config_data = data
+
     @cached_property
     def excluded_signatures(self) -> tuple:
         if len(self._excluded_signatures) == 0:
             signatures = list(self.global_options.exclude_signatures or ())
+            exclude_signatures = list(self.config_data.get("exclude_signatures", ()))
             try:
+                signatures = signatures + [
+                    x for x in exclude_signatures if x not in signatures
+                ]
                 signatures = [
                     signature["signature"]
                     for signature in cast(List[Dict[str, str]], signatures)
@@ -359,12 +371,13 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                     "reason of excluding the signature'}]",
                     DeprecationWarning,
                 )
-            for signature in signatures:
-                if not isinstance(signature, str):
-                    raise types.ConfigException(
-                        "Combination of old and new format of exclude-signatures will is not supported."
-                    )
-            self._excluded_signatures = tuple(cast(List[str], signatures))
+            try:
+                signatures = list(set(signatures + exclude_signatures))
+                self._excluded_signatures = tuple(cast(List[str], signatures))
+            except TypeError as exc:
+                raise types.ConfigException(
+                    f"Combination of old and new format of exclude-signatures is not supported.\n{exc}"
+                )
         return self._excluded_signatures
 
     def signature_is_excluded(self, blob: str, file_path: str) -> bool:
@@ -690,6 +703,7 @@ class GitRepoScanner(GitScanner):
         except (FileNotFoundError, types.ConfigException):
             config_file = None
         if config_file and config_file != self.global_options.config:
+            self.config_data = data
             include_patterns = list(data.get("include_path_patterns", ()))
             repo_include_file = data.get("include_paths", None)
             if repo_include_file:
