@@ -100,15 +100,14 @@ class ProcessIssuesTest(unittest.TestCase):
         mock_dt.now.return_value.isoformat.return_value = "nownownow"
         runner = CliRunner()
         with runner.isolated_filesystem() as dirname:
+            output_dir = (Path(dirname) / "foo").resolve()
             result = runner.invoke(
-                cli.main, ["--output-dir", "./foo", "scan-local-repo", "."]
+                cli.main, ["--output-dir", str(output_dir), "scan-local-repo", "."]
             )
-        output_dir = (
-            Path(dirname) / "foo" / "tartufo-scan-results-nownownow"
-        ).resolve()
+        result_dir = output_dir / "tartufo-scan-results-nownownow"
         self.assertEqual(
             result.output,
-            f"Results have been saved in {output_dir}\n",
+            f"Results have been saved in {result_dir}\n",
         )
 
     @unittest.skipUnless(helpers.WINDOWS, "Test is Windows-only")
@@ -130,15 +129,14 @@ class ProcessIssuesTest(unittest.TestCase):
         mock_dt.now.return_value.isoformat.return_value = "now:now:now"
         runner = CliRunner()
         with runner.isolated_filesystem() as dirname:
+            output_dir = (Path(dirname) / "foo").resolve()
             result = runner.invoke(
-                cli.main, ["--output-dir", "./foo", "scan-local-repo", "."]
+                cli.main, ["--output-dir", str(output_dir), "scan-local-repo", "."]
             )
-        output_dir = (
-            Path(dirname) / "foo" / "tartufo-scan-results-nownownow"
-        ).resolve()
+        result_dir = output_dir / "tartufo-scan-results-nownownow"
         self.assertEqual(
             result.output,
-            f"Results have been saved in {output_dir}\n",
+            f"Results have been saved in {result_dir}\n",
         )
 
     @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")

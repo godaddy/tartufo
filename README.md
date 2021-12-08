@@ -45,17 +45,21 @@ Usage: tartufo [OPTIONS] COMMAND [ARGS]...
   commit hook.
 
 Options:
-  --rules FILENAME                Path(s) to regex rules json list file(s).
+  --rules FILENAME                [DEPRECATED] Use the rule-patterns config
+                                  options instead. Path(s) to regex rules json
+                                  list file(s).
   --default-regexes / --no-default-regexes
                                   Whether to include the default regex list
                                   when configuring search patterns. Only
                                   applicable if --rules is also specified.
-                                  [default: True]
-
-  --entropy / --no-entropy        Enable entropy checks.  [default: True]
+                                  [default: default-regexes]
+  --entropy / --no-entropy        Enable entropy checks.  [default: entropy]
   --regex / --no-regex            Enable high signal regexes checks.
-                                  [default: True]
-
+                                  [default: regex]
+  --scan-filenames / --no-scan-filenames
+                                  Check the names of files being scanned as
+                                  well as their contents.  [default: scan-
+                                  filenames]
   -ip, --include-path-patterns TEXT
                                   Specify a regular expression which matches
                                   Git object paths to include in the scan.
@@ -64,7 +68,6 @@ Options:
                                   provided (default), all Git object paths are
                                   included unless otherwise excluded via the
                                   --exclude-path-patterns option.
-
   -xp, --exclude-path-patterns TEXT
                                   Specify a regular expression which matches
                                   Git object paths to exclude from the scan.
@@ -73,7 +76,6 @@ Options:
                                   provided (default), no Git object paths are
                                   excluded unless effectively excluded via the
                                   --include-path-patterns option.
-
   -of, --output-format [json|compact|text]
                                   Specify the format in which the output needs
                                   to be generated `--output-format
@@ -81,30 +83,20 @@ Options:
                                   or `text` can be specified. If not provided
                                   (default) the output will be generated in
                                   `text` format.
-
-  -xe, --exclude-entropy-patterns TEXT
-                                  Specify a regular expression which matches
-                                  entropy strings to exclude from the scan.
-                                  This option can be specified multiple times
-                                  to exclude multiple patterns. If not
-                                  provided (default), no entropy strings will
-                                  be excluded ({path regex}::{pattern regex}).
-
-  -e, --exclude-signatures TEXT   Specify signatures of matches that you
-                                  explicitly want to exclude from the scan,
-                                  and mark as okay. These signatures are
-                                  generated during the scan process, and
-                                  reported out with each individual match.
-                                  This option can be specified multiple times,
-                                  to exclude as many signatures as you would
-                                  like.
-
+  -e, --exclude-signatures TEXT   [DEPRECATED] Use the exclude-findings config
+                                  option instead. Specify signatures of
+                                  matches that you explicitly want to exclude
+                                  from the scan, and mark as okay. These
+                                  signatures are generated during the scan
+                                  process, and reported out with each
+                                  individual match. This option can be
+                                  specified multiple times, to exclude as many
+                                  signatures as you would like.
   -od, --output-dir DIRECTORY     If specified, all issues will be written out
                                   as individual JSON files to a uniquely named
                                   directory under this one. This will help
                                   with keeping the results of individual runs
                                   of tartufo separated.
-
   --git-rules-repo TEXT           A file path, or git URL, pointing to a git
                                   repository containing regex rules to be used
                                   for scanning. By default, all .json files
@@ -112,27 +104,21 @@ Options:
                                   repository. --git-rules-files can be used to
                                   override this behavior and load specific
                                   files.
-
   --git-rules-files TEXT          Used in conjunction with --git-rules-repo,
                                   specify glob-style patterns for files from
                                   which to load the regex rules. Can be
                                   specified multiple times.
-
   --config FILE                   Read configuration from specified file.
                                   [default: tartufo.toml]
-
   -q, --quiet / --no-quiet        Quiet mode. No outputs are reported if the
                                   scan is successful and doesn't find any
                                   issues
-
   -v, --verbose                   Display more verbose output. Specifying this
                                   option multiple times will incrementally
                                   increase the amount of output.
-
   --log-timestamps / --no-log-timestamps
                                   Enable or disable timestamps in logging
-                                  messages.  [default: True]
-
+                                  messages.  [default: log-timestamps]
   --entropy-sensitivity INTEGER RANGE
                                   Modify entropy detection sensitivity. This
                                   is expressed as on a scale of 0 to 100,
@@ -140,8 +126,8 @@ Options:
                                   means "totally random". Decreasing the
                                   scanner's sensitivity increases the
                                   likelihood that a given string will be
-                                  identified as suspicious.  [default: 75]
-
+                                  identified as suspicious.  [default: 75;
+                                  0<=x<=100]
   -b64, --b64-entropy-score TEXT  [DEPRECATED] Use `--entropy-sensitivity`.
                                   Modify the base64 entropy score. If a value
                                   greater than the default (4.5 in a range of
@@ -150,7 +136,6 @@ Options:
                                   randomized strings. A lower value lists
                                   lower entropy base64 strings (shorter or
                                   less randomized strings).
-
   -hex, --hex-entropy-score TEXT  [DEPRECATED] Use `--entropy-sensitivity`.
                                   Modify the hexadecimal entropy score. If a
                                   value greater than the default (3.0 in a
@@ -160,16 +145,14 @@ Options:
                                   value lists lower entropy hexadecimal
                                   strings (shorter or less randomized
                                   strings).
-
   -V, --version                   Show the version and exit.
   -h, --help                      Show this message and exit.
 
 Commands:
-  scan-folder       Scan a folder.
-  scan-remote-repo  Automatically clone and scan a remote git repository.
   pre-commit        Scan staged changes in a pre-commit hook.
+  scan-remote-repo  Automatically clone and scan a remote git repository.
+  scan-folder       Scan a folder.
   scan-local-repo   Scan a repository already cloned to your local system.
-
 ```
 
 ## Contributing
