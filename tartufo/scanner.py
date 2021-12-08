@@ -151,7 +151,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     global_options: types.GlobalOptions
     logger: logging.Logger
     _scan_lock: threading.Lock = threading.Lock()
-    _excluded_signatures: Tuple[str, ...] = ()
+    _excluded_signatures: Optional[Tuple[str, ...]] = None
     _config_data: MutableMapping[str, Any] = {}
 
     def __init__(self, options: types.GlobalOptions) -> None:
@@ -349,10 +349,10 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         self._config_data = data
 
     @cached_property
-    def excluded_signatures(self) -> tuple:
-        if len(self._excluded_signatures) == 0:
+    def excluded_signatures(self) -> Tuple[str, ...]:
+        if self._excluded_signatures is None:
             signatures = list(self.global_options.exclude_signatures or ())
-            exclude_signatures = list(self.config_data.get("exclude_signatures", ()))
+            signatures += list(self.config_data.get("exclude_signatures", ()))
             try:
                 signatures = signatures + [
                     x for x in exclude_signatures if x not in signatures
