@@ -351,17 +351,15 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     @cached_property
     def excluded_signatures(self) -> Tuple[str, ...]:
         if self._excluded_signatures is None:
-            signatures = list(self.global_options.exclude_signatures or ())
-            signatures += list(self.config_data.get("exclude_signatures", ()))
+            signatures = (tuple(self.global_options.exclude_signatures) or ()) + (
+                tuple(self.config_data.get("exclude_signatures", ()))
+            )
             try:
-                signatures = signatures + [
-                    x for x in exclude_signatures if x not in signatures
-                ]
-                signatures = [
+                signatures = tuple(
                     signature["signature"]
-                    for signature in cast(List[Dict[str, str]], signatures)
-                ]
-                self._excluded_signatures = tuple(cast(List[str], signatures))
+                    for signature in cast(Tuple[Dict[str, str]], signatures)
+                )
+                self._excluded_signatures = tuple(set(signatures))
                 return self._excluded_signatures
             except TypeError:
                 warnings.warn(
@@ -372,8 +370,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                     DeprecationWarning,
                 )
             try:
-                signatures = list(set(signatures + exclude_signatures))
-                self._excluded_signatures = tuple(cast(List[str], signatures))
+                self._excluded_signatures = tuple(set(cast(Tuple[str], signatures)))
             except TypeError as exc:
                 raise types.ConfigException(
                     f"Combination of old and new format of exclude-signatures is not supported.\n{exc}"

@@ -100,7 +100,7 @@ class RepoLoadTests(ScannerTestCase):
             self.data_dir / "pyproject.toml",
             {"exclude_signatures": ["foo"]},
         )
-        self.global_options.exclude_signatures = ("bar")
+        self.global_options.exclude_signatures = ("bar",)
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, str(self.data_dir)
         )
