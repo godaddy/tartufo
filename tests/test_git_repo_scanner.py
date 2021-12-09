@@ -465,7 +465,7 @@ class ExcludedSignaturesTests(ScannerTestCase):
         )
         self.assertEqual(test_scanner.excluded_signatures, ("bar/",))
 
-    def test_error_is_raised_when_two_styles_signatures_are_configured(self):
+    def test_error_is_not_raised_when_two_styles_signatures_are_configured(self):
         self.global_options.exclude_signatures = [
             "foo/",
             {"signature": "bar/", "reason": "path pattern"},
@@ -473,11 +473,7 @@ class ExcludedSignaturesTests(ScannerTestCase):
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
-        error_msg = (
-            "Combination of old and new format of exclude-signatures is not supported."
-        )
-        with self.assertRaisesRegex(types.ConfigException, error_msg):
-            list(test_scanner.excluded_signatures)
+        self.assertCountEqual(test_scanner.excluded_signatures, ("foo/", "bar/"))
 
 
 if __name__ == "__main__":

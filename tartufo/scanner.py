@@ -19,7 +19,6 @@ from typing import (
     Pattern,
     Set,
     Tuple,
-    cast,
 )
 import warnings
 
@@ -351,17 +350,26 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     @cached_property
     def excluded_signatures(self) -> Tuple[str, ...]:
         if self._excluded_signatures is None:
-            signatures = (tuple(self.global_options.exclude_signatures) or ()) + (
-                tuple(self.config_data.get("exclude_signatures", ()))
-            )
-            try:
-                signatures = tuple(
-                    signature["signature"]
-                    for signature in cast(Tuple[Dict[str, str]], signatures)
-                )
-                self._excluded_signatures = tuple(set(signatures))
-                return self._excluded_signatures
-            except TypeError:
+            signatures: Set[str] = set()
+            deprecated = False
+            for signature in tuple(
+                self.global_options.exclude_signatures or []
+            ) + tuple(self.config_data.get("exclude_signatures", [])):
+                if isinstance(signature, dict):
+                    try:
+                        signatures.add(signature["signature"])
+                    except KeyError as exc:
+                        raise types.ConfigException(
+                            f"Required key signature missing in exclude-signatures"
+                        ) from exc
+                elif isinstance(signature, str):
+                    deprecated = True
+                    signatures.add(signature)
+                else:
+                    raise types.ConfigException(
+                        f"{type(signature).__name__} signature is illegal in exclude-signatures"
+                    )
+            if deprecated:
                 warnings.warn(
                     "Configuring exclude-signatures as string has been deprecated and support for this format will "
                     "be removed in the future. Please make sure to update your exclude-signatures configuration to "
@@ -369,12 +377,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                     "reason of excluding the signature'}]",
                     DeprecationWarning,
                 )
-            try:
-                self._excluded_signatures = tuple(set(cast(Tuple[str], signatures)))
-            except TypeError as exc:
-                raise types.ConfigException(
-                    f"Combination of old and new format of exclude-signatures is not supported.\n{exc}"
-                )
+            self._excluded_signatures = tuple(signatures)
         return self._excluded_signatures
 
     def signature_is_excluded(self, blob: str, file_path: str) -> bool:
