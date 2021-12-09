@@ -1,4 +1,4 @@
-FROM python:3-alpine as base
+FROM python:3-alpine3.14 as base
 
 WORKDIR /app
 
@@ -7,7 +7,7 @@ FROM base as builder
 ENV PIP_DEFAULT_TIMEOUT=100 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_NO_CACHE_DIR=1 \
-    POETRY_VERSION=1.1.2
+    POETRY_VERSION=1.1.12
 
 RUN apk add --no-cache cargo gcc libffi-dev musl-dev openssl-dev rust libgit2-dev
 RUN pip --no-cache-dir install "poetry==$POETRY_VERSION"
