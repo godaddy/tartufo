@@ -100,18 +100,14 @@ class RepoLoadTests(ScannerTestCase):
     def test_extra_signatures_get_added(self, mock_load: mock.MagicMock):
         mock_load.return_value = (
             self.data_dir / "pyproject.toml",
-            {
-                "exclude_signatures": ["foo", "bar"],
-                "exclude_findings": [{"signature": "foo/bar", "reason": "test reason"}],
-            },
+            {"exclude_signatures": ["foo"]},
         )
+        self.global_options.exclude_signatures = ("bar",)
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, str(self.data_dir)
         )
         test_scanner.load_repo("../tartufo")
-        self.assertEqual(
-            sorted(test_scanner.excluded_findings), ["bar", "foo", "foo/bar"]
-        )
+        self.assertCountEqual(test_scanner.excluded_signatures, ["bar", "foo"])
 
 
 class FilterSubmoduleTests(ScannerTestCase):
@@ -453,6 +449,34 @@ class ScanFilenameTests(ScannerTestCase):
 
         mock_header_length.assert_not_called()
 
+
+class ExcludedSignaturesTests(ScannerTestCase):
+    def test_old_style_signatures_are_processed(self):
+        self.global_options.exclude_signatures = ["bar/"]
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        self.assertEqual(test_scanner.excluded_signatures, ("bar/",))
+
+    def test_new_style_signatures_are_processed(self):
+        self.global_options.exclude_signatures = [
+            {"signature": "bar/", "reason": "path pattern"}
+        ]
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        self.assertEqual(test_scanner.excluded_signatures, ("bar/",))
+
+    def test_error_is_not_raised_when_two_styles_signatures_are_configured(self):
+        self.global_options.exclude_signatures = [
+            "foo/",
+            {"signature": "bar/", "reason": "path pattern"},
+        ]
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        self.assertCountEqual(test_scanner.excluded_signatures, ("foo/", "bar/"))
+        
 
 class IncludedPathsTests(ScannerTestCase):
     def test_old_style_included_paths_are_processed(self):

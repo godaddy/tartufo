@@ -69,7 +69,7 @@ def echo_result(
             "output_dir": str(output_dir) if output_dir else None,
             "excluded_paths": [str(path.pattern) for path in scanner.excluded_paths],
             "excluded_signatures": [
-                str(signature) for signature in options.exclude_signatures
+                str(signature) for signature in scanner.excluded_signatures
             ],
             "exclude_entropy_patterns": [
                 str(pattern) for pattern in options.exclude_entropy_patterns
@@ -109,7 +109,7 @@ def echo_result(
             click.echo("\nExcluded paths:")
             click.echo("\n".join([str(path) for path in scanner.excluded_paths]))
             click.echo("\nExcluded signatures:")
-            click.echo("\n".join(options.exclude_signatures))
+            click.echo("\n".join(scanner.excluded_signatures))
             click.echo("\nExcluded entropy patterns:")
             click.echo("\n".join(str(path) for path in scanner.excluded_entropy))
 

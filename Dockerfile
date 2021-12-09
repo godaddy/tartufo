@@ -9,7 +9,7 @@ ENV PIP_DEFAULT_TIMEOUT=100 \
     PIP_NO_CACHE_DIR=1 \
     POETRY_VERSION=1.1.2
 
-RUN apk add --no-cache cargo gcc libffi-dev musl-dev openssl-dev rust
+RUN apk add --no-cache cargo gcc libffi-dev musl-dev openssl-dev rust libgit2-dev
 RUN pip --no-cache-dir install "poetry==$POETRY_VERSION"
 RUN python -m venv /venv
 
