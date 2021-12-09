@@ -360,7 +360,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                         signatures.add(signature["signature"])
                     except KeyError as exc:
                         raise types.ConfigException(
-                            f"Required key signature missing in exclude-signatures"
+                            "Required key signature missing in exclude-signatures"
                         ) from exc
                 elif isinstance(signature, str):
                     deprecated = True
