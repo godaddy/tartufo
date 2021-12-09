@@ -150,7 +150,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     global_options: types.GlobalOptions
     logger: logging.Logger
     _scan_lock: threading.Lock = threading.Lock()
-    _excluded_findings: Tuple[str, ...] = ()
+    _excluded_signatures: Optional[Tuple[str, ...]] = None
     _config_data: MutableMapping[str, Any] = {}
 
     def __init__(self, options: types.GlobalOptions) -> None:
@@ -348,25 +348,37 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         self._config_data = data
 
     @cached_property
-    def excluded_findings(self) -> tuple:
-        configured_signatures = []
-        signatures = self.config_data.get("exclude_signatures", None)
-        if signatures:
-            warnings.warn(
-                "--exclude-signatures has been deprecated and will be removed in a future version. "
-                "Make sure all the exclusions are moved to exclude-findings section with new format. Example: "
-                "exclude-findings = [{signature='signature', reason='The reason of excluding the signature'}]",
-                DeprecationWarning,
-            )
-            configured_signatures.extend(signatures)
-        findings = self.config_data.get("exclude_findings", None)
-        if findings:
-            configured_signatures.extend([finding["signature"] for finding in findings])
-
-        self._excluded_findings = tuple(
-            set(self.global_options.exclude_signatures + tuple(configured_signatures))
-        )
-        return self._excluded_findings
+    def excluded_signatures(self) -> Tuple[str, ...]:
+        if self._excluded_signatures is None:
+            signatures: Set[str] = set()
+            deprecated = False
+            for signature in tuple(
+                self.global_options.exclude_signatures or []
+            ) + tuple(self.config_data.get("exclude_signatures", [])):
+                if isinstance(signature, dict):
+                    try:
+                        signatures.add(signature["signature"])
+                    except KeyError as exc:
+                        raise types.ConfigException(
+                            "Required key signature missing in exclude-signatures"
+                        ) from exc
+                elif isinstance(signature, str):
+                    deprecated = True
+                    signatures.add(signature)
+                else:
+                    raise types.ConfigException(
+                        f"{type(signature).__name__} signature is illegal in exclude-signatures"
+                    )
+            if deprecated:
+                warnings.warn(
+                    "Configuring exclude-signatures as string has been deprecated and support for this format will "
+                    "be removed in the future. Please make sure to update your exclude-signatures configuration to "
+                    "an array of tables. For example: exclude-signatures = [{signature='signature', reason='The "
+                    "reason of excluding the signature'}]",
+                    DeprecationWarning,
+                )
+            self._excluded_signatures = tuple(signatures)
+        return self._excluded_signatures
 
     def signature_is_excluded(self, blob: str, file_path: str) -> bool:
         """Find whether the signature of some data has been excluded in configuration.
@@ -376,8 +388,8 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         """
         return (
             blob
-            in self.excluded_findings  # Signatures themselves pop up as entropy matches
-            or util.generate_signature(blob, file_path) in self.excluded_findings
+            in self.excluded_signatures  # Signatures themselves pop up as entropy matches
+            or util.generate_signature(blob, file_path) in self.excluded_signatures
         )
 
     @staticmethod

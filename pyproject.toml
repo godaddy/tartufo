@@ -145,14 +145,10 @@ exclude-signatures = [
   "357841766ca69979608e4e7fb1da2addeafe6d15cade15466c39d903cc0488a8", # tests/data/scan_folder/test.txt
   "743b893e30777d9c4e28d3d341ca4ba1c2541a9c62b497dece75c2a64420e770", # tests/test_folder_scanner.py
   "358a1ae040ab71b3aafeb4318e5d9e318ff1b681c5bf0e99d381584a33ee7833", # tests/data/scan_folder/scan_sub_folder/sub_folder_test.txt
+  "9d1b278fa384c9dc58d607130d97740910309d13b29f13f7ed6348738ea4f32c", # tests/test_folder_scanner.py 16-Nov-2021
+  "9f675d4d7f43e484e07fb199a1e7ec372ef204631c1f4ec054acc3119fbde4cf", # build_and_publish_docker_file 13-Jun-2019
+  "88152f1d10077f417ee5aea5fa86adaa5b74d3f2de2e87ce4b4aa5cd79c7b2f5", # nothing file, 30-Dec-2016
 ]
-
-exclude-findings = [
-  {signature="9d1b278fa384c9dc58d607130d97740910309d13b29f13f7ed6348738ea4f32c", reason="High entropy string added in test_folder_scanner file on 16th November 2021"},
-  {signature="9f675d4d7f43e484e07fb199a1e7ec372ef204631c1f4ec054acc3119fbde4cf", reason="High entropy string added in build_and_publish_docker file on 13th June 2019"},
-  {signature="88152f1d10077f417ee5aea5fa86adaa5b74d3f2de2e87ce4b4aa5cd79c7b2f5", reason="High entropy string added in nothing file on 30th December 2016"},
-]
-
 json = false
 regex = true
 repo-path = "."
