@@ -63,8 +63,8 @@ class GlobalOptions:
     entropy: bool
     regex: bool
     scan_filenames: bool
-    include_path_patterns: Tuple[str, ...]
-    exclude_path_patterns: Tuple[str, ...]
+    include_path_patterns: Union[Tuple[str, ...], Tuple[Dict[str, str], ...]]
+    exclude_path_patterns: Union[Tuple[str, ...], Tuple[Dict[str, str], ...]]
     exclude_entropy_patterns: Tuple[Dict[str, str], ...]
     exclude_signatures: Union[Tuple[Dict[str, str], ...], Tuple[str, ...]]
     output_dir: Optional[str]

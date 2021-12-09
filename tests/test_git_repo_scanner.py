@@ -61,8 +61,9 @@ class RepoLoadTests(ScannerTestCase):
     def test_extra_inclusions_get_added(self, mock_load: mock.MagicMock):
         mock_load.return_value = (
             self.data_dir / "pyproject.toml",
-            {"include_paths": "include-files", "include_path_patterns": ("foo/",)},
+            {"include_path_patterns": ("tartufo/", "scripts/")},
         )
+        self.global_options.include_path_patterns = ("foo/",)
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, str(self.data_dir)
         )
@@ -77,8 +78,9 @@ class RepoLoadTests(ScannerTestCase):
     def test_extra_exclusions_get_added(self, mock_load: mock.MagicMock):
         mock_load.return_value = (
             self.data_dir / "pyproject.toml",
-            {"exclude_paths": "exclude-files", "exclude_path_patterns": ("bar/",)},
+            {"exclude_path_patterns": ("tests/", r"\.venv/", r".*\.egg-info/")},
         )
+        self.global_options.exclude_path_patterns = ("bar/",)
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, str(self.data_dir)
         )
@@ -474,6 +476,67 @@ class ExcludedSignaturesTests(ScannerTestCase):
             self.global_options, self.git_options, "."
         )
         self.assertCountEqual(test_scanner.excluded_signatures, ("foo/", "bar/"))
+
+
+class IncludedPathsTests(ScannerTestCase):
+    def test_old_style_included_paths_are_processed(self):
+        self.global_options.include_path_patterns = ["bar/"]
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        self.assertEqual(test_scanner.included_paths, [re.compile("bar/")])
+
+    def test_new_style_included_paths_are_processed(self):
+        self.global_options.include_path_patterns = [
+            {"path-pattern": "bar/", "reason": "path pattern"}
+        ]
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        self.assertEqual(test_scanner.included_paths, [re.compile("bar/")])
+
+    def test_error_is_not_raised_when_two_styles_included_paths_are_configured(self):
+        self.global_options.include_path_patterns = [
+            "foo/",
+            {"path-pattern": "bar/", "reason": "path pattern"},
+        ]
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        self.assertCountEqual(
+            test_scanner.included_paths, [re.compile("foo/"), re.compile("bar/")]
+        )
+
+
+class ExcludedPathsTests(ScannerTestCase):
+    def test_old_style_excluded_paths_are_processed(self):
+        self.global_options.exclude_path_patterns = ["bar/"]
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        self.assertEqual(test_scanner.excluded_paths, [re.compile("bar/")])
+
+    def test_new_style_excluded_paths_are_processed(self):
+        self.global_options.exclude_path_patterns = [
+            {"path-pattern": "bar/", "reason": "path pattern"}
+        ]
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        self.assertEqual(test_scanner.excluded_paths, [re.compile("bar/")])
+
+    @mock.patch("tartufo.scanner.GitScanner.filter_submodules", mock.MagicMock())
+    def test_error_is_not_raised_when_two_styles_excluded_paths_are_configured(self):
+        self.global_options.exclude_path_patterns = [
+            "foo/",
+            {"path-pattern": "bar/", "reason": "path pattern"},
+        ]
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        self.assertCountEqual(
+            test_scanner.excluded_paths, [re.compile("foo/"), re.compile("bar/")]
+        )
 
 
 if __name__ == "__main__":
