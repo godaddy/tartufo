@@ -19,7 +19,6 @@ from typing import (
     Pattern,
     Set,
     Tuple,
-    cast,
 )
 import warnings
 
@@ -250,30 +249,29 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
 
     @property
     def included_paths(self) -> List[Pattern]:
-        """Get a list of regexes used as an exclusive list of paths to scan.
-
-        :rtype: List[Pattern]
-        """
+        """Get a list of regexes used as an exclusive list of paths to scan"""
         if self._included_paths is None:
             self.logger.info("Initializing included paths")
-            patterns = list(self.global_options.include_path_patterns or ())  # type: ignore
-            include_patterns = list(self.config_data.get("include_path_patterns", ()))
-            try:
-                patterns = patterns + [x for x in include_patterns if x not in patterns]
-                patterns = [
-                    pattern["path-pattern"]
-                    for pattern in cast(List[Dict[str, str]], patterns)
-                ]
-                self._included_paths = (
-                    config.compile_path_rules(set(cast(List[str], patterns)))
-                    if patterns
-                    else []
-                )
-                self.logger.debug(
-                    "Included paths was initialized as: %s", self._included_paths
-                )
-                return self._included_paths
-            except TypeError:
+            patterns: Set[str] = set()
+            deprecated = False
+            for pattern in tuple(
+                self.global_options.include_path_patterns or []
+            ) + tuple(self.config_data.get("include_path_patterns", [])):
+                if isinstance(pattern, dict):
+                    try:
+                        patterns.add(pattern["path-pattern"])
+                    except KeyError as exc:
+                        raise types.ConfigException(
+                            "Required key path-pattern missing in include-path-patterns"
+                        ) from exc
+                elif isinstance(pattern, str):
+                    deprecated = True
+                    patterns.add(pattern)
+                else:
+                    raise types.ConfigException(
+                        f"{type(pattern).__name__} pattern is illegal in include-path-patterns"
+                    )
+            if deprecated:
                 warnings.warn(
                     "Old format of --include-path-patterns option and config file setup include-path-patterns "
                     "= ['inclusion pattern'] has been deprecated and will be removed in a future version. "
@@ -281,21 +279,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                     "[{path-pattern='inclusion pattern',reason='reason for inclusion'}] in the config file",
                     DeprecationWarning,
                 )
-            try:
-                patterns = list(set(patterns + include_patterns))
-                self._included_paths = (
-                    config.compile_path_rules(set(cast(List[str], patterns)))
-                    if patterns
-                    else []
-                )
-                self.logger.debug(
-                    "Included paths was initialized as: %s", self._included_paths
-                )
-                return self._included_paths
-            except TypeError as exc:
-                raise types.ConfigException(
-                    f"Combination of old and new format of include-path-patterns will not be supported.\n{exc}"
-                )
+            self._included_paths = config.compile_path_rules(patterns)
         return self._included_paths
 
     @property
@@ -315,52 +299,37 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
 
     @property
     def excluded_paths(self) -> List[Pattern]:
-        """Get a list of regexes used to match paths to exclude from the scan.
-
-        :rtype: List[Pattern]
-        """
+        """Get a list of regexes used to match paths to exclude from the scan"""
         if self._excluded_paths is None:
             self.logger.info("Initializing excluded paths")
-            patterns = list(self.global_options.exclude_path_patterns or ())  # type: ignore
-            exclude_patterns = list(self.config_data.get("exclude_path_patterns", ()))
-            try:
-                patterns = patterns + [x for x in exclude_patterns if x not in patterns]
-                patterns = [
-                    pattern["path-pattern"]
-                    for pattern in cast(List[Dict[str, str]], patterns)
-                ]
-                self._excluded_paths = (
-                    config.compile_path_rules(set(cast(List[str], patterns)))
-                    if patterns
-                    else []
-                )
-                self.logger.debug(
-                    "Excluded paths was initialized as: %s", self._excluded_paths
-                )
-                return self._excluded_paths
-            except TypeError:
+            patterns: Set[str] = set()
+            deprecated = False
+            for pattern in tuple(
+                self.global_options.exclude_path_patterns or []
+            ) + tuple(self.config_data.get("exclude_path_patterns", [])):
+                if isinstance(pattern, dict):
+                    try:
+                        patterns.add(pattern["path-pattern"])
+                    except KeyError as exc:
+                        raise types.ConfigException(
+                            "Required key path-pattern missing in exclude-path-patterns"
+                        ) from exc
+                elif isinstance(pattern, str):
+                    deprecated = True
+                    patterns.add(pattern)
+                else:
+                    raise types.ConfigException(
+                        f"{type(pattern).__name__} pattern is illegal in exclude-path-patterns"
+                    )
+            if deprecated:
                 warnings.warn(
-                    "Old format of '--exclude-path-patterns option' and config file setup 'exclude-path-patterns "
-                    "= ['exclusion pattern']' has been deprecated and will be removed in a future version. "
+                    "Old format of --exclude-path-patterns option and config file setup exclude-path-patterns "
+                    "= ['exclusion pattern'] has been deprecated and will be removed in a future version. "
                     "Make sure all the exclusions are set up using new pattern i.e. exclude-path-patterns = "
                     "[{path-pattern='exclusion pattern',reason='reason for exclusion'}] in the config file",
                     DeprecationWarning,
                 )
-            try:
-                patterns = list(set(patterns + exclude_patterns))
-                self._excluded_paths = (
-                    config.compile_path_rules(set(cast(List[str], patterns)))
-                    if patterns
-                    else []
-                )
-                self.logger.debug(
-                    "Excluded paths was initialized as: %s", self._excluded_paths
-                )
-                return self._excluded_paths
-            except TypeError as exc:
-                raise types.ConfigException(
-                    f"Combination of old and new format of exclude-path-patterns will not be supported.\n{exc}"
-                )
+            self._excluded_paths = config.compile_path_rules(patterns)
         return self._excluded_paths
 
     @property

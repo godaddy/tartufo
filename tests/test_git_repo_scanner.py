@@ -471,7 +471,7 @@ class IncludedPathsTests(ScannerTestCase):
         )
         self.assertEqual(test_scanner.included_paths, [re.compile("bar/")])
 
-    def test_error_is_raised_when_two_styles_included_paths_are_configured(self):
+    def test_error_is_not_raised_when_two_styles_included_paths_are_configured(self):
         self.global_options.include_path_patterns = [
             "foo/",
             {"path-pattern": "bar/", "reason": "path pattern"},
@@ -479,9 +479,9 @@ class IncludedPathsTests(ScannerTestCase):
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
-        error_msg = "Combination of old and new format of include-path-patterns will not be supported."
-        with self.assertRaisesRegex(types.ConfigException, error_msg):
-            list(test_scanner.included_paths)
+        self.assertCountEqual(
+            test_scanner.included_paths, [re.compile("foo/"), re.compile("bar/")]
+        )
 
 
 class ExcludedPathsTests(ScannerTestCase):
@@ -502,7 +502,7 @@ class ExcludedPathsTests(ScannerTestCase):
         self.assertEqual(test_scanner.excluded_paths, [re.compile("bar/")])
 
     @mock.patch("tartufo.scanner.GitScanner.filter_submodules", mock.MagicMock())
-    def test_error_is_raised_when_two_styles_excluded_paths_are_configured(self):
+    def test_error_is_not_raised_when_two_styles_excluded_paths_are_configured(self):
         self.global_options.exclude_path_patterns = [
             "foo/",
             {"path-pattern": "bar/", "reason": "path pattern"},
@@ -510,9 +510,9 @@ class ExcludedPathsTests(ScannerTestCase):
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
-        error_msg = "Combination of old and new format of exclude-path-patterns will not be supported."
-        with self.assertRaisesRegex(types.ConfigException, error_msg):
-            list(test_scanner.excluded_paths)
+        self.assertCountEqual(
+            test_scanner.excluded_paths, [re.compile("foo/"), re.compile("bar/")]
+        )
 
 
 if __name__ == "__main__":
