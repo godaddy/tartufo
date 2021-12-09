@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import abc
+from collections import Counter
+from functools import lru_cache
 import hashlib
 import logging
 import math
 import pathlib
 import re
-import warnings
-from functools import lru_cache
+import threading
 from typing import (
     Any,
     Dict,
@@ -19,16 +20,24 @@ from typing import (
     Set,
     Tuple,
 )
+import warnings
 
+from cached_property import cached_property
 import click
-
 import git
+import pygit2
 
 from tartufo import config, types, util
-from tartufo.types import BranchNotFoundException, Rule, TartufoException
+from tartufo.types import (
+    BranchNotFoundException,
+    Rule,
+    TartufoException,
+    MatchType,
+    Scope,
+)
 
-BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
-HEX_CHARS = "1234567890abcdefABCDEF"
+BASE64_REGEX = re.compile(r"[A-Z0-9=+/_-]+", re.IGNORECASE)
+HEX_REGEX = re.compile(r"[0-9A-F]+", re.IGNORECASE)
 
 
 class Issue:
@@ -102,13 +111,13 @@ class Issue:
             self.matched_string, util.style_warning(self.matched_string)
         )
         output.append(self.OUTPUT_SEPARATOR)
-        output.append(util.style_ok("Reason: {}".format(self.issue_type.value)))  # type: ignore
+        output.append(util.style_ok(f"Reason: {self.issue_type.value}"))  # type: ignore
         if self.issue_detail:
-            output.append(util.style_ok("Detail: {}".format(self.issue_detail)))
-        output.append(util.style_ok("Filepath: {}".format(self.chunk.file_path)))
-        output.append(util.style_ok("Signature: {}".format(self.signature)))
+            output.append(util.style_ok(f"Detail: {self.issue_detail}"))
+        output.append(util.style_ok(f"Filepath: {self.chunk.file_path}"))
+        output.append(util.style_ok(f"Signature: {self.signature}"))
         output += [
-            util.style_ok("{}: {}".format(k.replace("_", " ").capitalize(), v))
+            util.style_ok(f"{k.replace('_', ' ').capitalize()}: {v}")
             for k, v in self.chunk.metadata.items()
         ]
 
@@ -120,7 +129,8 @@ class Issue:
         return self.__str__().encode("utf8")
 
 
-class ScannerBase(abc.ABC):
+# pylint: disable=too-many-public-methods
+class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     """Provide the base, generic functionality needed by all scanners.
 
     In fact, this contains all of the actual scanning logic. This part of the
@@ -131,54 +141,145 @@ class ScannerBase(abc.ABC):
     all the individual pieces of content to be scanned.
     """
 
-    _issues: Optional[List[Issue]] = None
+    _issues: List[Issue] = []
+    _completed: bool = False
     _included_paths: Optional[List[Pattern]] = None
     _excluded_paths: Optional[List[Pattern]] = None
     _excluded_entropy: Optional[List[Rule]] = None
-    _rules_regexes: Optional[Dict[str, Rule]] = None
+    _rules_regexes: Optional[Set[Rule]] = None
     global_options: types.GlobalOptions
     logger: logging.Logger
+    _scan_lock: threading.Lock = threading.Lock()
+    _excluded_signatures: Optional[Tuple[str, ...]] = None
+    _config_data: MutableMapping[str, Any] = {}
 
     def __init__(self, options: types.GlobalOptions) -> None:
         self.global_options = options
         self.logger = logging.getLogger(__name__)
 
+    def compute_scaled_entropy_limit(self, maximum_bitrate: float) -> float:
+        """Determine low entropy cutoff for specified bitrate
+
+        :param maximum_bitrate: How many bits does each character represent?
+        :returns: Entropy detection threshold scaled to the input bitrate
+        """
+
+        if self.global_options.entropy_sensitivity is None:
+            sensitivity = 75
+        else:
+            sensitivity = self.global_options.entropy_sensitivity
+        return float(sensitivity) / 100.0 * maximum_bitrate
+
+    @cached_property
+    def hex_entropy_limit(self) -> float:
+        """Returns low entropy limit for suspicious hexadecimal encodings"""
+
+        # For backwards compatibility, allow the caller to manipulate this score
+        # # directly (but complain about it).
+        if self.global_options.hex_entropy_score:
+            warnings.warn(
+                "--hex-entropy-score is deprecated. Use --entropy-sensitivity instead.",
+                DeprecationWarning,
+            )
+            return self.global_options.hex_entropy_score
+
+        # Each hexadecimal digit represents a 4-bit number, so we want to scale
+        # the base score by this amount to account for the efficiency of the
+        # string representation we're examining.
+        return self.compute_scaled_entropy_limit(4.0)
+
+    @cached_property
+    def b64_entropy_limit(self) -> float:
+        """Returns low entropy limit for suspicious base64 encodings"""
+
+        # For backwards compatibility, allow the caller to manipulate this score
+        # # directly (but complain about it).
+        if self.global_options.b64_entropy_score:
+            warnings.warn(
+                "--b64-entropy-score is deprecated. Use --entropy-sensitivity instead.",
+                DeprecationWarning,
+            )
+            return self.global_options.b64_entropy_score
+
+        # Each 4-character base64 group represents 3 8-bit bytes, i.e. an effective
+        # bit rate of 24/4 = 6 bits per character. We want to scale the base score
+        # by this amount to account for the efficiency of the string representation
+        # we're examining.
+        return self.compute_scaled_entropy_limit(6.0)
+
+    @property
+    def completed(self) -> bool:
+        """Return True if scan has completed
+
+        :returns: True if scan has completed; False if scan is in progress
+        """
+
+        return self._completed
+
     @property
     def issues(self) -> List[Issue]:
         """Get a list of issues found during the scan.
 
-        If a scan has not yet been run, run it.
+        If the scan is still in progress, force it to complete first.
 
-        :return: Any issues found during the scan.
-        :rtype: List[Issue]
+        :returns: Any issues found during the scan.
         """
-        if self._issues is None:
-            self.logger.debug("Issues called before scan. Calling scan now.")
-            self._issues = self.scan()
+
+        # Note there is no locking in this method (which is readonly). If the
+        # first scan is not completed (or even if we mistakenly believe it is
+        # not completed, due to a race), we call scan (which is protected) to
+        # ensure the issues list is complete. By the time we reach the return
+        # statement here, we know _issues is stable.
+
+        if not self.completed:
+            self.logger.debug(
+                "Issues called before scan completed. Finishing scan now."
+            )
+            list(self.scan())
+
         return self._issues
 
     @property
-    def included_paths(self) -> List[Pattern]:
-        """Get a list of regexes used as an exclusive list of paths to scan.
+    def config_data(self):
+        return self._config_data
 
-        :rtype: List[Pattern]
-        """
+    @config_data.setter
+    def config_data(self, data: MutableMapping[str, Any]) -> None:
+        self._config_data = data
+
+    @property
+    def included_paths(self) -> List[Pattern]:
+        """Get a list of regexes used as an exclusive list of paths to scan"""
         if self._included_paths is None:
             self.logger.info("Initializing included paths")
-            patterns = list(self.global_options.include_path_patterns or ())
-            if self.global_options.include_paths:
+            patterns: Set[str] = set()
+            deprecated = False
+            for pattern in tuple(
+                self.global_options.include_path_patterns or []
+            ) + tuple(self.config_data.get("include_path_patterns", [])):
+                if isinstance(pattern, dict):
+                    try:
+                        patterns.add(pattern["path-pattern"])
+                    except KeyError as exc:
+                        raise types.ConfigException(
+                            "Required key path-pattern missing in include-path-patterns"
+                        ) from exc
+                elif isinstance(pattern, str):
+                    deprecated = True
+                    patterns.add(pattern)
+                else:
+                    raise types.ConfigException(
+                        f"{type(pattern).__name__} pattern is illegal in include-path-patterns"
+                    )
+            if deprecated:
                 warnings.warn(
-                    "--include-paths is deprecated and will be removed in v3.0. Use --include-path-patterns instead.",
+                    "Old format of --include-path-patterns option and config file setup include-path-patterns "
+                    "= ['inclusion pattern'] has been deprecated and will be removed in a future version. "
+                    "Make sure all the inclusions are set up using new pattern i.e. include-path-patterns = "
+                    "[{path-pattern='inclusion pattern',reason='reason for inclusion'}] in the config file",
                     DeprecationWarning,
                 )
-                patterns += self.global_options.include_paths.readlines()
-                self.global_options.include_paths.close()
-            self._included_paths = (
-                config.compile_path_rules(set(patterns)) if patterns else []
-            )
-            self.logger.debug(
-                "Included paths was initialized as: %s", self._included_paths
-            )
+            self._included_paths = config.compile_path_rules(patterns)
         return self._included_paths
 
     @property
@@ -198,43 +299,54 @@ class ScannerBase(abc.ABC):
 
     @property
     def excluded_paths(self) -> List[Pattern]:
-        """Get a list of regexes used to match paths to exclude from the scan.
-
-        :rtype: List[Pattern]
-        """
+        """Get a list of regexes used to match paths to exclude from the scan"""
         if self._excluded_paths is None:
             self.logger.info("Initializing excluded paths")
-            patterns = list(self.global_options.exclude_path_patterns or ())
-            if self.global_options.exclude_paths:
+            patterns: Set[str] = set()
+            deprecated = False
+            for pattern in tuple(
+                self.global_options.exclude_path_patterns or []
+            ) + tuple(self.config_data.get("exclude_path_patterns", [])):
+                if isinstance(pattern, dict):
+                    try:
+                        patterns.add(pattern["path-pattern"])
+                    except KeyError as exc:
+                        raise types.ConfigException(
+                            "Required key path-pattern missing in exclude-path-patterns"
+                        ) from exc
+                elif isinstance(pattern, str):
+                    deprecated = True
+                    patterns.add(pattern)
+                else:
+                    raise types.ConfigException(
+                        f"{type(pattern).__name__} pattern is illegal in exclude-path-patterns"
+                    )
+            if deprecated:
                 warnings.warn(
-                    "--exclude-paths is deprecated and will be removed in v3.0. Use --exclude-path-patterns instead.",
+                    "Old format of --exclude-path-patterns option and config file setup exclude-path-patterns "
+                    "= ['exclusion pattern'] has been deprecated and will be removed in a future version. "
+                    "Make sure all the exclusions are set up using new pattern i.e. exclude-path-patterns = "
+                    "[{path-pattern='exclusion pattern',reason='reason for exclusion'}] in the config file",
                     DeprecationWarning,
                 )
-                patterns += self.global_options.exclude_paths.readlines()
-                self.global_options.exclude_paths.close()
-            self._excluded_paths = (
-                config.compile_path_rules(set(patterns)) if patterns else []
-            )
-            self.logger.debug(
-                "Excluded paths was initialized as: %s", self._excluded_paths
-            )
+            self._excluded_paths = config.compile_path_rules(patterns)
         return self._excluded_paths
 
     @property
-    def rules_regexes(self) -> Dict[str, Rule]:
-        """Get a dictionary of regular expressions to scan the code for.
+    def rules_regexes(self) -> Set[Rule]:
+        """Get a set of regular expressions to scan the code for.
 
         :raises types.TartufoConfigException: If there was a problem compiling the rules
-        :rtype: Dict[str, Pattern]
         """
         if self._rules_regexes is None:
             self.logger.info("Initializing regex rules")
             try:
                 self._rules_regexes = config.configure_regexes(
-                    self.global_options.default_regexes,
-                    self.global_options.rules,
-                    self.global_options.git_rules_repo,
-                    self.global_options.git_rules_files,
+                    include_default=self.global_options.default_regexes,
+                    rules_files=self.global_options.rules,
+                    rule_patterns=self.global_options.rule_patterns,
+                    rules_repo=self.global_options.git_rules_repo,
+                    rules_repo_files=self.global_options.git_rules_files,
                 )
             except (ValueError, re.error) as exc:
                 self.logger.exception("Error loading regex rules", exc_info=exc)
@@ -271,6 +383,39 @@ class ScannerBase(abc.ABC):
             return False
         return True
 
+    @cached_property
+    def excluded_signatures(self) -> Tuple[str, ...]:
+        if self._excluded_signatures is None:
+            signatures: Set[str] = set()
+            deprecated = False
+            for signature in tuple(
+                self.global_options.exclude_signatures or []
+            ) + tuple(self.config_data.get("exclude_signatures", [])):
+                if isinstance(signature, dict):
+                    try:
+                        signatures.add(signature["signature"])
+                    except KeyError as exc:
+                        raise types.ConfigException(
+                            "Required key signature missing in exclude-signatures"
+                        ) from exc
+                elif isinstance(signature, str):
+                    deprecated = True
+                    signatures.add(signature)
+                else:
+                    raise types.ConfigException(
+                        f"{type(signature).__name__} signature is illegal in exclude-signatures"
+                    )
+            if deprecated:
+                warnings.warn(
+                    "Configuring exclude-signatures as string has been deprecated and support for this format will "
+                    "be removed in the future. Please make sure to update your exclude-signatures configuration to "
+                    "an array of tables. For example: exclude-signatures = [{signature='signature', reason='The "
+                    "reason of excluding the signature'}]",
+                    DeprecationWarning,
+                )
+            self._excluded_signatures = tuple(signatures)
+        return self._excluded_signatures
+
     def signature_is_excluded(self, blob: str, file_path: str) -> bool:
         """Find whether the signature of some data has been excluded in configuration.
 
@@ -279,9 +424,8 @@ class ScannerBase(abc.ABC):
         """
         return (
             blob
-            in self.global_options.exclude_signatures  # Signatures themselves pop up as entropy matches
-            or util.generate_signature(blob, file_path)
-            in self.global_options.exclude_signatures
+            in self.excluded_signatures  # Signatures themselves pop up as entropy matches
+            or util.generate_signature(blob, file_path) in self.excluded_signatures
         )
 
     @staticmethod
@@ -292,18 +436,25 @@ class ScannerBase(abc.ABC):
 
         :param rule: Rule to perform match
         :param string: string to match against rule pattern
+        :param line: Source line containing string of interest
         :param path: path to match against rule path_pattern
         :return: True if string and path matched, False otherwise.
         """
         match = False
-        if rule.re_match_type == "match":
+        if rule.re_match_scope == Scope.Word:
+            scope = string
+        elif rule.re_match_scope == Scope.Line:
+            scope = line
+        else:
+            raise TartufoException(f"Invalid value for scope: {rule.re_match_scope}")
+        if rule.re_match_type == MatchType.Match:
             if rule.pattern:
-                match = rule.pattern.match(string) is not None
+                match = rule.pattern.match(scope) is not None
             if rule.path_pattern:
                 match = match and rule.path_pattern.match(path) is not None
-        elif rule.re_match_type == "search":
+        elif rule.re_match_type == MatchType.Search:
             if rule.pattern:
-                match = rule.pattern.search(line) is not None
+                match = rule.pattern.search(scope) is not None
             if rule.path_pattern:
                 match = match and rule.path_pattern.search(path) is not None
 
@@ -313,6 +464,7 @@ class ScannerBase(abc.ABC):
         """Find whether the signature of some data has been excluded in configuration.
 
         :param string: String to check against rule pattern
+        :param line: Source line containing string of interest
         :param path: Path to check against rule path pattern
         :return: True if excluded, False otherwise
         """
@@ -323,131 +475,139 @@ class ScannerBase(abc.ABC):
         )
 
     @lru_cache(maxsize=None)
-    def calculate_entropy(self, data: str, char_set: str) -> float:
+    def calculate_entropy(self, data: str) -> float:
         """Calculate the Shannon entropy for a piece of data.
 
         This essentially calculates the overall probability for each character
-        in `data` to be to be present, based on the characters in `char_set`.
-        By doing this, we can tell how random a string appears to be.
+        in `data` to be to be present. By doing this, we can tell how random a
+        string appears to be.
 
         Borrowed from http://blog.dkbza.org/2007/05/scanning-data-for-entropy-anomalies.html
 
         :param data: The data to be scanned for its entropy
-        :param char_set: The character set used as a basis for the calculation
-        :return: The amount of entropy detected in the data.
+        :return: The amount of entropy detected in the data
         """
         if not data:
             return 0.0
+        frequency = Counter(data)
         entropy = 0.0
-        for char in char_set:
-            prob_x = float(data.count(char)) / len(data)
-            if prob_x > 0:
-                entropy += -prob_x * math.log2(prob_x)
+        float_size = float(len(data))
+        for count in frequency.values():
+            probability = float(count) / float_size
+            entropy += -probability * math.log2(probability)
         return entropy
 
-    def scan(self) -> List[Issue]:
+    def scan(self) -> Generator[Issue, None, None]:
         """Run the requested scans against the target data.
 
         This will iterate through all chunks of data as provided by the scanner
         implementation, and run all requested scans against it, as specified in
         `self.global_options`.
 
+        The scan method is thread-safe; if multiple concurrent scans are requested,
+        the first will run to completion while other callers are blocked (after
+        which they will each execute in turn, yielding cached issues without
+        repeating the underlying repository scan).
+
         :raises types.TartufoConfigException: If there were problems with the
           scanner's configuration
         """
-        issues: List[Issue] = []
-        if not any((self.global_options.entropy, self.global_options.regex)):
-            self.logger.error("No analysis requested.")
-            raise types.ConfigException("No analysis requested.")
-        if self.global_options.regex and not self.rules_regexes:
-            self.logger.error("Regex checks requested, but no regexes found.")
-            raise types.ConfigException("Regex checks requested, but no regexes found.")
 
-        self.logger.info("Starting scan...")
-        for chunk in self.chunks:
-            # Run regex scans first to trigger a potential fast fail for bad config
-            if self.global_options.regex and self.rules_regexes:
-                issues += self.scan_regex(chunk)
-            if self.global_options.entropy:
-                issues += self.scan_entropy(
-                    chunk,
-                    self.global_options.b64_entropy_score,
-                    self.global_options.hex_entropy_score,
+        # I cannot find any written description of the python memory model. The
+        # correctness of this code in multithreaded environments relies on the
+        # expectation that the write to _completed at the bottom of the critical
+        # section cannot be reordered to appear after the implicit release of
+        # _scan_lock (when viewed from a competing thread).
+        with self._scan_lock:
+            if self._completed:
+                yield from self._issues
+                return
+
+            if not any((self.global_options.entropy, self.global_options.regex)):
+                self.logger.error("No analysis requested.")
+                raise types.ConfigException("No analysis requested.")
+            if self.global_options.regex and not self.rules_regexes:
+                self.logger.error("Regex checks requested, but no regexes found.")
+                raise types.ConfigException(
+                    "Regex checks requested, but no regexes found."
                 )
-        self._issues = issues
-        self.logger.info("Found %d issues.", len(self._issues))
-        return self._issues
+
+            self.logger.info("Starting scan...")
+            self._issues = []
+            for chunk in self.chunks:
+                # Run regex scans first to trigger a potential fast fail for bad config
+                if self.global_options.regex and self.rules_regexes:
+                    for issue in self.scan_regex(chunk):
+                        self._issues.append(issue)
+                        yield issue
+                if self.global_options.entropy:
+                    for issue in self.scan_entropy(
+                        chunk,
+                    ):
+                        self._issues.append(issue)
+                        yield issue
+            self._completed = True
+            self.logger.info("Found %d issues.", len(self._issues))
 
     def scan_entropy(
-        self, chunk: types.Chunk, b64_entropy_score: float, hex_entropy_score: float
-    ) -> List[Issue]:
+        self,
+        chunk: types.Chunk,
+    ) -> Generator[Issue, None, None]:
         """Scan a chunk of data for apparent high entropy.
 
         :param chunk: The chunk of data to be scanned
-        :param b64_entropy_score: Base64 entropy score
-        :param hex_entropy_score: Hexadecimal entropy score
         """
-        issues: List[Issue] = []
+
         for line in chunk.contents.split("\n"):
             for word in line.split():
-                b64_strings = util.get_strings_of_set(word, BASE64_CHARS)
-                hex_strings = util.get_strings_of_set(word, HEX_CHARS)
-
-                for string in b64_strings:
-                    issues += self.evaluate_entropy_string(
-                        chunk, line, string, BASE64_CHARS, b64_entropy_score
+                for string in util.find_strings_by_regex(word, BASE64_REGEX):
+                    yield from self.evaluate_entropy_string(
+                        chunk, line, string, self.b64_entropy_limit
                     )
-
-                for string in hex_strings:
-                    issues += self.evaluate_entropy_string(
-                        chunk, line, string, HEX_CHARS, hex_entropy_score
+                for string in util.find_strings_by_regex(word, HEX_REGEX):
+                    yield from self.evaluate_entropy_string(
+                        chunk, line, string, self.hex_entropy_limit
                     )
-
-        return issues
 
     def evaluate_entropy_string(
         self,
         chunk: types.Chunk,
         line: str,
         string: str,
-        chars: str,
         min_entropy_score: float,
-    ) -> List[Issue]:
+    ) -> Generator[Issue, None, None]:
         """
         Check entropy string using entropy characters and score.
 
         :param chunk: The chunk of data to check
-        :param issues: Issue list to append any strings flagged
+        :param line: Source line containing string of interest
         :param string: String to check
-        :param chars: Characters to calculate score
         :param min_entropy_score: Minimum entropy score to flag
-        return: List of issues flagged
+        return: Iterator of issues flagged
         """
         if not self.signature_is_excluded(string, chunk.file_path):
-            entropy_score = self.calculate_entropy(string, chars)
+            entropy_score = self.calculate_entropy(string)
             if entropy_score > min_entropy_score:
                 if self.entropy_string_is_excluded(string, line, chunk.file_path):
                     self.logger.debug("line containing entropy was excluded: %s", line)
                 else:
-                    return [Issue(types.IssueType.Entropy, string, chunk)]
-        return []
+                    yield Issue(types.IssueType.Entropy, string, chunk)
 
-    def scan_regex(self, chunk: types.Chunk) -> List[Issue]:
+    def scan_regex(self, chunk: types.Chunk) -> Generator[Issue, None, None]:
         """Scan a chunk of data for matches against the configured regexes.
 
         :param chunk: The chunk of data to be scanned
         """
-        issues: List[Issue] = []
-        for key, rule in self.rules_regexes.items():
+
+        for rule in self.rules_regexes:
             if rule.path_pattern is None or rule.path_pattern.match(chunk.file_path):
                 found_strings = rule.pattern.findall(chunk.contents)
                 for match in found_strings:
                     # Filter out any explicitly "allowed" match signatures
                     if not self.signature_is_excluded(match, chunk.file_path):
                         issue = Issue(types.IssueType.RegEx, match, chunk)
-                        issue.issue_detail = key
-                        issues.append(issue)
-        return issues
+                        issue.issue_detail = rule.name
+                        yield issue
 
     @property
     @abc.abstractmethod
@@ -468,7 +628,7 @@ class GitScanner(ScannerBase, abc.ABC):
     across all scanner that are interacting with git history.
     """
 
-    _repo: git.Repo
+    _repo: pygit2.Repository
     repo_path: str
 
     def __init__(self, global_options: types.GlobalOptions, repo_path: str) -> None:
@@ -481,7 +641,7 @@ class GitScanner(ScannerBase, abc.ABC):
         self._repo = self.load_repo(self.repo_path)
 
     def _iter_diff_index(
-        self, diff_index: git.DiffIndex
+        self, diff: pygit2.Diff
     ) -> Generator[Tuple[str, str], None, None]:
         """Iterate over a "diff index", yielding the individual file changes.
 
@@ -495,22 +655,43 @@ class GitScanner(ScannerBase, abc.ABC):
 
         :param diff_index: The diff index / commit to be iterated over
         """
-        diff: git.Diff
-        for diff in diff_index:
-            file_path = diff.b_path if diff.b_path else diff.a_path
+        for patch in diff:
+            delta: pygit2.DiffDelta = patch.delta
+            file_path = (
+                delta.new_file.path if delta.new_file.path else delta.old_file.path
+            )
+            if delta.is_binary:
+                self.logger.debug("Binary file skipped: %s", file_path)
+                continue
+            if delta.status == pygit2.GIT_DELTA_DELETED:
+                self.logger.debug("Skipping as the file is deleted")
+                continue
+            printable_diff: str = patch.text
+            if not self.global_options.scan_filenames:
+                # The `printable_diff` contains diff header,
+                # so we need to strip that before analyzing it
+                header_length = GitScanner.header_length(printable_diff)
+                printable_diff = printable_diff[header_length:]
             if self.should_scan(file_path):
-                printable_diff = diff.diff.decode("utf-8", errors="replace")
-                if printable_diff.startswith("Binary files"):
-                    self.logger.debug("Binary file skipped: %s", file_path)
-                    continue
-                yield (printable_diff, file_path)
+                yield printable_diff, file_path
 
-    def filter_submodules(self, repo: git.Repo) -> None:
+    @staticmethod
+    def header_length(diff: str) -> int:
+        """Compute the length of the git diff header text"""
+        try:
+            # Header ends after newline following line starting with "+++"
+            b_file_pos = diff.index("\n+++")
+            return diff.index("\n", b_file_pos + 4) + 1
+        except ValueError:
+            # Diff is pure header as it is a pure rename(similarity index 100%)
+            return len(diff)
+
+    def filter_submodules(self, repo: pygit2.Repository) -> None:
         """Exclude all git submodules and their contents from being scanned."""
         patterns: List[Pattern] = []
         self.logger.info("Excluding submodules paths from scan.")
         try:
-            for module in repo.submodules:
+            for module in repo.listall_submodules():
                 patterns.append(re.compile(f"^{module.path}"))
         except AttributeError as exc:
             raise TartufoException(
@@ -521,7 +702,7 @@ class GitScanner(ScannerBase, abc.ABC):
         self._excluded_paths = list(set(self.excluded_paths + patterns))
 
     @abc.abstractmethod
-    def load_repo(self, repo_path: str) -> git.Repo:
+    def load_repo(self, repo_path: str) -> pygit2.Repository:
         """Load and return the repository to be scanned.
 
         :param repo_path: The local filesystem path pointing to the repository
@@ -530,7 +711,6 @@ class GitScanner(ScannerBase, abc.ABC):
 
 
 class GitRepoScanner(GitScanner):
-
     git_options: types.GitOptions
 
     def __init__(
@@ -548,7 +728,7 @@ class GitRepoScanner(GitScanner):
         self.git_options = git_options
         super().__init__(global_options, repo_path)
 
-    def load_repo(self, repo_path: str) -> git.Repo:
+    def load_repo(self, repo_path: str) -> pygit2.Repository:
         config_file: Optional[pathlib.Path] = None
         data: MutableMapping[str, Any] = {}
         try:
@@ -558,69 +738,14 @@ class GitRepoScanner(GitScanner):
         except (FileNotFoundError, types.ConfigException):
             config_file = None
         if config_file and config_file != self.global_options.config:
-            signatures = data.get("exclude_signatures", None)
-            if signatures:
-                self.global_options.exclude_signatures = tuple(
-                    set(self.global_options.exclude_signatures + tuple(signatures))
-                )
-
-            include_patterns = list(data.get("include_path_patterns", ()))
-            repo_include_file = data.get("include_paths", None)
-            if repo_include_file:
-                repo_include_file = pathlib.Path(repo_path, repo_include_file)
-                if repo_include_file.exists():
-                    with repo_include_file.open() as handle:
-                        include_patterns += handle.readlines()
-            if include_patterns:
-                include_patterns = config.compile_path_rules(include_patterns)
-                self._included_paths = list(set(self.included_paths + include_patterns))
-
-            exclude_patterns = list(data.get("exclude_path_patterns", ()))
-            repo_exclude_file = data.get("exclude_paths", None)
-            if repo_exclude_file:
-                repo_exclude_file = pathlib.Path(repo_path, repo_exclude_file)
-                if repo_exclude_file.exists():
-                    with repo_exclude_file.open() as handle:
-                        exclude_patterns += handle.readlines()
-            if exclude_patterns:
-                exclude_patterns = config.compile_path_rules(exclude_patterns)
-                self._excluded_paths = list(set(self.excluded_paths + exclude_patterns))
+            self.config_data = data
         try:
-            repo = git.Repo(repo_path)
+            repo = pygit2.Repository(repo_path)
             if not self.git_options.include_submodules:
                 self.filter_submodules(repo)
             return repo
         except git.GitError as exc:
             raise types.GitLocalException(str(exc)) from exc
-
-    def _iter_branch_commits(
-        self, repo: git.Repo, branch: git.FetchInfo
-    ) -> Generator[Tuple[git.Commit, git.Commit], None, None]:
-        """Iterate over and yield the commits on a branch.
-
-        :param repo: The repository from which to extract the branch and commits
-        :param branch: The branch to iterate over
-        """
-        since_commit_reached: bool = False
-        prev_commit: git.Commit = None
-        curr_commit: git.Commit = None
-
-        for curr_commit in repo.iter_commits(
-            branch.name, max_count=self.git_options.max_depth, topo_order=True
-        ):
-            commit_hash = curr_commit.hexsha
-            self.logger.debug("Scanning commit: %s", commit_hash)
-            if self.git_options.since_commit:
-                if commit_hash == self.git_options.since_commit:
-                    since_commit_reached = True
-                if since_commit_reached:
-                    prev_commit = curr_commit
-                    break
-            if not prev_commit:
-                prev_commit = curr_commit
-                continue
-            yield (curr_commit, prev_commit)
-            prev_commit = curr_commit
 
     @property
     def chunks(self) -> Generator[types.Chunk, None, None]:
@@ -632,86 +757,89 @@ class GitRepoScanner(GitScanner):
         already_searched: Set[bytes] = set()
 
         try:
-            if self.git_options.is_remote:
-                # Remote repository - local directory does not have branch info
-                # and we must follow remote references
-                unfiltered_branches = list(self._repo.remotes.origin.refs)
-                if self.git_options.branch:
-                    # Single branch only
-                    branches = [
-                        x
-                        for x in unfiltered_branches
-                        if x.name == f"origin/{self.git_options.branch}"
-                    ]
-
-                    if len(branches) == 0:
-                        raise BranchNotFoundException(
-                            f"Branch {self.git_options.branch} was not found."
-                        )
-                else:
-                    # Everything
-                    branches = unfiltered_branches
+            if self.git_options.branch:
+                # Single branch only
+                branch = self._repo.branches.get(self.git_options.branch)
+                if not branch:
+                    raise BranchNotFoundException(
+                        f"Branch {self.git_options.branch} was not found."
+                    )
+                branches = [self.git_options.branch]
             else:
-                # Local repository
-                if self.git_options.branch:
-                    # Single branch only
-                    if self.git_options.fetch:
-                        self._repo.remotes.origin.fetch(self.git_options.branch)
-                    unfiltered_branches = list(self._repo.branches)
-                    branches = [
-                        x
-                        for x in unfiltered_branches
-                        if x.name == self.git_options.branch
-                    ]
-
-                    if len(branches) == 0:
-                        raise BranchNotFoundException(
-                            f"Branch {self.git_options.branch} was not found."
-                        )
+                # Everything
+                if not self._repo.listall_branches():
+                    # If no local branches are found, assume that this is a
+                    # shallow clone and examine the repo head as a single
+                    # commit to scan all files at once
+                    branches = ["HEAD"]
                 else:
-                    # Everything
-                    if self.git_options.fetch:
-                        self._repo.remotes.origin.fetch()
+                    # We use `self._repo.branches` here so that we make sure to
+                    # scan not only the locally checked out branches (as provided
+                    # by self._repo.listall_branches()), but to also scan all
+                    # available remote refs
                     branches = list(self._repo.branches)
-        except git.GitCommandError as exc:
-            raise types.GitRemoteException(exc.stderr.strip()) from exc
+        except pygit2.GitError as exc:
+            raise types.GitRemoteException(str(exc)) from exc
 
         self.logger.debug(
             "Branches to be scanned: %s",
             ", ".join([str(branch) for branch in branches]),
         )
 
-        for branch in branches:
-            self.logger.info("Scanning branch: %s", branch)
-            diff_index: git.DiffIndex = None
+        for branch_name in branches:
+            self.logger.info("Scanning branch: %s", branch_name)
+            if branch_name == "HEAD":
+                commits = [self._repo.get(self._repo.head.target)]
+            else:
+                branch = self._repo.branches.get(branch_name)
+                try:
+                    commits = self._repo.walk(
+                        branch.resolve().target, pygit2.GIT_SORT_TOPOLOGICAL
+                    )
+                except AttributeError:
+                    self.logger.debug(
+                        "Skipping branch %s because it cannot be resolved.", branch_name
+                    )
+                    continue
             diff_hash: bytes
-            curr_commit: git.Commit = None
-            prev_commit: git.Commit = None
-            for curr_commit, prev_commit in self._iter_branch_commits(
-                self._repo, branch
-            ):
-                diff_index = curr_commit.diff(prev_commit, create_patch=True)
+            curr_commit: pygit2.Commit = None
+            prev_commit: pygit2.Commit = None
+            for curr_commit in commits:
+                try:
+                    prev_commit = curr_commit.parents[0]
+                except (IndexError, KeyError, TypeError):
+                    # IndexError: current commit has no parents
+                    # KeyError: current commit has parents which are not local
+                    # If a commit doesn't have a parent skip diff generation since it is the first commit
+                    self.logger.debug(
+                        "Skipping commit %s because it has no parents", curr_commit.hex
+                    )
+                    continue
+                diff: pygit2.Diff = self._repo.diff(prev_commit, curr_commit)
                 diff_hash = hashlib.md5(
                     (str(prev_commit) + str(curr_commit)).encode("utf-8")
                 ).digest()
                 if diff_hash in already_searched:
                     continue
                 already_searched.add(diff_hash)
-                for blob, file_path in self._iter_diff_index(diff_index):
-                    yield types.Chunk(
-                        blob,
-                        file_path,
-                        util.extract_commit_metadata(prev_commit, branch),
-                    )
-
-            # Finally, yield the first commit to the branch
-            if curr_commit:
-                diff = curr_commit.diff(git.NULL_TREE, create_patch=True)
+                diff.find_similar()
                 for blob, file_path in self._iter_diff_index(diff):
                     yield types.Chunk(
                         blob,
                         file_path,
-                        util.extract_commit_metadata(prev_commit, branch),
+                        util.extract_commit_metadata(curr_commit, branch_name),
+                    )
+
+            # Finally, yield the first commit to the branch
+            if curr_commit:
+                tree: pygit2.Tree = self._repo.revparse_single(curr_commit.hex).tree
+                tree_diff: pygit2.Diff = tree.diff_to_tree(swap=True)
+                iter_diff = self._iter_diff_index(tree_diff)
+                for blob, file_path in iter_diff:
+                    yield types.Chunk(
+                        blob,
+                        file_path,
+                        util.extract_commit_metadata(curr_commit, branch_name),
                     )
 
 
@@ -727,8 +855,8 @@ class GitPreCommitScanner(GitScanner):
         self._include_submodules = include_submodules
         super().__init__(global_options, repo_path)
 
-    def load_repo(self, repo_path: str) -> git.Repo:
-        repo = git.Repo(repo_path, search_parent_directories=True)
+    def load_repo(self, repo_path: str) -> pygit2.Repository:
+        repo = pygit2.Repository(repo_path)
         if not self._include_submodules:
             self.filter_submodules(repo)
         return repo
@@ -739,9 +867,7 @@ class GitPreCommitScanner(GitScanner):
 
         :rtype: Generator[Chunk, None, None]
         """
-        diff_index = self._repo.index.diff(
-            self._repo.head.commit, create_patch=True, R=True
-        )
+        diff_index = self._repo.diff("HEAD")
         for blob, file_path in self._iter_diff_index(diff_index):
             yield types.Chunk(blob, file_path, {})
 
@@ -750,11 +876,10 @@ class FolderScanner(ScannerBase):
     """Used to scan a folder."""
 
     target: str
+    recurse: bool
 
     def __init__(
-        self,
-        global_options: types.GlobalOptions,
-        target: str,
+        self, global_options: types.GlobalOptions, target: str, recurse: bool
     ) -> None:
         """Used for scanning a folder.
 
@@ -762,6 +887,7 @@ class FolderScanner(ScannerBase):
         :param target: The local filesystem path to scan
         """
         self.target = target
+        self.recurse = recurse
         super().__init__(global_options)
 
     @property
@@ -776,7 +902,8 @@ class FolderScanner(ScannerBase):
 
     def _iter_folder(self) -> Generator[Tuple[str, str], None, None]:
         folder_path = pathlib.Path(self.target)
-        for file_path in folder_path.rglob("**/*"):
+        files = folder_path.rglob("**/*") if self.recurse else folder_path.glob("*")
+        for file_path in files:
             relative_path = file_path.relative_to(folder_path)
             if file_path.is_file() and self.should_scan(str(relative_path)):
                 try:
@@ -787,6 +914,8 @@ class FolderScanner(ScannerBase):
 
                 try:
                     blob = data.decode("utf-8")
+                    if self.global_options.scan_filenames:
+                        blob = str(relative_path) + "\n" + blob
                 except UnicodeDecodeError:
                     # binary file, continue
                     continue

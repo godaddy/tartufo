@@ -1,3 +1,72 @@
+vx.y.z - TBD
+------------
+
+Bug fixes:
+
+* [#284](https://github.com/godaddy/tartufo/pull/284) - Fix handling of first
+  commit during local scans; an exception was raised instead of processing the
+  commit.
+  
+Misc:
+
+* [#282](https://github.com/godaddy/tartufo/pull/282) - Remove old style config for `exclude-entropy-patterns`
+* [#292](https://github.com/godaddy/tartufo/pull/292) - Use the latest `click`
+  to provide better output on boolean flag defaults
+
+Features:
+
+* [#270](https://github.com/godaddy/tartufo/issues/270) - When no refs/branches
+  are found locally, tartufo will now scan the repo HEAD as a single commit,
+  effectively scanning the entire codebase at once.
+* [#265](https://github.com/godaddy/tartufo/issues/265) - Adds new `--entropy-sensitivity`
+  option which provides a friendlier way to adjust entropy detection sensitivity.
+  This replaces `--b64-entropy-score` and `--hex-entropy-score`, which now are
+  marked as deprecated.
+* [#273](https://github.com/godaddy/tartufo/inssues/273) - Entropy checking support
+  routines have been rewritten to utilize library abstractions and operate more
+  efficiently while returning identical results.
+* [#177](https://github.com/godaddy/tartufo/issues/177) -
+  [base64url](https://datatracker.ietf.org/doc/html/rfc4648#section-5) encodings
+  are now recognized and scanned for entropy.
+* [#268](https://github.com/godaddy/tartufo/issues/268) - Adds a new
+  `--recurse / --no-recurse` flag which allows users to recursively scan the entire directory or just
+  the root directory
+* [#256](https://github.com/godaddy/tartufo/issues/256) - Deprecated `--rules` in
+  favor of a new `rule-patterns` config option. This is the final piece of config
+  that was still stored in an external file.
+* [#202](https://github.com/godaddy/tartufo/issues/202) - Supports new format of exclusions in config file 
+  with the ability to specify the reason along with exclusion
+* [#257](https://github.com/godaddy/tartufo/issues/257) - Supports new format of include-path-patterns and
+  exclude-path-patterns in config file with the ability to specify the reason along with the path-patterns.
+
+v3.0.0-alpha.1 - 11 November 2021
+---------------------------------
+
+Bug fixes:
+
+* [#247](https://github.com/godaddy/tartufo/issues/247) - The `--branch` qualifier
+  now works again when using `scan-remote-repo`.
+
+Features:
+
+* [#227](https://github.com/godaddy/tartufo/pull/227) - Report findings incrementally
+  as scan progresses instead of holding all of them until it has completed. This
+  is a reimplementation of [#108](https://github.com/godaddy/tartufo/pull/108);
+  thanks to @dclayton-godaddy for showing the way.
+* [#244](https://github.com/godaddy/tartufo/pull/244) - Drops support for
+  `--fetch/--no-fetch` option for local scans
+* [#253](https://github.com/godaddy/tartufo/issues/253) - Drops support for `--json` and `--compact`
+  and consolidates the two options into one `---output-format json/compact/text`
+* [#259](https://github.com/godaddy/tartufo/pull/259) - Adds a new
+  `--scan-filenames/--no-scan-filenames` flag which allows users to enable or disable file name scanning.
+* [#254](https://github.com/godaddy/tartufo/pull/260) - Changes the default value of
+  `--regex/--no-regex` to True.
+
+Misc:
+
+* [#255](https://github.com/godaddy/tartufo/issues/255) - Removed deprecated flags
+  --include-paths and --exclude-paths
+
 v2.10.0 - 3 November 2021
 ------------
 

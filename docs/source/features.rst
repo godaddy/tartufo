@@ -23,14 +23,14 @@ Scanning a Local Repository
 
 .. code-block:: sh
 
-   $ tartufo scan-local-repo --no-fetch /path/to/my/repo
+   $ tartufo scan-local-repo /path/to/my/repo
 
 To use ``docker``, mount the local clone to the ``/git`` folder in the docker
 image:
 
 .. code-block:: sh
 
-   $ docker run --rm -v "/path/to/my/repo:/git" godaddy/tartufo scan-local-repo --no-fetch /git
+   $ docker run --rm -v "/path/to/my/repo:/git" godaddy/tartufo scan-local-repo /git
 
 .. note::
 
@@ -95,7 +95,7 @@ Using Docker for Linux, that will look something like this:
 
     $ docker run --rm -v "/path/to/my/repo:/git" \
       -v $SSH_AUTH_SOCK:/agent -e SSH_AUTH_SOCK=/agent \
-      godaddy/tartufo scan-local-repo --no-fetch /git
+      godaddy/tartufo scan-local-repo /git
 
 
 When using Docker Desktop for Mac, use ``/run/host-services/ssh-auth.sock`` as
@@ -277,34 +277,12 @@ Entropy Limiting
 
 Entropy scans can produce a high number of false positives such as git SHAs or md5
 digests. To avoid these false positives, enable ``exclude-entropy-patterns``. Exclusions
-apply to any strings flagged by entropy checks.
+apply to any strings flagged by entropy checks. This option is not available on the command line,
+and must be specified in your config file.
 
-For example, if ``docs/README.md`` contains a git SHA, this would be flagged by entropy.
-To exclude this, add ``docs/.*\.md$::^[a-zA-Z0-9]{40}$`` to ``exclude-entropy-patterns``.
-
-.. code-block:: sh
-
-    > tartufo ... --exclude-entropy-patterns "docs/.*\.md$::^[a-zA-Z0-9]{40}$"
-
-.. code-block:: toml
-
-    [tool.tartufo]
-    exclude-entropy-patterns = [
-      # format: "{file regex}::{entropy pattern}"
-      "docs/.*\.md$::^[a-zA-Z0-9]{40}$", # exclude all git SHAs in the docs directory
-    ]
-
-.. warning::
-    .. versionchanged:: 2.9.0
-    As of version 2.9.0, the above specification style has been deprecated, and
-    will be removed in version 3.0. The new style uses a TOML `array of tables`_
-    as shown below.
-
-    Note that this new syntax is not available on the command line, and must be
-    specified in your config file.
-
-Here is an example of how you might exclude SHA hashes in your docs, as well as
-hashes for GitHub Actions in your workflows:
+For example, if ``docs/README.md`` contains a git SHA and ``.github/workflows/*.yml`` contains pinned git SHAs
+this would be flagged by entropy.
+To exclude these, add the following entries to ``exclude-entropy-patterns`` in the config file.
 
 .. code-block:: toml
 
@@ -313,6 +291,14 @@ hashes for GitHub Actions in your workflows:
         {path-pattern = 'docs/.*\.md$', pattern = '^[a-zA-Z0-9]$', reason = 'exclude all git SHAs in the docs'},
         {path-pattern = '\.github/workflows/.*\.yml', pattern = 'uses: .*@[a-zA-Z0-9]{40}', reason = 'GitHub Actions'}
     ]
+.. note::
+    ``match-type`` is used to select the ``search`` or ``match`` regex operation. ``search`` looks for the regex
+    anywhere in the selected scope, while ``match`` requires the regex to match at the beginning of the selected scope.
+    Defaults to ``search``
+
+    ``scope`` is used to specify if you want to perform the regex operation (search or match) by ``word`` or ``line``.
+    ``word`` means exactly the high-entropy string of characters, while ``line`` searches the entire input line
+    containing the high-entropy string. Defaults to ``line``
 
 Thanks to the magic of TOML, you could also split these out into their own tables
 in the config if you wanted. So the following would be 100% equivalent to what
@@ -414,7 +400,7 @@ in the config file:
    > tartufo \
      --include-path-patterns 'src/' -ip 'gradle/' \
      --exclude-path-patterns '(.*/)?\.classpath$' -xp '.*\.jmx$' \
-     scan-local-repo --no-fetch file://path/to/my/repo.git
+     scan-local-repo file://path/to/my/repo.git
 
 
 Additional usage information is provided when calling ``tartufo`` with the

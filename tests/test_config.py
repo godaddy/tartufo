@@ -9,7 +9,7 @@ import tomlkit
 from click.testing import CliRunner
 
 from tartufo import config, types
-from tartufo.types import Rule
+from tartufo.types import ConfigException, Rule, MatchType, Scope
 
 from tests import helpers
 
@@ -19,17 +19,19 @@ class ConfigureRegexTests(unittest.TestCase):
         rules_path = pathlib.Path(__file__).parent / "data" / "testRules.json"
         rules_files = (rules_path.open(),)
         expected_regexes = {
-            "RSA private key 2": Rule(
+            Rule(
                 name="RSA private key 2",
                 pattern=re.compile("-----BEGIN EC PRIVATE KEY-----"),
                 path_pattern=None,
-                re_match_type="match",
+                re_match_type=MatchType.Match,
+                re_match_scope=None,
             ),
-            "Complex Rule": Rule(
+            Rule(
                 name="Complex Rule",
                 pattern=re.compile("complex-rule"),
                 path_pattern=re.compile("/tmp/[a-z0-9A-Z]+\\.(py|js|json)"),
-                re_match_type="match",
+                re_match_type=MatchType.Match,
+                re_match_scope=None,
             ),
         }
 
@@ -40,8 +42,7 @@ class ConfigureRegexTests(unittest.TestCase):
         self.assertEqual(
             expected_regexes,
             actual_regexes,
-            "The regexes dictionary should match the test rules "
-            "(expected: {}, actual: {})".format(expected_regexes, actual_regexes),
+            f"The regexes dictionary should match the test rules (expected: {expected_regexes}, actual: {actual_regexes})",
         )
 
     def test_configure_regexes_rules_files_with_defaults(self):
@@ -49,17 +50,23 @@ class ConfigureRegexTests(unittest.TestCase):
         rules_files = (rules_path.open(),)
         with config.DEFAULT_PATTERN_FILE.open() as handle:
             expected_regexes = config.load_rules_from_file(handle)
-        expected_regexes["RSA private key 2"] = Rule(
-            name="RSA private key 2",
-            pattern=re.compile("-----BEGIN EC PRIVATE KEY-----"),
-            path_pattern=None,
-            re_match_type="match",
+        expected_regexes.add(
+            Rule(
+                name="RSA private key 2",
+                pattern=re.compile("-----BEGIN EC PRIVATE KEY-----"),
+                path_pattern=None,
+                re_match_type=MatchType.Match,
+                re_match_scope=None,
+            )
         )
-        expected_regexes["Complex Rule"] = Rule(
-            name="Complex Rule",
-            pattern=re.compile("complex-rule"),
-            path_pattern=re.compile("/tmp/[a-z0-9A-Z]+\\.(py|js|json)"),
-            re_match_type="match",
+        expected_regexes.add(
+            Rule(
+                name="Complex Rule",
+                pattern=re.compile("complex-rule"),
+                path_pattern=re.compile("/tmp/[a-z0-9A-Z]+\\.(py|js|json)"),
+                re_match_type=MatchType.Match,
+                re_match_scope=None,
+            )
         )
 
         actual_regexes = config.configure_regexes(
@@ -69,8 +76,7 @@ class ConfigureRegexTests(unittest.TestCase):
         self.assertEqual(
             expected_regexes,
             actual_regexes,
-            "The regexes dictionary should match the test rules "
-            "(expected: {}, actual: {})".format(expected_regexes, actual_regexes),
+            f"The regexes dictionary should match the test rules (expected: {expected_regexes}, actual: {actual_regexes})",
         )
 
     def test_configure_regexes_returns_just_default_regexes_by_default(self):
@@ -102,7 +108,7 @@ class ConfigureRegexTests(unittest.TestCase):
     def test_configure_regexes_clones_git_rules_repo(self, mock_clone):
         runner = CliRunner()
         with runner.isolated_filesystem():
-            mock_clone.return_value = pathlib.Path(".").resolve()
+            mock_clone.return_value = (pathlib.Path(".").resolve(), "origin")
             config.configure_regexes(rules_repo="git@github.com:godaddy/tartufo.git")
         mock_clone.assert_called_once_with("git@github.com:godaddy/tartufo.git")
 
@@ -138,26 +144,76 @@ class ConfigureRegexTests(unittest.TestCase):
             rules_repo_files=["testRules.json"],
         )
         expected_regexes = {
-            "RSA private key 2": Rule(
+            Rule(
                 name="RSA private key 2",
                 pattern=re.compile("-----BEGIN EC PRIVATE KEY-----"),
                 path_pattern=None,
-                re_match_type="match",
+                re_match_type=MatchType.Match,
+                re_match_scope=None,
             ),
-            "Complex Rule": Rule(
+            Rule(
                 name="Complex Rule",
                 pattern=re.compile("complex-rule"),
                 path_pattern=re.compile("/tmp/[a-z0-9A-Z]+\\.(py|js|json)"),
-                re_match_type="match",
+                re_match_type=MatchType.Match,
+                re_match_scope=None,
             ),
         }
 
         self.assertEqual(
             expected_regexes,
             actual_regexes,
-            "The regexes dictionary should match the test rules "
-            "(expected: {}, actual: {})".format(expected_regexes, actual_regexes),
+            f"The regexes dictionary should match the test rules (expected: {expected_regexes}, actual: {actual_regexes})",
         )
+
+    def test_loading_rules_from_file_raises_deprecation_warning(self):
+        rules_path = pathlib.Path(__file__).parent / "data" / "testRules.json"
+        rules_files = (rules_path.open(),)
+        with self.assertWarnsRegex(
+            DeprecationWarning, "has been deprecated and will be removed."
+        ):
+            config.configure_regexes(rules_files=rules_files)
+
+    def test_rule_patterns_without_defaults(self):
+        rule_patterns = [
+            {
+                "reason": "RSA private key 2",
+                "pattern": "-----BEGIN EC PRIVATE KEY-----",
+            },
+            {
+                "reason": "Complex Rule",
+                "pattern": "complex-rule",
+                "path-pattern": "/tmp/[a-z0-9A-Z]+\\.(py|js|json)",
+            },
+        ]
+        expected = {
+            Rule(
+                name="RSA private key 2",
+                pattern=re.compile("-----BEGIN EC PRIVATE KEY-----"),
+                path_pattern=re.compile(""),
+                re_match_type=MatchType.Search,
+                re_match_scope=None,
+            ),
+            Rule(
+                name="Complex Rule",
+                pattern=re.compile("complex-rule"),
+                path_pattern=re.compile("/tmp/[a-z0-9A-Z]+\\.(py|js|json)"),
+                re_match_type=MatchType.Search,
+                re_match_scope=None,
+            ),
+        }
+        actual = config.configure_regexes(
+            rule_patterns=rule_patterns, include_default=False
+        )
+        self.assertEqual(actual, expected)
+
+    def test_config_exception_is_raised_if_reason_is_missing(self):
+        with self.assertRaisesRegex(ConfigException, "Invalid rule-pattern"):
+            config.configure_regexes(rule_patterns=[{"pattern": "foo"}])
+
+    def test_config_exception_is_raised_if_pattern_is_missing(self):
+        with self.assertRaisesRegex(ConfigException, "Invalid rule-pattern"):
+            config.configure_regexes(rule_patterns=[{"reason": "foo"}])
 
 
 class LoadConfigFromPathTests(unittest.TestCase):
@@ -301,98 +357,65 @@ class CompilePathRulesTests(unittest.TestCase):
 
 
 class CompileRulesTests(unittest.TestCase):
-    def test_commented_lines_are_ignored(self):
-        rules = config.compile_rules(["# Poetry lock file", r"^[a-zA-Z0-9]{26}$"])
-        self.assertEqual(
-            rules,
-            [
-                Rule(
-                    None,
-                    re.compile(r"^[a-zA-Z0-9]{26}$"),
-                    re.compile(r".*"),
-                    re_match_type="match",
-                )
-            ],
-        )
-
-    def test_whitespace_lines_are_ignored(self):
-        rules = config.compile_rules(
-            [
-                "# Poetry lock file",
-                r"poetry\.lock::^[a-zA-Z0-9]{40}$",
-                "",
-                "\t\n",
-                "# NPM files",
-                r"^[a-zA-Z0-9]{26}$",
-            ]
-        )
-        self.assertEqual(
-            rules,
-            [
-                Rule(
-                    None,
-                    re.compile(r"^[a-zA-Z0-9]{40}$"),
-                    re.compile(r"poetry\.lock"),
-                    re_match_type="match",
-                ),
-                Rule(
-                    None,
-                    re.compile(r"^[a-zA-Z0-9]{26}$"),
-                    re.compile(r".*"),
-                    re_match_type="match",
-                ),
-            ],
-        )
-
     def test_path_is_used(self):
         rules = config.compile_rules(
             [
-                r"src/.*::^[a-zA-Z0-9]{26}$",
-                r"^[a-zA-Z0-9]test$",
-                r"src/.*::^[a-zA-Z0-9]{26}::test$",
+                {"path-pattern": r"src/.*", "pattern": r"^[a-zA-Z0-9]{26}$"},
+                {"pattern": r"^[a-zA-Z0-9]test$"},
+                {"path-pattern": r"src/.*", "pattern": r"^[a-zA-Z0-9]{26}::test$"},
             ]
         )
-        self.assertEqual(
+        self.assertCountEqual(
             rules,
-            [
-                Rule(
-                    None,
-                    re.compile(r"^[a-zA-Z0-9]{26}$"),
-                    re.compile(r"src/.*"),
-                    re_match_type="match",
-                ),
-                Rule(
-                    None,
-                    re.compile(r"^[a-zA-Z0-9]test$"),
-                    re.compile(r".*"),
-                    re_match_type="match",
-                ),
-                Rule(
-                    None,
-                    re.compile(r"^[a-zA-Z0-9]{26}::test$"),
-                    re.compile(r"src/.*"),
-                    re_match_type="match",
-                ),
-            ],
+            list(
+                {
+                    Rule(
+                        None,
+                        re.compile(r"^[a-zA-Z0-9]{26}$"),
+                        re.compile(r"src/.*"),
+                        re_match_type=MatchType.Search,
+                        re_match_scope=Scope.Line,
+                    ),
+                    Rule(
+                        None,
+                        re.compile(r"^[a-zA-Z0-9]test$"),
+                        re.compile(r""),
+                        re_match_type=MatchType.Search,
+                        re_match_scope=Scope.Line,
+                    ),
+                    Rule(
+                        None,
+                        re.compile(r"^[a-zA-Z0-9]{26}::test$"),
+                        re.compile(r"src/.*"),
+                        re_match_type=MatchType.Search,
+                        re_match_scope=Scope.Line,
+                    ),
+                }
+            ),
         )
 
     def test_match_can_contain_delimiter(self):
-        rules = config.compile_rules([r".*::^[a-zA-Z0-9]::test$"])
+        rules = config.compile_rules(
+            [
+                {"pattern": r"^[a-zA-Z0-9]::test$"},
+            ]
+        )
         self.assertEqual(
             rules,
             [
                 Rule(
                     None,
                     re.compile(r"^[a-zA-Z0-9]::test$"),
-                    re.compile(r".*"),
-                    re_match_type="match",
+                    re.compile(r""),
+                    re_match_type=MatchType.Search,
+                    re_match_scope=Scope.Line,
                 )
             ],
         )
 
     def test_config_exception_is_raised_if_no_match_field_found(self):
         with self.assertRaisesRegex(
-            types.ConfigException, "Malformed exclude-entropy-patterns: "
+            types.ConfigException, "Invalid exclude-entropy-patterns: "
         ):
             config.compile_rules([{"foo": "bar"}])
 

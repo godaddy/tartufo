@@ -11,6 +11,7 @@ from typing import (
     MutableMapping,
     Optional,
     Pattern,
+    Set,
     TextIO,
     Tuple,
     Union,
@@ -20,11 +21,12 @@ import click
 import tomlkit
 
 from tartufo import types, util
-from tartufo.types import ConfigException, Rule
+from tartufo.types import ConfigException, Rule, MatchType, Scope
 
 OptionTypes = Union[str, int, bool, None, TextIO, Tuple[TextIO, ...]]
 
 DEFAULT_PATTERN_FILE = pathlib.Path(__file__).parent / "data" / "default_regexes.json"
+EMPTY_PATTERN = re.compile("")
 
 
 def load_config_from_path(
@@ -148,23 +150,49 @@ def read_pyproject_toml(
 def configure_regexes(
     include_default: bool = True,
     rules_files: Optional[Iterable[TextIO]] = None,
+    rule_patterns: Optional[Iterable[Dict[str, str]]] = None,
     rules_repo: Optional[str] = None,
     rules_repo_files: Optional[Iterable[str]] = None,
-) -> Dict[str, Rule]:
+) -> Set[Rule]:
     """Build a set of regular expressions to be used during a regex scan.
 
     :param include_default: Whether to include the built-in set of regexes
     :param rules_files: A list of files to load rules from
+    :param rule_patterns: A set of previously-collected rules
     :param rules_repo: A separate git repository to load rules from
     :param rules_repo_files: A set of patterns used to find files in the rules repo
+    :returns: Set of `Rule` objects to be used for regex scans
     """
+
     if include_default:
         with DEFAULT_PATTERN_FILE.open() as handle:
             rules = load_rules_from_file(handle)
     else:
-        rules = {}
+        rules = set()
+
+    if rule_patterns:
+        try:
+            for pattern in rule_patterns:
+                rule = Rule(
+                    name=pattern["reason"],
+                    pattern=re.compile(pattern["pattern"]),
+                    path_pattern=re.compile(pattern.get("path-pattern", "")),
+                    re_match_type=MatchType.Search,
+                    re_match_scope=None,
+                )
+                rules.add(rule)
+        except KeyError as exc:
+            raise ConfigException(
+                f"Invalid rule-pattern; both reason and pattern are required fields. Rule: {pattern}"
+            ) from exc
 
     if rules_files:
+        warnings.warn(
+            "Storing rules in a separate file has been deprecated and will be removed "
+            "in a future release. You should be using the 'rule-patterns' config "
+            " option instead.",
+            DeprecationWarning,
+        )
         all_files: List[TextIO] = list(rules_files)
     else:
         all_files = []
@@ -181,20 +209,14 @@ def configure_regexes(
                 cloned_repo = True
             finally:
                 if cloned_repo:
-                    repo_path = pathlib.Path(util.clone_git_repo(rules_repo))
+                    repo_path, _ = util.clone_git_repo(rules_repo)
             if not rules_repo_files:
                 rules_repo_files = ("*.json",)
             for repo_file in rules_repo_files:
                 all_files.extend([path.open("r") for path in repo_path.glob(repo_file)])
         if all_files:
             for rules_file in all_files:
-                loaded = load_rules_from_file(rules_file)
-                dupes = set(loaded.keys()).intersection(rules.keys())
-                if dupes:
-                    raise ValueError(
-                        "Rule(s) were defined multiple times: {}".format(dupes)
-                    )
-                rules.update(loaded)
+                rules.update(load_rules_from_file(rules_file))
     finally:
         if cloned_repo:
             shutil.rmtree(repo_path, onerror=util.del_rw)  # type: ignore
@@ -202,36 +224,39 @@ def configure_regexes(
     return rules
 
 
-def load_rules_from_file(rules_file: TextIO) -> Dict[str, Rule]:
+def load_rules_from_file(rules_file: TextIO) -> Set[Rule]:
     """Load a set of JSON rules from a file and return them as compiled patterns.
 
     :param rules_file: An open file handle containing a JSON dictionary of regexes
     :raises ValueError: If the rules contain invalid JSON
     """
-    rules: Dict[str, Rule] = {}
+
+    rules: Set[Rule] = set()
     try:
         new_rules = json.load(rules_file)
     except json.JSONDecodeError as exc:
-        raise ValueError(
-            "Error loading rules from file: {}".format(rules_file.name)
-        ) from exc
+        raise ValueError(f"Error loading rules from file: {rules_file.name}") from exc
     for rule_name, rule_definition in new_rules.items():
         try:
             path_pattern = rule_definition.get("path_pattern", None)
             rule = Rule(
                 name=rule_name,
                 pattern=re.compile(rule_definition["pattern"]),
-                path_pattern=re.compile(path_pattern) if path_pattern else None,
-                re_match_type="match",
+                path_pattern=re.compile(path_pattern)
+                if path_pattern
+                else EMPTY_PATTERN,
+                re_match_type=MatchType.Match,
+                re_match_scope=None,
             )
         except AttributeError:
             rule = Rule(
                 name=rule_name,
                 pattern=re.compile(rule_definition),
                 path_pattern=None,
-                re_match_type="match",
+                re_match_type=MatchType.Match,
+                re_match_scope=None,
             )
-        rules[rule_name] = rule
+        rules.add(rule)
     return rules
 
 
@@ -250,58 +275,38 @@ def compile_path_rules(patterns: Iterable[str]) -> List[Pattern]:
     ]
 
 
-def compile_rule(pattern: str) -> Rule:
-    """
-    Compile pattern string to Rule.
-
-    :param pattern: Rule pattern with {path_pattern}::{pattern}
-    :return Rule: Rule object with pattern and path_pattern
-    """
-    try:
-        path, pattern = pattern.split("::", 1)
-    except ValueError:  # Raised when the split separator is not found
-        path = ".*"
-    return Rule(
-        name=None,
-        pattern=re.compile(pattern),
-        path_pattern=re.compile(path),
-        re_match_type="match",
-    )
-
-
-def compile_rules(patterns: Iterable[Union[str, Dict[str, str]]]) -> List[Rule]:
+def compile_rules(patterns: Iterable[Dict[str, str]]) -> List[Rule]:
     """Take a list of regex string with paths and compile them into a List of Rule.
-
-    Any line starting with `#` will be ignored.
 
     :param patterns: The list of patterns to be compiled
     :return: List of Rule objects
     """
-    try:
-        return list(
-            {
+    rules: List[Rule] = []
+    for pattern in patterns:
+        try:
+            match_type = MatchType(pattern.get("match-type", MatchType.Search.value))
+        except ValueError as exc:
+            raise ConfigException(
+                f"Invalid value for match-type: {pattern.get('match-type')}"
+            ) from exc
+        try:
+            scope = Scope(pattern.get("scope", Scope.Line.value))
+        except ValueError as exc:
+            raise ConfigException(
+                f"Invalid value for scope: {pattern.get('scope')}"
+            ) from exc
+        try:
+            rules.append(
                 Rule(
                     name=pattern.get("reason", None),  # type: ignore[union-attr]
                     pattern=re.compile(pattern["pattern"]),  # type: ignore[index]
-                    path_pattern=re.compile(pattern.get("path-pattern", ".*")),  # type: ignore[union-attr]
-                    re_match_type="search",
+                    path_pattern=re.compile(pattern.get("path-pattern", "")),  # type: ignore[union-attr]
+                    re_match_type=match_type,
+                    re_match_scope=scope,
                 )
-                for pattern in patterns
-            }
-        )
-    except KeyError as exc:
-        raise ConfigException(
-            f"Malformed exclude-entropy-patterns: {patterns}"
-        ) from exc
-    except AttributeError:
-        warnings.warn(
-            "Using old-style exclude-entropy-patterns; this behavior will be removed in v3.0",
-            DeprecationWarning,
-        )
-        stripped = (p.strip() for p in patterns)  # type: ignore[union-attr]
-        rules = [
-            compile_rule(pattern)
-            for pattern in stripped
-            if pattern and not pattern.startswith("#")
-        ]
-        return rules
+            )
+        except KeyError as exc:
+            raise ConfigException(
+                f"Invalid exclude-entropy-patterns: {patterns}"
+            ) from exc
+    return rules

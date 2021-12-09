@@ -4,17 +4,16 @@ import re
 import unittest
 from unittest import mock
 
-import git
+import pygit2
 
 from tartufo import scanner, types
 from tartufo.types import GlobalOptions, GitOptions, TartufoException
-
 from tests.helpers import generate_options
 
 
 class ScannerTestCase(unittest.TestCase):
     def setUp(self) -> None:
-        self.global_options = generate_options(GlobalOptions)
+        self.global_options = generate_options(GlobalOptions, exclude_signatures=())
         self.git_options = generate_options(GitOptions)
 
 
@@ -23,15 +22,15 @@ class RepoLoadTests(ScannerTestCase):
         self.data_dir = pathlib.Path(__file__).parent / "data"
         super().setUp()
 
-    @mock.patch("git.Repo")
+    @mock.patch("pygit2.Repository")
     def test_repo_is_loaded_on_init(self, mock_repo: mock.MagicMock):
         scanner.GitRepoScanner(self.global_options, self.git_options, ".")
         mock_repo.assert_called_once_with(".")
 
-    @mock.patch("git.Repo")
     @mock.patch(
         "tartufo.scanner.GitRepoScanner.filter_submodules", new=mock.MagicMock()
     )
+    @mock.patch("pygit2.Repository")
     def test_load_repo_loads_new_repo(self, mock_repo: mock.MagicMock):
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
@@ -39,7 +38,7 @@ class RepoLoadTests(ScannerTestCase):
         test_scanner.load_repo("../tartufo")
         mock_repo.assert_has_calls((mock.call("."), mock.call("../tartufo")))
 
-    @mock.patch("git.Repo")
+    @mock.patch("pygit2.Repository")
     @mock.patch("tartufo.scanner.GitRepoScanner.filter_submodules")
     def test_load_repo_filters_submodules_when_specified(
         self, mock_filter: mock.MagicMock, mock_repo: mock.MagicMock
@@ -48,7 +47,7 @@ class RepoLoadTests(ScannerTestCase):
         scanner.GitRepoScanner(self.global_options, self.git_options, ".")
         mock_filter.assert_called_once_with(mock_repo.return_value)
 
-    @mock.patch("git.Repo", new=mock.MagicMock())
+    @mock.patch("pygit2.Repository", new=mock.MagicMock())
     @mock.patch("tartufo.scanner.GitRepoScanner.filter_submodules")
     def test_load_repo_does_not_filter_submodules_when_requested(
         self, mock_filter: mock.MagicMock
@@ -57,13 +56,14 @@ class RepoLoadTests(ScannerTestCase):
         scanner.GitRepoScanner(self.global_options, self.git_options, ".")
         mock_filter.assert_not_called()
 
-    @mock.patch("git.Repo", new=mock.MagicMock())
+    @mock.patch("pygit2.Repository", new=mock.MagicMock())
     @mock.patch("tartufo.config.load_config_from_path")
     def test_extra_inclusions_get_added(self, mock_load: mock.MagicMock):
         mock_load.return_value = (
             self.data_dir / "pyproject.toml",
-            {"include_paths": "include-files", "include_path_patterns": ("foo/",)},
+            {"include_path_patterns": ("tartufo/", "scripts/")},
         )
+        self.global_options.include_path_patterns = ("foo/",)
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, str(self.data_dir)
         )
@@ -73,13 +73,14 @@ class RepoLoadTests(ScannerTestCase):
             [re.compile("foo/"), re.compile("tartufo/"), re.compile("scripts/")],
         )
 
-    @mock.patch("git.Repo", new=mock.MagicMock())
+    @mock.patch("pygit2.Repository", new=mock.MagicMock())
     @mock.patch("tartufo.config.load_config_from_path")
     def test_extra_exclusions_get_added(self, mock_load: mock.MagicMock):
         mock_load.return_value = (
             self.data_dir / "pyproject.toml",
-            {"exclude_paths": "exclude-files", "exclude_path_patterns": ("bar/",)},
+            {"exclude_path_patterns": ("tests/", r"\.venv/", r".*\.egg-info/")},
         )
+        self.global_options.exclude_path_patterns = ("bar/",)
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, str(self.data_dir)
         )
@@ -94,25 +95,23 @@ class RepoLoadTests(ScannerTestCase):
             ],
         )
 
-    @mock.patch("git.Repo", new=mock.MagicMock())
+    @mock.patch("pygit2.Repository", new=mock.MagicMock())
     @mock.patch("tartufo.config.load_config_from_path")
     def test_extra_signatures_get_added(self, mock_load: mock.MagicMock):
-        self.global_options.exclude_signatures = ()
         mock_load.return_value = (
             self.data_dir / "pyproject.toml",
-            {"exclude_signatures": ["foo", "bar"]},
+            {"exclude_signatures": ["foo"]},
         )
+        self.global_options.exclude_signatures = ("bar",)
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, str(self.data_dir)
         )
         test_scanner.load_repo("../tartufo")
-        self.assertEqual(
-            sorted(test_scanner.global_options.exclude_signatures), ["bar", "foo"]
-        )
+        self.assertCountEqual(test_scanner.excluded_signatures, ["bar", "foo"])
 
 
 class FilterSubmoduleTests(ScannerTestCase):
-    @mock.patch("git.Repo")
+    @mock.patch("pygit2.Repository")
     def test_filter_submodules_adds_all_submodule_paths_to_exclusions(
         self, mock_repo: mock.MagicMock
     ):
@@ -123,7 +122,10 @@ class FilterSubmoduleTests(ScannerTestCase):
                 self.path = path
 
         self.git_options.include_submodules = False
-        mock_repo.return_value.submodules = [FakeSubmodule("foo"), FakeSubmodule("bar")]
+        mock_repo.return_value.listall_submodules.return_value = [
+            FakeSubmodule("foo"),
+            FakeSubmodule("bar"),
+        ]
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
@@ -131,12 +133,14 @@ class FilterSubmoduleTests(ScannerTestCase):
             test_scanner.excluded_paths, [re.compile("^foo"), re.compile("^bar")]
         )
 
-    @mock.patch("git.Repo")
+    @mock.patch("pygit2.Repository")
     def test_filter_submodules_handles_broken_submodules_explicitly(
         self, mock_repo: mock.MagicMock
     ):
         self.git_options.include_submodules = False
-        mock_repo.return_value.submodules.__iter__.side_effect = AttributeError
+        mock_repo.return_value.listall_submodules.return_value.__iter__.side_effect = (
+            AttributeError
+        )
         with self.assertRaisesRegex(
             TartufoException, "There was an error while parsing submodules"
         ):
@@ -144,303 +148,139 @@ class FilterSubmoduleTests(ScannerTestCase):
 
 
 class ChunkGeneratorTests(ScannerTestCase):
-    @mock.patch("git.Repo")
-    def test_single_branch_is_loaded_if_specified(self, mock_repo: mock.MagicMock):
+    def setUp(self) -> None:
+        self.diff_patcher = mock.patch("tartufo.scanner.GitScanner._iter_diff_index")
+        self.repo_patcher = mock.patch("pygit2.Repository")
+
+        self.mock_iter_diff = self.diff_patcher.start()
+        self.mock_repo = self.repo_patcher.start()
+
+        self.addCleanup(self.diff_patcher.stop)
+        self.addCleanup(self.repo_patcher.stop)
+        return super().setUp()
+
+    def test_single_branch_is_loaded_if_specified(self):
         self.git_options.branch = "foo"
-        self.git_options.fetch = True
-        self.git_options.is_remote = False
-        mock_fetch = mock.MagicMock()
-        mock_fetch.return_value = []
-        mock_branch = mock.MagicMock()
-        mock_branch.name = "foo"
-        mock_repo.return_value.branches = [mock_branch]
-        mock_repo.return_value.remotes.origin.fetch = mock_fetch
+        mock_branch_foo = mock.MagicMock()
+        mock_branch_bar = mock.MagicMock()
+        self.mock_repo.return_value.listall_branches.return_value = ["foo", "bar"]
+        self.mock_repo.return_value.branches = {
+            "foo": mock_branch_foo,
+            "bar": mock_branch_bar,
+        }
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
+
+        self.mock_iter_diff.return_value = []
         for _ in test_scanner.chunks:
             pass
-        mock_fetch.assert_called_once_with("foo")
+        self.mock_repo.return_value.walk.assert_called_once_with(
+            mock_branch_foo.resolve().target, pygit2.GIT_SORT_TOPOLOGICAL
+        )
 
-    @mock.patch("git.Repo")
-    def test_all_branches_are_loaded_if_specified(self, mock_repo: mock.MagicMock):
-        mock_fetch = mock.MagicMock()
-        mock_fetch.return_value = []
-        mock_repo.return_value.remotes.origin.fetch = mock_fetch
-        self.git_options.fetch = True
-        self.git_options.is_remote = False
+    def test_all_branches_are_scanned_for_commits(self):
+        mock_branch_foo = mock.MagicMock()
+        mock_branch_bar = mock.MagicMock()
+        self.mock_repo.return_value.listall_branches.return_value = ["foo", "bar"]
+        self.mock_repo.return_value.branches = {
+            "foo": mock_branch_foo,
+            "bar": mock_branch_bar,
+        }
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
-        for _ in test_scanner.chunks:
-            pass
-        mock_fetch.assert_called_once_with()
 
-    @mock.patch("git.Repo")
-    def test_explicit_exception_is_raised_if_fetch_fails(
-        self, mock_repo: mock.MagicMock
-    ):
-        self.git_options.fetch = True
-        mock_repo.return_value.remotes.origin.fetch.side_effect = git.GitCommandError(
-            command="git fetch -v origin", status=42, stderr="Fetch failed!"
-        )
-        test_scanner = scanner.GitRepoScanner(
-            self.global_options, self.git_options, "."
-        )
-        with self.assertRaisesRegex(
-            types.GitRemoteException, "stderr: 'Fetch failed!'"
-        ):
-            for _ in test_scanner.chunks:
-                pass
-
-    @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
-    @mock.patch("git.Repo")
-    def test_all_local_branches_are_scanned_for_commits(
-        self, mock_repo: mock.MagicMock, mock_iter_commits: mock.MagicMock
-    ):
-        self.git_options.fetch = True
-        self.git_options.is_remote = False
-        mock_repo.return_value.remotes.origin.fetch.return_value = ["foo", "bar"]
-        mock_repo.return_value.branches = ["foo", "bar"]
-        test_scanner = scanner.GitRepoScanner(
-            self.global_options, self.git_options, "."
-        )
-        mock_iter_commits.return_value = []
-        for _ in test_scanner.chunks:
-            pass
-        mock_iter_commits.assert_has_calls(
-            (
-                mock.call(mock_repo.return_value, "foo"),
-                mock.call(mock_repo.return_value, "bar"),
-            )
-        )
-
-    @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
-    @mock.patch("git.Repo")
-    def test_all_remote_branches_are_scanned_for_commits(
-        self, mock_repo: mock.MagicMock, mock_iter_commits: mock.MagicMock
-    ):
-        mock_foo = mock.MagicMock()
-        mock_foo.name = "origin/foo"
-        mock_bar = mock.MagicMock()
-        mock_bar.name = "origin/bar"
-
-        self.git_options.is_remote = True
-        mock_repo.return_value.remotes.origin.refs = [mock_foo, mock_bar]
-        test_scanner = scanner.GitRepoScanner(
-            self.global_options, self.git_options, "."
-        )
-        mock_iter_commits.return_value = []
-        for _ in test_scanner.chunks:
-            pass
-        mock_iter_commits.assert_has_calls(
-            (
-                mock.call(mock_repo.return_value, mock_foo),
-                mock.call(mock_repo.return_value, mock_bar),
-            )
-        )
-
-    @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
-    @mock.patch("git.Repo")
-    def test_scan_all_local_branches_fetch_false(
-        self, mock_repo: mock.MagicMock, mock_iter_commits: mock.MagicMock
-    ):
-        self.git_options.fetch = False
-        self.git_options.is_remote = False
-        mock_repo.return_value.remotes.origin.fetch.return_value = ["foo", "bar"]
-        mock_repo.return_value.branches = ["foo", "bar"]
-        test_scanner = scanner.GitRepoScanner(
-            self.global_options, self.git_options, "."
-        )
-        mock_iter_commits.return_value = []
-        for _ in test_scanner.chunks:
-            pass
-        mock_iter_commits.assert_has_calls(
-            (
-                mock.call(mock_repo.return_value, "foo"),
-                mock.call(mock_repo.return_value, "bar"),
-            )
-        )
-
-    @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
-    @mock.patch("git.Repo")
-    def test_scan_single_branch_fetch_false(
-        self, mock_repo: mock.MagicMock, mock_iter_commits: mock.MagicMock
-    ):
-        self.git_options.fetch = False
-        self.git_options.branch = "bar"
-        mock_foo = mock.MagicMock()
-        mock_foo.name = "foo"
-        mock_bar = mock.MagicMock()
-        mock_bar.name = "bar"
-        mock_repo.return_value.remotes.origin.fetch.return_value = ["foo", "bar"]
-        mock_repo.return_value.branches = [mock_foo, mock_bar]
-        test_scanner = scanner.GitRepoScanner(
-            self.global_options, self.git_options, "."
-        )
-        mock_iter_commits.return_value = []
-        for _ in test_scanner.chunks:
-            pass
-        mock_repo.return_value.remotes.origin.fetch.assert_not_called()
-        mock_iter_commits.assert_has_calls(
-            (mock.call(mock_repo.return_value, mock_bar),)
-        )
-
-    @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
-    @mock.patch("git.Repo")
-    def test_scan_single_remote_branch(
-        self, mock_repo: mock.MagicMock, mock_iter_commits: mock.MagicMock
-    ):
-        self.git_options.is_remote = True
-        self.git_options.branch = "bar"
-        mock_foo = mock.MagicMock()
-        mock_foo.name = "origin/foo"
-        mock_bar = mock.MagicMock()
-        mock_bar.name = "origin/bar"
-        mock_repo.return_value.remotes.origin.refs = [mock_foo, mock_bar]
-        test_scanner = scanner.GitRepoScanner(
-            self.global_options, self.git_options, "."
-        )
-        mock_iter_commits.return_value = []
-        for _ in test_scanner.chunks:
-            pass
-        mock_repo.return_value.remotes.branches.assert_not_called()
-        mock_iter_commits.assert_has_calls(
-            (mock.call(mock_repo.return_value, mock_bar),)
-        )
-
-    @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
-    @mock.patch("git.Repo")
-    def test_scan_single_local_branch_throws_exception_when_branch_not_found(
-        self, mock_repo: mock.MagicMock, mock_iter_commits: mock.MagicMock
-    ):
-        self.git_options.fetch = True
-        self.git_options.is_remote = False
-        self.git_options.branch = "not-found"
-        self.global_options.entropy = True
-        mock_foo = mock.MagicMock()
-        mock_foo.name = "foo"
-        mock_bar = mock.MagicMock()
-        mock_bar.name = "bar"
-        mock_repo.return_value.remotes.origin.fetch.return_value = ["foo", "bar"]
-        mock_repo.return_value.branches = [mock_foo, mock_bar]
-
-        test_scanner = scanner.GitRepoScanner(
-            self.global_options, self.git_options, "."
-        )
-        mock_iter_commits.return_value = []
-        self.assertRaises(types.BranchNotFoundException, test_scanner.scan)
-
-    @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
-    @mock.patch("git.Repo")
-    def test_scan_single_remote_branch_throws_exception_when_branch_not_found(
-        self, mock_repo: mock.MagicMock, mock_iter_commits: mock.MagicMock
-    ):
-        self.git_options.is_remote = True
-        self.git_options.branch = "not-found"
-        self.global_options.entropy = True
-        mock_foo = mock.MagicMock()
-        mock_foo.name = "foo"
-        mock_bar = mock.MagicMock()
-        mock_bar.name = "bar"
-        mock_repo.return_value.remotes.origin.refs = [mock_foo, mock_bar]
-
-        test_scanner = scanner.GitRepoScanner(
-            self.global_options, self.git_options, "."
-        )
-        mock_iter_commits.return_value = []
-        self.assertRaises(types.BranchNotFoundException, test_scanner.scan)
-
-    @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
-    @mock.patch("git.Repo")
-    def test_scan_single_branch_fetch_true(
-        self, mock_repo: mock.MagicMock, mock_iter_commits: mock.MagicMock
-    ):
-        self.git_options.fetch = True
-        self.git_options.is_remote = False
-        self.git_options.branch = "bar"
-        mock_foo = mock.MagicMock()
-        mock_foo.name = "foo"
-        mock_bar = mock.MagicMock()
-        mock_bar.name = "bar"
-        mock_repo.return_value.remotes.origin.fetch.return_value = ["foo", "bar"]
-        mock_repo.return_value.branches = [mock_foo, mock_bar]
-        test_scanner = scanner.GitRepoScanner(
-            self.global_options, self.git_options, "."
-        )
-        mock_iter_commits.return_value = []
-        for _ in test_scanner.chunks:
-            pass
-        mock_repo.return_value.remotes.origin.fetch.assert_called()
-        mock_iter_commits.assert_has_calls(
-            (mock.call(mock_repo.return_value, mock_bar),)
-        )
-
-    @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
-    @mock.patch("tartufo.scanner.GitRepoScanner._iter_diff_index")
-    @mock.patch("git.Repo")
-    def test_all_commits_are_scanned_for_files(
-        self,
-        mock_repo: mock.MagicMock,
-        mock_iter_diff_index: mock.MagicMock,
-        mock_iter_commits: mock.MagicMock,
-    ):
-        self.git_options.fetch = True
-        self.git_options.is_remote = False
-        mock_repo.return_value.remotes.origin.fetch.return_value = ["foo"]
-        mock_repo.return_value.branches = ["foo"]
-        test_scanner = scanner.GitRepoScanner(
-            self.global_options, self.git_options, "."
-        )
         mock_commit_1 = mock.MagicMock()
+        mock_commit_1.parents = None
         mock_commit_2 = mock.MagicMock()
+        mock_commit_2.parents = [mock_commit_1]
         mock_commit_3 = mock.MagicMock()
-        mock_iter_commits.return_value = [
-            (mock_commit_2, mock_commit_3),
-            (mock_commit_1, mock_commit_2),
+        mock_commit_3.parents = [mock_commit_2]
+
+        self.mock_repo.return_value.walk.return_value = [
+            mock_commit_3,
+            mock_commit_2,
+            mock_commit_1,
         ]
-        mock_iter_diff_index.return_value = []
+
+        self.mock_iter_diff.return_value = []
         for _ in test_scanner.chunks:
             pass
-        mock_commit_2.diff.assert_called_once_with(mock_commit_3, create_patch=True)
-        mock_commit_1.diff.assert_has_calls(
+
+        self.mock_repo.return_value.walk.assert_has_calls(
             (
-                mock.call(mock_commit_2, create_patch=True),
-                mock.call(git.NULL_TREE, create_patch=True),
-            )
-        )
-        mock_iter_diff_index.assert_has_calls(
-            (
-                mock.call(mock_commit_2.diff.return_value),
-                mock.call(mock_commit_1.diff.return_value),
-                mock.call(mock_commit_1.diff.return_value),
+                mock.call(
+                    mock_branch_foo.resolve().target, pygit2.GIT_SORT_TOPOLOGICAL
+                ),
+                mock.call(
+                    mock_branch_bar.resolve().target, pygit2.GIT_SORT_TOPOLOGICAL
+                ),
             )
         )
 
-    @mock.patch("tartufo.scanner.GitRepoScanner._iter_branch_commits")
-    @mock.patch("tartufo.scanner.GitRepoScanner._iter_diff_index")
+    def test_all_commits_are_scanned_for_files(self):
+        self.mock_repo.return_value.branches = {"foo": mock.MagicMock()}
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        mock_commit_1 = mock.MagicMock(name="commit1")
+        mock_commit_1.parents = None
+        mock_commit_2 = mock.MagicMock(name="commit2")
+        mock_commit_2.parents = [mock_commit_1]
+        mock_commit_3 = mock.MagicMock(name="commit3")
+        mock_commit_3.parents = [mock_commit_2]
+        self.mock_repo.return_value.walk.return_value = [
+            mock_commit_3,
+            mock_commit_2,
+            mock_commit_1,
+        ]
+        self.mock_iter_diff.return_value = []
+        for _ in test_scanner.chunks:
+            pass
+        self.mock_repo.return_value.diff.assert_has_calls(
+            (
+                mock.call(mock_commit_2, mock_commit_3),
+                mock.call().find_similar(),
+                mock.call(mock_commit_1, mock_commit_2),
+                mock.call().find_similar(),
+            )
+        )
+        self.mock_iter_diff.assert_has_calls(
+            (
+                mock.call(
+                    self.mock_repo.return_value.diff(mock_commit_3, mock_commit_2),
+                ),
+                mock.call(
+                    self.mock_repo.return_value.diff(mock_commit_2, mock_commit_1),
+                ),
+                mock.call(
+                    self.mock_repo.return_value.revparse_single().tree.diff_to_tree(),
+                ),
+            )
+        )
+
     @mock.patch("tartufo.util.extract_commit_metadata")
-    @mock.patch("git.Repo")
     def test_all_files_are_yielded_as_chunks(
         self,
-        mock_repo: mock.MagicMock,
         mock_extract: mock.MagicMock,
-        mock_iter_diff_index: mock.MagicMock,
-        mock_iter_commits: mock.MagicMock,
     ):
-        self.git_options.fetch = True
-        self.git_options.is_remote = False
-        mock_repo.return_value.remotes.origin.fetch.return_value = ["foo"]
-        mock_repo.return_value.branches = ["foo"]
+        self.mock_repo.return_value.branches = {"foo": mock.MagicMock()}
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
         mock_commit_1 = mock.MagicMock()
+        mock_commit_1.parents = None
         mock_commit_2 = mock.MagicMock()
-        mock_iter_commits.return_value = [(mock_commit_1, mock_commit_2)]
-        mock_iter_diff_index.return_value = [("foo", "bar.py"), ("baz", "blah.py")]
+        mock_commit_2.parents = [mock_commit_1]
+        self.mock_repo.return_value.walk.return_value = [
+            mock_commit_2,
+            mock_commit_1,
+        ]
+        self.mock_iter_diff.return_value = [("foo", "bar.py"), ("baz", "blah.py")]
         chunks = list(test_scanner.chunks)
-        # These get duplicated in this test, because `_iter_diff_index` is called
+
+        # These get duplicated in this test, because `_iter_diff` is called
         # both in the normal branch/commit iteration, and then once more afterward
         # to capture the first commit on the branch
         self.assertEqual(
@@ -453,24 +293,59 @@ class ChunkGeneratorTests(ScannerTestCase):
             ],
         )
 
+    def test_error_is_raised_when_specified_branch_is_not_found(self):
+        self.git_options.branch = "foo"
+        self.mock_repo.return_value.branches = {}
+
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        with self.assertRaisesRegex(
+            types.BranchNotFoundException, "Branch foo was not found."
+        ):
+            for _ in test_scanner.chunks:
+                pass
+
+    def test_head_is_scanned_when_no_local_branches_are_found(self):
+        self.mock_repo.return_value.listall_branches.return_value = []
+        self.mock_iter_diff.return_value = []
+        self.mock_repo.return_value.head.target = "commit-hash"
+        mock_head = mock.MagicMock(spec=pygit2.Commit)
+        self.mock_repo.return_value.get.return_value = mock_head
+
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+
+        for _ in test_scanner.chunks:
+            pass
+
+        # This is all the stuff that happens for yielding the "first commit".
+        self.mock_repo.return_value.get.assert_called_once_with("commit-hash")
+        revparse = self.mock_repo.return_value.revparse_single
+        revparse.assert_called_once_with(mock_head.hex)
+        tree = revparse.return_value.tree.diff_to_tree
+        tree.assert_called_once_with(swap=True)
+        self.mock_iter_diff.assert_called_with(tree.return_value)
+
 
 class IterDiffIndexTests(ScannerTestCase):
-    @mock.patch("git.Repo", new=mock.MagicMock())
+    @mock.patch("pygit2.Repository", new=mock.MagicMock())
     def test_binary_files_are_skipped(self):
         mock_diff = mock.MagicMock()
-        mock_diff.diff.decode.return_value = "Binary files\n101010"
+        mock_diff.delta.is_binary = True
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
         diffs = list(test_scanner._iter_diff_index([mock_diff]))
         self.assertEqual(diffs, [])
 
-    @mock.patch("git.Repo", new=mock.MagicMock())
+    @mock.patch("pygit2.Repository", new=mock.MagicMock())
     @mock.patch("tartufo.scanner.ScannerBase.should_scan")
     def test_excluded_files_are_not_scanned(self, mock_should: mock.MagicMock):
         mock_should.return_value = False
         mock_diff = mock.MagicMock()
-        mock_diff.diff.decode.return_value = "+ Ford Prefect"
+        mock_diff.delta.is_binary = False
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
@@ -478,76 +353,189 @@ class IterDiffIndexTests(ScannerTestCase):
         self.assertEqual(diffs, [])
         mock_should.assert_called_once()
 
-    @mock.patch("git.Repo", new=mock.MagicMock())
+    @mock.patch("pygit2.Repository", new=mock.MagicMock())
+    @mock.patch(
+        "tartufo.scanner.GitScanner.header_length",
+        mock.MagicMock(side_effect=[52, 52, 0]),
+    )
     @mock.patch("tartufo.scanner.ScannerBase.should_scan")
     def test_all_files_are_yielded(self, mock_should: mock.MagicMock):
         mock_should.return_value = True
         mock_diff_1 = mock.MagicMock()
-        mock_diff_1.diff.decode.return_value = "+ Ford Prefect"
+        mock_diff_1.delta.is_binary = False
+        mock_diff_1.text = (
+            "meta_line_1\nmeta_line_2\nmeta_line_3\n+++ meta_line_4\n+ Ford Prefect"
+        )
+        mock_diff_1.delta.new_file.path = "/foo"
         mock_diff_2 = mock.MagicMock()
-        mock_diff_2.diff.decode.return_value = "- Marvin"
+        mock_diff_2.delta.is_binary = False
+        mock_diff_2.text = (
+            "meta_line_1\nmeta_line_2\nmeta_line_3\n+++ meta_line_4\n- Marvin"
+        )
+        mock_diff_2.delta.new_file.path = "/bar"
+        mock_diff_3 = mock.MagicMock()
+        mock_diff_3.delta.is_binary = False
+        mock_diff_3.text = (
+            "meta_line_1\nsimilarity index 100%\nrename from file1\nrename to file1"
+        )
+        mock_diff_3.delta.new_file.path = "/bar"
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
         diffs = list(test_scanner._iter_diff_index([mock_diff_1, mock_diff_2]))
         self.assertEqual(
             diffs,
-            [("+ Ford Prefect", mock_diff_1.b_path), ("- Marvin", mock_diff_2.b_path)],
-        )
-
-
-class IterBranchCommitsTests(ScannerTestCase):
-    @mock.patch("git.Repo", new=mock.MagicMock())
-    def test_all_commits_get_yielded_in_pairs(self):
-        test_scanner = scanner.GitRepoScanner(
-            self.global_options, self.git_options, "."
-        )
-        mock_repo = mock.MagicMock()
-        mock_branch = mock.MagicMock(name="foo")
-        mock_commit_1 = mock.MagicMock()
-        mock_commit_2 = mock.MagicMock()
-        mock_commit_3 = mock.MagicMock()
-        mock_commit_4 = mock.MagicMock()
-        mock_repo.iter_commits.return_value = [
-            mock_commit_1,
-            mock_commit_2,
-            mock_commit_3,
-            mock_commit_4,
-        ]
-        commits = list(test_scanner._iter_branch_commits(mock_repo, mock_branch))
-        self.assertEqual(
-            commits,
             [
-                (mock_commit_2, mock_commit_1),
-                (mock_commit_3, mock_commit_2),
-                (mock_commit_4, mock_commit_3),
+                ("+ Ford Prefect", "/foo"),
+                ("- Marvin", "/bar"),
             ],
         )
 
-    @mock.patch("git.Repo", new=mock.MagicMock())
-    def test_iteration_stops_when_since_commit_is_reached(self):
-        self.git_options.since_commit = "42"
+
+class HeaderLineCountTests(ScannerTestCase):
+    def test_detects_there_are_four_header_lines(self):
+        diff = "meta_line_1\nmeta_line_2\nmeta_line_3\n+++ meta_line_4\n+ Ford Prefect"
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
-        mock_repo = mock.MagicMock()
-        mock_branch = mock.MagicMock(name="foo")
-        mock_commit_1 = mock.MagicMock()
-        mock_commit_2 = mock.MagicMock()
-        mock_commit_3 = mock.MagicMock()
-        mock_commit_3.hexsha = "42"
-        mock_commit_4 = mock.MagicMock()
-        mock_repo.iter_commits.return_value = [
-            mock_commit_1,
-            mock_commit_2,
-            mock_commit_3,
-            mock_commit_4,
+        actual_diff_header_length = test_scanner.header_length(diff)
+        self.assertEqual(52, actual_diff_header_length)
+
+    def test_detects_there_are_five_header_lines(self):
+        diff = "meta_line_1\nmeta_line_2\nmeta_line_3\nmeta_line_4\n+++ meta_line_4\n+ Ford Prefect"
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        actual_diff_header_length = test_scanner.header_length(diff)
+        self.assertEqual(64, actual_diff_header_length)
+
+    def test_returns_entire_header_length_when_no_header_match(self):
+        diff = "meta_line_1\nmeta_line_2\nmeta_line_3\nmeta_line_4\nmeta_line_4\n+ Ford Prefect"
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        actual_diff_header_length = test_scanner.header_length(diff)
+        self.assertEqual(len(diff), actual_diff_header_length)
+
+
+class ScanFilenameTests(ScannerTestCase):
+    @mock.patch("tartufo.scanner.GitScanner.header_length")
+    def test_scan_filename_disabled(self, mock_header_length):
+        mock_diff = mock.MagicMock()
+        mock_diff.delta.is_binary = False
+        mock_diff.text = "meta_line_1\nmeta_line_2\nmeta_line_3\nmeta_line_4\nmeta_line_4\n+ Ford Prefect"
+        self.global_options.scan_filenames = False
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+
+        for _ in test_scanner._iter_diff_index([mock_diff]):
+            pass
+
+        mock_header_length.assert_called_once_with(mock_diff.text)
+
+    @mock.patch("tartufo.scanner.GitScanner.header_length")
+    def test_scan_filename_enabled(self, mock_header_length):
+        mock_diff = mock.MagicMock()
+        mock_diff.delta.is_binary = False
+        mock_diff.text = "meta_line_1\nmeta_line_2\nmeta_line_3\nmeta_line_4\nmeta_line_4\n+ Ford Prefect"
+        self.global_options.scan_filenames = True
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+
+        for _ in test_scanner._iter_diff_index([mock_diff]):
+            pass
+
+        mock_header_length.assert_not_called()
+
+
+class ExcludedSignaturesTests(ScannerTestCase):
+    def test_old_style_signatures_are_processed(self):
+        self.global_options.exclude_signatures = ["bar/"]
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        self.assertEqual(test_scanner.excluded_signatures, ("bar/",))
+
+    def test_new_style_signatures_are_processed(self):
+        self.global_options.exclude_signatures = [
+            {"signature": "bar/", "reason": "path pattern"}
         ]
-        commits = list(test_scanner._iter_branch_commits(mock_repo, mock_branch))
-        # Because "since commit" is exclusive, only the 2 commits before it are ever yielded
-        self.assertEqual(
-            commits,
-            [(mock_commit_2, mock_commit_1)],
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        self.assertEqual(test_scanner.excluded_signatures, ("bar/",))
+
+    def test_error_is_not_raised_when_two_styles_signatures_are_configured(self):
+        self.global_options.exclude_signatures = [
+            "foo/",
+            {"signature": "bar/", "reason": "path pattern"},
+        ]
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        self.assertCountEqual(test_scanner.excluded_signatures, ("foo/", "bar/"))
+
+
+class IncludedPathsTests(ScannerTestCase):
+    def test_old_style_included_paths_are_processed(self):
+        self.global_options.include_path_patterns = ["bar/"]
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        self.assertEqual(test_scanner.included_paths, [re.compile("bar/")])
+
+    def test_new_style_included_paths_are_processed(self):
+        self.global_options.include_path_patterns = [
+            {"path-pattern": "bar/", "reason": "path pattern"}
+        ]
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        self.assertEqual(test_scanner.included_paths, [re.compile("bar/")])
+
+    def test_error_is_not_raised_when_two_styles_included_paths_are_configured(self):
+        self.global_options.include_path_patterns = [
+            "foo/",
+            {"path-pattern": "bar/", "reason": "path pattern"},
+        ]
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        self.assertCountEqual(
+            test_scanner.included_paths, [re.compile("foo/"), re.compile("bar/")]
+        )
+
+
+class ExcludedPathsTests(ScannerTestCase):
+    def test_old_style_excluded_paths_are_processed(self):
+        self.global_options.exclude_path_patterns = ["bar/"]
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        self.assertEqual(test_scanner.excluded_paths, [re.compile("bar/")])
+
+    def test_new_style_excluded_paths_are_processed(self):
+        self.global_options.exclude_path_patterns = [
+            {"path-pattern": "bar/", "reason": "path pattern"}
+        ]
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        self.assertEqual(test_scanner.excluded_paths, [re.compile("bar/")])
+
+    @mock.patch("tartufo.scanner.GitScanner.filter_submodules", mock.MagicMock())
+    def test_error_is_not_raised_when_two_styles_excluded_paths_are_configured(self):
+        self.global_options.exclude_path_patterns = [
+            "foo/",
+            {"path-pattern": "bar/", "reason": "path pattern"},
+        ]
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+        self.assertCountEqual(
+            test_scanner.excluded_paths, [re.compile("foo/"), re.compile("bar/")]
         )
 
 

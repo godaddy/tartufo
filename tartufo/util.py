@@ -2,19 +2,30 @@
 import json
 import os
 import pathlib
+import platform
 import stat
 import tempfile
 import uuid
 from datetime import datetime
 from functools import lru_cache, partial
 from hashlib import blake2s
-from typing import Any, Callable, Dict, Iterable, List, Optional, TYPE_CHECKING, Pattern
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    List,
+    Optional,
+    Tuple,
+    TYPE_CHECKING,
+    Pattern,
+)
 
 import click
 import git
+import pygit2
 
 from tartufo import types
-from tartufo.types import Rule
 
 if TYPE_CHECKING:
     from tartufo.scanner import Issue  # pylint: disable=cyclic-import
@@ -37,13 +48,6 @@ def del_rw(_func: Callable, name: str, _exc: Exception) -> None:
     os.remove(name)
 
 
-def convert_regexes_to_rules(regexes: Dict[str, Pattern]) -> Dict[str, Rule]:
-    return {
-        name: Rule(name=name, pattern=pattern, path_pattern=None, re_match_type="match")
-        for name, pattern in regexes.items()
-    }
-
-
 def echo_result(
     options: "types.GlobalOptions",
     scanner: "ScannerBase",
@@ -56,50 +60,64 @@ def echo_result(
     :param repo_path: The path to the repository the issues were found in
     :param output_dir: The directory that issue details were written out to
     """
+
     now = datetime.now().isoformat("T", "microseconds")
-    if options.json:
+    if options.output_format == types.OutputFormat.Json.value:
         output = {
             "scan_time": now,
             "project_path": repo_path,
             "output_dir": str(output_dir) if output_dir else None,
             "excluded_paths": [str(path.pattern) for path in scanner.excluded_paths],
             "excluded_signatures": [
-                str(signature) for signature in options.exclude_signatures
+                str(signature) for signature in scanner.excluded_signatures
             ],
             "exclude_entropy_patterns": [
                 str(pattern) for pattern in options.exclude_entropy_patterns
             ],
-            "found_issues": [
-                issue.as_dict(compact=options.compact) for issue in scanner.issues
-            ],
+            # This member is for reference. Read below...
+            # "found_issues": [
+            #     issue.as_dict(compact=options.compact) for issue in scanner.issues
+            # ],
         }
 
-        click.echo(json.dumps(output))
-    elif options.compact:
-        for issue in scanner.issues:
+        # Observation: We want to "stream" JSON; the only generator output is the
+        # "found_issues" list (which is at the top level). Dump the "static" part
+        # minus the closing "}", then generate issues individually, then emit the
+        # closing "}".
+        static_part = json.dumps(output)
+        click.echo(f'{static_part[:-1]}, "found_issues": [', nl=False)
+        delimiter = ""
+        for issue in scanner.scan():
+            compact = options.output_format == types.OutputFormat.Compact.value
+            live_part = json.dumps(issue.as_dict(compact=compact))
+            click.echo(f"{delimiter}{live_part}", nl=False)
+            delimiter = ", "
+        click.echo("]}")
+    elif options.output_format == types.OutputFormat.Compact.value:
+        for issue in scanner.scan():
             click.echo(
                 f"[{issue.issue_type.value}] {issue.chunk.file_path}: {issue.matched_string} "
                 f"({issue.signature}, {issue.issue_detail})"
             )
     else:
+        for issue in scanner.scan():
+            click.echo(bytes(issue))
         if not scanner.issues:
             if not options.quiet:
                 click.echo(f"Time: {now}\nAll clear. No secrets detected.")
-        else:
-            click.echo(b"\n".join([bytes(issue) for issue in scanner.issues]))
         if options.verbose > 0:
             click.echo("\nExcluded paths:")
-            click.echo("\n".join([path.pattern for path in scanner.excluded_paths]))
+            click.echo("\n".join([str(path) for path in scanner.excluded_paths]))
             click.echo("\nExcluded signatures:")
-            click.echo("\n".join(options.exclude_signatures))
+            click.echo("\n".join(scanner.excluded_signatures))
             click.echo("\nExcluded entropy patterns:")
-            click.echo("\n".join(options.exclude_entropy_patterns))
+            click.echo("\n".join(str(path) for path in scanner.excluded_entropy))
 
 
-def write_outputs(found_issues: "List[Issue]", output_dir: pathlib.Path) -> List[str]:
+def write_outputs(found_issues: List["Issue"], output_dir: pathlib.Path) -> List[str]:
     """Write details of the issues to individual files in the specified directory.
 
-    :param found_issues: The list of issues to be written out
+    :param found_issues: A list of issues to be written out
     :param output_dir: The directory where the files should be written
     """
     result_files = []
@@ -112,11 +130,12 @@ def write_outputs(found_issues: "List[Issue]", output_dir: pathlib.Path) -> List
 
 def clone_git_repo(
     git_url: str, target_dir: Optional[pathlib.Path] = None
-) -> pathlib.Path:
+) -> Tuple[pathlib.Path, str]:
     """Clone a remote git repository and return its filesystem path.
 
     :param git_url: The URL of the git repository to be cloned
     :param target_dir: Where to clone the repository to
+    :returns: Filesystem path of local clone and name of remote source
     :raises types.GitRemoteException: If there was an error cloning the repository
     """
     if not target_dir:
@@ -125,10 +144,11 @@ def clone_git_repo(
         project_path = str(target_dir)
 
     try:
-        git.Repo.clone_from(git_url, project_path)
+        repo = git.Repo.clone_from(git_url, project_path)
+        origin = repo.remotes[0].name
     except git.GitCommandError as exc:
         raise types.GitRemoteException(exc.stderr.strip()) from exc
-    return pathlib.Path(project_path)
+    return pathlib.Path(project_path), origin
 
 
 style_ok = partial(click.style, fg="bright_green")  # pylint: disable=invalid-name
@@ -157,56 +177,43 @@ def generate_signature(snippet: str, filename: str) -> str:
     :param snippet: A string which was found as a potential issue during a scan
     :param filename: The file where the issue was found
     """
-    return blake2s("{}$${}".format(snippet, filename).encode("utf-8")).hexdigest()
+    return blake2s(f"{snippet}$${filename}".encode("utf-8")).hexdigest()
 
 
-def extract_commit_metadata(
-    commit: git.Commit, branch: git.FetchInfo
-) -> Dict[str, Any]:
+def extract_commit_metadata(commit: pygit2.Commit, branch_name: str) -> Dict[str, Any]:
     """Grab a consistent set of metadata from a git commit, for user output.
 
     :param commit: The commit to extract the data from
     :param branch: What branch the commit was found on
     """
     return {
-        "commit_time": datetime.fromtimestamp(commit.committed_date).strftime(
+        "commit_time": datetime.fromtimestamp(commit.commit_time).strftime(
             DATETIME_FORMAT
         ),
         "commit_message": commit.message,
-        "commit_hash": commit.hexsha,
-        "branch": branch.name,
+        "commit_hash": commit.hex,
+        "branch": branch_name,
     }
 
 
-def get_strings_of_set(
-    word: str, char_set: Iterable[str], threshold: int = 20
-) -> List[str]:
-    """Split a "word" into a set of "strings", based on a given character set.
+def find_strings_by_regex(
+    text: str, regex: Pattern, threshold: int = 20
+) -> Generator[str, None, None]:
+    """Locate strings ("words") of interest in input text
 
-    The returned strings must have a length, at minimum, equal to `threshold`.
-    This is meant for extracting long strings which are likely to be things like
+    Each returned string must have a length, at minimum, equal to `threshold`.
+    This is meant to return longer strings which are likely to be things like
     auto-generated passwords, tokens, hashes, etc.
 
-    :param word: The word to be analyzed
-    :param char_set: The set of characters used to compose the strings (i.e. hex)
-    :param threshold: The minimum length for what is accepted as a string
+    :param text: The text string to be analyzed
+    :param regex: A pattern which matches all character sequences of interest
+    :param threshold: The minimum acceptable length of a matching string
     """
-    count: int = 0
-    letters: str = ""
-    strings: List[str] = []
 
-    for char in word:
-        if char in char_set:
-            letters += char
-            count += 1
-        else:
-            if count > threshold:
-                strings.append(letters)
-            letters = ""
-            count = 0
-    if count > threshold:
-        strings.append(letters)
-    return strings
+    for match in regex.finditer(text):
+        substring = match.group()
+        if len(substring) >= threshold:
+            yield substring
 
 
 def path_contains_git(path: str) -> bool:
@@ -214,3 +221,24 @@ def path_contains_git(path: str) -> bool:
         return git.Repo(path) is not None
     except git.GitError:
         return False
+
+
+def process_issues(
+    repo_path: str,
+    scan: "ScannerBase",
+    options: types.GlobalOptions,
+):
+    now = datetime.now().isoformat("T", "microseconds")
+    output_dir = None
+    if options.output_dir:
+        if platform.system().lower() == "windows":  # pragma: no cover
+            # Make sure we aren't using illegal characters for Windows folder names
+            now = now.replace(":", "")
+        output_dir = pathlib.Path(options.output_dir) / f"tartufo-scan-results-{now}"
+        output_dir.mkdir(parents=True)
+
+    echo_result(options, scan, repo_path, output_dir)
+    if output_dir:
+        write_outputs(scan.issues, output_dir)
+        if options.output_format != types.OutputFormat.Json.value:
+            click.echo(f"Results have been saved in {output_dir}")

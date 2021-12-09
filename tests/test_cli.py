@@ -85,7 +85,7 @@ class ProcessIssuesTest(unittest.TestCase):
     @unittest.skipIf(
         helpers.BROKEN_USER_PATHS, "Skipping due to truncated Windows usernames"
     )
-    @mock.patch("tartufo.cli.datetime")
+    @mock.patch("tartufo.util.datetime")
     @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
     @mock.patch("tartufo.util.echo_result", new=mock.MagicMock())
     @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
@@ -100,22 +100,21 @@ class ProcessIssuesTest(unittest.TestCase):
         mock_dt.now.return_value.isoformat.return_value = "nownownow"
         runner = CliRunner()
         with runner.isolated_filesystem() as dirname:
+            output_dir = (Path(dirname) / "foo").resolve()
             result = runner.invoke(
-                cli.main, ["--output-dir", "./foo", "scan-local-repo", "."]
+                cli.main, ["--output-dir", str(output_dir), "scan-local-repo", "."]
             )
-        output_dir = (
-            Path(dirname) / "foo" / "tartufo-scan-results-nownownow"
-        ).resolve()
+        result_dir = output_dir / "tartufo-scan-results-nownownow"
         self.assertEqual(
             result.output,
-            f"Results have been saved in {output_dir}\n",
+            f"Results have been saved in {result_dir}\n",
         )
 
     @unittest.skipUnless(helpers.WINDOWS, "Test is Windows-only")
     @unittest.skipIf(
         helpers.BROKEN_USER_PATHS, "Skipping due to truncated Windows usernames"
     )
-    @mock.patch("tartufo.cli.datetime")
+    @mock.patch("tartufo.util.datetime")
     @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
     @mock.patch("tartufo.util.echo_result", new=mock.MagicMock())
     @mock.patch("tartufo.util.write_outputs", new=mock.MagicMock())
@@ -130,15 +129,14 @@ class ProcessIssuesTest(unittest.TestCase):
         mock_dt.now.return_value.isoformat.return_value = "now:now:now"
         runner = CliRunner()
         with runner.isolated_filesystem() as dirname:
+            output_dir = (Path(dirname) / "foo").resolve()
             result = runner.invoke(
-                cli.main, ["--output-dir", "./foo", "scan-local-repo", "."]
+                cli.main, ["--output-dir", str(output_dir), "scan-local-repo", "."]
             )
-        output_dir = (
-            Path(dirname) / "foo" / "tartufo-scan-results-nownownow"
-        ).resolve()
+        result_dir = output_dir / "tartufo-scan-results-nownownow"
         self.assertEqual(
             result.output,
-            f"Results have been saved in {output_dir}\n",
+            f"Results have been saved in {result_dir}\n",
         )
 
     @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
@@ -155,7 +153,15 @@ class ProcessIssuesTest(unittest.TestCase):
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(
-                cli.main, ["--output-dir", "./foo", "--json", "scan-local-repo", "."]
+                cli.main,
+                [
+                    "--output-dir",
+                    "./foo",
+                    "--output-format",
+                    "json",
+                    "scan-local-repo",
+                    ".",
+                ],
             )
         # All other outputs are mocked, so this is ensuring that the
         #   "Results have been saved in ..." message is not output.
@@ -175,7 +181,15 @@ class ProcessIssuesTest(unittest.TestCase):
         runner = CliRunner()
         with runner.isolated_filesystem():
             runner.invoke(
-                cli.main, ["--output-dir", "./foo", "--json", "scan-local-repo", "."]
+                cli.main,
+                [
+                    "--output-dir",
+                    "./foo",
+                    "--output-format",
+                    "json",
+                    "scan-local-repo",
+                    ".",
+                ],
             )
             self.assertTrue(Path("./foo").exists())
 

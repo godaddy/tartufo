@@ -31,14 +31,15 @@ maintainers = ["GoDaddy <oss@godaddy.com>"]
 name = "tartufo"
 readme = "README.md"
 repository = "https://github.com/godaddy/tartufo/"
-version = "2.10.0"
+version = "3.0.0-alpha.2"
 
 [tool.poetry.scripts]
 tartufo = "tartufo.cli:main"
 
 [tool.poetry.dependencies]
 GitPython = "<3.1.20"
-click = "^7"
+pygit2 = "~1.6"
+click = "^8.0.3"
 colorama = {version = "*", markers = "sys_platform == 'win32'"}
 dataclasses = {version = "*", python = "< 3.7"}
 python = "^3.6.2"
@@ -48,6 +49,7 @@ sphinx-click = {version = "^2.5.0", optional = true}
 sphinx-rtd-theme = {version = "^0.5.0", optional = true}
 sphinxcontrib-spelling = {version = "^5.4.0", optional = true}
 tomlkit = "^0.7.2"
+cached-property = "^1.5.2"
 
 [tool.poetry.dev-dependencies]
 black = {version = "21.5b2", allow-prereleases = true, markers = "platform_python_implementation == 'CPython'"}
@@ -62,6 +64,7 @@ tox = "^3.21.4"
 vulture = "^2.3"
 types-requests = "^2.25.2"
 types-click = "^7.1.2"
+cached-property = "^1.5.2"
 
 [tool.poetry.extras]
 docs = ["recommonmark", "sphinx", "sphinx-click", "sphinx-rtd-theme", "sphinxcontrib-spelling"]
@@ -138,9 +141,13 @@ exclude-signatures = [
   "d039c652f27c4d42026c5b5c9be31bfe368b283b24248e98d92f131272580053",
 
   # test secrets
-  "d26b223efb2087d4a3db7b3ff0f65362372c46190fd74b8061db8099f4a2ee60", # tests/data/scan_folder/donotscan.txt
-  "94c45f9acae0551a2438fa8932fac466e903fd9a09bd2e11897198b133937ccd", # tests/data/scan_folder/test.txt
+  "6c70b4a712ada69f2a6c919edc783cf485b6637e3c5429de376ef1a451a042e4", # tests/data/scan_folder/donotscan.txt
+  "357841766ca69979608e4e7fb1da2addeafe6d15cade15466c39d903cc0488a8", # tests/data/scan_folder/test.txt
   "743b893e30777d9c4e28d3d341ca4ba1c2541a9c62b497dece75c2a64420e770", # tests/test_folder_scanner.py
+  "358a1ae040ab71b3aafeb4318e5d9e318ff1b681c5bf0e99d381584a33ee7833", # tests/data/scan_folder/scan_sub_folder/sub_folder_test.txt
+  "9d1b278fa384c9dc58d607130d97740910309d13b29f13f7ed6348738ea4f32c", # tests/test_folder_scanner.py 16-Nov-2021
+  "9f675d4d7f43e484e07fb199a1e7ec372ef204631c1f4ec054acc3119fbde4cf", # build_and_publish_docker_file 13-Jun-2019
+  "88152f1d10077f417ee5aea5fa86adaa5b74d3f2de2e87ce4b4aa5cd79c7b2f5", # nothing file, 30-Dec-2016
 ]
 json = false
 regex = true
@@ -180,7 +187,7 @@ ignore_missing_imports = true
 # R0914: Too many local variables
 # W0511: FIXME
 # E1136: Unsubscriptable object (Disabled due to Python 3.9 compatibility bug in pylint)
-disable = "C0111,C0301,C0330,R0201,R0801,R0903,R0912,R0914,W0511,E1136"
+disable = "C0111,C0301,C0330,R0201,R0801,R0903,R0912,R0914,W0511,E1136,W1514"
 
 [tool.pylint.BASIC]
 module-rgx = "(([a-z_][a-z0-9_]*)|([a-z][a-zA-Z0-9]+))$"
@@ -193,6 +200,7 @@ max-args = "14"
 
 [tool.pylint.MASTER]
 ignore = "docs/"
+extension-pkg-whitelist = ["pygit2"]
 
 [tool.coverage.run]
 branch = true

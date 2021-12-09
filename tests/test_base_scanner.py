@@ -1,10 +1,11 @@
 import re
+import string
 import unittest
 from unittest import mock
 
 from tartufo import scanner, types
 from tartufo.scanner import Issue
-from tartufo.types import GlobalOptions, Rule
+from tartufo.types import GlobalOptions, Rule, MatchType
 
 from tests.helpers import generate_options
 
@@ -33,7 +34,7 @@ class ScanTests(ScannerTestCase):
         self.options.regex = False
         test_scanner = TestScanner(self.options)
         with self.assertRaisesRegex(types.ConfigException, "No analysis requested."):
-            test_scanner.scan()
+            list(test_scanner.scan())
 
     def test_scan_aborts_when_regex_requested_but_none_found(self):
         self.options.regex = True
@@ -42,7 +43,7 @@ class ScanTests(ScannerTestCase):
         with self.assertRaisesRegex(
             types.ConfigException, "Regex checks requested, but no regexes found."
         ):
-            test_scanner.scan()
+            list(test_scanner.scan())
 
     @mock.patch("tartufo.config.configure_regexes")
     def test_scan_aborts_due_to_invalid_regex(self, mock_config: mock.MagicMock):
@@ -54,7 +55,7 @@ class ScanTests(ScannerTestCase):
         with self.assertRaisesRegex(
             types.ConfigException, "Invalid regular expression"
         ):
-            test_scanner.scan()
+            list(test_scanner.scan())
 
     @mock.patch("tartufo.scanner.ScannerBase.scan_entropy")
     def test_scan_iterates_through_all_chunks(self, mock_entropy: mock.MagicMock):
@@ -63,21 +64,36 @@ class ScanTests(ScannerTestCase):
         self.options.b64_entropy_score = 4.5
         self.options.hex_entropy_score = 3
         test_scanner = TestScanner(self.options)
-        test_scanner.scan()
+        list(test_scanner.scan())
         mock_entropy.assert_has_calls(
             (
-                mock.call("foo", 4.5, 3),
-                mock.call("bar", 4.5, 3),
-                mock.call("baz", 4.5, 3),
+                mock.call("foo"),
+                mock.call("bar"),
+                mock.call("baz"),
             ),
             any_order=True,
         )
 
     @mock.patch("tartufo.scanner.ScannerBase.scan_entropy")
+    @mock.patch("tartufo.scanner.ScannerBase.scan_regex")
+    def test_scan_does_not_rescan(self, mock_regex, mock_entropy):
+        """Make sure scan() does not rescan"""
+
+        self.options.regex = True
+        self.options.entropy = True
+        test_scanner = TestScanner(self.options)
+        test_scanner._completed = True  # pylint: disable=protected-access
+        test_scanner._issues = [1, 2, 3]  # pylint: disable=protected-access
+        result = list(test_scanner.scan())
+        mock_regex.assert_not_called()
+        mock_entropy.assert_not_called()
+        self.assertEqual(result, [1, 2, 3])
+
+    @mock.patch("tartufo.scanner.ScannerBase.scan_entropy")
     def test_scan_checks_entropy_if_specified(self, mock_entropy: mock.MagicMock):
         self.options.entropy = True
         test_scanner = TestScanner(self.options)
-        test_scanner.scan()
+        list(test_scanner.scan())
         mock_entropy.assert_called()
 
     @mock.patch("tartufo.scanner.ScannerBase.scan_regex")
@@ -85,7 +101,7 @@ class ScanTests(ScannerTestCase):
         self.options.regex = True
         self.options.default_regexes = True
         test_scanner = TestScanner(self.options)
-        test_scanner.scan()
+        list(test_scanner.scan())
         mock_regex.assert_called()
 
 
@@ -93,15 +109,13 @@ class IssuesTests(ScannerTestCase):
     @mock.patch("tartufo.scanner.ScannerBase.scan")
     def test_empty_issue_list_causes_scan(self, mock_scan: mock.MagicMock):
         test_scanner = TestScanner(self.options)
-        test_scanner.issues  # pylint: disable=pointless-statement
+        list(test_scanner.issues)  # pylint: disable=pointless-statement
         mock_scan.assert_called()
 
     @mock.patch("tartufo.scanner.ScannerBase.scan")
-    def test_populated_issues_list_does_not_rescan(self, mock_scan: mock.MagicMock):
+    def test_scanner_does_not_rescan(self, mock_scan: mock.MagicMock):
         test_scanner = TestScanner(self.options)
-        test_scanner._issues = [  # pylint: disable=protected-access
-            scanner.Issue(types.IssueType.RegEx, "foo", types.Chunk("foo", "bar", {}))
-        ]
+        test_scanner._completed = True  # pylint: disable=protected-access
         test_scanner.issues  # pylint: disable=pointless-statement
         mock_scan.assert_not_called()
 
@@ -170,13 +184,10 @@ class IncludeExcludePathsTests(ScannerTestCase):
     def test_include_paths_are_calculated_if_specified(
         self, mock_compile: mock.MagicMock
     ):
-        mock_include = mock.MagicMock()
-        mock_include.readlines.return_value = ["bar"]
-        self.options.include_paths = mock_include
         self.options.include_path_patterns = ("foo",)
         test_scanner = TestScanner(self.options)
         test_scanner.included_paths  # pylint: disable=pointless-statement
-        mock_compile.assert_called_once_with({"foo", "bar"})
+        mock_compile.assert_called_once_with({"foo"})
 
     @mock.patch("tartufo.config.compile_path_rules")
     def test_populated_excluded_paths_list_does_not_recompute(
@@ -195,13 +206,10 @@ class IncludeExcludePathsTests(ScannerTestCase):
     def test_exclude_paths_are_calculated_if_specified(
         self, mock_compile: mock.MagicMock
     ):
-        mock_exclude = mock.MagicMock()
-        mock_exclude.readlines.return_value = ["Pipfile.lock\n"]
-        self.options.exclude_paths = mock_exclude
         self.options.exclude_path_patterns = ("foo",)
         test_scanner = TestScanner(self.options)
         test_scanner.excluded_paths  # pylint: disable=pointless-statement
-        mock_compile.assert_called_once_with({"foo", "Pipfile.lock\n"})
+        mock_compile.assert_called_once_with({"foo"})
 
     def test_should_scan_treats_included_paths_as_exclusive(self):
         test_scanner = TestScanner(self.options)
@@ -233,48 +241,56 @@ class IncludeExcludePathsTests(ScannerTestCase):
 
 
 class RegexRulesTests(ScannerTestCase):
-    @mock.patch("tartufo.config.configure_regexes")
-    def test_populated_regex_list_does_not_recompute(
-        self, mock_configure: mock.MagicMock
-    ):
-        test_scanner = TestScanner(self.options)
-        test_scanner._rules_regexes = {}  # pylint: disable=protected-access
-        test_scanner.rules_regexes  # pylint: disable=pointless-statement
-        mock_configure.assert_not_called()
+    def setUp(self) -> None:
+        self.config_patcher = mock.patch("tartufo.config.configure_regexes")
+        self.mock_configure = self.config_patcher.start()
 
-    @mock.patch("tartufo.config.configure_regexes")
-    def test_regex_rules_are_computed_when_first_accessed(
-        self, mock_configure: mock.MagicMock
-    ):
+        self.addCleanup(self.config_patcher.stop)
+        return super().setUp()
+
+    def test_populated_regex_list_does_not_recompute(self):
+        test_scanner = TestScanner(self.options)
+        test_scanner._rules_regexes = set()  # pylint: disable=protected-access
+        test_scanner.rules_regexes  # pylint: disable=pointless-statement
+        self.mock_configure.assert_not_called()
+
+    def test_regex_rules_are_computed_when_first_accessed(self):
         self.options.default_regexes = True
         self.options.rules = "foo"  # type: ignore
+        self.options.rule_patterns = "oof"  # type: ignore
         self.options.git_rules_repo = "bar"
         self.options.git_rules_files = "baz"  # type: ignore
         test_scanner = TestScanner(self.options)
         test_scanner.rules_regexes  # pylint: disable=pointless-statement
-        mock_configure.assert_called_once_with(True, "foo", "bar", "baz")
+        self.mock_configure.assert_called_once_with(
+            include_default=True,
+            rules_files="foo",
+            rule_patterns="oof",
+            rules_repo="bar",
+            rules_repo_files="baz",
+        )
 
 
 class SignatureTests(ScannerTestCase):
     @mock.patch("tartufo.util.generate_signature")
     def test_matched_signatures_are_excluded(self, mock_signature: mock.MagicMock):
-        self.options.exclude_signatures = ("foo",)
         mock_signature.return_value = "foo"
         test_scanner = TestScanner(self.options)
+        self.options.exclude_signatures = ("foo",)
         self.assertTrue(test_scanner.signature_is_excluded("bar", "blah"))
 
     @mock.patch("tartufo.util.generate_signature")
     def test_unmatched_signatures_are_not_excluded(
         self, mock_signature: mock.MagicMock
     ):
-        self.options.exclude_signatures = ("foo",)
         mock_signature.return_value = "bar"
         test_scanner = TestScanner(self.options)
+        self.options.exclude_signatures = ("foo",)
         self.assertFalse(test_scanner.signature_is_excluded("blah", "stuff"))
 
     def test_signature_found_as_scan_match_is_excluded(self):
-        self.options.exclude_signatures = ("ford_prefect",)
         test_scanner = TestScanner(self.options)
+        self.options.exclude_signatures = ("ford_prefect",)
         self.assertTrue(test_scanner.signature_is_excluded("ford_prefect", "/earth"))
 
 
@@ -296,24 +312,30 @@ class RegexScanTests(ScannerTestCase):
         rule_3_path.match = mock.MagicMock(return_value=[])
         test_scanner = TestScanner(self.options)
         test_scanner._rules_regexes = {  # pylint: disable=protected-access
-            "foo": Rule(
-                name=None, pattern=rule_1, path_pattern=None, re_match_type="match"
+            Rule(
+                name="foo",
+                pattern=rule_1,
+                path_pattern=None,
+                re_match_type=MatchType.Match,
+                re_match_scope=None,
             ),
-            "bar": Rule(
-                name=None,
+            Rule(
+                name="bar",
                 pattern=rule_2,
                 path_pattern=rule_2_path,
-                re_match_type="match",
+                re_match_type=MatchType.Match,
+                re_match_scope=None,
             ),
-            "not-found": Rule(
-                name=None,
+            Rule(
+                name="not-found",
                 pattern=rule_3,
                 path_pattern=rule_3_path,
-                re_match_type="match",
+                re_match_type=MatchType.Match,
+                re_match_scope=None,
             ),
         }
         chunk = types.Chunk("foo", "/file/path", {})
-        test_scanner.scan_regex(chunk)
+        list(test_scanner.scan_regex(chunk))
         rule_1.findall.assert_called_once_with("foo")
         rule_2.findall.assert_called_once_with("foo")
         rule_2_path.match.assert_called_once_with("/file/path")
@@ -327,15 +349,16 @@ class RegexScanTests(ScannerTestCase):
         mock_signature.return_value = True
         test_scanner = TestScanner(self.options)
         test_scanner._rules_regexes = {  # pylint: disable=protected-access
-            "foo": Rule(
-                name=None,
+            Rule(
+                name="foo",
                 pattern=re.compile("foo"),
                 path_pattern=None,
-                re_match_type="match",
+                re_match_type=MatchType.Match,
+                re_match_scope=None,
             )
         }
         chunk = types.Chunk("foo", "bar", {})
-        issues = test_scanner.scan_regex(chunk)
+        issues = list(test_scanner.scan_regex(chunk))
         mock_signature.assert_called_once_with("foo", "bar")
         self.assertEqual(issues, [])
 
@@ -346,15 +369,16 @@ class RegexScanTests(ScannerTestCase):
         mock_signature.return_value = False
         test_scanner = TestScanner(self.options)
         test_scanner._rules_regexes = {  # pylint: disable=protected-access
-            "foo": Rule(
-                name=None,
+            Rule(
+                name="foo",
                 pattern=re.compile("foo"),
                 path_pattern=None,
-                re_match_type="match",
+                re_match_type=MatchType.Match,
+                re_match_scope=None,
             )
         }
         chunk = types.Chunk("foo", "bar", {})
-        issues = test_scanner.scan_regex(chunk)
+        issues = list(test_scanner.scan_regex(chunk))
         mock_signature.assert_called_once_with("foo", "bar")
         self.assertEqual(len(issues), 1)
         self.assertEqual(issues[0].issue_detail, "foo")
@@ -362,7 +386,7 @@ class RegexScanTests(ScannerTestCase):
         self.assertEqual(issues[0].matched_string, "foo")
 
 
-class EntropyTests(ScannerTestCase):
+class EntropyManagementTests(ScannerTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.options.entropy = True
@@ -377,9 +401,14 @@ class EntropyTests(ScannerTestCase):
         self.scanner = TestScanner(self.options)
 
     def test_entropy_string_is_excluded(self):
-        self.options.exclude_entropy_patterns = [r"docs/.*\.md::f.*"]
+        self.options.exclude_entropy_patterns = [
+            {
+                "path-pattern": r"docs/.*\.md",
+                "pattern": "f.*",
+            }
+        ]
         excluded = self.scanner.entropy_string_is_excluded(
-            "foo", "bar", "docs/README.md"
+            "foo", "barfoo", "docs/README.md"
         )
         self.assertEqual(True, excluded)
 
@@ -393,54 +422,22 @@ class EntropyTests(ScannerTestCase):
         self.assertEqual(True, excluded)
 
     def test_entropy_string_is_not_excluded(self):
-        self.options.exclude_entropy_patterns = [r"foo\..*::f.*"]
-        excluded = self.scanner.entropy_string_is_excluded("bar", "foo", "foo.py")
+        self.options.exclude_entropy_patterns = [
+            {"path-pattern": r"foo\..*", "pattern": "f.*", "match-type": "match"}
+        ]
+        excluded = self.scanner.entropy_string_is_excluded("foo", "bar", "foo.py")
         self.assertEqual(False, excluded)
 
     def test_entropy_string_is_not_excluded_given_different_path(self):
-        self.options.exclude_entropy_patterns = [r"foo\..*::f.*"]
+        self.options.exclude_entropy_patterns = [
+            {"path-pattern": r"foo\..*", "pattern": "f.*", "match-type": "match"}
+        ]
         excluded = self.scanner.entropy_string_is_excluded("foo", "bar", "bar.py")
         self.assertEqual(False, excluded)
 
-    def test_calculate_base64_entropy_calculation(self):
-        random_string = (
-            "ZWVTjPQSdhwRgl204Hc51YCsritMIzn8B=/p9UyeX7xu6KkAGqfm3FJ+oObLDNEva"
-        )
-        self.assertGreaterEqual(
-            self.scanner.calculate_entropy(random_string, scanner.BASE64_CHARS), 4.5
-        )
-
-    def test_calculate_hex_entropy_calculation(self):
-        random_string = "b3A0a1FDfe86dcCE945B72"
-        self.assertGreaterEqual(
-            self.scanner.calculate_entropy(random_string, scanner.HEX_CHARS), 3
-        )
-
-    def test_empty_string_has_no_entropy(self):
-        self.assertEqual(self.scanner.calculate_entropy("", ""), 0.0)
-
-    @mock.patch("tartufo.util.get_strings_of_set")
-    def test_scan_entropy_find_b64_strings_for_every_word_in_diff(
-        self, mock_strings: mock.MagicMock
-    ):
-        mock_strings.return_value = []
-        b64_entropy_score = 4.5
-        hex_entropy_score = 3
-        self.scanner.scan_entropy(self.chunk, b64_entropy_score, hex_entropy_score)
-        mock_strings.assert_has_calls(
-            (
-                mock.call("foo", scanner.BASE64_CHARS),
-                mock.call("foo", scanner.HEX_CHARS),
-                mock.call("bar", scanner.BASE64_CHARS),
-                mock.call("bar", scanner.HEX_CHARS),
-                mock.call("asdfqwer", scanner.BASE64_CHARS),
-                mock.call("asdfqwer", scanner.HEX_CHARS),
-            )
-        )
-
     @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
     @mock.patch("tartufo.scanner.ScannerBase.signature_is_excluded")
-    @mock.patch("tartufo.util.get_strings_of_set")
+    @mock.patch("tartufo.util.find_strings_by_regex")
     def test_issues_are_not_created_for_b64_string_excluded_signatures(
         self,
         mock_strings: mock.MagicMock,
@@ -449,17 +446,13 @@ class EntropyTests(ScannerTestCase):
     ):
         mock_strings.side_effect = (["foo"], [], [], [], [], [])
         mock_signature.return_value = True
-        b64_entropy_score = 4.5
-        hex_entropy_score = 3
-        issues = self.scanner.scan_entropy(
-            self.chunk, b64_entropy_score, hex_entropy_score
-        )
+        issues = list(self.scanner.scan_entropy(self.chunk))
         mock_calculate.assert_not_called()
         self.assertEqual(issues, [])
 
     @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
     @mock.patch("tartufo.scanner.ScannerBase.signature_is_excluded")
-    @mock.patch("tartufo.util.get_strings_of_set")
+    @mock.patch("tartufo.util.find_strings_by_regex")
     def test_issues_are_not_created_for_hex_string_excluded_signatures(
         self,
         mock_strings: mock.MagicMock,
@@ -468,17 +461,13 @@ class EntropyTests(ScannerTestCase):
     ):
         mock_strings.side_effect = ([], ["foo"], [], [], [], [])
         mock_signature.return_value = True
-        b64_entropy_score = 4.5
-        hex_entropy_score = 3
-        issues = self.scanner.scan_entropy(
-            self.chunk, b64_entropy_score, hex_entropy_score
-        )
+        issues = list(self.scanner.scan_entropy(self.chunk))
         mock_calculate.assert_not_called()
         self.assertEqual(issues, [])
 
     @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
     @mock.patch("tartufo.scanner.ScannerBase.signature_is_excluded")
-    @mock.patch("tartufo.util.get_strings_of_set")
+    @mock.patch("tartufo.util.find_strings_by_regex")
     def test_issues_are_created_for_high_entropy_b64_strings(
         self,
         mock_strings: mock.MagicMock,
@@ -488,18 +477,14 @@ class EntropyTests(ScannerTestCase):
         mock_strings.side_effect = (["foo"], [], [], [], [], [])
         mock_signature.return_value = False
         mock_calculate.return_value = 9.0
-        b64_entropy_score = 4.5
-        hex_entropy_score = 3
-        issues = self.scanner.scan_entropy(
-            self.chunk, b64_entropy_score, hex_entropy_score
-        )
+        issues = list(self.scanner.scan_entropy(self.chunk))
         self.assertEqual(len(issues), 1)
         self.assertEqual(issues[0].issue_type, types.IssueType.Entropy)
         self.assertEqual(issues[0].matched_string, "foo")
 
     @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
     @mock.patch("tartufo.scanner.ScannerBase.signature_is_excluded")
-    @mock.patch("tartufo.util.get_strings_of_set")
+    @mock.patch("tartufo.util.find_strings_by_regex")
     def test_issues_are_created_for_high_entropy_hex_strings(
         self,
         mock_strings: mock.MagicMock,
@@ -509,11 +494,7 @@ class EntropyTests(ScannerTestCase):
         mock_strings.side_effect = ([], ["foo"], [], [], [], [])
         mock_signature.return_value = False
         mock_calculate.return_value = 9.0
-        b64_entropy_score = 4.5
-        hex_entropy_score = 3
-        issues = self.scanner.scan_entropy(
-            self.chunk, b64_entropy_score, hex_entropy_score
-        )
+        issues = list(self.scanner.scan_entropy(self.chunk))
         self.assertEqual(len(issues), 1)
         self.assertEqual(issues[0].issue_type, types.IssueType.Entropy)
         self.assertEqual(issues[0].matched_string, "foo")
@@ -521,7 +502,7 @@ class EntropyTests(ScannerTestCase):
     @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
     @mock.patch("tartufo.scanner.ScannerBase.signature_is_excluded")
     @mock.patch("tartufo.scanner.ScannerBase.entropy_string_is_excluded")
-    @mock.patch("tartufo.util.get_strings_of_set")
+    @mock.patch("tartufo.util.find_strings_by_regex")
     def test_issues_are_not_created_for_high_entropy_hex_strings_given_entropy_is_excluded(
         self,
         mock_strings: mock.MagicMock,
@@ -533,17 +514,13 @@ class EntropyTests(ScannerTestCase):
         mock_entropy.return_value = True
         mock_signature.return_value = False
         mock_calculate.return_value = 9.0
-        b64_entropy_score = 4.5
-        hex_entropy_score = 3
-        issues = self.scanner.scan_entropy(
-            self.chunk, b64_entropy_score, hex_entropy_score
-        )
+        issues = list(self.scanner.scan_entropy(self.chunk))
         self.assertEqual(len(issues), 0)
 
     @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
     @mock.patch("tartufo.scanner.ScannerBase.signature_is_excluded")
     @mock.patch("tartufo.scanner.ScannerBase.entropy_string_is_excluded")
-    @mock.patch("tartufo.util.get_strings_of_set")
+    @mock.patch("tartufo.util.find_strings_by_regex")
     def test_issues_are_not_created_for_low_entropy_b64_strings_given_entropy_is_excluded(
         self,
         mock_strings: mock.MagicMock,
@@ -555,16 +532,12 @@ class EntropyTests(ScannerTestCase):
         mock_entropy.return_value = True
         mock_signature.return_value = False
         mock_calculate.return_value = 9.0
-        b64_entropy_score = 4.5
-        hex_entropy_score = 3
-        issues = self.scanner.scan_entropy(
-            self.chunk, b64_entropy_score, hex_entropy_score
-        )
+        issues = list(self.scanner.scan_entropy(self.chunk))
         self.assertEqual(len(issues), 0)
 
     @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
     @mock.patch("tartufo.scanner.ScannerBase.signature_is_excluded")
-    @mock.patch("tartufo.util.get_strings_of_set")
+    @mock.patch("tartufo.util.find_strings_by_regex")
     def test_issues_are_not_created_for_low_entropy_b64_strings(
         self,
         mock_strings: mock.MagicMock,
@@ -574,16 +547,12 @@ class EntropyTests(ScannerTestCase):
         mock_strings.side_effect = (["foo"], [], [], [], [], [])
         mock_signature.return_value = False
         mock_calculate.return_value = 1.0
-        b64_entropy_score = 4.5
-        hex_entropy_score = 3
-        issues = self.scanner.scan_entropy(
-            self.chunk, b64_entropy_score, hex_entropy_score
-        )
+        issues = list(self.scanner.scan_entropy(self.chunk))
         self.assertEqual(len(issues), 0)
 
     @mock.patch("tartufo.scanner.ScannerBase.calculate_entropy")
     @mock.patch("tartufo.scanner.ScannerBase.signature_is_excluded")
-    @mock.patch("tartufo.util.get_strings_of_set")
+    @mock.patch("tartufo.util.find_strings_by_regex")
     def test_issues_are_not_created_for_low_entropy_hex_strings(
         self,
         mock_strings: mock.MagicMock,
@@ -593,12 +562,110 @@ class EntropyTests(ScannerTestCase):
         mock_strings.side_effect = ([], ["foo"], [], [], [], [])
         mock_signature.return_value = False
         mock_calculate.return_value = 1.0
-        b64_entropy_score = 4.5
-        hex_entropy_score = 3
-        issues = self.scanner.scan_entropy(
-            self.chunk, b64_entropy_score, hex_entropy_score
-        )
+        issues = list(self.scanner.scan_entropy(self.chunk))
         self.assertEqual(len(issues), 0)
+
+
+class EntropyDetectionTests(ScannerTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.options.entropy = True
+        self.chunk = types.Chunk(
+            """
+        foo bar
+        asdfqwer
+        """,
+            "foo.py",
+            {},
+        )
+        self.scanner = TestScanner(self.options)
+
+    def test_calculate_base64_entropy_calculation(self):
+        random_string = (
+            "ZWVTjPQSdhwRgl204Hc51YCsritMIzn8B=/p9UyeX7xu6KkAGqfm3FJ+oObLDNEva"
+        )
+        self.assertGreaterEqual(
+            self.scanner.calculate_entropy(random_string),
+            4.5,
+        )
+
+    def test_calculate_hex_entropy_calculation(self):
+        random_string = "b3A0a1FDfe86dcCE945B72"
+        self.assertGreaterEqual(self.scanner.calculate_entropy(random_string), 3)
+
+    def test_empty_string_has_no_entropy(self):
+        self.assertEqual(self.scanner.calculate_entropy(""), 0.0)
+
+    @mock.patch("tartufo.util.find_strings_by_regex")
+    def test_scan_entropy_find_b64_strings_for_every_word_in_diff(
+        self, mock_strings: mock.MagicMock
+    ):
+        mock_strings.return_value = []
+        list(self.scanner.scan_entropy(self.chunk))
+        mock_strings.assert_has_calls(
+            (
+                mock.call("foo", scanner.BASE64_REGEX),
+                mock.call("foo", scanner.HEX_REGEX),
+                mock.call("bar", scanner.BASE64_REGEX),
+                mock.call("bar", scanner.HEX_REGEX),
+                mock.call("asdfqwer", scanner.BASE64_REGEX),
+                mock.call("asdfqwer", scanner.HEX_REGEX),
+            )
+        )
+
+    def test_sensitivity_low_end_calculation(self):
+        self.options.entropy_sensitivity = 0
+        test_scanner = TestScanner(self.options)
+
+        # 0% sensitivity means entropy rate must equal bit rate
+        self.assertEqual(test_scanner.b64_entropy_limit, 0.0)
+        self.assertEqual(test_scanner.hex_entropy_limit, 0.0)
+
+    def test_sensitivity_high_end_calculation(self):
+        self.options.entropy_sensitivity = 100
+        test_scanner = TestScanner(self.options)
+
+        # 100% sensitivity means required entropy rate will be zero
+        self.assertEqual(test_scanner.b64_entropy_limit, 6.0)
+        self.assertEqual(test_scanner.hex_entropy_limit, 4.0)
+
+    def test_sensitivity_deprecated_overrides(self):
+        self.options.b64_entropy_score = 11.1
+        self.options.hex_entropy_score = 22.2
+        test_scanner = TestScanner(self.options)
+
+        self.assertEqual(test_scanner.b64_entropy_limit, 11.1)
+        self.assertEqual(test_scanner.hex_entropy_limit, 22.2)
+
+    def test_calculate_entropy_minimum_calculation(self):
+
+        # We already know an empty string trivially has zero entropy.
+        # Doing the math, a one-character string also should have zero entropy.
+        self.assertEqual(self.scanner.calculate_entropy("a"), 0.0)
+
+    def test_calculate_entropy_maximum_hexadecimal(self):
+
+        # We reach maximum entropy when every character in the alphabet appears
+        # once in the input string (order doesn't matter). Each character represents
+        # 4 bits (has 2^4 = 16 possible values).
+        #
+        # Try to avoid causing a finding ourselves. :)
+        #
+        # Note there is no requirement that the test alphabet actually is the
+        # same as the hexadecimal representation, as long as the size is identical.
+        # However, it is convenient to use the real thing to avoid errors. Note
+        # that representation is case-insensitive so we do not include uppercase
+        # letters in this alphabet.
+        alphabet = string.hexdigits[:16]
+        self.assertEqual(self.scanner.calculate_entropy(alphabet), 4.0)
+
+    def test_calculate_entropy_maximum_base64(self):
+
+        # See above. base64 uses 4 characters to represent 3 bytes, so the
+        # underlying bit rate is 24 / 4 = 6 bits per character. Unlike above,
+        # case matters, so we include both upper- and lowercase letters.
+        alphabet = string.ascii_letters + string.digits + "+/"
+        self.assertEqual(self.scanner.calculate_entropy(alphabet), 6.0)
 
 
 if __name__ == "__main__":

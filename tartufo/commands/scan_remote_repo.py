@@ -1,6 +1,6 @@
 from pathlib import Path
 from shutil import rmtree
-from typing import Optional, Tuple
+from typing import Optional
 from urllib.parse import urlparse
 
 import click
@@ -51,15 +51,13 @@ def main(
     branch: Optional[str],
     work_dir: Optional[str],
     include_submodules: bool,
-) -> Tuple[str, GitRepoScanner]:
+) -> GitRepoScanner:
     """Automatically clone and scan a remote git repository."""
     git_options = types.GitOptions(
         since_commit=since_commit,
         max_depth=max_depth,
-        branch=branch,
-        fetch=False,
+        branch=None,
         include_submodules=include_submodules,
-        is_remote=True,
     )
     repo_path: Optional[Path] = None
     if work_dir:
@@ -70,9 +68,11 @@ def main(
         repo_path.mkdir(parents=True)
     scanner = None
     try:
-        repo_path = util.clone_git_repo(git_url, repo_path)
+        repo_path, origin = util.clone_git_repo(git_url, repo_path)
+        if branch:
+            git_options.branch = f"{origin}/{branch}"
         scanner = GitRepoScanner(options, git_options, str(repo_path))
-        scanner.scan()
+        util.process_issues(git_url, scanner, options)
     except types.GitException as exc:
         util.fail(f"Error cloning remote repo: {exc}", ctx)
     except types.TartufoException as exc:
@@ -80,4 +80,4 @@ def main(
     finally:
         if repo_path and repo_path.exists():
             rmtree(str(repo_path), onerror=util.del_rw)
-    return (git_url, scanner)  # type: ignore
+    return scanner  # type: ignore

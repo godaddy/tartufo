@@ -36,7 +36,7 @@ class GitPreCommitScannerTests(unittest.TestCase):
         self.global_options = generate_options(types.GlobalOptions)
         return super().setUp()
 
-    @mock.patch("git.Repo")
+    @mock.patch("pygit2.Repository")
     @mock.patch("tartufo.scanner.GitPreCommitScanner.filter_submodules")
     def test_load_repo_filters_submodules_when_specified(
         self, mock_filter: mock.MagicMock, mock_repo: mock.MagicMock
@@ -44,7 +44,7 @@ class GitPreCommitScannerTests(unittest.TestCase):
         scanner.GitPreCommitScanner(self.global_options, ".", include_submodules=False)
         mock_filter.assert_called_once_with(mock_repo.return_value)
 
-    @mock.patch("git.Repo", new=mock.MagicMock())
+    @mock.patch("pygit2.Repository", new=mock.MagicMock())
     @mock.patch("tartufo.scanner.GitPreCommitScanner.filter_submodules")
     def test_load_repo_does_not_filter_submodules_when_requested(
         self, mock_filter: mock.MagicMock

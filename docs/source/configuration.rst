@@ -52,6 +52,58 @@ this:
 Note that all options specified in a configuration file are treated as
 defaults, and will be overridden by any options specified on the command line.
 
-For a full list of configuration options, check out the :doc:`usage` document.
+For a full list of available command line options, check out the :doc:`usage`
+document.
 
-.. _TOML: https://github.com/toml-lang/toml
+Configuration File Exclusive Options
+------------------------------------
+
+.. versionadded:: 3.0
+
+As of version 3.0, we have added several configuration options which are
+available only in the configuration file. This is due to the nature of their
+construction, and the fact that they would be exceedingly difficult to
+represent on the command line.
+
+Rule Patterns
++++++++++++++
+
+.. versionadded:: 3.0
+
+``tartufo`` comes bundled with a number of regular expression rules that it will
+check your code for by default. If you would like to scan for additional regular
+expressions, you may add them to your configuration with the ``rule-patterns``
+directive. This directive utilizes a `TOML`_ `array of tables`_, and thus can
+take one of two forms:
+
+Option 1: Keeping it contained in your ``[tool.tartufo]`` table.
+
+.. code-block:: toml
+
+    [tool.tartufo]
+    rule-patterns = [
+        {reason = "RSA private key 2", pattern = "-----BEGIN EC PRIVATE KEY-----"},
+        {reason = "Null characters in GitHub Workflows", pattern = '\0', path-pattern = '\.github/workflows/(.*)\.yml'}
+    ]
+
+Option 2: Separating each rule out into its own table.
+
+.. code-block:: toml
+
+    [[tool.tartufo.rule-patterns]]
+    reason = "RSA private key 2"
+    pattern = "-----BEGIN EC PRIVATE KEY-----"
+
+    [[tool.tartufo.rule-patterns]]
+    reason = "Null characters in GitHub Workflows"
+    pattern = '\0'
+    path-pattern = '\.github/workflows/(.*)\.yml'
+
+.. note::
+
+    There are 3 different keys used here: ``reason``, ``pattern``, and ``path-pattern``.
+    Only ``reason`` and ``pattern`` are required. If no ``path-pattern`` is
+    specified, then the pattern will be used to scan against all files.
+
+.. _TOML: https://toml.io/
+.. _array of tables: https://toml.io/en/v1.0.0#array-of-tables

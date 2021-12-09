@@ -3,14 +3,12 @@
 import importlib
 import logging
 import pathlib
-import platform
 import warnings
-from datetime import datetime
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 import click
 
-from tartufo import config, scanner, types, util
+from tartufo import config, scanner, types
 
 
 PLUGIN_DIR = pathlib.Path(__file__).parent / "commands"
@@ -47,12 +45,19 @@ class TartufoCLI(click.MultiCommand):
     name="tartufo",
     context_settings=dict(help_option_names=["-h", "--help"]),
 )
-@click.option("--json/--no-json", help="Output in JSON format.", is_flag=True)
 @click.option(
     "--rules",
     multiple=True,
     type=click.File("r"),
-    help="Path(s) to regex rules json list file(s).",
+    help="[DEPRECATED] Use the rule-patterns config options instead. Path(s) to regex "
+    "rules json list file(s).",
+)
+@click.option(
+    "--rule-patterns",
+    multiple=True,
+    type=str,
+    hidden=True,
+    help="Regular expression patterns to search the target for. May be specified multiple times.",
 )
 @click.option(
     "--default-regexes/--no-default-regexes",
@@ -61,13 +66,6 @@ class TartufoCLI(click.MultiCommand):
     show_default=True,
     help="Whether to include the default regex list when configuring"
     " search patterns. Only applicable if --rules is also specified.",
-)
-@click.option(
-    "--compact/--no-compact",
-    is_flag=True,
-    default=False,
-    show_default=True,
-    help="Enable reduced output.",
 )
 @click.option(
     "--entropy/--no-entropy",
@@ -79,69 +77,78 @@ class TartufoCLI(click.MultiCommand):
 @click.option(
     "--regex/--no-regex",
     is_flag=True,
-    default=False,
+    default=True,
     show_default=True,
     help="Enable high signal regexes checks.",
 )
 @click.option(
-    "-i",
-    "--include-paths",
-    type=click.File("r"),
-    help="""[DEPRECATED] Use `--include-path-patterns`. File with regular
-    expressions (one per line), at least one of which must match a Git object
-    path in order for it to be scanned; lines starting with '#' are treated as
-    comments and are ignored. If empty or not provided (default), all Git object
-    paths are included unless otherwise excluded via the --exclude-paths
-    option.""",
+    "--scan-filenames/--no-scan-filenames",
+    is_flag=True,
+    default=True,
+    show_default=True,
+    help="Check the names of files being scanned as well as their contents.",
 )
 @click.option(
     "-ip",
     "--include-path-patterns",
     multiple=True,
+    hidden=True,
     help="""Specify a regular expression which matches Git object paths to
-    include in the scan. This option can be specified multiple times to include
-    multiple patterns. If not provided (default), all Git object paths are
-    included unless otherwise excluded via the --exclude-path-patterns
+    include in the scan. Multiple patterns can be included in the config file using
+    include-path-patterns = [{path-pattern="pattern", reason="reason to include pattern},].
+    If not provided (default), all Git object paths
+    are included unless otherwise excluded via the --exclude-path-patterns
     option.""",
-)
-@click.option(
-    "-x",
-    "--exclude-paths",
-    type=click.File("r"),
-    help="""[DEPRECATED] Use `--exclude-path-patterns`. File with regular
-    expressions (one per line), none of which may match a Git object path in
-    order for it to be scanned; lines starting with '#' are treated as comments
-    and are ignored. If empty or not provided (default), no Git object paths are
-    excluded unless effectively excluded via the --include-paths option.""",
 )
 @click.option(
     "-xp",
     "--exclude-path-patterns",
     multiple=True,
+    hidden=True,
     help="""Specify a regular expression which matches Git object paths to
-    exclude from the scan. This option can be specified multiple times to
-    exclude multiple patterns. If not provided (default), no Git object paths
+    exclude from the scan. Multiple patterns can be excluded in the config file using
+    exclude-path-patterns = [{path-pattern="pattern", reason="reason to exclude pattern},].
+    If not provided (default), no Git object paths
     are excluded unless effectively excluded via the --include-path-patterns
     option.""",
+)
+@click.option(
+    "-of",
+    "--output-format",
+    type=click.Choice(
+        [
+            types.OutputFormat.Json.value,
+            types.OutputFormat.Compact.value,
+            types.OutputFormat.Text.value,
+        ]
+    ),
+    default="text",
+    help="""Specify the format in which the output needs to be generated
+    `--output-format json/compact/text`. Either `json`, `compact` or `text`
+    can be specified. If not provided (default) the output will be generated
+    in `text` format.""",
 )
 @click.option(
     "-xe",
     "--exclude-entropy-patterns",
     multiple=True,
-    help="""Specify a regular expression which matches entropy strings to
-    exclude from the scan. This option can be specified multiple times to
-    exclude multiple patterns. If not provided (default), no entropy strings
-    will be excluded ({path regex}::{pattern regex}).""",
+    hidden=True,
+    help="""Specify a regular expression which matches entropy strings to exclude from the scan. This option can be
+    specified multiple times to exclude multiple patterns. If not provided (default), no entropy strings will be
+    excluded. ({"path-pattern": {path regex}, "pattern": {pattern regex}, "match-type": "match"|"search",
+    "scope": "word"|"line"}).""",
 )
 @click.option(
     "-e",
     "--exclude-signatures",
     multiple=True,
+    hidden=True,
     help="Specify signatures of matches that you explicitly want to exclude "
-    "from the scan, and mark as okay. These signatures are generated during "
-    "the scan process, and reported out with each individual match. This "
-    "option can be specified multiple times, to exclude as many signatures as "
-    "you would like.",
+    "from the scan along with the reason, and mark as okay. These signatures "
+    "are generated during the scan process, and reported out with each"
+    "individual match. This option can be specified multiple times, "
+    "to exclude as many signatures as you would like. "
+    "{signature='signature', reason='The reason of excluding the signature'}",
 )
 @click.option(
     "-od",
@@ -209,24 +216,32 @@ class TartufoCLI(click.MultiCommand):
     help="Enable or disable timestamps in logging messages.",
 )
 @click.option(
+    "--entropy-sensitivity",
+    type=click.IntRange(0, 100),
+    default=75,
+    show_default=True,
+    help="""Modify entropy detection sensitivity. This is expressed as on a scale
+    of 0 to 100, where 0 means "totally nonrandom" and 100 means "totally random".
+    Decreasing the scanner's sensitivity increases the likelihood that a given
+    string will be identified as suspicious.""",
+)
+@click.option(
     "-b64",
     "--b64-entropy-score",
-    default=4.5,
-    show_default=True,
-    help="Modify the base64 entropy score. If a value greater than the default is "
-    "specified, tartufo lists higher entropy base64 strings (longer or more randomized "
-    "strings). A lower value lists lower entropy base64 strings (shorter or less "
-    "randomized strings).",
+    help="""[DEPRECATED] Use `--entropy-sensitivity`. Modify the base64 entropy score. If
+    a value greater than the default (4.5 in a range of 0.0-6.0) is specified,
+    tartufo lists higher entropy base64 strings (longer or more randomized strings.
+    A lower value lists lower entropy base64 strings (shorter or less randomized
+    strings).""",
 )
 @click.option(
     "-hex",
     "--hex-entropy-score",
-    default=3.0,
-    show_default=True,
-    help="Modify the hexadecimal entropy score. If a value greater than the default is "
-    "specified, tartufo lists higher entropy hexadecimal strings (longer or more randomized "
-    "strings). A lower value lists lower entropy hexadecimal strings (shorter or less "
-    "randomized strings).",
+    help="""[DEPRECATED] Use `--entropy-sensitivity`. Modify the hexadecimal entropy score.
+    If a value greater than the default (3.0 in a range of 0.0-4.0) is specified,
+    tartufo lists higher entropy hexadecimal strings (longer or more randomized
+    strings). A lower value lists lower entropy hexadecimal strings (shorter or less
+    randomized strings).""",
 )
 # The first positional argument here would be a hard-coded version, hence the `None`
 @click.version_option(None, "-V", "--version")
@@ -280,28 +295,11 @@ def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
 
 @main.resultcallback()  # type: ignore
 @click.pass_context
-def process_issues(
+def process_exit(
     ctx: click.Context,
-    result: Tuple[str, scanner.ScannerBase],
-    **kwargs: config.OptionTypes,
+    scan: scanner.ScannerBase,
+    **_kwargs: config.OptionTypes,
 ):
-    repo_path, scan = result
-    options = types.GlobalOptions(**kwargs)  # type: ignore
-    now = datetime.now().isoformat("T", "microseconds")
-    output_dir = None
-    if options.output_dir:
-        if platform.system().lower() == "windows":  # pragma: no cover
-            # Make sure we aren't using illegal characters for Windows folder names
-            now = now.replace(":", "")
-        output_dir = pathlib.Path(options.output_dir) / f"tartufo-scan-results-{now}"
-        output_dir.mkdir(parents=True)
-
-    util.echo_result(options, scan, repo_path, output_dir)
-    if output_dir:
-        util.write_outputs(scan.issues, output_dir)
-        if not options.json:
-            click.echo(f"Results have been saved in {output_dir}")
-
     if scan.issues:
         ctx.exit(1)
 

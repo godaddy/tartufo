@@ -1,12 +1,14 @@
-import unittest
+from io import StringIO
+import json
 import re
+import unittest
 from pathlib import Path
 from unittest import mock
 
 import git
 
 from tartufo import scanner, types, util
-from tartufo.types import GlobalOptions
+from tartufo.types import GlobalOptions, Rule, MatchType, Scope
 
 from tests.helpers import generate_options
 
@@ -35,12 +37,22 @@ class GitTests(unittest.TestCase):
             "https://github.com/godaddy/tartufo.git", "/foo"
         )
 
-    @mock.patch("git.Repo.clone_from", new=mock.MagicMock())
+    @mock.patch("git.Repo.clone_from")
     @mock.patch("tartufo.util.tempfile.mkdtemp")
-    def test_clone_git_repo_returns_path_to_clone(self, mock_mkdtemp: mock.MagicMock):
+    def test_clone_git_repo_returns_path_to_clone(
+        self, mock_mkdtemp: mock.MagicMock, mock_clone: mock.MagicMock
+    ):
+        mock_remote = mock.MagicMock()
+        mock_remote.name = "origin"
+        mock_repo = mock.MagicMock()
+        mock_repo.remotes = [mock_remote]
+        mock_clone.return_value = mock_repo
         mock_mkdtemp.return_value = "/foo"
-        repo_path = util.clone_git_repo("https://github.com/godaddy/tartufo.git")
+        repo_path, repo_origin = util.clone_git_repo(
+            "https://github.com/godaddy/tartufo.git"
+        )
         self.assertEqual(repo_path, Path("/foo"))
+        self.assertEqual(repo_origin, "origin")
 
     @mock.patch("git.Repo.clone_from")
     @mock.patch("tartufo.util.tempfile.mkdtemp")
@@ -69,7 +81,7 @@ class GitTests(unittest.TestCase):
         ):
             util.clone_git_repo("https://github.com/godaddy/tartufo.git")
 
-    @mock.patch("git.Repo")
+    @mock.patch("pygit2.Repository")
     def test_path_contains_git_should_return_false_given_giterror(
         self, mock_git_repo: mock.MagicMock
     ):
@@ -98,19 +110,25 @@ class OutputTests(unittest.TestCase):
     @mock.patch("tartufo.scanner.ScannerBase")
     @mock.patch("tartufo.util.click")
     def test_echo_result_echos_all_when_not_json(self, mock_click, mock_scanner):
-        options = generate_options(GlobalOptions, json=False, verbose=0)
+        options = generate_options(GlobalOptions, verbose=0)
         mock_scanner.exclude_signatures = []
-        mock_scanner.issues = [1, 2, 3, 4]
+        mock_scanner.scan.return_value = (1, 2, 3, 4)
         util.echo_result(options, mock_scanner, "", "")
         # Ensure that the issues are output as a byte stream
-        mock_click.echo.assert_called_once_with(
-            bytes(1) + b"\n" + bytes(2) + b"\n" + bytes(3) + b"\n" + bytes(4)
+        mock_click.echo.assert_has_calls(
+            [
+                mock.call(bytes(1)),
+                mock.call(bytes(2)),
+                mock.call(bytes(3)),
+                mock.call(bytes(4)),
+            ]
         )
+        self.assertEqual(mock_click.echo.call_count, 4)
 
     @mock.patch("tartufo.scanner.ScannerBase")
     @mock.patch("tartufo.util.click")
     def test_echo_result_outputs_compact_format(self, mock_click, mock_scanner):
-        options = generate_options(GlobalOptions, json=False, verbose=0, compact=True)
+        options = generate_options(GlobalOptions, verbose=0, output_format="compact")
         issue1 = scanner.Issue(
             types.IssueType.Entropy, "foo", types.Chunk("fullfoobar", "/what/foo", {})
         )
@@ -118,7 +136,7 @@ class OutputTests(unittest.TestCase):
             types.IssueType.RegEx, "bar", types.Chunk("fullfoobar", "/what/bar", {})
         )
         issue2.issue_detail = "Meets the bar"
-        mock_scanner.issues = [issue1, issue2]
+        mock_scanner.scan.return_value = (issue1, issue2)
         util.echo_result(options, mock_scanner, "", "")
 
         mock_click.echo.assert_has_calls(
@@ -139,11 +157,12 @@ class OutputTests(unittest.TestCase):
         self, mock_time, mock_click, mock_scanner
     ):
         mock_time.now.return_value.isoformat.return_value = "now:now:now"
-        options = generate_options(GlobalOptions, json=False, quiet=False, verbose=0)
+        options = generate_options(GlobalOptions, quiet=False, verbose=0)
         mock_scanner.exclude_signatures = []
+        mock_scanner.issue_count = 0
         mock_scanner.issues = []
         util.echo_result(options, mock_scanner, "", "")
-        mock_click.echo.assert_called_with(
+        mock_click.echo.assert_called_once_with(
             "Time: now:now:now\nAll clear. No secrets detected."
         )
 
@@ -154,37 +173,52 @@ class OutputTests(unittest.TestCase):
         self, mock_time, mock_click, mock_scanner
     ):
         mock_time.now.return_value.isoformat.return_value = "now:now:now"
-        exclude_signatures = [
-            "fffffffffffff",
-            "ooooooooooooo",
-        ]
-        exclude_entropy_patterns = [
-            "aaaa::bbbb",
-            "cccc::dddd",
-        ]
+
         options = generate_options(
             GlobalOptions,
-            json=False,
             quiet=False,
             verbose=1,
-            exclude_signatures=exclude_signatures,
-            exclude_entropy_patterns=exclude_entropy_patterns,
         )
         mock_scanner.issues = []
+        mock_scanner.issue_count = 0
         mock_scanner.excluded_paths = [
             re.compile("package-lock.json"),
             re.compile("poetry.lock"),
         ]
+        mock_scanner.excluded_signatures = [
+            "fffffffffffff",
+            "ooooooooooooo",
+        ]
+
+        rule_1 = (
+            Rule(
+                name="Rule-1",
+                pattern="aaaa",
+                path_pattern="bbbb",
+                re_match_type=MatchType.Search,
+                re_match_scope=Scope.Line,
+            ),
+        )
+        rule_2 = (
+            Rule(
+                name="Rule-1",
+                pattern="cccc",
+                path_pattern="dddd",
+                re_match_type=MatchType.Search,
+                re_match_scope=Scope.Line,
+            ),
+        )
+        mock_scanner.excluded_entropy = [rule_1, rule_2]
         util.echo_result(options, mock_scanner, "", "")
         mock_click.echo.assert_has_calls(
             (
                 mock.call("Time: now:now:now\nAll clear. No secrets detected."),
                 mock.call("\nExcluded paths:"),
-                mock.call("package-lock.json\npoetry.lock"),
+                mock.call("re.compile('package-lock.json')\nre.compile('poetry.lock')"),
                 mock.call("\nExcluded signatures:"),
                 mock.call("fffffffffffff\nooooooooooooo"),
                 mock.call("\nExcluded entropy patterns:"),
-                mock.call("aaaa::bbbb\ncccc::dddd"),
+                mock.call(f"{rule_1}\n{rule_2}"),
             ),
             any_order=False,
         )
@@ -192,20 +226,17 @@ class OutputTests(unittest.TestCase):
     @mock.patch("tartufo.scanner.ScannerBase")
     @mock.patch("tartufo.util.click")
     def test_echo_result_echos_no_message_when_quiet(self, mock_click, mock_scanner):
-        options = generate_options(GlobalOptions, json=False, quiet=True, verbose=0)
+        options = generate_options(GlobalOptions, quiet=True, verbose=0)
         mock_scanner.issues = []
         mock_scanner.exclude_signatures = []
         util.echo_result(options, mock_scanner, "", "")
         mock_click.echo.assert_not_called()
 
     @mock.patch("tartufo.scanner.ScannerBase")
-    @mock.patch("tartufo.util.click", new=mock.MagicMock())
-    @mock.patch("tartufo.util.json")
     @mock.patch("tartufo.util.datetime")
     def test_echo_result_outputs_proper_json_when_requested(
         self,
         mock_time,
-        mock_json,
         mock_scanner,
     ):
         mock_time.now.return_value.isoformat.return_value = "now:now:now"
@@ -215,14 +246,24 @@ class OutputTests(unittest.TestCase):
         issue_2 = scanner.Issue(
             types.IssueType.RegEx, "bar", types.Chunk("foo", "/bar", {})
         )
-        mock_scanner.issues = [issue_1, issue_2]
+        mock_scanner.scan.return_value = (issue_1, issue_2)
         mock_scanner.excluded_paths = []
         options = generate_options(
-            GlobalOptions, json=True, exclude_signatures=[], exclude_entropy_patterns=[]
+            GlobalOptions,
+            output_format=types.OutputFormat.Json.value,
+            exclude_signatures=[],
+            exclude_entropy_patterns=[],
         )
-        util.echo_result(options, mock_scanner, "/repo", "/output")
 
-        mock_json.dumps.assert_called_once_with(
+        # We're generating JSON piecemeal, so if we want to be safe we'll recover
+        # the entire output, deserialize it (to confirm it's valid syntax) and
+        # compare the result to the original input dictionary.
+        with mock.patch("sys.stdout", new=StringIO()) as mock_stdout:
+            util.echo_result(options, mock_scanner, "/repo", "/output")
+            actual_output = mock_stdout.getvalue()
+
+        self.assertEqual(
+            json.loads(actual_output),
             {
                 "scan_time": "now:now:now",
                 "project_path": "/repo",
@@ -248,15 +289,13 @@ class OutputTests(unittest.TestCase):
                         "file_path": "/bar",
                     },
                 ],
-            }
+            },
         )
 
     @mock.patch("tartufo.scanner.ScannerBase")
-    @mock.patch("tartufo.util.click", new=mock.MagicMock())
-    @mock.patch("tartufo.util.json")
     @mock.patch("tartufo.util.datetime")
     def test_echo_result_outputs_proper_json_when_requested_pathtype(
-        self, mock_time, mock_json, mock_scanner
+        self, mock_time, mock_scanner
     ):
         mock_time.now.return_value.isoformat.return_value = "now:now:now"
         issue_1 = scanner.Issue(
@@ -265,12 +304,12 @@ class OutputTests(unittest.TestCase):
         issue_2 = scanner.Issue(
             types.IssueType.RegEx, "bar", types.Chunk("foo", "/bar", {})
         )
-        mock_scanner.issues = [issue_1, issue_2]
+        mock_scanner.scan.return_value = (issue_1, issue_2)
         mock_scanner.excluded_paths = [
             re.compile("package-lock.json"),
             re.compile("poetry.lock"),
         ]
-        exclude_signatures = [
+        mock_scanner.excluded_signatures = [
             "fffffffffffff",
             "ooooooooooooo",
         ]
@@ -280,12 +319,18 @@ class OutputTests(unittest.TestCase):
         ]
         options = generate_options(
             GlobalOptions,
-            json=True,
-            exclude_signatures=exclude_signatures,
+            output_format=types.OutputFormat.Json.value,
             exclude_entropy_patterns=exclude_entropy_patterns,
         )
-        util.echo_result(options, mock_scanner, "/repo", Path("/tmp"))
-        mock_json.dumps.assert_called_once_with(
+
+        # We're generating JSON piecemeal, so if we want to be safe we'll recover
+        # the entire output, deserialize it (to confirm it's valid syntax) and
+        # compare the result to the original input dictionary.
+        with mock.patch("sys.stdout", new=StringIO()) as mock_stdout:
+            util.echo_result(options, mock_scanner, "/repo", Path("/tmp"))
+            actual_output = mock_stdout.getvalue()
+        self.assertEqual(
+            json.loads(actual_output),
             {
                 "scan_time": "now:now:now",
                 "project_path": "/repo",
@@ -317,7 +362,7 @@ class OutputTests(unittest.TestCase):
                         "file_path": "/bar",
                     },
                 ],
-            }
+            },
         )
 
 
@@ -340,10 +385,64 @@ class GeneralUtilTests(unittest.TestCase):
         util.generate_signature("foo", "bar")
         mock_hash.assert_called_once_with(b"foo$$bar")
 
-    def test_get_strings_of_set_splits_string_by_chars_outside_charset(self):
-        strings = util.get_strings_of_set("asdf.qwer", "asdfqwer", 1)
+    def test_find_strings_by_regex_splits_string_by_chars_outside_charset(self):
+        strings = list(
+            util.find_strings_by_regex("asdf.qwer", re.compile(r"[asdfqwer]+"), 1)
+        )
         self.assertEqual(strings, ["asdf", "qwer"])
 
-    def test_get_strings_of_set_will_not_return_strings_below_threshold_length(self):
-        strings = util.get_strings_of_set("w.asdf.q", "asdfqwer", 3)
+    def test_find_strings_by_regex_will_not_return_strings_below_threshold_length(self):
+        strings = list(
+            util.find_strings_by_regex("w.asdf.q", re.compile(r"[asdfqwer]+"), 3)
+        )
         self.assertEqual(strings, ["asdf"])
+
+    def test_find_strings_by_regex_recognizes_hexadecimal(self):
+
+        sample_input = """
+        1111111111fffffCCCCC This is valid hexadecimal
+        g111111111fffffCCCCC This is not because "g" is not in alphabet
+        """
+
+        strings = list(util.find_strings_by_regex(sample_input, scanner.HEX_REGEX, 20))
+        self.assertEqual(strings, ["1111111111fffffCCCCC"])
+
+    def test_find_strings_by_regex_recognizes_base64(self):
+
+        sample_input = """
+        111111111+ffffCCCC== This is valid base64
+        @111111111+ffffCCCC= This is not because "@" is not in alphabet
+        """
+
+        strings = list(
+            util.find_strings_by_regex(sample_input, scanner.BASE64_REGEX, 20)
+        )
+        self.assertEqual(strings, ["111111111+ffffCCCC=="])
+
+    def test_find_strings_by_regex_recognizes_base64url(self):
+
+        sample_input = """
+        111111111-ffffCCCC== This is valid base64url
+        @111111111-ffffCCCC= This is not because "@" is not in alphabet
+        """
+
+        strings = list(
+            util.find_strings_by_regex(sample_input, scanner.BASE64_REGEX, 20)
+        )
+        self.assertEqual(strings, ["111111111-ffffCCCC=="])
+
+    def test_find_strings_by_regex_recognizes_mutant_base64(self):
+
+        sample_input = """
+        +111111111-ffffCCCC= Can't mix + and - but both are in regex
+        111111111111111111111== Not a valid length but we don't care
+        ==111111111111111111 = Is supposed to be end only but we don't care
+        """
+
+        strings = list(
+            util.find_strings_by_regex(sample_input, scanner.BASE64_REGEX, 20)
+        )
+        self.assertEqual(
+            strings,
+            ["+111111111-ffffCCCC=", "111111111111111111111==", "==111111111111111111"],
+        )

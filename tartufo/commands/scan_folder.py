@@ -1,7 +1,5 @@
 import sys
 
-from typing import Tuple
-
 import click
 
 from tartufo import types, util
@@ -9,6 +7,13 @@ from tartufo.scanner import FolderScanner
 
 
 @click.command("scan-folder")
+@click.option(
+    "--recurse/--no-recurse",
+    is_flag=True,
+    default=True,
+    show_default=True,
+    help="Recurse and scan the entire folder",
+)
 @click.argument(
     "target",
     type=click.Path(exists=True, file_okay=False, resolve_path=True, allow_dash=False),
@@ -16,8 +21,8 @@ from tartufo.scanner import FolderScanner
 @click.pass_obj
 @click.pass_context
 def main(
-    ctx: click.Context, options: types.GlobalOptions, target: str
-) -> Tuple[str, FolderScanner]:
+    ctx: click.Context, options: types.GlobalOptions, target: str, recurse: bool
+) -> FolderScanner:
     """Scan a folder."""
     try:
         resume: bool = True
@@ -28,8 +33,8 @@ def main(
             )
         if resume is False:
             sys.exit(0)
-        scanner = FolderScanner(options, target)
-        scanner.scan()
+        scanner = FolderScanner(options, target, recurse)
+        util.process_issues(target, scanner, options)
     except types.TartufoException as exc:
         util.fail(str(exc), ctx)
-    return target, scanner
+    return scanner  # type: ignore
