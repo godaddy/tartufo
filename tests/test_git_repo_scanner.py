@@ -476,7 +476,7 @@ class ExcludedSignaturesTests(ScannerTestCase):
             self.global_options, self.git_options, "."
         )
         self.assertCountEqual(test_scanner.excluded_signatures, ("foo/", "bar/"))
-        
+
 
 class IncludedPathsTests(ScannerTestCase):
     def test_old_style_included_paths_are_processed(self):
