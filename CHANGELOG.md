@@ -1,3 +1,13 @@
+v3.0.0-rc.2 - 09 December 2021
+------------------------------
+
+Bug fixes:
+
+* [#296](https://github.com/godaddy/tartufo/pull/296), [#297](https://github.com/godaddy/tartufo/pull/297) -
+  Fix our Docker image so that it actually builds, and the tartufo command works
+* [#298](https://github.com/godaddy/tartufo/pull/298) - Fix how we determine whether
+  we are scanning a shallow clone, so that it is more bulletproof.
+
 v3.0.0-rc.1 - 09 December 2021
 ------------------------------
 
