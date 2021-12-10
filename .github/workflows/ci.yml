@@ -100,7 +100,4 @@ jobs:
         install: true
     - name: Build
       run: |
-        docker build -t tartufo .
-    - name: Make sure the image functions
-      run: |
-        docker run --rm tartufo -h
+        docker build .
