@@ -242,3 +242,17 @@ def process_issues(
         write_outputs(scan.issues, output_dir)
         if options.output_format != types.OutputFormat.Json.value:
             click.echo(f"Results have been saved in {output_dir}")
+
+
+def is_shallow_clone(repo: pygit2.Repository) -> bool:
+    """Determine whether a repository is a shallow clone
+
+    :param repo: The repository to check for "shallowness"
+
+    This is used to work around https://github.com/libgit2/libgit2/issues/3058
+    Basically, any time a git repository is a "shallow" clone (it was cloned
+    with `--max-depth N`), git will create a file at `.git/shallow`. So we
+    simply need to test whether that file exists to know whether we are
+    interacting with a shallow repository.
+    """
+    return (pathlib.Path(repo.path) / "shallow").exists()

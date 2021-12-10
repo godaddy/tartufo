@@ -767,9 +767,8 @@ class GitRepoScanner(GitScanner):
                 branches = [self.git_options.branch]
             else:
                 # Everything
-                if not self._repo.listall_branches():
-                    # If no local branches are found, assume that this is a
-                    # shallow clone and examine the repo head as a single
+                if util.is_shallow_clone(self._repo):
+                    # If this is a shallow clone, examine the repo head as a single
                     # commit to scan all files at once
                     branches = ["HEAD"]
                 else:

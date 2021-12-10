@@ -151,12 +151,17 @@ class ChunkGeneratorTests(ScannerTestCase):
     def setUp(self) -> None:
         self.diff_patcher = mock.patch("tartufo.scanner.GitScanner._iter_diff_index")
         self.repo_patcher = mock.patch("pygit2.Repository")
+        self.shallow_patcher = mock.patch("tartufo.scanner.util.is_shallow_clone")
 
         self.mock_iter_diff = self.diff_patcher.start()
         self.mock_repo = self.repo_patcher.start()
+        self.mock_shallow = self.shallow_patcher.start()
+
+        self.mock_shallow.return_value = False
 
         self.addCleanup(self.diff_patcher.stop)
         self.addCleanup(self.repo_patcher.stop)
+        self.addCleanup(self.shallow_patcher.stop)
         return super().setUp()
 
     def test_single_branch_is_loaded_if_specified(self):
@@ -306,8 +311,8 @@ class ChunkGeneratorTests(ScannerTestCase):
             for _ in test_scanner.chunks:
                 pass
 
-    def test_head_is_scanned_when_no_local_branches_are_found(self):
-        self.mock_repo.return_value.listall_branches.return_value = []
+    def test_head_is_scanned_when_shallow_clone_is_found(self):
+        self.mock_shallow.return_value = True
         self.mock_iter_diff.return_value = []
         self.mock_repo.return_value.head.target = "commit-hash"
         mock_head = mock.MagicMock(spec=pygit2.Commit)
