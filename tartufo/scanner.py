@@ -692,7 +692,8 @@ class GitScanner(ScannerBase, abc.ABC):
         self.logger.info("Excluding submodules paths from scan.")
         try:
             for module in repo.listall_submodules():
-                patterns.append(re.compile(f"^{module.path}"))
+                submodule = repo.lookup_submodule(module)
+                patterns.append(re.compile(f"^{submodule.path}"))
         except AttributeError as exc:
             raise TartufoException(
                 "There was an error while parsing submodules for this repository. "

@@ -128,9 +128,13 @@ class FilterSubmoduleTests(ScannerTestCase):
         self.git_options.include_submodules = False
         mock_repo.return_value.is_bare = False
         mock_repo.return_value.listall_submodules.return_value = [
-            FakeSubmodule("foo"),
-            FakeSubmodule("bar"),
+            "foo",
+            "bar",
         ]
+        mock_repo.return_value.lookup_submodule.side_effect = lambda x: {
+            "foo": FakeSubmodule("foo"),
+            "bar": FakeSubmodule("bar"),
+        }[x]
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
