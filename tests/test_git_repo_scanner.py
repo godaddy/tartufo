@@ -306,8 +306,9 @@ class ChunkGeneratorTests(ScannerTestCase):
             for _ in test_scanner.chunks:
                 pass
 
-    def test_head_is_scanned_when_no_local_branches_are_found(self):
-        self.mock_repo.return_value.listall_branches.return_value = []
+    @mock.patch("tartufo.scanner.util.is_shallow_clone")
+    def test_head_is_scanned_when_shallow_clone_is_found(self, mock_shallow):
+        mock_shallow.return_value = True
         self.mock_iter_diff.return_value = []
         self.mock_repo.return_value.head.target = "commit-hash"
         mock_head = mock.MagicMock(spec=pygit2.Commit)
