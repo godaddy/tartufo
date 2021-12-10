@@ -35,8 +35,11 @@ class RepoLoadTests(ScannerTestCase):
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
+        mock_repo.return_value.is_bare = False
         test_scanner.load_repo("../tartufo")
-        mock_repo.assert_has_calls((mock.call("."), mock.call("../tartufo")))
+        mock_repo.assert_has_calls(
+            (mock.call("."), mock.call().is_bare.__bool__(), mock.call("../tartufo"))
+        )
 
     @mock.patch("pygit2.Repository")
     @mock.patch("tartufo.scanner.GitRepoScanner.filter_submodules")
@@ -44,6 +47,7 @@ class RepoLoadTests(ScannerTestCase):
         self, mock_filter: mock.MagicMock, mock_repo: mock.MagicMock
     ):
         self.git_options.include_submodules = False
+        mock_repo.return_value.is_bare = False
         scanner.GitRepoScanner(self.global_options, self.git_options, ".")
         mock_filter.assert_called_once_with(mock_repo.return_value)
 
@@ -122,6 +126,7 @@ class FilterSubmoduleTests(ScannerTestCase):
                 self.path = path
 
         self.git_options.include_submodules = False
+        mock_repo.return_value.is_bare = False
         mock_repo.return_value.listall_submodules.return_value = [
             FakeSubmodule("foo"),
             FakeSubmodule("bar"),
@@ -138,6 +143,7 @@ class FilterSubmoduleTests(ScannerTestCase):
         self, mock_repo: mock.MagicMock
     ):
         self.git_options.include_submodules = False
+        mock_repo.return_value.is_bare = False
         mock_repo.return_value.listall_submodules.return_value.__iter__.side_effect = (
             AttributeError
         )
@@ -145,6 +151,17 @@ class FilterSubmoduleTests(ScannerTestCase):
             TartufoException, "There was an error while parsing submodules"
         ):
             scanner.GitRepoScanner(self.global_options, self.git_options, ".")
+
+    @mock.patch("pygit2.Repository")
+    @mock.patch("tartufo.scanner.GitRepoScanner.filter_submodules")
+    def test_filter_submodules_skipped_for_mirror_clones(
+        self, mock_filter: mock.MagicMock, mock_repo: mock.MagicMock
+    ):
+        self.git_options.include_submodules = True
+        mock_repo.return_value.is_bare = True
+
+        scanner.GitRepoScanner(self.global_options, self.git_options, ".")
+        mock_filter.assert_not_called()
 
 
 class ChunkGeneratorTests(ScannerTestCase):

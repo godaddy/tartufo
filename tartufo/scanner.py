@@ -741,8 +741,9 @@ class GitRepoScanner(GitScanner):
             self.config_data = data
         try:
             repo = pygit2.Repository(repo_path)
-            if not self.git_options.include_submodules:
-                self.filter_submodules(repo)
+            if not repo.is_bare:
+                if not self.git_options.include_submodules:
+                    self.filter_submodules(repo)
             return repo
         except git.GitError as exc:
             raise types.GitLocalException(str(exc)) from exc
