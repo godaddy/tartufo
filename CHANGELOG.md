@@ -1,3 +1,12 @@
+vX.X.X - TBD
+------------
+
+Bug fixes:
+
+* [#301](https://github.com/godaddy/tartufo/issues/301) - Parse new-style option
+  values correctly, avoid duplicate processing of global options, and don't
+  generate spurious deprecation warnings for these options.
+
 v3.0.0-rc.2 - 09 December 2021
 ------------------------------
 
@@ -32,7 +41,7 @@ Features:
   option which provides a friendlier way to adjust entropy detection sensitivity.
   This replaces `--b64-entropy-score` and `--hex-entropy-score`, which now are
   marked as deprecated.
-* [#273](https://github.com/godaddy/tartufo/inssues/273) - Entropy checking support
+* [#273](https://github.com/godaddy/tartufo/issues/273) - Entropy checking support
   routines have been rewritten to utilize library abstractions and operate more
   efficiently while returning identical results.
 * [#177](https://github.com/godaddy/tartufo/issues/177) -

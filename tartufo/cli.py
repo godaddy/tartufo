@@ -93,6 +93,7 @@ class TartufoCLI(click.MultiCommand):
     "--include-path-patterns",
     multiple=True,
     hidden=True,
+    type=click.UNPROCESSED,
     help="""Specify a regular expression which matches Git object paths to
     include in the scan. Multiple patterns can be included in the config file using
     include-path-patterns = [{path-pattern="pattern", reason="reason to include pattern},].
@@ -105,6 +106,7 @@ class TartufoCLI(click.MultiCommand):
     "--exclude-path-patterns",
     multiple=True,
     hidden=True,
+    type=click.UNPROCESSED,
     help="""Specify a regular expression which matches Git object paths to
     exclude from the scan. Multiple patterns can be excluded in the config file using
     exclude-path-patterns = [{path-pattern="pattern", reason="reason to exclude pattern},].
@@ -133,6 +135,7 @@ class TartufoCLI(click.MultiCommand):
     "--exclude-entropy-patterns",
     multiple=True,
     hidden=True,
+    type=click.UNPROCESSED,
     help="""Specify a regular expression which matches entropy strings to exclude from the scan. This option can be
     specified multiple times to exclude multiple patterns. If not provided (default), no entropy strings will be
     excluded. ({"path-pattern": {path regex}, "pattern": {pattern regex}, "match-type": "match"|"search",
@@ -143,6 +146,7 @@ class TartufoCLI(click.MultiCommand):
     "--exclude-signatures",
     multiple=True,
     hidden=True,
+    type=click.UNPROCESSED,
     help="Specify signatures of matches that you explicitly want to exclude "
     "from the scan along with the reason, and mark as okay. These signatures "
     "are generated during the scan process, and reported out with each"
