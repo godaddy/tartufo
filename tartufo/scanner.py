@@ -738,7 +738,7 @@ class GitRepoScanner(GitScanner):
             )
         except (FileNotFoundError, types.ConfigException):
             config_file = None
-        if config_file and config_file != self.global_options.config:
+        if config_file and str(config_file) != self.global_options.config:
             self.config_data = data
         try:
             repo = pygit2.Repository(repo_path)
