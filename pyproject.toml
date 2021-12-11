@@ -73,15 +73,15 @@ docs = ["recommonmark", "sphinx", "sphinx-click", "sphinx-rtd-theme", "sphinxcon
 cleanup = true
 entropy = true
 exclude-path-patterns = [
-    {path-pattern = 'poetry.lock'},
-    {path-pattern = 'pyproject.toml'},
+    {path-pattern = 'poetry\.lock'},
+    {path-pattern = 'pyproject\.toml'},
     # To not have to escape `\` in regexes, use single quoted
     # TOML 'literal strings'
     {path-pattern = '\.github/workflows/(.*)\.yml'},
     {path-pattern = 'docs/source/(.*)\.rst'},
     {path-pattern = 'tests/test_base_scanner\.py'},
-    {path-pattern = 'tests/test_util.py'},
-    {path-pattern = 'tests/data/testRules.json'},
+    {path-pattern = 'tests/test_util\.py'},
+    {path-pattern = 'tests/data/testRules\.json'},
     {path-pattern = 'tartufo/data/default_regexes\.json'},
     {path-pattern = '\.git/.*'},
 ]
