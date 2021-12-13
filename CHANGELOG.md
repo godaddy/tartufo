@@ -1,5 +1,5 @@
-vX.X.X - TBD
-------------
+v3.0.0-rc.3 - 13 December 2021
+------------------------------
 
 Bug fixes:
 
@@ -7,7 +7,7 @@ Bug fixes:
   values correctly, avoid duplicate processing of global options, and don't
   generate spurious deprecation warnings for these options.
 * [#303](https://github.com/godaddy/tartufo/pull/303) - Include or exclude git submodules
-only if we're not working with a mirror clone.
+  only if we're not working with a mirror clone.
 
 v3.0.0-rc.2 - 09 December 2021
 ------------------------------
