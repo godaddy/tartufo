@@ -692,7 +692,8 @@ class GitScanner(ScannerBase, abc.ABC):
         self.logger.info("Excluding submodules paths from scan.")
         try:
             for module in repo.listall_submodules():
-                patterns.append(re.compile(f"^{module.path}"))
+                submodule = repo.lookup_submodule(module)
+                patterns.append(re.compile(f"^{submodule.path}"))
         except AttributeError as exc:
             raise TartufoException(
                 "There was an error while parsing submodules for this repository. "
@@ -741,8 +742,9 @@ class GitRepoScanner(GitScanner):
             self.config_data = data
         try:
             repo = pygit2.Repository(repo_path)
-            if not self.git_options.include_submodules:
-                self.filter_submodules(repo)
+            if not repo.is_bare:
+                if not self.git_options.include_submodules:
+                    self.filter_submodules(repo)
             return repo
         except git.GitError as exc:
             raise types.GitLocalException(str(exc)) from exc
