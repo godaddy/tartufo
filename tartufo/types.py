@@ -1,7 +1,7 @@
 # pylint: disable=too-many-instance-attributes
 import enum
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, TextIO, Tuple, Pattern
+from typing import Any, Dict, Optional, TextIO, Tuple, Pattern, Union
 
 
 class IssueType(enum.Enum):
