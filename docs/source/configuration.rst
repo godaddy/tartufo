@@ -65,6 +65,8 @@ available only in the configuration file. This is due to the nature of their
 construction, and the fact that they would be exceedingly difficult to
 represent on the command line.
 
+.. _rule-patterns:
+
 Rule Patterns
 +++++++++++++
 
@@ -105,5 +107,54 @@ Option 2: Separating each rule out into its own table.
     Only ``reason`` and ``pattern`` are required. If no ``path-pattern`` is
     specified, then the pattern will be used to scan against all files.
 
+.. _entropy-exclusion-patterns:
+
+Entropy Exclusion Patterns
+++++++++++++++++++++++++++
+
+Entropy scans can produce a high number of false positive matches such as git
+SHAs or MD5 digests. To avoid these false positives, you can use the
+``exclude-entropy-patterns`` configuration option. These patterns will be
+applied to and matched against any strings flagged by entropy checks. As above,
+this directive utilizes an `array of tables`_, enabling two forms:
+
+Option 1:
+
+.. code-block:: toml
+
+    [tool.tartufo]
+    exclude-entropy-patterns = [
+        {path-pattern = 'docs/.*\.md$', pattern = '^[a-zA-Z0-9]$', reason = 'exclude all git SHAs in the docs'},
+        {path-pattern = '\.github/workflows/.*\.yml', pattern = 'uses: .*@[a-zA-Z0-9]{40}', reason = 'GitHub Actions'}
+    ]
+
+Option 2:
+
+.. code-block:: toml
+
+    [[tool.tartufo.exclude-entropy-patterns]]
+    path-pattern = 'docs/.*\.md$'
+    pattern = '^[a-zA-Z0-9]$'
+    reason = 'exclude all git SHAs in the docs'
+
+    [[tool.tartufo.exclude-entropy-patterns]]
+    path-pattern = '\.github/workflows/.*\.yml'
+    pattern = 'uses: .*@[a-zA-Z0-9]{40}'
+    reason = 'GitHub Actions'
+
+
+There are 5 relevant keys for this directive, as described below.
+
+============ ======== ============================ ==============================================================
+Key          Required Value                        Description
+============ ======== ============================ ==============================================================
+pattern      Yes      Regular expression           The pattern used to check against the match
+path-pattern No       Regular expression           A pattern to specify to what files the exclusion will apply
+reason       No       String                       A plaintext reason the exclusion has been added
+match-type   No       String ("match", or "scope") Whether to perform a `search or match`_ regex operation
+scope        No       String ("word", or "line")   Whether to match against the current word or full line of text
+============ ======== ============================ ==============================================================
+
 .. _TOML: https://toml.io/
 .. _array of tables: https://toml.io/en/v1.0.0#array-of-tables
+.. _search or match: https://docs.python.org/3/library/re.html#search-vs-match
