@@ -80,7 +80,7 @@ class Issue:
 
         This is primarily meant to aid in JSON serialization.
 
-        :compact: True to return a dictionary with fewer fields.
+        :param compact: True to return a dictionary with fewer fields.
         :return: A JSON serializable dictionary representation of this issue
         """
 
@@ -98,10 +98,7 @@ class Issue:
 
     @property
     def signature(self) -> str:
-        """Generate a stable hash-based signature uniquely identifying this issue.
-
-        :rtype: str
-        """
+        """Generate a stable hash-based signature uniquely identifying this issue."""
         return util.generate_signature(self.matched_string, self.chunk.file_path)
 
     def __str__(self) -> str:
@@ -154,6 +151,9 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     _config_data: MutableMapping[str, Any] = {}
 
     def __init__(self, options: types.GlobalOptions) -> None:
+        """
+        :param options: A set of options to control the behavior of the scanner
+        """
         self.global_options = options
         self.logger = logging.getLogger(__name__)
 
@@ -240,7 +240,8 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         return self._issues
 
     @property
-    def config_data(self):
+    def config_data(self) -> MutableMapping[str, Any]:
+        r"""Supplemental configuration to be merged into the \*_options information."""
         return self._config_data
 
     @config_data.setter
@@ -284,10 +285,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
 
     @property
     def excluded_entropy(self) -> List[Rule]:
-        """Get a list of regexes used as an exclusive list of paths to scan.
-
-        :rtype: List[Pattern]
-        """
+        """Get a list of regexes used as an exclusive list of paths to scan."""
         if self._excluded_entropy is None:
             self.logger.info("Initializing excluded entropy patterns")
             patterns = list(self.global_options.exclude_entropy_patterns or ())
@@ -336,7 +334,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     def rules_regexes(self) -> Set[Rule]:
         """Get a set of regular expressions to scan the code for.
 
-        :raises types.TartufoConfigException: If there was a problem compiling the rules
+        :raises types.ConfigException: If there was a problem compiling the rules
         """
         if self._rules_regexes is None:
             self.logger.info("Initializing regex rules")
@@ -357,7 +355,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         return self._rules_regexes
 
     @lru_cache(maxsize=None)
-    def should_scan(self, file_path: str):
+    def should_scan(self, file_path: str) -> bool:
         """Check if the a file path should be included in analysis.
 
         If non-empty, `self.included_paths` has precedence over
@@ -385,6 +383,10 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
 
     @cached_property
     def excluded_signatures(self) -> Tuple[str, ...]:
+        """Get a list of the signatures of findings to be excluded from the scan results.
+
+        :returns: The signatures to be excluded from scan results
+        """
         if self._excluded_signatures is None:
             signatures: Set[str] = set()
             deprecated = False
@@ -482,7 +484,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         in `data` to be to be present. By doing this, we can tell how random a
         string appears to be.
 
-        Borrowed from http://blog.dkbza.org/2007/05/scanning-data-for-entropy-anomalies.html
+        Adapted from http://blog.dkbza.org/2007/05/scanning-data-for-entropy-anomalies.html
 
         :param data: The data to be scanned for its entropy
         :return: The amount of entropy detected in the data
@@ -509,7 +511,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         which they will each execute in turn, yielding cached issues without
         repeating the underlying repository scan).
 
-        :raises types.TartufoConfigException: If there were problems with the
+        :raises types.ConfigException: If there were problems with the
           scanner's configuration
         """
 
@@ -582,7 +584,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         :param line: Source line containing string of interest
         :param string: String to check
         :param min_entropy_score: Minimum entropy score to flag
-        :return: Iterator of issues flagged
+        :return: Generator of issues flagged
         """
         if not self.signature_is_excluded(string, chunk.file_path):
             entropy_score = self.calculate_entropy(string)
@@ -615,8 +617,6 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
 
         Examples of "chunks" would be individual git commit diffs, or the
         contents of individual files.
-
-        :rtype: Generator[Chunk, None, None]
         """
 
 
@@ -652,7 +652,7 @@ class GitScanner(ScannerBase, abc.ABC):
 
         Note that binary files are wholly skipped.
 
-        :param diff_index: The diff index / commit to be iterated over
+        :param diff: The diff index / commit to be iterated over
         """
         for patch in diff:
             delta: pygit2.DiffDelta = patch.delta
@@ -676,7 +676,10 @@ class GitScanner(ScannerBase, abc.ABC):
 
     @staticmethod
     def header_length(diff: str) -> int:
-        """Compute the length of the git diff header text"""
+        """Compute the length of the git diff header text.
+
+        :param diff: The diff being inspected for a header
+        """
         try:
             # Header ends after newline following line starting with "+++"
             b_file_pos = diff.index("\n+++")
@@ -686,7 +689,10 @@ class GitScanner(ScannerBase, abc.ABC):
             return len(diff)
 
     def filter_submodules(self, repo: pygit2.Repository) -> None:
-        """Exclude all git submodules and their contents from being scanned."""
+        """Exclude all git submodules and their contents from being scanned.
+
+        :param repo: The repository being scanned
+        """
         patterns: List[Pattern] = []
         self.logger.info("Excluding submodules paths from scan.")
         try:
@@ -752,7 +758,6 @@ class GitRepoScanner(GitScanner):
     def chunks(self) -> Generator[types.Chunk, None, None]:
         """Yield individual diffs from the repository's history.
 
-        :rtype: Generator[Chunk, None, None]
         :raises types.GitRemoteException: If there was an error fetching branches
         """
         already_searched: Set[bytes] = set()
@@ -852,6 +857,11 @@ class GitPreCommitScanner(GitScanner):
         repo_path: str,
         include_submodules: bool,
     ) -> None:
+        """
+        :param global_options: The options provided to the top-level tartufo command
+        :param repo_path: The local filesystem path pointing to the repository
+        :param include_submodules: Whether to scan git submodules in the repository
+        """
         self._include_submodules = include_submodules
         super().__init__(global_options, repo_path)
 
@@ -863,10 +873,7 @@ class GitPreCommitScanner(GitScanner):
 
     @property
     def chunks(self):
-        """Yield the individual file changes currently staged for commit.
-
-        :rtype: Generator[Chunk, None, None]
-        """
+        """Yield the individual file changes currently staged for commit."""
         diff_index = self._repo.diff("HEAD")
         for blob, file_path in self._iter_diff_index(diff_index):
             yield types.Chunk(blob, file_path, {})
@@ -885,6 +892,7 @@ class FolderScanner(ScannerBase):
 
         :param global_options: The options provided to the top-level tartufo command
         :param target: The local filesystem path to scan
+        :param recurse: Whether to recurse into sub-folders of the target
         """
         self.target = target
         self.recurse = recurse
@@ -892,10 +900,7 @@ class FolderScanner(ScannerBase):
 
     @property
     def chunks(self) -> Generator[types.Chunk, None, None]:
-        """Yield the individual files in the target directory.
-
-        :rtype: Generator[Chunk, None, None]
-        """
+        """Yield the individual files in the target directory."""
 
         for blob, file_path in self._iter_folder():
             yield types.Chunk(blob, file_path, {})
