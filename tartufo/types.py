@@ -133,10 +133,12 @@ class GlobalOptions:
 class GitOptions:
     """Configuration options specific to git-based scans
 
-    :param since_commit:
-    :param max_depth:
-    :param branch:
-    :param include_submodules:
+    :param since_commit: A commit hash to treat as a starting point in history
+      for the scan
+    :param max_depth: A maximum depth, or maximum number of commits back in
+      history, to scan
+    :param branch: A specific branch to scan
+    :param include_submodules: Whether to also scan submodules of the repository
     """
 
     __slots__ = ("since_commit", "max_depth", "branch", "include_submodules")
@@ -150,9 +152,9 @@ class GitOptions:
 class Chunk:
     """A single "chunk" of text to be inspected during a scan
 
-    :param contents:
-    :param file_path:
-    :param metadata:
+    :param contents: The actual text contents of the chunk
+    :param file_path: The file path that is being inspected
+    :param metadata: Commit/file metadata for the chunk being inspected
     """
 
     __slots__ = ("contents", "file_path", "metadata")
@@ -165,11 +167,11 @@ class Chunk:
 class Rule:
     """A regular expression rule to be used for inspecting text during a scan
 
-    :param name:
-    :param pattern:
-    :param path_pattern:
-    :param re_match_type:
-    :param re_match_scope:
+    :param name: A unique name for the rule
+    :param pattern: The regex pattern to be used by the pattern
+    :param path_pattern: A regex pattern to match against the file path(s)
+    :param re_match_type: What type of regex operation to perform
+    :param re_match_scope: What scope to perform the match against
     """
 
     __slots__ = ("name", "pattern", "path_pattern", "re_match_type", "re_match_scope")
