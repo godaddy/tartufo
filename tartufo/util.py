@@ -93,7 +93,9 @@ def echo_result(
             click.echo("\nExcluded signatures:")
             click.echo("\n".join(options.exclude_signatures))
             click.echo("\nExcluded entropy patterns:")
-            click.echo("\n".join(options.exclude_entropy_patterns))
+            click.echo(
+                "\n".join(str(path) for path in options.exclude_entropy_patterns)
+            )
 
 
 def write_outputs(found_issues: "List[Issue]", output_dir: pathlib.Path) -> List[str]:
