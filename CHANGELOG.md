@@ -1,4 +1,4 @@
-v2.10.1 - TBD
+v2.10.1 - 27 December 2021
 ------------
 
 Bug fixes:
