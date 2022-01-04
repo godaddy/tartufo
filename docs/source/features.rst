@@ -280,35 +280,10 @@ Limiting by Signature
 
 Every time an issue is found during a scan, ``tartufo`` will generate a
 "signature" for that issue. This is a stable hash generated from the filename
-and the actual string that was identified as being an issue.
+and the actual string that was identified as being an issue. You can configure
+highly granular exclusions to these signatures as described in the
+:ref:`exclude-signatures` section of the :doc:`configuration` document.
 
-For example, you might see the following header in the output for an issue:
-
-.. image:: _static/img/issue-signature.png
-
-Looking at this information, it's clear that this issue was found in a test
-file, and it's probably okay. Of course, you will want to look at the actual
-body of what was found and determine that for yourself. But let's say that this
-really is okay, and we want tell ``tartufo`` to ignore this issue in future
-scans. To do this, you can either specify it on the command line...
-
-.. code-block:: sh
-
-    > tartufo -e 2a3cb329b81351e357b09f1b97323ff726e72bd5ff8427c9295e6ef68226e1d1
-    # No output! Success!
-    >
-
-Or you can add it to your config file, so that this exclusion is always
-remembered!
-
-.. code-block:: toml
-
-    [tool.tartufo]
-    exclude-signatures = [
-      "2a3cb329b81351e357b09f1b97323ff726e72bd5ff8427c9295e6ef68226e1d1",
-    ]
-
-Done! This particular issue will no longer show up in your scan results.
 
 Limiting Scans by Path
 ++++++++++++++++++++++
@@ -316,45 +291,9 @@ Limiting Scans by Path
 .. versionadded:: 2.5.0
 
 By default ``tartufo`` will scan all objects tracked by Git. You can limit
-scanning by either including fewer paths or excluding some of them using
-Python Regular Expressions (regex) and the `--include-path-patterns` and
-`--exclude-path-patterns` options.
-
-.. warning::
-
-   Using include patterns is more dangerous, since it's easy to miss the
-   creation of new secrets if future files don't match an existing include
-   rule. We recommend only using fine-grained exclude patterns instead.
-
-.. code-block:: toml
-
-   [tool.tartufo]
-   include-path-patterns = [
-      'src/',
-      'gradle/',
-      # regexes must match the entire path, but can use python's regex syntax
-      # for case-insensitive matching and other advanced options
-      '(.*/)?id_[rd]sa$',
-      # Single quoted strings in TOML don't require escapes for `\` in regexes
-      '(?i).*\.(properties|conf|ini|txt|y(a)?ml)$',
-   ]
-   exclude-path-patterns = [
-      '(.*/)?\.classpath$',
-      '.*\.jmx$',
-      '(.*/)?test/(.*/)?resources/',
-   ]
-
-The filter expressions can also be specified as command line arguments.
-Patterns specified like this are merged with any patterns specified
-in the config file:
-
-.. code-block:: sh
-
-   > tartufo \
-     --include-path-patterns 'src/' -ip 'gradle/' \
-     --exclude-path-patterns '(.*/)?\.classpath$' -xp '.*\.jmx$' \
-     scan-local-repo file://path/to/my/repo.git
-
+scanning by either including fewer paths or excluding some of them. You can configure
+these paths as described in the :ref:`limiting-scans-by-paths` section of the
+:doc:`configuration` document.
 
 Additional usage information is provided when calling ``tartufo`` with the
 ``-h`` or ``--help`` options.
