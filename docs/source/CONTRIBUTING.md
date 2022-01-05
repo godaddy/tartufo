@@ -11,8 +11,7 @@ project by reading these Contribution Guidelines.
 to [GoDaddy's Open Source Software Slack][slack], or the
 [Tartufo Mailing list].
 
-Table of Contents
-=================
+## Table of Contents
 
 * [Answering Questions](#answering-questions)
 * [Reporting Bugs](#reporting-bugs)
@@ -20,9 +19,11 @@ Table of Contents
 * [Code Review](#code-review)
 * [Attribution of Changes](#attribution-of-changes)
 * [Writing Code](#writing-code)
-    * [Setting Up A Development Environment](#setting-up-a-development-environment)
-    * [Code Style](#code-style)
+  * [Setting Up A Development Environment](#setting-up-a-development-environment)
+  * [Code Style](#code-style)
 * [Running tests](#running-tests)
+* [Contributing as a Maintainer](#contributing-as-a-maintainer)
+  * [Issuing a New Release](#issuing-a-new-release)
 * [Additional Resources](#additional-resources)
 
 ## Answering Questions
@@ -43,11 +44,11 @@ software and can be easily found through [PyPI].
 
 Submit a ticket for your issue, assuming one does not already exist:
 
-- Create it on our [Issue Tracker][issues]
-- Clearly describe the issue by following the template layout
-    - Make sure to include steps to reproduce the bug.
-    - A reproducible (unit) test could be helpful in solving the bug.
-    - Describe the environment that (re)produced the problem.
+* Create it on our [Issue Tracker][issues]
+* Clearly describe the issue by following the template layout
+  * Make sure to include steps to reproduce the bug.
+  * A reproducible (unit) test could be helpful in solving the bug.
+  * Describe the environment that (re)produced the problem.
 
 > For a bug to be actionable, it needs to be reproducible. If you or
 > contributors can't reproduce the bug, try to figure out why. Please take care
@@ -61,11 +62,11 @@ reasoning about a longer sample.
 
 From a practical perspective, contributions are as simple as:
 
-- Forking the repository on GitHub.
-- Making changes to your forked repository.
-- When committing, reference your issue (if present) and include a note about the fix.
-- If possible, and if applicable, please also add/update unit tests for your changes.
-- Push the changes to your fork and submit a pull request to the 'main' branch of the projects' repository.
+* Forking the repository on GitHub.
+* Making changes to your forked repository.
+* When committing, reference your issue (if present) and include a note about the fix.
+* If possible, and if applicable, please also add/update unit tests for your changes.
+* Push the changes to your fork and submit a pull request to the 'main' branch of the projects' repository.
 
 If you are interested in making a large change and feel unsure about its overall effect, please make sure to first
 discuss the change and reach a consensus with core contributors through [slack]. Then ask about the best way to go about
@@ -83,11 +84,11 @@ Any open source project relies heavily on code review to improve software qualit
 Sometimes code reviews will take longer than you would hope for, especially for larger features. Here are some accepted
 ways to speed up review times for your patches:
 
-- Review other people's changes. If you help out, others will be more willing to do the same for you. Good will is our
+* Review other people's changes. If you help out, others will be more willing to do the same for you. Good will is our
   currency.
-- Split your change into multiple smaller changes. The smaller your change, the higher the probability that somebody
+* Split your change into multiple smaller changes. The smaller your change, the higher the probability that somebody
   will take a quick look at it.
-- Ping the change on [slack]. If it is urgent, provide reasons why it is important to get this change landed. Remember
+* Ping the change on [slack]. If it is urgent, provide reasons why it is important to get this change landed. Remember
   that you're asking for valuable time from other professional developers.
 
 **Note that anyone is welcome to review and give feedback on a change, but only people with commit access to the
@@ -206,25 +207,25 @@ This process is thankfully mostly automated. There are, however, a handful of ma
 off that automation. It is all built this way to help ensure that issuing a release is a very conscious decision,
 requiring peer review, and cannot easily happen accidentally. The steps involved currently are:
 
-- Create a new branch locally for the release, for example:
+* Create a new branch locally for the release, for example:
 
   ```console
   > git checkout -b releases/v2.1.0
   ```
 
-- Tell Poetry to [bump the version]:
+* Tell Poetry to [bump the version]:
 
   ```console
   > poetry version minor
   Bumping version from 2.0.1 to 2.1.0
   ```
 
-    - Note: All this is doing, is updating the version number in the
-      `pyproject.toml`. You can totally do this manually. This command just might be a bit quicker. And it's nice to
-      have a command to do it for you. Yay automation!
-- Update the CHANGELOG with the appropriate new version number and release date.
-- Create a pull request for these changes, and get it approved!
-- Once your PR has been merged, the final piece is to actually create the new release.
+  * Note: All this is doing, is updating the version number in the
+    `pyproject.toml`. You can totally do this manually. This command just might be a bit quicker. And it's nice to
+    have a command to do it for you. Yay automation!
+* Update the CHANGELOG with the appropriate new version number and release date.
+* Create a pull request for these changes, and get it approved!
+* Once your PR has been merged, the final piece is to actually create the new release.
 
     1. Go to the `tartufo` [releases page] and click on `Draft a new release`.
     2. Enter an appropriate tag version (in this example, `v2.1.0`).
@@ -237,8 +238,8 @@ Congratulations, you've just issued a new release for `tartufo`. The automation 
 
 ## Additional Resources
 
-- [General GitHub Documentation](https://help.github.com/)
-- [GitHub Pull Request documentation](https://help.github.com/send-pull-requests/)
+* [General GitHub Documentation](https://help.github.com/)
+* [GitHub Pull Request documentation](https://help.github.com/send-pull-requests/)
 
 [black]: https://github.com/psf/black
 [black-editors]: https://black.readthedocs.io/en/stable/integrations/editors.html

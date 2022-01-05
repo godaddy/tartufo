@@ -77,7 +77,7 @@ Features:
 
 * [#227](https://github.com/godaddy/tartufo/pull/227) - Report findings incrementally
   as scan progresses instead of holding all of them until it has completed. This
-  is a reimplementation of [#108](https://github.com/godaddy/tartufo/pull/108);
+  is a re-implementation of [#108](https://github.com/godaddy/tartufo/pull/108);
   thanks to @dclayton-godaddy for showing the way.
 * [#244](https://github.com/godaddy/tartufo/pull/244) - Drops support for
   `--fetch/--no-fetch` option for local scans
@@ -93,8 +93,16 @@ Misc:
 * [#255](https://github.com/godaddy/tartufo/issues/255) - Removed deprecated flags
   --include-paths and --exclude-paths
 
-v2.10.0 - 3 November 2021
+v2.10.1 - 27 December 2021
 ------------
+
+Bug fixes:
+
+*[#309](https://github.com/godaddy/tartufo/pull/309) Fixes an issue where verbose output display
+would error out if the new-style entropy exclusion pattern was used
+
+v2.10.0 - 3 November 2021
+-------------------------
 
 Bug fixes:
 
@@ -131,7 +139,7 @@ Features:
   This is now done via a TOML table, rather than a specifically patterned string.
   Users who have the old style configuration will now receive a
   `DeprecationWarning` stating that the old behavior will go away with v3.0.
-* Fixed up warning handling so that we can display `DeprecationWarning`s to users
+* Fixed up warning handling so that we can display `DeprecationWarnings` to users
   more easily.
 * [#223](https://github.com/godaddy/tartufo/pull/223) New flags
   (`-b64`/`--b64-entropy-score` and `-hex`/`--hex-entropy-score`) allow for user

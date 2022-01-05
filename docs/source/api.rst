@@ -26,7 +26,6 @@ tartufo.types
 
 .. automodule:: tartufo.types
    :members:
-   :undoc-members:
 
 tartufo.util
 ------------

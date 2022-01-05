@@ -54,34 +54,8 @@ To use ``docker``:
 When used this way, `tartufo` will clone the repository to a temporary
 directory, scan the local clone, and then delete it.
 
-Scanning a Folder
-+++++++++++++++++++++++++++
-
-Operating in this mode, tartufo scans the files in a local folder, rather than
-operating on git commit history. This is ideal for locating secrets in the latest
-version of source files, or files not in source control.
-
-.. code-block:: sh
-
-   $ tartufo scan-folder .
-
-.. code-block:: sh
-
-   $ docker run --rm -v "/path/to/my/repo:/git" godaddy/tartufo scan-folder /git
-
-.. note::
-
-   If you are using ``podman`` in place of ``docker``, you will need to add the
-   ``--privileged`` flag to the ``run`` command, in order to avoid a permission
-   denied error.
-
-   This will scan all files and folders in the specified directory including
-   .git and any other files that may not be in source control. Perform a git clean
-   or use a fresh clone of the repository before running scanning a folder and add
-   ``.git`` to the ``exclude-paths``.
-
 Accessing Repositories via SSH from Docker
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+******************************************
 
 When accessing repositories via SSH, the ``docker`` runtime needs to have
 access to your SSH keys for authorization. To allow this, make sure
@@ -108,6 +82,31 @@ this same location:
       -v /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock \
       -e SSH_AUTH_SOCK="/run/host-services/ssh-auth.sock" godaddy/tartufo
 
+Scanning a Folder
++++++++++++++++++++++++++++
+
+Operating in this mode, tartufo scans the files in a local folder, rather than
+operating on git commit history. This is ideal for locating secrets in the latest
+version of source files, or files not in source control.
+
+.. code-block:: sh
+
+   $ tartufo scan-folder .
+
+.. code-block:: sh
+
+   $ docker run --rm -v "/path/to/my/repo:/git" godaddy/tartufo scan-folder /git
+
+.. note::
+
+   If you are using ``podman`` in place of ``docker``, you will need to add the
+   ``--privileged`` flag to the ``run`` command, in order to avoid a permission
+   denied error.
+
+   This will scan all files and folders in the specified directory including
+   .git and any other files that may not be in source control. Perform a git clean
+   or use a fresh clone of the repository before running scanning a folder and add
+   ``.git`` to the ``exclude-paths``.
 
 Pre-commit Hook
 +++++++++++++++
@@ -213,14 +212,8 @@ regular expression which was matched.
 Customizing
 ***********
 
-Additional rules can be specified in a JSON file, pointed to on the command
-line with the ``--rules`` argument. The file should be in the following format:
-
-.. code-block:: json
-
-   {
-       "RSA private key": "-----BEGIN EC PRIVATE KEY-----"
-   }
+Additional rules can be specified as described in the :ref:`rule-patterns`
+section of the :doc:`configuration` document.
 
 Things like subdomain enumeration, s3 bucket detection, and other useful
 regexes highly custom to the situation can be added.
@@ -275,50 +268,10 @@ Entropy Limiting
 
 .. versionadded:: 2.5.0
 
-Entropy scans can produce a high number of false positives such as git SHAs or md5
-digests. To avoid these false positives, enable ``exclude-entropy-patterns``. Exclusions
-apply to any strings flagged by entropy checks. This option is not available on the command line,
-and must be specified in your config file.
-
-For example, if ``docs/README.md`` contains a git SHA and ``.github/workflows/*.yml`` contains pinned git SHAs
-this would be flagged by entropy.
-To exclude these, add the following entries to ``exclude-entropy-patterns`` in the config file.
-
-.. code-block:: toml
-
-    [tool.tartufo]
-    exclude-entropy-patterns = [
-        {path-pattern = 'docs/.*\.md$', pattern = '^[a-zA-Z0-9]$', reason = 'exclude all git SHAs in the docs'},
-        {path-pattern = '\.github/workflows/.*\.yml', pattern = 'uses: .*@[a-zA-Z0-9]{40}', reason = 'GitHub Actions'}
-    ]
-.. note::
-    ``match-type`` is used to select the ``search`` or ``match`` regex operation. ``search`` looks for the regex
-    anywhere in the selected scope, while ``match`` requires the regex to match at the beginning of the selected scope.
-    Defaults to ``search``
-
-    ``scope`` is used to specify if you want to perform the regex operation (search or match) by ``word`` or ``line``.
-    ``word`` means exactly the high-entropy string of characters, while ``line`` searches the entire input line
-    containing the high-entropy string. Defaults to ``line``
-
-Thanks to the magic of TOML, you could also split these out into their own tables
-in the config if you wanted. So the following would be 100% equivalent to what
-you see above:
-
-.. code-block:: toml
-
-    [[tool.tartufo.exclude-entropy-patterns]]
-    path-pattern = 'docs/.*\.md$'
-    pattern = '^[a-zA-Z0-9]$'
-    reason = 'exclude all git SHAs in the docs'
-
-    [[tool.tartufo.exclude-entropy-patterns]]
-    path-pattern = '\.github/workflows/.*\.yml'
-    pattern = 'uses: .*@[a-zA-Z0-9]{40}'
-    reason = 'GitHub Actions'
-
-.. note::
-    In reality, the only key you **have** to specify is ``pattern``. If you do
-    this, the pattern match will apply to **all** files that are scanned.
+If you find that you are getting a high number of false positives from entropy
+scanning, you can configure highly granular exclusions to these findings as
+described in the :ref:`entropy-exclusion-patterns` section of the
+:doc:`configuration` document.
 
 Limiting by Signature
 +++++++++++++++++++++
@@ -327,35 +280,10 @@ Limiting by Signature
 
 Every time an issue is found during a scan, ``tartufo`` will generate a
 "signature" for that issue. This is a stable hash generated from the filename
-and the actual string that was identified as being an issue.
+and the actual string that was identified as being an issue. You can configure
+highly granular exclusions to these signatures as described in the
+:ref:`exclude-signatures` section of the :doc:`configuration` document.
 
-For example, you might see the following header in the output for an issue:
-
-.. image:: _static/img/issue-signature.png
-
-Looking at this information, it's clear that this issue was found in a test
-file, and it's probably okay. Of course, you will want to look at the actual
-body of what was found and determine that for yourself. But let's say that this
-really is okay, and we want tell ``tartufo`` to ignore this issue in future
-scans. To do this, you can either specify it on the command line...
-
-.. code-block:: sh
-
-    > tartufo -e 2a3cb329b81351e357b09f1b97323ff726e72bd5ff8427c9295e6ef68226e1d1
-    # No output! Success!
-    >
-
-Or you can add it to your config file, so that this exclusion is always
-remembered!
-
-.. code-block:: toml
-
-    [tool.tartufo]
-    exclude-signatures = [
-      "2a3cb329b81351e357b09f1b97323ff726e72bd5ff8427c9295e6ef68226e1d1",
-    ]
-
-Done! This particular issue will no longer show up in your scan results.
 
 Limiting Scans by Path
 ++++++++++++++++++++++
@@ -363,45 +291,9 @@ Limiting Scans by Path
 .. versionadded:: 2.5.0
 
 By default ``tartufo`` will scan all objects tracked by Git. You can limit
-scanning by either including fewer paths or excluding some of them using
-Python Regular Expressions (regex) and the `--include-path-patterns` and
-`--exclude-path-patterns` options.
-
-.. warning::
-
-   Using include patterns is more dangerous, since it's easy to miss the
-   creation of new secrets if future files don't match an existing include
-   rule. We recommend only using fine-grained exclude patterns instead.
-
-.. code-block:: toml
-
-   [tool.tartufo]
-   include-path-patterns = [
-      'src/',
-      'gradle/',
-      # regexes must match the entire path, but can use python's regex syntax
-      # for case-insensitive matching and other advanced options
-      '(.*/)?id_[rd]sa$',
-      # Single quoted strings in TOML don't require escapes for `\` in regexes
-      '(?i).*\.(properties|conf|ini|txt|y(a)?ml)$',
-   ]
-   exclude-path-patterns = [
-      '(.*/)?\.classpath$',
-      '.*\.jmx$',
-      '(.*/)?test/(.*/)?resources/',
-   ]
-
-The filter expressions can also be specified as command line arguments.
-Patterns specified like this are merged with any patterns specified
-in the config file:
-
-.. code-block:: sh
-
-   > tartufo \
-     --include-path-patterns 'src/' -ip 'gradle/' \
-     --exclude-path-patterns '(.*/)?\.classpath$' -xp '.*\.jmx$' \
-     scan-local-repo file://path/to/my/repo.git
-
+scanning by either including fewer paths or excluding some of them. You can configure
+these paths as described in the :ref:`limiting-scans-by-paths` section of the
+:doc:`configuration` document.
 
 Additional usage information is provided when calling ``tartufo`` with the
 ``-h`` or ``--help`` options.
