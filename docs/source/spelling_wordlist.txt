@@ -1,5 +1,6 @@
 backport
 backported
+bitrate
 bugfix
 bugfixes
 bytestreams
@@ -28,6 +29,7 @@ metadata
 param
 pre
 Pypy
+Recurse
 refactored
 regexes
 repo
@@ -45,6 +47,7 @@ tuple
 twilio
 txt
 unicode
+url
 utf
 util
 # For contractions: you've, we've, I've
@@ -52,6 +55,7 @@ ve
 versioned
 # For the ChangeLog on undeclared version numbers -- vX.Y.Z
 vX
+vx
 walkthrough
 whitelist
 whitespace

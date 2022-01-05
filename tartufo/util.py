@@ -55,6 +55,7 @@ def echo_result(
     output_dir: Optional[pathlib.Path],
 ) -> None:
     """Print all found issues out to the console, optionally as JSON.
+
     :param options: Global options object
     :param scanner: ScannerBase containing issues and excluded paths from config tree
     :param repo_path: The path to the repository the issues were found in
@@ -184,7 +185,7 @@ def extract_commit_metadata(commit: pygit2.Commit, branch_name: str) -> Dict[str
     """Grab a consistent set of metadata from a git commit, for user output.
 
     :param commit: The commit to extract the data from
-    :param branch: What branch the commit was found on
+    :param branch_name: What branch the commit was found on
     """
     return {
         "commit_time": datetime.fromtimestamp(commit.commit_time).strftime(
@@ -217,6 +218,10 @@ def find_strings_by_regex(
 
 
 def path_contains_git(path: str) -> bool:
+    """Determine whether a filesystem path contains a git repository.
+
+    :param path: The fully qualified path to be checked
+    """
     try:
         return git.Repo(path) is not None
     except git.GitError:
@@ -227,7 +232,13 @@ def process_issues(
     repo_path: str,
     scan: "ScannerBase",
     options: types.GlobalOptions,
-):
+) -> None:
+    """Handle post-scan processing/reporting of a batch of issues.
+
+    :param repo_path: The repository that was scanned
+    :param scan: The scanner that performed the scan
+    :param options: The options to use for determining output
+    """
     now = datetime.now().isoformat("T", "microseconds")
     output_dir = None
     if options.output_dir:
@@ -247,12 +258,12 @@ def process_issues(
 def is_shallow_clone(repo: pygit2.Repository) -> bool:
     """Determine whether a repository is a shallow clone
 
-    :param repo: The repository to check for "shallowness"
-
     This is used to work around https://github.com/libgit2/libgit2/issues/3058
     Basically, any time a git repository is a "shallow" clone (it was cloned
     with `--max-depth N`), git will create a file at `.git/shallow`. So we
     simply need to test whether that file exists to know whether we are
     interacting with a shallow repository.
+
+    :param repo: The repository to check for "shallowness"
     """
     return (pathlib.Path(repo.path) / "shallow").exists()
