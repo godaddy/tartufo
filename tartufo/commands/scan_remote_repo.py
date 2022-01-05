@@ -10,12 +10,13 @@ from tartufo.scanner import GitRepoScanner
 
 
 @click.command("scan-remote-repo")
-@click.option("--since-commit", help="Only scan from a given commit hash.")
+@click.option("--since-commit", help="Only scan from a given commit hash.", hidden=True)
 @click.option(
     "--max-depth",
     default=1000000,
     show_default=True,
     help="The max commit depth to go back when searching for secrets.",
+    hidden=True,
 )
 @click.option("--branch", help="Specify a branch name to scan only that branch.")
 @click.option(
