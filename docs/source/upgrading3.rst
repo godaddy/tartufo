@@ -70,6 +70,25 @@ at once.
 This scenario is commonly encountered in GitHub actions, which perform shallow
 checkouts.
 
+Nonfunctional Options
++++++++++++++++++++++
+
+``tartufo`` release 3 uses
+.. _pygit2: https://pygit2.readthedocs.io/en/latest/
+instead of
+.. _GitPython: https://gitpython.readthedocs.io/en/stable/
+to access git repositories. While this provides vastly improved performance with
+generally equivalent functionality, some less-frequently used options require
+reimplementation and currently are nonfunctional. We plan to provide either
+replacements or reimplementations in the future.
+
+The ``--since-commit`` option is intended to restrict scans to a subset of
+repository history; the ``--max-depth`` option provides roughly the same
+functionality specified differently. Both options are ignored by ``tartufo``
+release 3. Refer to
+.. _#267: https://github.com/godaddy/tartufo/issues/267
+for more information about this topic.
+
 Changes to Default Behavior
 ---------------------------
 
