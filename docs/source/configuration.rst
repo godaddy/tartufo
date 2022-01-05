@@ -258,8 +258,8 @@ Key          Required Value                        Description
 pattern      Yes      Regular expression           The pattern used to check against the match
 path-pattern No       Regular expression           A pattern to specify to what files the exclusion will apply
 reason       No       String                       A plaintext reason the exclusion has been added
-match-type   No       String ("match", or "scope") Whether to perform a `search or match`_ regex operation
-scope        No       String ("word", or "line")   Whether to match against the current word or full line of text
+match-type   No       String ("match" or "scope")  Whether to perform a `search or match`_ regex operation
+scope        No       String ("word" or "line")    Whether to match against the current word or full line of text
 ============ ======== ============================ ==============================================================
 
 .. _TOML: https://toml.io/
