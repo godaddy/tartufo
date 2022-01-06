@@ -76,6 +76,7 @@ on the `truffleHog`_ project.
    usage
    features
    configuration
+   upgrading3
    CONTRIBUTING
    SECURITY
    changelog
