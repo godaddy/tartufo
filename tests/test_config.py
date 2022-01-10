@@ -8,7 +8,7 @@ import click
 import tomlkit
 from click.testing import CliRunner
 
-from tartufo import config, types
+from tartufo import config, types, cli
 from tartufo.types import ConfigException, Rule, MatchType, Scope
 
 from tests import helpers
@@ -418,6 +418,26 @@ class CompileRulesTests(unittest.TestCase):
             types.ConfigException, "Invalid exclude-entropy-patterns: "
         ):
             config.compile_rules([{"foo": "bar"}])
+
+    def test_rule_patterns_are_read(self):
+        conf = (
+            pathlib.Path(__file__).parent
+            / "data"
+            / "config"
+            / "rule_pattern_config.toml"
+        )
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result = runner.invoke(
+                cli.main,
+                [
+                    "--config",
+                    conf,
+                    "scan-remote-repo",
+                    "git@github.com:godaddy/tartufo.git",
+                ],
+            )
+        self.assertEqual(result.exit_code, 0)
 
 
 if __name__ == "__main__":
