@@ -1,0 +1,7 @@
+[tool.tartufo]
+regex = true
+
+rule-patterns = [
+    {reason = "RSA private key 2", pattern = "-----BEGIN EC PRIVATE KEY-----"},
+    {reason = "Null characters in GitHub Workflows", pattern = '\0', path-pattern = '\.github/workflows/(.*)\.yml'}
+]
