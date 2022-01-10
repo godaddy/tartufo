@@ -73,13 +73,8 @@ checkouts.
 Nonfunctional Options
 +++++++++++++++++++++
 
-``tartufo`` release 3 uses
-
-.. _pygit2: https://pygit2.readthedocs.io/en/latest/
-instead of
-
-.. _GitPython: https://gitpython.readthedocs.io/en/stable/
-to access git repositories. While this provides vastly improved performance with
+``tartufo`` release 3 uses `pygit2`_ instead of `GitPython`_ to access git repositories.
+While this provides vastly improved performance with
 generally equivalent functionality, some less-frequently used options require
 reimplementation and currently are nonfunctional. We plan to provide either
 replacements or reimplementations in the future.
@@ -87,10 +82,7 @@ replacements or reimplementations in the future.
 The ``--since-commit`` option is intended to restrict scans to a subset of
 repository history; the ``--max-depth`` option provides roughly the same
 functionality specified differently. Both options are ignored by ``tartufo``
-release 3. Refer to
-
-.. _#267: https://github.com/godaddy/tartufo/issues/267
-for more information about this topic.
+release 3. Refer to `#267`_ for more information about this topic.
 
 Changes to Default Behavior
 ---------------------------
@@ -186,3 +178,9 @@ sensitivity for both encodings consistently, using a scale of 0-100. To convert:
 
 Users who require different base64 and hexadecimal sensitivities should open an
 issue that explains their use case.
+
+.. _TOML: https://toml.io/
+.. _array of tables: https://toml.io/en/v1.0.0#array-of-tables
+.. _pygit2: https://pygit2.readthedocs.io/en/latest/
+.. _GitPython: https://gitpython.readthedocs.io/en/stable/
+.. _#267: https://github.com/godaddy/tartufo/issues/267
