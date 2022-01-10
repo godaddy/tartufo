@@ -419,6 +419,7 @@ class CompileRulesTests(unittest.TestCase):
         ):
             config.compile_rules([{"foo": "bar"}])
 
+    @mock.patch("tartufo.util.process_issues", new=mock.MagicMock())
     @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
     def test_rule_patterns_are_read(self, mock_scanner: mock.MagicMock):
         mock_scanner.return_value.issues = []
@@ -434,9 +435,9 @@ class CompileRulesTests(unittest.TestCase):
                 cli.main,
                 [
                     "--config",
-                    conf,
-                    "scan-remote-repo",
-                    "git@github.com:godaddy/tartufo.git",
+                    str(conf),
+                    "scan-folder",
+                    ".",
                 ],
             )
         self.assertEqual(result.exit_code, 0)
