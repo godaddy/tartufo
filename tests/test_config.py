@@ -419,7 +419,9 @@ class CompileRulesTests(unittest.TestCase):
         ):
             config.compile_rules([{"foo": "bar"}])
 
-    def test_rule_patterns_are_read(self):
+    @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
+    def test_rule_patterns_are_read(self, mock_scanner: mock.MagicMock):
+        mock_scanner.return_value.issues = []
         conf = (
             pathlib.Path(__file__).parent
             / "data"
