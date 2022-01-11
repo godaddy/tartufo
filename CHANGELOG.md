@@ -94,11 +94,11 @@ Misc:
   --include-paths and --exclude-paths
 
 v2.10.1 - 27 December 2021
-------------
+--------------------------
 
 Bug fixes:
 
-*[#309](https://github.com/godaddy/tartufo/pull/309) Fixes an issue where verbose output display
+* [#309](https://github.com/godaddy/tartufo/pull/309) Fixes an issue where verbose output display
 would error out if the new-style entropy exclusion pattern was used
 
 v2.10.0 - 3 November 2021

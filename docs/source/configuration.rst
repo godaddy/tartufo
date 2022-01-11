@@ -147,6 +147,7 @@ in the config file:
      scan-local-repo file://path/to/my/repo.git
 
 As of version 3.0, a new format for specifying paths has been added.
+
 .. code-block:: toml
 
    [tool.tartufo]
