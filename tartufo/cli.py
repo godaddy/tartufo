@@ -55,7 +55,7 @@ class TartufoCLI(click.MultiCommand):
 @click.option(
     "--rule-patterns",
     multiple=True,
-    type=str,
+    type=click.UNPROCESSED,
     hidden=True,
     help="Regular expression patterns to search the target for. May be specified multiple times.",
 )
