@@ -427,14 +427,14 @@ class GeneralUtilTests(unittest.TestCase):
         """
 
         strings = list(
-            util.find_strings_by_regex(sample_input, scanner.BASE64_REGEX, 20)
+            util.find_strings_by_regex(sample_input, scanner.BASE64URL_REGEX, 20)
         )
         self.assertEqual(strings, ["111111111-ffffCCCC=="])
 
     def test_find_strings_by_regex_recognizes_mutant_base64(self):
 
         sample_input = """
-        +111111111-ffffCCCC= Can't mix + and - but both are in regex
+        +111111111-ffffCCCC= Can't mix + and - and substrings are too short
         111111111111111111111== Not a valid length but we don't care
         ==111111111111111111 = Is supposed to be end only but we don't care
         """
@@ -444,5 +444,5 @@ class GeneralUtilTests(unittest.TestCase):
         )
         self.assertEqual(
             strings,
-            ["+111111111-ffffCCCC=", "111111111111111111111==", "==111111111111111111"],
+            ["111111111111111111111==", "==111111111111111111"],
         )

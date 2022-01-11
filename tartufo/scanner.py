@@ -36,8 +36,9 @@ from tartufo.types import (
     Scope,
 )
 
-BASE64_REGEX = re.compile(r"[A-Z0-9=+/_-]+", re.IGNORECASE)
-HEX_REGEX = re.compile(r"[0-9A-F]+", re.IGNORECASE)
+BASE64_REGEX = re.compile(r"[A-Z0-9=+/]{20,}", re.IGNORECASE)
+BASE64URL_REGEX = re.compile(r"[A-Z0-9=_-]{20,}", re.IGNORECASE)
+HEX_REGEX = re.compile(r"[0-9A-F]{20,}", re.IGNORECASE)
 
 
 class Issue:
@@ -561,15 +562,29 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         """
 
         for line in chunk.contents.split("\n"):
-            for word in line.split():
-                for string in util.find_strings_by_regex(word, BASE64_REGEX):
-                    yield from self.evaluate_entropy_string(
+            # Using a set eliminates exact duplicates, which are common
+            base64_strings = set(util.find_strings_by_regex(line, BASE64_REGEX))
+            base64_strings.update(util.find_strings_by_regex(line, BASE64URL_REGEX))
+            # Don't report a string which is a substring of a string we already reported
+            reported_strings: List[str] = []
+            for string in sorted(base64_strings, key=len, reverse=True):
+                if all((string not in already for already in reported_strings)):
+                    report = self.evaluate_entropy_string(
                         chunk, line, string, self.b64_entropy_limit
                     )
-                for string in util.find_strings_by_regex(word, HEX_REGEX):
-                    yield from self.evaluate_entropy_string(
+                    if report is not None:
+                        reported_strings.append(string)
+                        yield report
+            # Hex alphabet is subset of base64, so check duplicates here too;
+            # but it's easier because hex string will never be substring of another
+            # hex string.
+            for string in util.find_strings_by_regex(line, HEX_REGEX):
+                if all((string not in already for already in reported_strings)):
+                    report = self.evaluate_entropy_string(
                         chunk, line, string, self.hex_entropy_limit
                     )
+                    if report is not None:
+                        yield report
 
     def evaluate_entropy_string(
         self,
@@ -577,22 +592,23 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         line: str,
         string: str,
         min_entropy_score: float,
-    ) -> Generator[Issue, None, None]:
+    ) -> Optional[Issue]:
         """Check entropy string using entropy characters and score.
 
         :param chunk: The chunk of data to check
         :param line: Source line containing string of interest
         :param string: String to check
         :param min_entropy_score: Minimum entropy score to flag
-        :return: Generator of issues flagged
+        :return: Issue, if one is detected; otherwise None
         """
         if not self.signature_is_excluded(string, chunk.file_path):
             entropy_score = self.calculate_entropy(string)
             if entropy_score > min_entropy_score:
                 if self.entropy_string_is_excluded(string, line, chunk.file_path):
                     self.logger.debug("line containing entropy was excluded: %s", line)
-                else:
-                    yield Issue(types.IssueType.Entropy, string, chunk)
+                    return None
+                return Issue(types.IssueType.Entropy, string, chunk)
+        return None
 
     def scan_regex(self, chunk: types.Chunk) -> Generator[Issue, None, None]:
         """Scan a chunk of data for matches against the configured regexes.

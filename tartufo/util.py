@@ -209,6 +209,12 @@ def find_strings_by_regex(
     :param text: The text string to be analyzed
     :param regex: A pattern which matches all character sequences of interest
     :param threshold: The minimum acceptable length of a matching string
+
+    WARNING: If you are passing one of the scanner.py regex variables, note
+    they are compiled with a minimum length of 20, and using a lower threshold
+    here will not have the intended effect. Nothing in this codebase passes a
+    threshold parameter, but external users might need to adjust or use their
+    own expressions.
     """
 
     for match in regex.finditer(text):

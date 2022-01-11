@@ -444,7 +444,20 @@ class EntropyManagementTests(ScannerTestCase):
         mock_signature: mock.MagicMock,
         mock_calculate: mock.MagicMock,
     ):
-        mock_strings.side_effect = (["foo"], [], [], [], [], [])
+        mock_strings.side_effect = (
+            ["foo"],
+            ["foo"],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+        )
         mock_signature.return_value = True
         issues = list(self.scanner.scan_entropy(self.chunk))
         mock_calculate.assert_not_called()
@@ -459,7 +472,7 @@ class EntropyManagementTests(ScannerTestCase):
         mock_signature: mock.MagicMock,
         mock_calculate: mock.MagicMock,
     ):
-        mock_strings.side_effect = ([], ["foo"], [], [], [], [])
+        mock_strings.side_effect = ([], [], ["foo"], [], [], [], [], [], [], [], [], [])
         mock_signature.return_value = True
         issues = list(self.scanner.scan_entropy(self.chunk))
         mock_calculate.assert_not_called()
@@ -474,7 +487,20 @@ class EntropyManagementTests(ScannerTestCase):
         mock_signature: mock.MagicMock,
         mock_calculate: mock.MagicMock,
     ):
-        mock_strings.side_effect = (["foo"], [], [], [], [], [])
+        mock_strings.side_effect = (
+            ["foo"],
+            ["foo"],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+        )
         mock_signature.return_value = False
         mock_calculate.return_value = 9.0
         issues = list(self.scanner.scan_entropy(self.chunk))
@@ -491,7 +517,7 @@ class EntropyManagementTests(ScannerTestCase):
         mock_signature: mock.MagicMock,
         mock_calculate: mock.MagicMock,
     ):
-        mock_strings.side_effect = ([], ["foo"], [], [], [], [])
+        mock_strings.side_effect = ([], [], ["foo"], [], [], [], [], [], [], [], [], [])
         mock_signature.return_value = False
         mock_calculate.return_value = 9.0
         issues = list(self.scanner.scan_entropy(self.chunk))
@@ -510,7 +536,7 @@ class EntropyManagementTests(ScannerTestCase):
         mock_signature: mock.MagicMock,
         mock_calculate: mock.MagicMock,
     ):
-        mock_strings.side_effect = ([], ["foo"], [], [], [], [])
+        mock_strings.side_effect = ([], [], ["foo"], [], [], [], [], [], [], [], [], [])
         mock_entropy.return_value = True
         mock_signature.return_value = False
         mock_calculate.return_value = 9.0
@@ -528,7 +554,20 @@ class EntropyManagementTests(ScannerTestCase):
         mock_signature: mock.MagicMock,
         mock_calculate: mock.MagicMock,
     ):
-        mock_strings.side_effect = (["foo"], [], [], [], [], [])
+        mock_strings.side_effect = (
+            ["foo"],
+            ["foo"],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+        )
         mock_entropy.return_value = True
         mock_signature.return_value = False
         mock_calculate.return_value = 9.0
@@ -544,7 +583,20 @@ class EntropyManagementTests(ScannerTestCase):
         mock_signature: mock.MagicMock,
         mock_calculate: mock.MagicMock,
     ):
-        mock_strings.side_effect = (["foo"], [], [], [], [], [])
+        mock_strings.side_effect = (
+            ["foo"],
+            ["foo"],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+        )
         mock_signature.return_value = False
         mock_calculate.return_value = 1.0
         issues = list(self.scanner.scan_entropy(self.chunk))
@@ -559,7 +611,7 @@ class EntropyManagementTests(ScannerTestCase):
         mock_signature: mock.MagicMock,
         mock_calculate: mock.MagicMock,
     ):
-        mock_strings.side_effect = ([], ["foo"], [], [], [], [])
+        mock_strings.side_effect = ([], [], ["foo"], [], [], [], [], [], [], [], [], [])
         mock_signature.return_value = False
         mock_calculate.return_value = 1.0
         issues = list(self.scanner.scan_entropy(self.chunk))
@@ -604,12 +656,15 @@ class EntropyDetectionTests(ScannerTestCase):
         list(self.scanner.scan_entropy(self.chunk))
         mock_strings.assert_has_calls(
             (
-                mock.call("foo", scanner.BASE64_REGEX),
-                mock.call("foo", scanner.HEX_REGEX),
-                mock.call("bar", scanner.BASE64_REGEX),
-                mock.call("bar", scanner.HEX_REGEX),
-                mock.call("asdfqwer", scanner.BASE64_REGEX),
-                mock.call("asdfqwer", scanner.HEX_REGEX),
+                mock.call("        foo bar", scanner.BASE64_REGEX),
+                mock.call("        foo bar", scanner.BASE64URL_REGEX),
+                mock.call("        foo bar", scanner.HEX_REGEX),
+                mock.call("        asdfqwer", scanner.BASE64_REGEX),
+                mock.call("        asdfqwer", scanner.BASE64URL_REGEX),
+                mock.call("        asdfqwer", scanner.HEX_REGEX),
+                mock.call("        ", scanner.BASE64_REGEX),
+                mock.call("        ", scanner.BASE64URL_REGEX),
+                mock.call("        ", scanner.HEX_REGEX),
             )
         )
 
