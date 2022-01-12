@@ -1,3 +1,13 @@
+v3.0.x - TBD
+------------
+
+Bug fixes:
+
+* [315](https://github.com/godaddy/tartufo/issues/315) - Rework entropy scanning
+  to reduce number of new issues generated for text that passed 2.x scans without
+  issues. Some corner cases may remain that will require exclusions to silence.
+  See [319](https://github.com/godaddy/tartufo/pull/319) for details.
+
 v3.0.0 - 5 January 2022
 -----------------------
 
