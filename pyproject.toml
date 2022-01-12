@@ -140,8 +140,6 @@ exclude-signatures = [
   {signature = "586f9df1870fcfafd3070dc553e97db25b3fce82c9144602567d69a86597c06f"},
   {signature = "842533f44cf32fb3d93a7f56227977aa4f16caafe82ace8f5f4de27d750c1ec1"},
   {signature = "d039c652f27c4d42026c5b5c9be31bfe368b283b24248e98d92f131272580053"},
-
-  # test secrets
   {signature = "6c70b4a712ada69f2a6c919edc783cf485b6637e3c5429de376ef1a451a042e4", reason = "tests/data/scan_folder/donotscan.txt"},
   {signature = "357841766ca69979608e4e7fb1da2addeafe6d15cade15466c39d903cc0488a8", reason = "tests/data/scan_folder/test.txt"},
   {signature = "743b893e30777d9c4e28d3d341ca4ba1c2541a9c62b497dece75c2a64420e770", reason = "tests/test_folder_scanner.py"},
@@ -149,6 +147,7 @@ exclude-signatures = [
   {signature = "9d1b278fa384c9dc58d607130d97740910309d13b29f13f7ed6348738ea4f32c", reason = "tests/test_folder_scanner.py 16-Nov-2021"},
   {signature = "9f675d4d7f43e484e07fb199a1e7ec372ef204631c1f4ec054acc3119fbde4cf", reason = "build_and_publish_docker_file 13-Jun-2019"},
   {signature = "88152f1d10077f417ee5aea5fa86adaa5b74d3f2de2e87ce4b4aa5cd79c7b2f5", reason = "nothing file, 30-Dec-2016"},
+  {signature = "c94ba36a7411bf89fab6e87076740deecdc7a61fcfbbc1aa5934608f6c4f3adb", reason = "tests/data/config/rule_pattern_config.toml"}
 ]
 json = false
 regex = true
