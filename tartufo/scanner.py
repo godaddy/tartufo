@@ -252,7 +252,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                 try:
                     issue = pickle.load(self._issue_file)
                     issues.append(issue)
-                except PickleError as err:
+                except pickle.PickleError as err:
                     return issues
 
     @property
@@ -544,7 +544,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                     try:
                         issue = pickle.load(self._issue_file)
                         yield issue
-                    except PickleError as err:
+                    except pickle.PickleError as err:
                         return
 
 
