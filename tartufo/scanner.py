@@ -243,7 +243,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             while self.scan():
                 pass
 
-        issues: List[issue]
+        issues: List[Issue]
         issues = []
         with self._scan_lock:
             # Rewind the issue_file
