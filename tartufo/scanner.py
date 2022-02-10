@@ -252,11 +252,15 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             self._issue_file.seek(0)
             while True:
                 try:
+                    self.logger.debug("Loading issue from pickle file")
                     issue = pickle.load(self._issue_file)
                     if issue is None:
+                        self.logger.debug("pickle.load returned None")
                         return issues
+                    self.logger.debug("Appending new issue to issues list")
                     issues.append(issue)
                 except EOFError:
+                    self.logger.debug("pickle.load raised EOFError")
                     return issues
 
     @property
@@ -546,11 +550,15 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                 self._issue_file.seek(0)
                 while True:
                     try:
+                        self.logger.debug("Loading issue from pickle file")
                         issue = pickle.load(self._issue_file)
                         if issue is None:
+                            self.logger.debug("pickle.load returned None")
                             return
+                        self.logger.debug("Yielding new issue")
                         yield issue
                     except EOFError:
+                        self.logger.debug("pickle.load raised EOFError")
                         return
 
             if not any((self.global_options.entropy, self.global_options.regex)):
