@@ -112,6 +112,7 @@ class IssuesTests(ScannerTestCase):
         list(test_scanner.scan())  # pylint: disable=pointless-statement
         mock_scan.assert_called()
 
+
 #    @mock.patch("tartufo.scanner.ScannerBase.scan")
 #    def test_scanner_does_not_rescan(self, mock_scan: mock.MagicMock):
 #        test_scanner = TestScanner(self.options)
