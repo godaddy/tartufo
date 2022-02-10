@@ -21,6 +21,7 @@ from typing import (
     Pattern,
     Set,
     Tuple,
+    IO
 )
 import warnings
 
@@ -150,7 +151,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     _scan_lock: threading.Lock = threading.Lock()
     _excluded_signatures: Optional[Tuple[str, ...]] = None
     _config_data: MutableMapping[str, Any] = {}
-    _issue_file: file
+    _issue_file: IO
     issue_count: int
 
     def __init__(self, options: types.GlobalOptions) -> None:
