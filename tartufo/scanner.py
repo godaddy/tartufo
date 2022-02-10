@@ -564,17 +564,17 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                 if self.global_options.regex and self.rules_regexes:
                     for issue in self.scan_regex(chunk):
                         pickle.dump(issue, self._issue_file)
-                        issue_count = issue_count + 1
+                        self.issue_count = self.issue_count + 1
                         yield issue
                 if self.global_options.entropy:
                     for issue in self.scan_entropy(
                         chunk,
                     ):
                         pickle.dump(issue, self._issue_file)
-                        issue_count = issue_count + 1
+                        self.issue_count = self.issue_count + 1
                         yield issue
             self._completed = True
-            self.logger.info("Found %d issues.", issue_count)
+            self.logger.info("Found %d issues.", self.issue_count)
 
     def scan_entropy(
         self,
