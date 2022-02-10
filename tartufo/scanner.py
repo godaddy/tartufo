@@ -569,7 +569,6 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                         if issue is None:
                             self.logger.debug("pickle.load returned None, exiting")
                             return
-                            self.logger.debug("Yielding issue")
                         yield issue
                     except EOFError:
                         self.logger.debug("pickle.load raised EOFError, exiting")
