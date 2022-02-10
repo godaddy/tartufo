@@ -548,7 +548,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                     try:
                         issue = pickle.load(self._issue_file)
                         if issue is None:
-                            return issues
+                            return
                         yield issue
                     except EOFError:
                         return
