@@ -304,7 +304,7 @@ def process_exit(
     scan: scanner.ScannerBase,
     **_kwargs: config.OptionTypes,
 ):
-    if scan.issues:
+    if scan.issue_count:
         ctx.exit(1)
 
     ctx.exit(0)
