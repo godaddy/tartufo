@@ -242,33 +242,36 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             self.logger.debug(
                 "Issues called before scan completed. Finishing scan now."
             )
-            while self.scan():
+            for issue in self.scan():
                 pass
+            self.logger.debug("Scan complete")
 
         issues: List[Issue]
         issues = []
         count: int
         count = 0
+        self.logger.debug("Waiting for scan lock")
         with self._scan_lock:
             # Rewind the issue_file
+            self.logger.debug("Rewinding pickle file")
             self._issue_file.seek(0)
             while True:
                 try:
-                    self.logger.debug("Loading issue from pickle file")
                     issue = pickle.load(self._issue_file)
                     if issue is None:
-                        self.logger.debug("pickle.load returned None")
+                        self.logger.debug("pickle.load returned None, exiting")
                         # Workaround for bad assumptions in tests
                         if self.issue_count == 0:
+                            self.logger.debug("Overriding issue_count")
                             self.issue_count = count
                         return issues
-                    self.logger.debug("Appending new issue to issues list")
                     issues.append(issue)
                     count = count + 1
                 except EOFError:
-                    self.logger.debug("pickle.load raised EOFError")
+                    self.logger.debug("pickle.load raised EOFError, exiting")
                     # Workaround for bad assumptions in tests
                     if self.issue_count == 0:
+                        self.logger.debug("Overriding issue_count")
                         self.issue_count = count
                     return issues
 
@@ -553,21 +556,23 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         # expectation that the write to _completed at the bottom of the critical
         # section cannot be reordered to appear after the implicit release of
         # _scan_lock (when viewed from a competing thread).
+        self.logger.debug("Waiting for scan lock")
         with self._scan_lock:
             if self._completed:
+                self.logger.debug("Scan already completed, using pickle file")
                 # Rewind the issue_file
+                self.logger.debug("Rewinding pickle file")
                 self._issue_file.seek(0)
                 while True:
                     try:
-                        self.logger.debug("Loading issue from pickle file")
                         issue = pickle.load(self._issue_file)
                         if issue is None:
-                            self.logger.debug("pickle.load returned None")
+                            self.logger.debug("pickle.load returned None, exiting")
                             return
-                        self.logger.debug("Yielding new issue")
+                            self.logger.debug("Yielding issue")
                         yield issue
                     except EOFError:
-                        self.logger.debug("pickle.load raised EOFError")
+                        self.logger.debug("pickle.load raised EOFError, exiting")
                         return
 
             if not any((self.global_options.entropy, self.global_options.regex)):
