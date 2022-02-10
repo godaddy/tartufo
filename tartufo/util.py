@@ -103,7 +103,7 @@ def echo_result(
     else:
         for issue in scanner.scan():
             click.echo(bytes(issue))
-        if not scanner.issues:
+        if scanner.issue_count == 0:
             if not options.quiet:
                 click.echo(f"Time: {now}\nAll clear. No secrets detected.")
         if options.verbose > 0:
@@ -115,14 +115,16 @@ def echo_result(
             click.echo("\n".join(str(path) for path in scanner.excluded_entropy))
 
 
-def write_outputs(found_issues: List["Issue"], output_dir: pathlib.Path) -> List[str]:
+def write_outputs(
+    issues: Generator["Issue", None, None], output_dir: pathlib.Path
+) -> List[str]:
     """Write details of the issues to individual files in the specified directory.
 
     :param found_issues: A list of issues to be written out
     :param output_dir: The directory where the files should be written
     """
     result_files = []
-    for issue in found_issues:
+    for issue in issues:
         result_file = output_dir / f"{uuid.uuid4()}.json"
         result_file.write_text(json.dumps(issue.as_dict()))
         result_files.append(str(result_file))
@@ -250,7 +252,7 @@ def process_issues(
 
     echo_result(options, scan, repo_path, output_dir)
     if output_dir:
-        write_outputs(scan.issues, output_dir)
+        write_outputs(scan.scan(), output_dir)
         if options.output_format != types.OutputFormat.Json.value:
             click.echo(f"Results have been saved in {output_dir}")
 

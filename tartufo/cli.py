@@ -170,6 +170,26 @@ class TartufoCLI(click.MultiCommand):
     "the results of individual runs of tartufo separated.",
 )
 @click.option(
+    "-td",
+    "--temp-dir",
+    type=click.Path(
+        exists=False,
+        file_okay=False,
+        dir_okay=True,
+        writable=True,
+        resolve_path=True,
+        allow_dash=False,
+    ),
+    help="If specified, temporary files will be written to the specified path",
+)
+@click.option(
+    "--max-buffered-issues",
+    type=int,
+    default=10000,
+    show_default=True,
+    help="Maximum number of issue to buffer in memory before shifting to temporary file buffering",
+)
+@click.option(
     "--git-rules-repo",
     help="A file path, or git URL, pointing to a git repository containing regex "
     "rules to be used for scanning. By default, all .json files will be loaded "
@@ -304,7 +324,7 @@ def process_exit(
     scan: scanner.ScannerBase,
     **_kwargs: config.OptionTypes,
 ):
-    if scan.issues:
+    if scan.issue_count > 0:
         ctx.exit(1)
 
     ctx.exit(0)

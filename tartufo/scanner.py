@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 # -*- coding: utf-8 -*-
 
 import abc
@@ -9,6 +10,9 @@ import math
 import pathlib
 import re
 import threading
+import tempfile
+import pickle
+import gzip
 from typing import (
     Any,
     Dict,
@@ -19,6 +23,7 @@ from typing import (
     Pattern,
     Set,
     Tuple,
+    IO,
 )
 import warnings
 
@@ -38,26 +43,23 @@ from tartufo.types import (
 
 BASE64_REGEX = re.compile(r"[A-Z0-9=+/_-]+", re.IGNORECASE)
 HEX_REGEX = re.compile(r"[0-9A-F]+", re.IGNORECASE)
+OUTPUT_SEPARATOR = "~~~~~~~~~~~~~~~~~~~~~"
 
 
 class Issue:
     """Represent an issue found while scanning a target."""
 
     __slots__ = (
-        "OUTPUT_SEPARATOR",
         "chunk",
         "issue_type",
         "issue_detail",
         "matched_string",
-        "logger",
     )
 
-    OUTPUT_SEPARATOR: str
     chunk: types.Chunk
     issue_type: types.IssueType
     issue_detail: Optional[str]
     matched_string: str
-    logger: logging.Logger
 
     def __init__(
         self, issue_type: types.IssueType, matched_string: str, chunk: types.Chunk
@@ -67,13 +69,10 @@ class Issue:
         :param matched_string: The string that was identified as a potential issue
         :param chunk: The chunk of data where the match was found
         """
-        self.OUTPUT_SEPARATOR = "~~~~~~~~~~~~~~~~~~~~~"  # pylint: disable=invalid-name
         self.issue_detail = None
-
         self.issue_type = issue_type
         self.matched_string = matched_string
         self.chunk = chunk
-        self.logger = logging.getLogger(__name__)
 
     def as_dict(self, compact=False) -> Dict[str, Optional[str]]:
         """Return a dictionary representation of an issue.
@@ -107,7 +106,7 @@ class Issue:
         diff_body = diff_body.replace(
             self.matched_string, util.style_warning(self.matched_string)
         )
-        output.append(self.OUTPUT_SEPARATOR)
+        output.append(OUTPUT_SEPARATOR)
         output.append(util.style_ok(f"Reason: {self.issue_type.value}"))  # type: ignore
         if self.issue_detail:
             output.append(util.style_ok(f"Detail: {self.issue_detail}"))
@@ -119,7 +118,7 @@ class Issue:
         ]
 
         output.append(diff_body)
-        output.append(self.OUTPUT_SEPARATOR)
+        output.append(OUTPUT_SEPARATOR)
         return "\n".join(output)
 
     def __bytes__(self) -> bytes:
@@ -138,7 +137,6 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     all the individual pieces of content to be scanned.
     """
 
-    _issues: List[Issue] = []
     _completed: bool = False
     _included_paths: Optional[List[Pattern]] = None
     _excluded_paths: Optional[List[Pattern]] = None
@@ -149,6 +147,9 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     _scan_lock: threading.Lock = threading.Lock()
     _excluded_signatures: Optional[Tuple[str, ...]] = None
     _config_data: MutableMapping[str, Any] = {}
+    _issue_list: List[Issue] = []
+    _issue_file: IO
+    _issue_count: int
 
     def __init__(self, options: types.GlobalOptions) -> None:
         """
@@ -208,6 +209,10 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         return self.compute_scaled_entropy_limit(6.0)
 
     @property
+    def issue_count(self) -> int:
+        return self._issue_count
+
+    @property
     def completed(self) -> bool:
         """Return True if scan has completed
 
@@ -225,19 +230,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         :returns: Any issues found during the scan.
         """
 
-        # Note there is no locking in this method (which is readonly). If the
-        # first scan is not completed (or even if we mistakenly believe it is
-        # not completed, due to a race), we call scan (which is protected) to
-        # ensure the issues list is complete. By the time we reach the return
-        # statement here, we know _issues is stable.
-
-        if not self.completed:
-            self.logger.debug(
-                "Issues called before scan completed. Finishing scan now."
-            )
-            list(self.scan())
-
-        return self._issues
+        return list(self.scan())
 
     @property
     def config_data(self) -> MutableMapping[str, Any]:
@@ -499,7 +492,44 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             entropy += -probability * math.log2(probability)
         return entropy
 
-    def scan(self) -> Generator[Issue, None, None]:
+    @property
+    def issue_file(self) -> IO:
+        if not self._issue_file:
+            self._issue_file = (
+                tempfile.NamedTemporaryFile(  # pylint: disable=consider-using-with
+                    dir=self.global_options.temp_dir
+                )
+            )
+        return self._issue_file
+
+    def load_issues(self) -> Generator[Issue, None, None]:
+        # Rewind the issue_file
+        self.logger.debug("Rewinding pickle file")
+        self.issue_file.seek(0)
+        while True:
+            try:
+                length = int.from_bytes(self.issue_file.read(4), "little")
+                buf = self.issue_file.read(length)
+                issue = pickle.loads(gzip.decompress(buf))
+                yield from issue
+            except EOFError:
+                self.logger.debug("pickle.load raised EOFError, exiting")
+                yield from self._issue_list
+                return
+
+    def store_issue(self, issue: Issue) -> None:
+        self._issue_count = self._issue_count + 1
+        self._issue_list.append(issue)
+        if len(self._issue_list) >= self.global_options.max_buffered_issues:
+            compressed = gzip.compress(pickle.dumps(self._issue_list), compresslevel=9)
+            length = len(compressed)
+            self.issue_file.write(length.to_bytes(4, "little"))
+            self.issue_file.write(compressed)
+            self._issue_list.clear()
+
+    def scan(
+        self,
+    ) -> Generator[Issue, None, None]:
         """Run the requested scans against the target data.
 
         This will iterate through all chunks of data as provided by the scanner
@@ -520,9 +550,11 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         # expectation that the write to _completed at the bottom of the critical
         # section cannot be reordered to appear after the implicit release of
         # _scan_lock (when viewed from a competing thread).
+        self.logger.debug("Waiting for scan lock")
         with self._scan_lock:
             if self._completed:
-                yield from self._issues
+                self.logger.debug("Scan already completed")
+                yield from self.load_issues()
                 return
 
             if not any((self.global_options.entropy, self.global_options.regex)):
@@ -535,21 +567,20 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                 )
 
             self.logger.info("Starting scan...")
-            self._issues = []
-            for chunk in self.chunks:
+            self._issue_count = 0
+            for chunk in self.chunks:  # pylint: disable=too-many-nested-blocks
                 # Run regex scans first to trigger a potential fast fail for bad config
                 if self.global_options.regex and self.rules_regexes:
                     for issue in self.scan_regex(chunk):
-                        self._issues.append(issue)
+                        self.store_issue(issue)
                         yield issue
                 if self.global_options.entropy:
-                    for issue in self.scan_entropy(
-                        chunk,
-                    ):
-                        self._issues.append(issue)
+                    for issue in self.scan_entropy(chunk):
+                        self.store_issue(issue)
                         yield issue
+
             self._completed = True
-            self.logger.info("Found %d issues.", len(self._issues))
+            self.logger.info("Found %d issues.", self._issue_count)
 
     def scan_entropy(
         self,

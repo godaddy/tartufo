@@ -83,7 +83,9 @@ class ScanTests(ScannerTestCase):
         self.options.entropy = True
         test_scanner = TestScanner(self.options)
         test_scanner._completed = True  # pylint: disable=protected-access
-        test_scanner._issues = [1, 2, 3]  # pylint: disable=protected-access
+        test_scanner._issue_list = [1, 2, 3]  # pylint: disable=protected-access
+        test_scanner._issue_count = 3  # pylint: disable=protected-access
+        test_scanner._issue_file = None  # pylint: disable=protected-access
         result = list(test_scanner.scan())
         mock_regex.assert_not_called()
         mock_entropy.assert_not_called()
@@ -111,13 +113,6 @@ class IssuesTests(ScannerTestCase):
         test_scanner = TestScanner(self.options)
         list(test_scanner.issues)  # pylint: disable=pointless-statement
         mock_scan.assert_called()
-
-    @mock.patch("tartufo.scanner.ScannerBase.scan")
-    def test_scanner_does_not_rescan(self, mock_scan: mock.MagicMock):
-        test_scanner = TestScanner(self.options)
-        test_scanner._completed = True  # pylint: disable=protected-access
-        test_scanner.issues  # pylint: disable=pointless-statement
-        mock_scan.assert_not_called()
 
 
 class IssueTests(unittest.TestCase):

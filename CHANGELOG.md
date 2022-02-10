@@ -1,3 +1,10 @@
+Unreleased
+----------
+
+Features:
+
+* [#328](https://github.com/godaddy/tartufo/pull/328) - Buffer issues to temporary file as needed
+
 v3.0.0 - 5 January 2022
 -----------------------
 

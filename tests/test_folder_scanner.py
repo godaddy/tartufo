@@ -22,6 +22,7 @@ class FolderScannerTestCase(unittest.TestCase):
         self.global_options.hex_entropy_score = 3
         self.global_options.exclude_signatures = ()
         self.global_options.exclude_path_patterns = [r"donotscan\.txt"]
+        self.global_options.max_buffered_issues = 50000
 
         test_scanner = scanner.FolderScanner(self.global_options, folder_path, recurse)
         issues = list(test_scanner.scan())
@@ -54,6 +55,7 @@ class FolderScannerTestCase(unittest.TestCase):
         self.global_options.exclude_signatures = ()
         self.global_options.b64_entropy_score = 4.5
         self.global_options.hex_entropy_score = 3
+        self.global_options.max_buffered_issues = 50000
 
         test_scanner = scanner.FolderScanner(self.global_options, folder_path, recurse)
         issues = list(test_scanner.scan())
@@ -73,6 +75,7 @@ class FolderScannerTestCase(unittest.TestCase):
         self.global_options.exclude_signatures = ()
         self.global_options.b64_entropy_score = 4.5
         self.global_options.hex_entropy_score = 3
+        self.global_options.max_buffered_issues = 50000
 
         test_scanner = scanner.FolderScanner(self.global_options, folder_path, recurse)
         issues = list(test_scanner.scan())
