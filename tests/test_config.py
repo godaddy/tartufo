@@ -8,7 +8,7 @@ import click
 import tomlkit
 from click.testing import CliRunner
 
-from tartufo import config, types, cli
+from tartufo import config, types
 from tartufo.types import ConfigException, Rule, MatchType, Scope
 
 from tests import helpers
