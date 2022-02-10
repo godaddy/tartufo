@@ -256,7 +256,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                     if issue is None:
                         return issues
                     issues.append(issue)
-                except pickle.PickleError:
+                except EOFError:
                     return issues
 
     @property
@@ -550,7 +550,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                         if issue is None:
                             return issues
                         yield issue
-                    except pickle.PickleError:
+                    except EOFError:
                         return
 
             if not any((self.global_options.entropy, self.global_options.regex)):
