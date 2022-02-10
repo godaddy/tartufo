@@ -9,6 +9,8 @@ import math
 import pathlib
 import re
 import threading
+import tempfile
+import pickle
 from typing import (
     Any,
     Dict,
@@ -138,7 +140,6 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     all the individual pieces of content to be scanned.
     """
 
-    _issues: List[Issue] = []
     _completed: bool = False
     _included_paths: Optional[List[Pattern]] = None
     _excluded_paths: Optional[List[Pattern]] = None
@@ -149,6 +150,8 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     _scan_lock: threading.Lock = threading.Lock()
     _excluded_signatures: Optional[Tuple[str, ...]] = None
     _config_data: MutableMapping[str, Any] = {}
+    _issue_file: file
+    issue_count: int
 
     def __init__(self, options: types.GlobalOptions) -> None:
         """
@@ -156,6 +159,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         """
         self.global_options = options
         self.logger = logging.getLogger(__name__)
+        self._issue_file = tempfile.TemporaryFile()
 
     def compute_scaled_entropy_limit(self, maximum_bitrate: float) -> float:
         """Determine low entropy cutoff for specified bitrate
@@ -235,9 +239,20 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             self.logger.debug(
                 "Issues called before scan completed. Finishing scan now."
             )
-            list(self.scan())
+            while self.scan():
+                pass
 
-        return self._issues
+        issues: List[issue]
+        issues = []
+        with self._scan_lock:
+            # Rewind the issue_file
+            self._issue_file.seek(0)
+            while True:
+                try:
+                    issue = pickle.load(self._issue_file)
+                    issues.append(issue)
+                except PickleError as err:
+                    return issues
 
     @property
     def config_data(self) -> MutableMapping[str, Any]:
@@ -522,8 +537,15 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         # _scan_lock (when viewed from a competing thread).
         with self._scan_lock:
             if self._completed:
-                yield from self._issues
-                return
+                # Rewind the issue_file
+                self._issue_file.seek(0)
+                while True:
+                    try:
+                        issue = pickle.load(self._issue_file)
+                        yield issue
+                    except PickleError as err:
+                        return
+
 
             if not any((self.global_options.entropy, self.global_options.regex)):
                 self.logger.error("No analysis requested.")
@@ -535,21 +557,23 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                 )
 
             self.logger.info("Starting scan...")
-            self._issues = []
+            self.issue_count = 0
             for chunk in self.chunks:
                 # Run regex scans first to trigger a potential fast fail for bad config
                 if self.global_options.regex and self.rules_regexes:
                     for issue in self.scan_regex(chunk):
-                        self._issues.append(issue)
+                        pickle.dump(issue, self._issue_file)
+                        issue_count = issue_count + 1
                         yield issue
                 if self.global_options.entropy:
                     for issue in self.scan_entropy(
                         chunk,
                     ):
-                        self._issues.append(issue)
+                        pickle.dump(issue, self._issue_file)
+                        issue_count = issue_count + 1
                         yield issue
             self._completed = True
-            self.logger.info("Found %d issues.", len(self._issues))
+            self.logger.info("Found %d issues.", issue_count)
 
     def scan_entropy(
         self,
