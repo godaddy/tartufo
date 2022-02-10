@@ -161,8 +161,8 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         self.global_options = options
         self.logger = logging.getLogger(__name__)
         self._issue_file = (
-            tempfile.TemporaryFile()
-        )  # pylint: disable=consider-using-with
+            tempfile.TemporaryFile() # pylint: disable=consider-using-with
+        )
 
     def compute_scaled_entropy_limit(self, maximum_bitrate: float) -> float:
         """Determine low entropy cutoff for specified bitrate
