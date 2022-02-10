@@ -74,20 +74,20 @@ class ScanTests(ScannerTestCase):
             any_order=True,
         )
 
-#    @mock.patch("tartufo.scanner.ScannerBase.scan_entropy")
-#    @mock.patch("tartufo.scanner.ScannerBase.scan_regex")
-#    def test_scan_does_not_rescan(self, mock_regex, mock_entropy):
-#        """Make sure scan() does not rescan"""
-#
-#        self.options.regex = True
-#        self.options.entropy = True
-#        test_scanner = TestScanner(self.options)
-#        test_scanner._completed = True  # pylint: disable=protected-access
-#        test_scanner._issues = [1, 2, 3]  # pylint: disable=protected-access
-#        result = list(test_scanner.scan())
-#        mock_regex.assert_not_called()
-#        mock_entropy.assert_not_called()
-#        self.assertEqual(result, [1, 2, 3])
+    #    @mock.patch("tartufo.scanner.ScannerBase.scan_entropy")
+    #    @mock.patch("tartufo.scanner.ScannerBase.scan_regex")
+    #    def test_scan_does_not_rescan(self, mock_regex, mock_entropy):
+    #        """Make sure scan() does not rescan"""
+    #
+    #        self.options.regex = True
+    #        self.options.entropy = True
+    #        test_scanner = TestScanner(self.options)
+    #        test_scanner._completed = True  # pylint: disable=protected-access
+    #        test_scanner._issues = [1, 2, 3]  # pylint: disable=protected-access
+    #        result = list(test_scanner.scan())
+    #        mock_regex.assert_not_called()
+    #        mock_entropy.assert_not_called()
+    #        self.assertEqual(result, [1, 2, 3])
 
     @mock.patch("tartufo.scanner.ScannerBase.scan_entropy")
     def test_scan_checks_entropy_if_specified(self, mock_entropy: mock.MagicMock):

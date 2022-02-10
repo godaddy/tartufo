@@ -21,7 +21,7 @@ from typing import (
     Pattern,
     Set,
     Tuple,
-    IO
+    IO,
 )
 import warnings
 
@@ -160,7 +160,9 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         """
         self.global_options = options
         self.logger = logging.getLogger(__name__)
-        self._issue_file = tempfile.TemporaryFile() # pylint: disable=consider-using-with
+        self._issue_file = (
+            tempfile.TemporaryFile()
+        )  # pylint: disable=consider-using-with
 
     def compute_scaled_entropy_limit(self, maximum_bitrate: float) -> float:
         """Determine low entropy cutoff for specified bitrate
@@ -546,7 +548,6 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                         yield issue
                     except pickle.PickleError:
                         return
-
 
             if not any((self.global_options.entropy, self.global_options.regex)):
                 self.logger.error("No analysis requested.")
