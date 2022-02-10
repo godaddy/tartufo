@@ -24,7 +24,7 @@ class FolderScannerTestCase(unittest.TestCase):
         self.global_options.exclude_path_patterns = [r"donotscan\.txt"]
 
         test_scanner = scanner.FolderScanner(self.global_options, folder_path, recurse)
-        issues = list(test_scanner.scan())
+        issues = test_scanner.issues
 
         self.assertEqual(2, len(issues))
         actual_issues = [issue.matched_string for issue in issues]
@@ -56,7 +56,7 @@ class FolderScannerTestCase(unittest.TestCase):
         self.global_options.hex_entropy_score = 3
 
         test_scanner = scanner.FolderScanner(self.global_options, folder_path, recurse)
-        issues = list(test_scanner.scan())
+        issues = test_scanner.issues
 
         self.assertEqual(3, len(issues))
         actual_issues = [issue.matched_string for issue in issues]
@@ -75,7 +75,7 @@ class FolderScannerTestCase(unittest.TestCase):
         self.global_options.hex_entropy_score = 3
 
         test_scanner = scanner.FolderScanner(self.global_options, folder_path, recurse)
-        issues = list(test_scanner.scan())
+        issues = test_scanner.issues
 
         self.assertEqual(2, len(issues))
         actual_issues = [issue.matched_string for issue in issues]
