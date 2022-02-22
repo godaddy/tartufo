@@ -510,8 +510,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             try:
                 length = int.from_bytes(self.issue_file.read(4), "little")
                 buf = self.issue_file.read(length)
-                issue = pickle.loads(gzip.decompress(buf))
-                yield from issue
+                yield from pickle.loads(gzip.decompress(buf))
             except EOFError:
                 self.logger.debug("pickle.load raised EOFError, exiting")
                 yield from self._issue_list
