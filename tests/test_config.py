@@ -420,9 +420,10 @@ class CompileRulesTests(unittest.TestCase):
             config.compile_rules([{"foo": "bar"}])
 
     @mock.patch("tartufo.util.process_issues", new=mock.MagicMock())
-    @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
+    @mock.patch("tartufo.scanner.FolderScanner")
     def test_rule_patterns_are_read(self, mock_scanner: mock.MagicMock):
         mock_scanner.return_value.issues = []
+        mock_scanner.return_value.issue_count = 0
         conf = (
             pathlib.Path(__file__).parent
             / "data"
