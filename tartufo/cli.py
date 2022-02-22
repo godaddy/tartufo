@@ -183,7 +183,7 @@ class TartufoCLI(click.MultiCommand):
     help="If specified, temporary files will be written to the specified path",
 )
 @click.option(
-    "--max-buffered-issues",
+    "--buffer-size",
     type=int,
     default=10000,
     show_default=True,

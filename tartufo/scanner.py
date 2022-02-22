@@ -520,7 +520,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     def store_issue(self, issue: Issue) -> None:
         self._issue_count = self._issue_count + 1
         self._issue_list.append(issue)
-        if len(self._issue_list) >= self.global_options.max_buffered_issues:
+        if len(self._issue_list) >= self.global_options.buffer_size:
             compressed = gzip.compress(pickle.dumps(self._issue_list), compresslevel=9)
             length = len(compressed)
             self.issue_file.write(length.to_bytes(4, "little"))

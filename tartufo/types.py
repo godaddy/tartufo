@@ -66,7 +66,7 @@ class GlobalOptions:
     :param output_dir: A directory where detailed findings results will be
       written
     :param temp_dir: A directory where temporary files will be written
-    :param max_buffered_issues: Maximum number of issues that will be buffered
+    :param buffer_size: Maximum number of issues that will be buffered
       on the heap
     :param git_rules_repo: A remote git repository where additional rules can be
       found
@@ -99,7 +99,7 @@ class GlobalOptions:
         "exclude_signatures",
         "output_dir",
         "temp_dir",
-        "max_buffered_issues",
+        "buffer_size",
         "git_rules_repo",
         "git_rules_files",
         "config",
@@ -123,7 +123,7 @@ class GlobalOptions:
     exclude_signatures: Union[Tuple[Dict[str, str], ...], Tuple[str, ...]]
     output_dir: Optional[str]
     temp_dir: Optional[str]
-    max_buffered_issues: int
+    buffer_size: int
     git_rules_repo: Optional[str]
     git_rules_files: Tuple[str, ...]
     config: Optional[TextIO]
