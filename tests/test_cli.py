@@ -204,7 +204,7 @@ class ProcessIssuesTest(unittest.TestCase):
                 types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {})
             )
         ]
-        mock_scanner.return_value._issue_count = 1  # pylint: disable=protected-access
+        mock_scanner.return_value.issue_count = 1
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(cli.main, ["scan-local-repo", "."])
@@ -315,7 +315,7 @@ class LoggingTests(unittest.TestCase):
     @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
     def test_excess_verbosity_does_not_exceed_debug(self, mock_scanner: mock.MagicMock):
         mock_scanner.return_value.issues = []
-        mock_scanner.return_value._issue_count = 0  # pylint: disable=protected-access
+        mock_scanner.return_value.issue_count = 0
         runner = CliRunner()
         with runner.isolated_filesystem():
             runner.invoke(cli.main, ["-vvvvvvvvvvvvvvv", "scan-local-repo", "."])
