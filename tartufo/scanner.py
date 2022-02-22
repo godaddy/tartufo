@@ -43,7 +43,6 @@ from tartufo.types import (
 
 BASE64_REGEX = re.compile(r"[A-Z0-9=+/_-]+", re.IGNORECASE)
 HEX_REGEX = re.compile(r"[0-9A-F]+", re.IGNORECASE)
-OUTPUT_SEPARATOR = "~~~~~~~~~~~~~~~~~~~~~"
 
 
 class Issue:
@@ -60,6 +59,7 @@ class Issue:
     issue_type: types.IssueType
     issue_detail: Optional[str]
     matched_string: str
+    OUTPUT_SEPARATOR: str = "~~~~~~~~~~~~~~~~~~~~~"
 
     def __init__(
         self, issue_type: types.IssueType, matched_string: str, chunk: types.Chunk
@@ -106,7 +106,7 @@ class Issue:
         diff_body = diff_body.replace(
             self.matched_string, util.style_warning(self.matched_string)
         )
-        output.append(OUTPUT_SEPARATOR)
+        output.append(self.OUTPUT_SEPARATOR)
         output.append(util.style_ok(f"Reason: {self.issue_type.value}"))  # type: ignore
         if self.issue_detail:
             output.append(util.style_ok(f"Detail: {self.issue_detail}"))
@@ -118,7 +118,7 @@ class Issue:
         ]
 
         output.append(diff_body)
-        output.append(OUTPUT_SEPARATOR)
+        output.append(self.OUTPUT_SEPARATOR)
         return "\n".join(output)
 
     def __bytes__(self) -> bytes:
