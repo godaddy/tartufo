@@ -5,6 +5,11 @@ Features:
 
 * [#328](https://github.com/godaddy/tartufo/pull/328) - Buffer issues beyond --buffer-size to a temporary file
 
+v3.0.0 - 15 March 2022
+----------------------
+
+Allow pygit2 dependency <=1.6,>2
+
 v3.0.0 - 5 January 2022
 -----------------------
 
