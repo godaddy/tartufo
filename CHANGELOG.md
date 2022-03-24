@@ -1,5 +1,5 @@
-Unreleased
-----------
+v3.1.0 - 24 March 2022
+----------------------
 
 Features:
 
@@ -8,6 +8,7 @@ Features:
 Bug Fixes:
 
 * [#330](https://github.com/godaddy/tartufo/pull/330) - Allow newer versions of pygit2 for newer versions of Python
+
 v3.0.0 - 5 January 2022
 -----------------------
 
@@ -70,7 +71,7 @@ Features:
 * [#256](https://github.com/godaddy/tartufo/issues/256) - Deprecated `--rules` in
   favor of a new `rule-patterns` config option. This is the final piece of config
   that was still stored in an external file.
-* [#202](https://github.com/godaddy/tartufo/issues/202) - Supports new format of exclusions in config file 
+* [#202](https://github.com/godaddy/tartufo/issues/202) - Supports new format of exclusions in config file
   with the ability to specify the reason along with exclusion
 * [#257](https://github.com/godaddy/tartufo/issues/257) - Supports new format of include-path-patterns and
   exclude-path-patterns in config file with the ability to specify the reason along with the path-patterns.
@@ -310,7 +311,7 @@ Other changes:
 * #130 - Added references to Tartufo GoogleGroups mailing list to docs
 * Fixed testing in Pypy3 and explicitly added Python 3.9 support
 * #134 - Documented the release process
-* #143 - Updated GitHub Action hashes to newest rev to address https://github.blog/changelog/2020-10-01-github-actions-deprecating-set-env-and-add-path-commands/ where possible
+* #143 - Updated GitHub Action hashes to newest rev to address <https://github.blog/changelog/2020-10-01-github-actions-deprecating-set-env-and-add-path-commands/> where possible
 
 v2.0.1 - 09 October 2020
 ------------------------
@@ -411,7 +412,7 @@ v1.0.2 - 19 November 2019
 
 This release is essentially the same as the v1.0.0 release, but with a new number.
 Unfortunately, we had historical releases versioned as v1.0.0 and v1.0.1. Due to
-limitations in PyPI (https://pypi.org/help/#file-name-reuse), even if a previous
+limitations in PyPI (<https://pypi.org/help/#file-name-reuse>), even if a previous
 release has been deleted, the version number may not be reused.
 
 v1.0.0 - 19 November 2019
@@ -431,7 +432,7 @@ v0.0.2 - 23 October 2019
 
 Automated Docker builds!
 
-* Docker images are built and pushed automatically to https://hub.docker.com/r/godaddy/tartufo
+* Docker images are built and pushed automatically to <https://hub.docker.com/r/godaddy/tartufo>
 * The version of these images has been synchronized with the Python version via the VERSION file
 * Gave the Python package a more verbose long description for PyPi, straight from the README.
 
@@ -447,4 +448,4 @@ The primary new features/bugfixes include:
 * #4 - `--pre_commit` support
 * #6 - Documented the `--cleanup` switch which cleans up files in `/tmp`
 * #10 - Running `tartufo` with no arguments would produce an error
-* Added support for https://pre-commit.com/ style hooks
+* Added support for <https://pre-commit.com/> style hooks
