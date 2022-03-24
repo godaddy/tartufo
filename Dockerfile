@@ -1,4 +1,4 @@
-FROM python:3-alpine3.14 as base
+FROM python:3-slim as base
 
 WORKDIR /app
 
@@ -9,9 +9,6 @@ ENV PIP_DEFAULT_TIMEOUT=100 \
     PIP_NO_CACHE_DIR=1 \
     POETRY_VERSION=1.1.12
 
-RUN apk update && \
-    apk upgrade && \
-    apk add --no-cache cargo gcc libffi-dev musl-dev openssl-dev rust libgit2-dev
 RUN pip --no-cache-dir install "poetry==$POETRY_VERSION"
 RUN python -m venv /venv
 
@@ -23,7 +20,7 @@ RUN poetry build && /venv/bin/pip install dist/*.whl
 
 FROM base as final
 
-RUN apk add --no-cache git libgit2 openssh-client
+RUN apt-get update && apt-get install -y git openssh-client
 COPY --from=builder /venv /venv
 COPY scripts/docker/gitconfig /root/.gitconfig
 

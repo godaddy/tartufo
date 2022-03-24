@@ -5,6 +5,9 @@ Features:
 
 * [#328](https://github.com/godaddy/tartufo/pull/328) - Buffer issues beyond --buffer-size to a temporary file
 
+Bug Fixes:
+
+* [#330](https://github.com/godaddy/tartufo/pull/330) - Allow newer versions of pygit2 for newer versions of Python
 v3.0.0 - 5 January 2022
 -----------------------
 
