@@ -107,6 +107,24 @@ class ScanTests(ScannerTestCase):
         mock_regex.assert_called()
 
 
+class IssueFileTests(ScannerTestCase):
+    @mock.patch("tempfile.NamedTemporaryFile")
+    def test_issue_file_creates_new_temporary_file(self, mock_temp: mock.MagicMock):
+        self.options.temp_dir = "/foo/bar"
+        test_scanner = TestScanner(self.options)
+        issue_file = test_scanner.issue_file
+        mock_temp.assert_called_once_with(dir="/foo/bar")
+        self.assertEqual(issue_file, mock_temp.return_value)
+
+    @mock.patch("tempfile.NamedTemporaryFile", mock.MagicMock())
+    def test_issue_file_is_cached(self):
+        self.options.temp_dir = "/foo/bar"
+        test_scanner = TestScanner(self.options)
+        file1 = test_scanner.issue_file
+        file2 = test_scanner.issue_file
+        self.assertEqual(file1, file2)
+
+
 class IssuesTests(ScannerTestCase):
     @mock.patch("tartufo.scanner.ScannerBase.scan")
     def test_empty_issue_list_causes_scan(self, mock_scan: mock.MagicMock):

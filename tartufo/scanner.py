@@ -147,7 +147,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     _excluded_signatures: Optional[Tuple[str, ...]] = None
     _config_data: MutableMapping[str, Any] = {}
     _issue_list: List[Issue] = []
-    _issue_file: IO
+    _issue_file: Optional[IO] = None
     _issue_count: int
 
     def __init__(self, options: types.GlobalOptions) -> None:
