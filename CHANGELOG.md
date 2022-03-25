@@ -1,3 +1,10 @@
+v3.1.1 - 25 March 2022
+----------------------
+
+Bug Fixes:
+
+* [#336](https://github.com/godaddy/tartufo/issues/336) - `_issue_file` was not defined by default, causing all scans to fail
+
 v3.1.0 - 24 March 2022
 ----------------------
 
