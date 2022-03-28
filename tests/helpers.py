@@ -9,7 +9,7 @@ PY_37 = ("3", "7", "0") <= PY_VERSION < ("3", "8", "0")
 BROKEN_USER_PATHS = WINDOWS and (PY_36 or PY_37)
 
 
-OptionsType = TypeVar("OptionsType")
+OptionsType = TypeVar("OptionsType")  # pylint: disable=invalid-name
 
 
 def generate_options(option_class: Type[OptionsType], **kwargs) -> OptionsType:

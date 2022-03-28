@@ -1,7 +1,17 @@
+v3.1.2 - 28 March 2022
+----------------------
+
+Bug fixes:
+
+* [#339](https://github.com/godaddy/tartufo/issues/339) - Fix `click` compatibility issues. Specifically:
+  * Pin to < 8.1.0 for Python 3.6, as support for that version was dropped
+  * Pin to >= 8.1.0 for Python 3.7+, and change `resultcallback` usage to `result_callback`
+  * Upgraded to the latest version of `black`
+
 v3.1.1 - 25 March 2022
 ----------------------
 
-Bug Fixes:
+Bug fixes:
 
 * [#336](https://github.com/godaddy/tartufo/issues/336) - `_issue_file` was not defined by default, causing all scans to fail
 
@@ -12,7 +22,7 @@ Features:
 
 * [#328](https://github.com/godaddy/tartufo/pull/328) - Buffer issues beyond --buffer-size to a temporary file
 
-Bug Fixes:
+Bug fixes:
 
 * [#330](https://github.com/godaddy/tartufo/pull/330) - Allow newer versions of pygit2 for newer versions of Python
 

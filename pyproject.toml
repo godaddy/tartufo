@@ -32,7 +32,7 @@ maintainers = ["GoDaddy <oss@godaddy.com>"]
 name = "tartufo"
 readme = "README.md"
 repository = "https://github.com/godaddy/tartufo/"
-version = "3.1.1"
+version = "3.1.2"
 
 [tool.poetry.scripts]
 tartufo = "tartufo.cli:main"
@@ -40,7 +40,7 @@ tartufo = "tartufo.cli:main"
 [tool.poetry.dependencies]
 GitPython = "<3.1.20"
 pygit2 = [ {version = "~1.6", python = "~3.6"}, {version = "^1.9.0", python = "^3.7"} ]
-click = "^8.0.3"
+click = [{version = "~8.0.4", python = "~3.6"}, {version = "^8.1.0", python = "^3.7"}]
 colorama = {version = "*", markers = "sys_platform == 'win32'"}
 dataclasses = {version = "*", python = "< 3.7"}
 python = "^3.6.2"
@@ -54,7 +54,7 @@ tomlkit = "^0.7.2"
 cached-property = "^1.5.2"
 
 [tool.poetry.dev-dependencies]
-black = {version = "21.5b2", allow-prereleases = true, markers = "platform_python_implementation == 'CPython'"}
+black = "^22.3.0"
 coverage = {extras = ["toml"], version = "^5.1"}
 mypy = {version = "^0.902", markers = "platform_python_implementation == 'CPython'"}
 pre-commit = "*"
