@@ -317,7 +317,7 @@ def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
     warnings.simplefilter("always", DeprecationWarning)
 
 
-@main.resultcallback()  # type: ignore
+@main.result_callback()  # type: ignore
 @click.pass_context
 def process_exit(
     ctx: click.Context,
