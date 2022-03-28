@@ -54,7 +54,7 @@ tomlkit = "^0.7.2"
 cached-property = "^1.5.2"
 
 [tool.poetry.dev-dependencies]
-black = {version = "21.5b2", allow-prereleases = true, markers = "platform_python_implementation == 'CPython'"}
+black = "^22.3.0"
 coverage = {extras = ["toml"], version = "^5.1"}
 mypy = {version = "^0.902", markers = "platform_python_implementation == 'CPython'"}
 pre-commit = "*"
