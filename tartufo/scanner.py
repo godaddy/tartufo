@@ -280,7 +280,9 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         """Get a list of regexes used as an exclusive list of paths to scan."""
         if self._excluded_entropy is None:
             self.logger.info("Initializing excluded entropy patterns")
-            patterns = list(self.global_options.exclude_entropy_patterns or ())
+            patterns = list(self.global_options.exclude_entropy_patterns or ()) + list(
+                self.config_data.get("exclude_entropy_patterns", ())
+            )
             self._excluded_entropy = config.compile_rules(patterns) if patterns else []
             self.logger.debug(
                 "Excluded entropy was initialized as: %s", self._excluded_entropy
