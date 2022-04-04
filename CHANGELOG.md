@@ -1,3 +1,13 @@
+v3.1.3 - 4 April 2022
+----------------------
+
+Bug fixes:
+
+* [#329](https://github.com/godaddy/tartufo/issues/329) - Entropy exclusions(exclude-entropy-patterns) ignored when using
+scan-local-repo
+* [#343](https://github.com/godaddy/tartufo/issues/343) - Entropy exclusions(exclude-entropy-patterns) ignored when using
+scan-remote-repo
+
 v3.1.2 - 28 March 2022
 ----------------------
 
