@@ -14,6 +14,13 @@ from tartufo.scanner import FolderScanner
     show_default=True,
     help="Recurse and scan the entire folder",
 )
+@click.option(
+    "--git-check/--no-git-check",
+    is_flag=True,
+    default=True,
+    show_default=True,
+    help="Check if folder is a git repo and show confirmation dialog",
+)
 @click.argument(
     "target",
     type=click.Path(exists=True, file_okay=False, resolve_path=True, allow_dash=False),
@@ -21,12 +28,12 @@ from tartufo.scanner import FolderScanner
 @click.pass_obj
 @click.pass_context
 def main(
-    ctx: click.Context, options: types.GlobalOptions, target: str, recurse: bool
+    ctx: click.Context, options: types.GlobalOptions, target: str, recurse: bool, git_check: bool
 ) -> FolderScanner:
     """Scan a folder."""
     try:
         resume: bool = True
-        if util.path_contains_git(target) is True:
+        if git_check and util.path_contains_git(target) is True:
             resume = click.confirm(
                 "This folder is a git repository, and should be scanned using the "
                 "scan-local-repo command. Are you sure you wish to proceed?"
