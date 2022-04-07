@@ -12,6 +12,9 @@ Features:
   * Rebase container to python 3.11
   * Add CI step to verify container is operational
 
+* [#348](https://github.com/godaddy/tartufo/pull/348) - Add --no-git-check option
+  to skip confirmation dialog for scan-folder
+
 v3.3.1 - 23 Nov 2022
 --------------------
 
