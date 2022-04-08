@@ -28,7 +28,11 @@ from tartufo.scanner import FolderScanner
 @click.pass_obj
 @click.pass_context
 def main(
-    ctx: click.Context, options: types.GlobalOptions, target: str, recurse: bool, git_check: bool
+    ctx: click.Context,
+    options: types.GlobalOptions,
+    target: str,
+    recurse: bool,
+    git_check: bool,
 ) -> FolderScanner:
     """Scan a folder."""
     try:
