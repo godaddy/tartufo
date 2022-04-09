@@ -19,7 +19,7 @@ from tartufo.scanner import FolderScanner
     is_flag=True,
     default=True,
     show_default=True,
-    help="Check if folder is a git repo and show confirmation dialog",
+    help="Skip check if the folder is a git repo",
 )
 @click.argument(
     "target",
