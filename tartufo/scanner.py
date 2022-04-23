@@ -905,7 +905,7 @@ class GitPreCommitScanner(GitScanner):
     @property
     def chunks(self):
         """Yield the individual file changes currently staged for commit."""
-        diff_index = self._repo.diff("HEAD")
+        diff_index = self._repo.diff("HEAD", cached=True)
         for blob, file_path in self._iter_diff_index(diff_index):
             yield types.Chunk(blob, file_path, {})
 
