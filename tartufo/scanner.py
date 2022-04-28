@@ -912,7 +912,12 @@ class GitPreCommitScanner(GitScanner):
         # These were introduced so that tartufo would scan newly added files that are staged. Without these flags, tartufo
         # will only scan files that have been committed at least once, because a file still counts as "untracked" even
         # after it has been added to the index. It only becomes tracked once it has actually been committed.
-        diff_index = self._repo.diff("HEAD", cached=True, flags=pygit2.GIT_DIFF_INCLUDE_UNTRACKED | pygit2.GIT_DIFF_SHOW_UNTRACKED_CONTENT)
+        diff_index = self._repo.diff(
+            "HEAD",
+            cached=True,
+            flags=pygit2.GIT_DIFF_INCLUDE_UNTRACKED
+            | pygit2.GIT_DIFF_SHOW_UNTRACKED_CONTENT,
+        )
         for blob, file_path in self._iter_diff_index(diff_index):
             yield types.Chunk(blob, file_path, {})
 
