@@ -905,6 +905,12 @@ class GitPreCommitScanner(GitScanner):
     @property
     def chunks(self):
         """Yield the individual file changes currently staged for commit."""
+        # See the meaning of the flags below
+        # here: https://github.com/libgit2/libgit2/blob/13502d9e7f6c51a5f93ea39e14db707d382dc996/include/git2/diff.h#L49
+        # and here: https://github.com/libgit2/libgit2/blob/13502d9e7f6c51a5f93ea39e14db707d382dc996/include/git2/diff.h#L156
+        #
+        # These were introduced so that tartufo would scan newly added files that are staged. Without these flags, tartufo
+        # will only scan files that have been committed at least once.
         diff_index = self._repo.diff("HEAD", cached=True, flags=pygit2.GIT_DIFF_INCLUDE_UNTRACKED | pygit2.GIT_DIFF_SHOW_UNTRACKED_CONTENT)
         for blob, file_path in self._iter_diff_index(diff_index):
             yield types.Chunk(blob, file_path, {})
