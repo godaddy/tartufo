@@ -7,6 +7,12 @@ on:
     branches: [ main, v3.x ]
 
 jobs:
+  tartufo:
+    name: Run Tartufo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: godaddy/tartufo-action@8803be6cd9531f4f9e57136e141658bc2ccf188e
+        name: Run Tartufo
   unit-test:
     name: Unit Tests
     strategy:
