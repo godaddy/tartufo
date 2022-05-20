@@ -1,3 +1,10 @@
+v3.1.4 - 20 May 2022
+----------------------
+
+Bug fixes:
+
+* [#351](https://github.com/godaddy/tartufo/pull/351) Make precommit check staged changes instead of entire working directory
+
 v3.1.3 - 4 April 2022
 ----------------------
 
@@ -70,7 +77,7 @@ Bug fixes:
 * [#284](https://github.com/godaddy/tartufo/pull/284) - Fix handling of first
   commit during local scans; an exception was raised instead of processing the
   commit.
-  
+
 Misc:
 
 * [#282](https://github.com/godaddy/tartufo/pull/282) - Remove old style config for `exclude-entropy-patterns`
