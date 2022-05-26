@@ -35,7 +35,6 @@ this:
 
    [tool.tartufo]
    repo-path = "."
-   json = false
    regex = true
    entropy = true
    exclude-path-patterns = [
@@ -69,15 +68,7 @@ Looking at this information, it's clear that this issue was found in a test
 file, and it's probably okay. Of course, you will want to look at the actual
 body of what was found and determine that for yourself. But let's say that this
 really is okay, and we want tell ``tartufo`` to ignore this issue in future
-scans. To do this, you can either specify it on the command line...
-
-.. code-block:: sh
-
-    > tartufo -e 2a3cb329b81351e357b09f1b97323ff726e72bd5ff8427c9295e6ef68226e1d1
-    # No output! Success!
-    >
-
-Or you can add it to your config file, so that this exclusion is always
+scans. To do this, you can add it to your config file, so that this exclusion is always
 remembered!
 
 .. code-block:: toml
@@ -100,7 +91,7 @@ As of version 3.0, a new format for specifying exclusion signatures has been add
 
 .. note::
 
-    Currently all 3 formats of signature exclusions are supported. However, only `TOML`_ `array of tables`_ format
+    Currently both formats of signature exclusions are supported. However, only `TOML`_ `array of tables`_ format
     will be supported in future versions.
 
 .. _limiting-scans-by-paths:

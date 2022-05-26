@@ -141,7 +141,6 @@ exclude-signatures = [
   {signature = "c94ba36a7411bf89fab6e87076740deecdc7a61fcfbbc1aa5934608f6c4f3adb", reason = "tests/data/config/rule_pattern_config.toml"},
   {signature = "4f44b817b42c94fa01f47166ca7adaa0b750b1b6cd84f7ce3bf23a7728cdac57", reason = "commit hashes in github URLs in comments, tartufo/scanner.py"}
 ]
-json = false
 regex = true
 repo-path = "."
 
