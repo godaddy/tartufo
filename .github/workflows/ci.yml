@@ -7,8 +7,17 @@ on:
     branches: [ main, v3.x ]
 
 jobs:
+  tartufo:
+    name: Run Tartufo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f
+        name: Checkout the repo
+      - uses: godaddy/tartufo-action@8803be6cd9531f4f9e57136e141658bc2ccf188e
+        name: Run Tartufo
   unit-test:
     name: Unit Tests
+    needs: [ tartufo ]
     strategy:
       fail-fast: false
       matrix:
@@ -61,6 +70,7 @@ jobs:
   linting:
     name: Linting
     runs-on: ubuntu-latest
+    needs: [ tartufo ]
     strategy:
       fail-fast: false
       matrix:
@@ -91,6 +101,7 @@ jobs:
   docker:
     name: Build Docker Image
     runs-on: ubuntu-latest
+    needs: [ tartufo ]
     steps:
     - uses: actions/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f
       name: Checkout the repo
