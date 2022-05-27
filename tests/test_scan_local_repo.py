@@ -1,13 +1,12 @@
 import unittest
 from pathlib import Path
 from unittest import mock
+from hashlib import sha256
+from os import remove
 from click.testing import CliRunner
+from pygit2 import Repository
 from tartufo import cli, types
 from tests import helpers
-from hashlib import sha256
-from pygit2 import Repository
-from subprocess import call
-from os import remove
 
 class ScanLocalRepoTests(unittest.TestCase):
     @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
@@ -34,25 +33,34 @@ class ScanLocalRepoTests(unittest.TestCase):
             )
 
     def test_new_file_shows_up(self):
+        file_name = "secret_1.key"
         runner = CliRunner()
         # Add file with high entropy
         secret_key = sha256(b"hello world")
-        f = open("secret.key", "a")
-        f.write(secret_key.hexdigest())
-        f.close()
+        with open(file_name, "a") as file:
+            file.write(secret_key.hexdigest())
         repo = Repository(".")
 
         # Check that tartufo picks up on newly added files
-        repo.index.add("tests/data/config/secret.key")
+        repo.index.add("tests/data/config/" + file_name)
         repo.index.write() # This actually writes the index to disk. Without it, the tracked file is not actually staged.
-        result_1 = runner.invoke(cli.main, ["--entropy-sensitivity", "1", "pre-commit"])
-        self.assertNotEqual(result_1.exit_code, 0)
-
-        # Check that tartufo does not flag non-added new files
-        repo.index.remove("tests/data/config/secret.key")
-        repo.index.write() # This actually writes the index to disk. Without it, secret.key will not return to being untracked.
-        result_2 = runner.invoke(cli.main, ["--entropy-sensitivity", "1", "pre-commit"])
-        self.assertEqual(result_2.exit_code, 0)
+        result = runner.invoke(cli.main, ["--entropy-sensitivity", "1", "pre-commit"])
+        self.assertNotEqual(result.exit_code, 0)
 
         # Cleanup
-        remove("secret.key")
+        repo.index.remove("tests/data/config/" + file_name)
+        repo.index.write() # This actually writes the index to disk. Without it, secret.key will not removed from the index.
+        remove(file_name)
+
+    def test_new_unstaged_file_does_not_show_up(self):
+        file_name = "secret_2.key"
+        runner = CliRunner()
+        # Add file with high entropy
+        secret_key = sha256(b"hello world")
+        with open(file_name, "a") as file:
+            file.write(secret_key.hexdigest())
+        result = runner.invoke(cli.main, ["--entropy-sensitivity", "1", "pre-commit"])
+        self.assertEqual(result.exit_code, 0)
+
+        # Cleanup
+        remove(file_name)
