@@ -1,9 +1,14 @@
-v3.1.4 - 20 May 2022
+v3.1.4 - 31 May 2022
 ----------------------
 
 Bug fixes:
 
 * [#352](https://github.com/godaddy/tartufo/pull/352) - Fix tartufo ignoring new files added to a Git repo
+* [#351](https://github.com/godaddy/tartufo/pull/351) - Make pre-commit check staged changes instead of entire working directory
+
+Misc:
+* [356](https://github.com/godaddy/tartufo/pull/356) - Update documentation
+* [354](https://github.com/godaddy/tartufo/pull/354) - Add a tartufo scan step in Tartufo's CI
 
 v3.1.3 - 4 April 2022
 ----------------------
