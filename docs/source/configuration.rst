@@ -68,8 +68,7 @@ Looking at this information, it's clear that this issue was found in a test
 file, and it's probably okay. Of course, you will want to look at the actual
 body of what was found and determine that for yourself. But let's say that this
 really is okay, and we want tell ``tartufo`` to ignore this issue in future
-scans. To do this, you can add it to your config file, so that this exclusion is always
-remembered!
+scans. To do this, you can add it to your config file.
 
 .. code-block:: toml
 

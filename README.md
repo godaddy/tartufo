@@ -83,15 +83,6 @@ Options:
                                   or `text` can be specified. If not provided
                                   (default) the output will be generated in
                                   `text` format.
-  -e, --exclude-signatures TEXT   [DEPRECATED] Use the exclude-findings config
-                                  option instead. Specify signatures of
-                                  matches that you explicitly want to exclude
-                                  from the scan, and mark as okay. These
-                                  signatures are generated during the scan
-                                  process, and reported out with each
-                                  individual match. This option can be
-                                  specified multiple times, to exclude as many
-                                  signatures as you would like.
   -od, --output-dir DIRECTORY     If specified, all issues will be written out
                                   as individual JSON files to a uniquely named
                                   directory under this one. This will help
