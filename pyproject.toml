@@ -138,7 +138,8 @@ exclude-signatures = [
   {signature = "9d1b278fa384c9dc58d607130d97740910309d13b29f13f7ed6348738ea4f32c", reason = "tests/test_folder_scanner.py 16-Nov-2021"},
   {signature = "9f675d4d7f43e484e07fb199a1e7ec372ef204631c1f4ec054acc3119fbde4cf", reason = "build_and_publish_docker_file 13-Jun-2019"},
   {signature = "88152f1d10077f417ee5aea5fa86adaa5b74d3f2de2e87ce4b4aa5cd79c7b2f5", reason = "nothing file, 30-Dec-2016"},
-  {signature = "c94ba36a7411bf89fab6e87076740deecdc7a61fcfbbc1aa5934608f6c4f3adb", reason = "tests/data/config/rule_pattern_config.toml"}
+  {signature = "c94ba36a7411bf89fab6e87076740deecdc7a61fcfbbc1aa5934608f6c4f3adb", reason = "tests/data/config/rule_pattern_config.toml"},
+  {signature = "4f44b817b42c94fa01f47166ca7adaa0b750b1b6cd84f7ce3bf23a7728cdac57", reason = "commit hashes in github URLs in comments, tartufo/scanner.py"}
 ]
 json = false
 regex = true

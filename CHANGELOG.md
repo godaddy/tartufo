@@ -1,3 +1,10 @@
+v3.1.4 - 20 May 2022
+----------------------
+
+Bug fixes:
+
+* [#352](https://github.com/godaddy/tartufo/pull/352) - Fix tartufo ignoring new files added to a Git repo
+
 v3.1.3 - 4 April 2022
 ----------------------
 
