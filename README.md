@@ -60,22 +60,6 @@ Options:
                                   Check the names of files being scanned as
                                   well as their contents.  [default: scan-
                                   filenames]
-  -ip, --include-path-patterns TEXT
-                                  Specify a regular expression which matches
-                                  Git object paths to include in the scan.
-                                  This option can be specified multiple times
-                                  to include multiple patterns. If not
-                                  provided (default), all Git object paths are
-                                  included unless otherwise excluded via the
-                                  --exclude-path-patterns option.
-  -xp, --exclude-path-patterns TEXT
-                                  Specify a regular expression which matches
-                                  Git object paths to exclude from the scan.
-                                  This option can be specified multiple times
-                                  to exclude multiple patterns. If not
-                                  provided (default), no Git object paths are
-                                  excluded unless effectively excluded via the
-                                  --include-path-patterns option.
   -of, --output-format [json|compact|text]
                                   Specify the format in which the output needs
                                   to be generated `--output-format
@@ -88,6 +72,11 @@ Options:
                                   directory under this one. This will help
                                   with keeping the results of individual runs
                                   of tartufo separated.
+  -td, --temp-dir DIRECTORY       If specified, temporary files will be
+                                  written to the specified path
+  --buffer-size INTEGER           Maximum number of issue to buffer in memory
+                                  before shifting to temporary file buffering
+                                  [default: 10000]
   --git-rules-repo TEXT           A file path, or git URL, pointing to a git
                                   repository containing regex rules to be used
                                   for scanning. By default, all .json files
