@@ -8,6 +8,7 @@ from pygit2 import Repository
 from tartufo import cli, types
 from tests import helpers
 
+
 class ScanLocalRepoTests(unittest.TestCase):
     @mock.patch("tartufo.commands.scan_local_repo.GitRepoScanner")
     def test_scan_exits_gracefully_on_scan_exception(
@@ -43,13 +44,13 @@ class ScanLocalRepoTests(unittest.TestCase):
 
         # Check that tartufo picks up on newly added files
         repo.index.add("tests/data/config/" + file_name)
-        repo.index.write() # This actually writes the index to disk. Without it, the tracked file is not actually staged.
+        repo.index.write()  # This actually writes the index to disk. Without it, the tracked file is not actually staged.
         result = runner.invoke(cli.main, ["--entropy-sensitivity", "1", "pre-commit"])
         self.assertNotEqual(result.exit_code, 0)
 
         # Cleanup
         repo.index.remove("tests/data/config/" + file_name)
-        repo.index.write() # This actually writes the index to disk. Without it, secret.key will not removed from the index.
+        repo.index.write()  # This actually writes the index to disk. Without it, secret.key will not removed from the index.
         remove(file_name)
 
     def test_new_unstaged_file_does_not_show_up(self):
