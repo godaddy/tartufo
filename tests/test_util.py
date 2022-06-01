@@ -1,4 +1,5 @@
 from io import StringIO
+import importlib
 import json
 import re
 import unittest
@@ -379,6 +380,34 @@ class GeneralUtilTests(unittest.TestCase):
         util.fail("Foo!", mock.MagicMock(), 42)
         mock_style.assert_called_once_with("Foo!")
         mock_click.echo.assert_called_once_with(mock_style.return_value, err=True)
+
+    @mock.patch("tartufo.util.sys.stdout")
+    def test_style_when_not_a_tty(self, mock_stdout):
+        mock_stdout.isatty.return_value = False
+        importlib.reload(util)  # Forces sys.stdout.isatty to False
+
+        ok_result = util.style_ok("OK")
+        error_result = util.style_error("ERROR")
+        warning_result = util.style_warning("WARNING")
+
+        mock_stdout.isatty.assert_called_once()
+        self.assertEqual(ok_result, "OK")
+        self.assertEqual(error_result, "ERROR")
+        self.assertEqual(warning_result, "WARNING")
+
+    @mock.patch("tartufo.util.sys.stdout")
+    def test_style_when_is_a_tty(self, mock_stdout):
+        mock_stdout.isatty.return_value = True
+        importlib.reload(util)  # Forces sys.stdout.isatty to True
+
+        ok_result = util.style_ok("OK")
+        error_result = util.style_error("ERROR")
+        warning_result = util.style_warning("WARNING")
+
+        mock_stdout.isatty.assert_called_once()
+        self.assertEqual(ok_result, "\x1b[92mOK\x1b[0m")
+        self.assertEqual(error_result, "\x1b[31m\x1b[1mERROR\x1b[0m")
+        self.assertEqual(warning_result, "\x1b[93mWARNING\x1b[0m")
 
     @mock.patch("tartufo.util.blake2s")
     def test_signature_is_generated_with_snippet_and_filename(self, mock_hash):

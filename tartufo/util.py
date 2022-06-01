@@ -4,6 +4,7 @@ import os
 import pathlib
 import platform
 import stat
+import sys
 import tempfile
 import uuid
 from datetime import datetime
@@ -154,9 +155,19 @@ def clone_git_repo(
     return pathlib.Path(project_path), origin
 
 
-style_ok = partial(click.style, fg="bright_green")  # pylint: disable=invalid-name
-style_error = partial(click.style, fg="red", bold=True)  # pylint: disable=invalid-name
-style_warning = partial(click.style, fg="bright_yellow")  # pylint: disable=invalid-name
+if sys.stdout.isatty():
+    style_ok = partial(click.style, fg="bright_green")
+    style_error = partial(click.style, fg="red", bold=True)
+    style_warning = partial(click.style, fg="bright_yellow")
+else:
+    # If stdout is not a TTY, don't include color - just pass the string back
+    def _style_func(msg: str, *_: Any, **__: Any) -> str:
+        # We define this func and pass it to partial still to preserve
+        # typing integrity and prevent issues when callers expect to be
+        # able to pass the same args as click.style accepts
+        return msg
+
+    style_ok = style_error = style_warning = partial(_style_func)
 
 
 def fail(msg: str, ctx: click.Context, code: int = 1) -> None:
