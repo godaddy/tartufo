@@ -1,3 +1,9 @@
+Unreleased
+----------------------
+
+Bug fixes:
+* [#360](https://github.com/godaddy/tartufo/issues/360) - Fix ANSI escape sequences being written to files on redirection
+
 v3.1.4 - 31 May 2022
 ----------------------
 
@@ -82,7 +88,7 @@ Bug fixes:
 * [#284](https://github.com/godaddy/tartufo/pull/284) - Fix handling of first
   commit during local scans; an exception was raised instead of processing the
   commit.
-  
+
 Misc:
 
 * [#282](https://github.com/godaddy/tartufo/pull/282) - Remove old style config for `exclude-entropy-patterns`
