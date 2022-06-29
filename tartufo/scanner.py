@@ -591,11 +591,18 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         :param chunk: The chunk of data to be scanned
         """
 
-        for line in chunk.contents.split("\n"):
-            # The lines are in diff format and so contain a prefixed +/-.
-            # We are ignoring the first element in each line so the Tartufo matched_string
-            # reports the actual string that generates the entropy finding.
-            for word in line[1:].split():
+        for line in (x for x in chunk.contents.split("\n") if x):
+            # If the chunk is diff output, the first character of each line is
+            # generated metadata ("+", "-", etc.) that is not part of actual
+            # repository content, and it should be ignored.
+            extra_char: Optional[str]
+            if chunk.is_diff:
+                extra_char = line[0]
+                analyze = line[1:]
+            else:
+                extra_char = None
+                analyze = line
+            for word in analyze.split():
                 for string in util.find_strings_by_regex(word, BASE64_REGEX):
                     yield from self.evaluate_entropy_string(
                         chunk, line, string, self.b64_entropy_limit
@@ -604,6 +611,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                     yield from self.evaluate_entropy_string(
                         chunk, line, string, self.hex_entropy_limit
                     )
+                extra_char = None
 
     def evaluate_entropy_string(
         self,
@@ -867,6 +875,7 @@ class GitRepoScanner(GitScanner):
                         blob,
                         file_path,
                         util.extract_commit_metadata(curr_commit, branch_name),
+                        True,
                     )
 
             # Finally, yield the first commit to the branch
@@ -879,6 +888,7 @@ class GitRepoScanner(GitScanner):
                         blob,
                         file_path,
                         util.extract_commit_metadata(curr_commit, branch_name),
+                        True,
                     )
 
 
@@ -922,7 +932,7 @@ class GitPreCommitScanner(GitScanner):
             | pygit2.GIT_DIFF_SHOW_UNTRACKED_CONTENT,
         )
         for blob, file_path in self._iter_diff_index(diff_index):
-            yield types.Chunk(blob, file_path, {})
+            yield types.Chunk(blob, file_path, {}, True)
 
 
 class FolderScanner(ScannerBase):
@@ -949,7 +959,7 @@ class FolderScanner(ScannerBase):
         """Yield the individual files in the target directory."""
 
         for blob, file_path in self._iter_folder():
-            yield types.Chunk(blob, file_path, {})
+            yield types.Chunk(blob, file_path, {}, False)
 
     def _iter_folder(self) -> Generator[Tuple[str, str], None, None]:
         folder_path = pathlib.Path(self.target)

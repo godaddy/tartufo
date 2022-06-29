@@ -312,10 +312,10 @@ class ChunkGeneratorTests(ScannerTestCase):
         self.assertEqual(
             chunks,
             [
-                types.Chunk("foo", "bar.py", mock_extract.return_value),
-                types.Chunk("baz", "blah.py", mock_extract.return_value),
-                types.Chunk("foo", "bar.py", mock_extract.return_value),
-                types.Chunk("baz", "blah.py", mock_extract.return_value),
+                types.Chunk("foo", "bar.py", mock_extract.return_value, True),
+                types.Chunk("baz", "blah.py", mock_extract.return_value, True),
+                types.Chunk("foo", "bar.py", mock_extract.return_value, True),
+                types.Chunk("baz", "blah.py", mock_extract.return_value, True),
             ],
         )
 

@@ -162,12 +162,14 @@ class Chunk:
     :param contents: The actual text contents of the chunk
     :param file_path: The file path that is being inspected
     :param metadata: Commit/file metadata for the chunk being inspected
+    :param is_diff: True if contents is diff output (vs raw data)
     """
 
-    __slots__ = ("contents", "file_path", "metadata")
+    __slots__ = ("contents", "file_path", "metadata", "is_diff")
     contents: str
     file_path: str
     metadata: Dict[str, Any]
+    is_diff: bool
 
 
 @dataclass
