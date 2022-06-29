@@ -139,7 +139,7 @@ class IssueTests(unittest.TestCase):
             types.IssueType.Entropy,
             "test-string",
             types.Chunk(
-                "test-contents", "test-file", {"test-meta1": "test-meta-value"}
+                "test-contents", "test-file", {"test-meta1": "test-meta-value"}, True
             ),
         )
         issue.issue_detail = "issue-detail"
@@ -162,7 +162,7 @@ class IssueTests(unittest.TestCase):
             types.IssueType.Entropy,
             "test-string",
             types.Chunk(
-                "test-contents", "test-file", {"test-meta1": "test-meta-value"}
+                "test-contents", "test-file", {"test-meta1": "test-meta-value"}, True
             ),
         )
         issue.issue_detail = "issue-detail"
@@ -347,7 +347,7 @@ class RegexScanTests(ScannerTestCase):
                 re_match_scope=None,
             ),
         }
-        chunk = types.Chunk("foo", "/file/path", {})
+        chunk = types.Chunk("foo", "/file/path", {}, False)
         list(test_scanner.scan_regex(chunk))
         rule_1.findall.assert_called_once_with("foo")
         rule_2.findall.assert_called_once_with("foo")
@@ -370,7 +370,7 @@ class RegexScanTests(ScannerTestCase):
                 re_match_scope=None,
             )
         }
-        chunk = types.Chunk("foo", "bar", {})
+        chunk = types.Chunk("foo", "bar", {}, False)
         issues = list(test_scanner.scan_regex(chunk))
         mock_signature.assert_called_once_with("foo", "bar")
         self.assertEqual(issues, [])
@@ -390,7 +390,7 @@ class RegexScanTests(ScannerTestCase):
                 re_match_scope=None,
             )
         }
-        chunk = types.Chunk("foo", "bar", {})
+        chunk = types.Chunk("foo", "bar", {}, False)
         issues = list(test_scanner.scan_regex(chunk))
         mock_signature.assert_called_once_with("foo", "bar")
         self.assertEqual(len(issues), 1)
@@ -410,6 +410,7 @@ class EntropyManagementTests(ScannerTestCase):
         """,
             "foo.py",
             {},
+            False,
         )
         self.scanner = TestScanner(self.options)
 
@@ -590,6 +591,7 @@ class EntropyDetectionTests(ScannerTestCase):
         """,
             "foo.py",
             {},
+            False,
         )
         self.scanner = TestScanner(self.options)
 
