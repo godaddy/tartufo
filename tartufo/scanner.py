@@ -605,11 +605,11 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             for word in analyze.split():
                 for string in util.find_strings_by_regex(word, BASE64_REGEX):
                     yield from self.evaluate_entropy_string(
-                        chunk, line, string, self.b64_entropy_limit, extra_char
+                        chunk, analyze, string, self.b64_entropy_limit, extra_char
                     )
                 for string in util.find_strings_by_regex(word, HEX_REGEX):
                     yield from self.evaluate_entropy_string(
-                        chunk, line, string, self.hex_entropy_limit, extra_char
+                        chunk, analyze, string, self.hex_entropy_limit, extra_char
                     )
                 extra_char = None
 
