@@ -592,7 +592,10 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         """
 
         for line in chunk.contents.split("\n"):
-            for word in line.split():
+            # The lines are in diff format and so contain a prefixed +/-.
+            # We are ignoring the first element in each line so the Tartufo matched_string
+            # reports the actual string that generates the entropy finding.
+            for word in line[1:].split():
                 for string in util.find_strings_by_regex(word, BASE64_REGEX):
                     yield from self.evaluate_entropy_string(
                         chunk, line, string, self.b64_entropy_limit
