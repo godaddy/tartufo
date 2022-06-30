@@ -3,6 +3,7 @@ Unreleased
 
 Bug fixes:
 * [#360](https://github.com/godaddy/tartufo/issues/360) - Fix ANSI escape sequences being written to files on redirection
+* [#363](https://github.com/godaddy/tartufo/pull/363) - Fix leading +/- in Tartufo matched_strings
 
 v3.1.4 - 31 May 2022
 ----------------------
