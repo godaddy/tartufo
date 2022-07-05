@@ -188,8 +188,8 @@ def configure_regexes(
 
     if rules_files:
         warnings.warn(
-            "Storing rules in a separate file has been deprecated and will be removed "
-            "in a future release. You should be using the 'rule-patterns' config "
+            "Storing rules in a separate file is deprecated and will be removed "
+            "in tartufo 4.x. Please use the 'rule-patterns' config "
             " option instead.",
             DeprecationWarning,
         )
