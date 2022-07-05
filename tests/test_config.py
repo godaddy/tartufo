@@ -170,7 +170,8 @@ class ConfigureRegexTests(unittest.TestCase):
         rules_path = pathlib.Path(__file__).parent / "data" / "testRules.json"
         rules_files = (rules_path.open(),)
         with self.assertWarnsRegex(
-            DeprecationWarning, "has been deprecated and will be removed."
+            DeprecationWarning,
+            "Storing rules in a separate file is deprecated and will be removed in tartufo 4.x. ",
         ):
             config.configure_regexes(rules_files=rules_files)
 

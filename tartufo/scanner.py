@@ -178,7 +178,8 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         # # directly (but complain about it).
         if self.global_options.hex_entropy_score:
             warnings.warn(
-                "--hex-entropy-score is deprecated. Use --entropy-sensitivity instead.",
+                "--hex-entropy-score is deprecated and will be removed in tartufo 4.x. "
+                "Please use --entropy-sensitivity instead.",
                 DeprecationWarning,
             )
             return self.global_options.hex_entropy_score
@@ -196,7 +197,8 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         # # directly (but complain about it).
         if self.global_options.b64_entropy_score:
             warnings.warn(
-                "--b64-entropy-score is deprecated. Use --entropy-sensitivity instead.",
+                "--b64-entropy-score is deprecated and will be removed in tartufo 4.x. "
+                "Please use --entropy-sensitivity instead.",
                 DeprecationWarning,
             )
             return self.global_options.b64_entropy_score
@@ -267,7 +269,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             if deprecated:
                 warnings.warn(
                     "Old format of --include-path-patterns option and config file setup include-path-patterns "
-                    "= ['inclusion pattern'] has been deprecated and will be removed in a future version. "
+                    "= ['inclusion pattern'] has been deprecated and will be removed in tartufo 4.x. "
                     "Make sure all the inclusions are set up using new pattern i.e. include-path-patterns = "
                     "[{path-pattern='inclusion pattern',reason='reason for inclusion'}] in the config file",
                     DeprecationWarning,
@@ -316,7 +318,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             if deprecated:
                 warnings.warn(
                     "Old format of --exclude-path-patterns option and config file setup exclude-path-patterns "
-                    "= ['exclusion pattern'] has been deprecated and will be removed in a future version. "
+                    "= ['exclusion pattern'] has been deprecated and will be removed in tartufo 4.x. "
                     "Make sure all the exclusions are set up using new pattern i.e. exclude-path-patterns = "
                     "[{path-pattern='exclusion pattern',reason='reason for exclusion'}] in the config file",
                     DeprecationWarning,
@@ -404,7 +406,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             if deprecated:
                 warnings.warn(
                     "Configuring exclude-signatures as string has been deprecated and support for this format will "
-                    "be removed in the future. Please make sure to update your exclude-signatures configuration to "
+                    "be removed in tartufo 4.x. Please update your exclude-signatures configuration to "
                     "an array of tables. For example: exclude-signatures = [{signature='signature', reason='The "
                     "reason of excluding the signature'}]",
                     DeprecationWarning,
