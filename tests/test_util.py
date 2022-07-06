@@ -131,10 +131,14 @@ class OutputTests(unittest.TestCase):
     def test_echo_result_outputs_compact_format(self, mock_click, mock_scanner):
         options = generate_options(GlobalOptions, verbose=0, output_format="compact")
         issue1 = scanner.Issue(
-            types.IssueType.Entropy, "foo", types.Chunk("fullfoobar", "/what/foo", {})
+            types.IssueType.Entropy,
+            "foo",
+            types.Chunk("fullfoobar", "/what/foo", {}, False),
         )
         issue2 = scanner.Issue(
-            types.IssueType.RegEx, "bar", types.Chunk("fullfoobar", "/what/bar", {})
+            types.IssueType.RegEx,
+            "bar",
+            types.Chunk("fullfoobar", "/what/bar", {}, False),
         )
         issue2.issue_detail = "Meets the bar"
         mock_scanner.scan.return_value = (issue1, issue2)
@@ -242,10 +246,10 @@ class OutputTests(unittest.TestCase):
     ):
         mock_time.now.return_value.isoformat.return_value = "now:now:now"
         issue_1 = scanner.Issue(
-            types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {})
+            types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {}, False)
         )
         issue_2 = scanner.Issue(
-            types.IssueType.RegEx, "bar", types.Chunk("foo", "/bar", {})
+            types.IssueType.RegEx, "bar", types.Chunk("foo", "/bar", {}, False)
         )
         mock_scanner.scan.return_value = (issue_1, issue_2)
         mock_scanner.excluded_paths = []
@@ -300,10 +304,10 @@ class OutputTests(unittest.TestCase):
     ):
         mock_time.now.return_value.isoformat.return_value = "now:now:now"
         issue_1 = scanner.Issue(
-            types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {})
+            types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {}, False)
         )
         issue_2 = scanner.Issue(
-            types.IssueType.RegEx, "bar", types.Chunk("foo", "/bar", {})
+            types.IssueType.RegEx, "bar", types.Chunk("foo", "/bar", {}, False)
         )
         mock_scanner.scan.return_value = (issue_1, issue_2)
         mock_scanner.excluded_paths = [

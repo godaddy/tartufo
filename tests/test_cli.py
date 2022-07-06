@@ -94,7 +94,7 @@ class ProcessIssuesTest(unittest.TestCase):
     ):
         mock_scanner.return_value.scan.return_value = [
             scanner.Issue(
-                types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {})
+                types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {}, False)
             )
         ]
         mock_dt.now.return_value.isoformat.return_value = "nownownow"
@@ -123,7 +123,7 @@ class ProcessIssuesTest(unittest.TestCase):
     ):
         mock_scanner.return_value.scan.return_value = [
             scanner.Issue(
-                types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {})
+                types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {}, False)
             )
         ]
         mock_dt.now.return_value.isoformat.return_value = "now:now:now"
@@ -147,7 +147,7 @@ class ProcessIssuesTest(unittest.TestCase):
     ):
         mock_scanner.return_value.scan.return_value = [
             scanner.Issue(
-                types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {})
+                types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {}, False)
             )
         ]
         runner = CliRunner()
@@ -175,7 +175,7 @@ class ProcessIssuesTest(unittest.TestCase):
     ):
         mock_scanner.return_value.scan.return_value = [
             scanner.Issue(
-                types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {})
+                types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {}, False)
             )
         ]
         runner = CliRunner()
@@ -201,7 +201,7 @@ class ProcessIssuesTest(unittest.TestCase):
     ):
         mock_scanner.return_value.scan.return_value = [
             scanner.Issue(
-                types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {})
+                types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {}, False)
             )
         ]
         mock_scanner.return_value.issue_count = 1
