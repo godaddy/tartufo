@@ -1,4 +1,4 @@
-Unreleased
+v3.2.0 - 6 July 2022
 ----------------------
 
 Bug fixes:
