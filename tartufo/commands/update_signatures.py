@@ -84,6 +84,7 @@ def main(
             util.style_warning("No signatures found in configuration, exiting..."), ctx
         )
 
+    updated = 0
     stdout = io.StringIO()
     stderr = io.StringIO()
     deprecations = set()
@@ -115,12 +116,13 @@ def main(
             deprecations.add(match.groups())
 
     click.echo(f"Found {len(deprecations)} unique deprecated signatures.")
-    for (i, (old_sig, new_sig)) in enumerate(deprecations):
+    for old_sig, new_sig in deprecations:
         targets = functools.partial(lambda o, s: o == s["signature"], old_sig)
         # Iterate all the deprecations and update them everywhere
         # they are found in the exclude-signatures section of config
         for target_signature in filter(targets, config_data["exclude_signatures"]):
-            click.echo(f"{i + 1}) Updating {old_sig!r} -> {new_sig!r}")
+            updated += 1
+            click.echo(f"{updated}) Updating {old_sig!r} -> {new_sig!r}")
             target_signature["signature"] = new_sig
 
     # Read the current config, for clean overwrite
@@ -134,6 +136,9 @@ def main(
 
     with open(str(config_path), "w") as file:
         file.write(tomlkit.dumps(result))
+
+    if deprecations:
+        click.echo(f"Updated {updated} total deprecated signatures.")
 
     # We would have failed earlier so this assert is safe
     assert scanner is not None
