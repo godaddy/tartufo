@@ -1,4 +1,5 @@
 import contextlib
+import functools
 import io
 import pathlib
 import re
@@ -115,22 +116,24 @@ def main(
 
     click.echo(f"Found {len(deprecations)} unique deprecated signatures.")
     for (i, (old_sig, new_sig)) in enumerate(deprecations):
-        for target_signature in filter(
-            lambda s: s["signature"] == old_sig, config_data["exclude_signatures"]
-        ):
-            # Iterate all the deprecations and update them everywhere
-            # they are found in the exclude-signatures section of config
+        targets = functools.partial(lambda o, s: o == s["signature"], old_sig)
+        # Iterate all the deprecations and update them everywhere
+        # they are found in the exclude-signatures section of config
+        for target_signature in filter(targets, config_data["exclude_signatures"]):
             click.echo(f"{i + 1}) Updating {old_sig!r} -> {new_sig!r}")
             target_signature["signature"] = new_sig
 
     # Read the current config, for clean overwrite
-    with open(str(config_path), "r") as f:
-        result = tomlkit.loads(f.read())
+    with open(str(config_path), "r") as file:
+        result = tomlkit.loads(file.read())
 
     # Assign the new signatures and write it to the config
-    result["tool"]["tartufo"]["exclude-signatures"] = config_data["exclude_signatures"]
-    with open(str(config_path), "w") as f:
-        f.write(tomlkit.dumps(result))
+    result["tool"]["tartufo"]["exclude-signatures"] = config_data[  # type: ignore
+        "exclude_signatures"
+    ]
+
+    with open(str(config_path), "w") as file:
+        file.write(tomlkit.dumps(result))
 
     # We would have failed earlier so this assert is safe
     assert scanner is not None
