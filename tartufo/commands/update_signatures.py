@@ -12,18 +12,31 @@ from tartufo import types, util
 from tartufo.config import load_config_from_path
 from tartufo.scanner import GitRepoScanner
 
+DeprecationSetT = t.MutableSet[t.Sequence[str]]
 
-def _scan_local_repo(
+
+def scan_local_repo(
     options: types.GlobalOptions,
     repo_path: str,
     since_commit: t.Optional[str],
     max_depth: int,
     branch: t.Optional[str],
     include_submodules: bool,
-) -> t.Union[GitRepoScanner, None]:
-    """We had to duplicate the scan local repo command callback, to
-    alter the exception logic a bit and prevent swallowing errors.
+) -> t.Tuple[t.Optional[GitRepoScanner], io.StringIO, io.StringIO]:
+    """A reworked version of the scan-local-repo command.
+
+    :param options: The options provided to the top-level tartufo command
+    :param repo_path: The local filesystem path pointing to the repository
+    :param since_commit: A commit hash to treat as a starting point in history for the scan
+    :param max_depth: A maximum depth, or maximum number of commits back in history, to scan
+    :param branch: A specific branch to scan
+    :param include_submodules: Whether to also scan submodules of the repository
+    :returns: The number of items replaced in config_data
     """
+    stdout = io.StringIO()
+    stderr = io.StringIO()
+    scanner = None
+
     git_options = types.GitOptions(
         since_commit=since_commit,
         max_depth=max_depth,
@@ -31,18 +44,84 @@ def _scan_local_repo(
         include_submodules=include_submodules,
     )
 
-    try:
-        scanner = GitRepoScanner(options, git_options, str(repo_path))
-        util.process_issues(repo_path, scanner, options)
-    except types.GitLocalException:
-        message = f"{repo_path} is not a valid git repository."
-        click.echo(util.style_error(message), err=True)
-        return None
-    except types.TartufoException as exc:
-        click.echo(util.style_error(str(exc)), err=True)
-        return None
+    with contextlib.redirect_stdout(stdout):
+        with contextlib.redirect_stderr(stderr):
+            try:
+                scanner = GitRepoScanner(options, git_options, str(repo_path))
+                util.process_issues(repo_path, scanner, options)
+            except types.GitLocalException:
+                message = f"{repo_path} is not a valid git repository."
+                click.echo(util.style_error(message), err=True)
+            except types.TartufoException as exc:
+                click.echo(util.style_error(str(exc)), err=True)
 
-    return scanner
+    return scanner, stdout, stderr
+
+
+def get_deprecations(stderr: io.StringIO) -> DeprecationSetT:
+    """Finds the deprecated signatures from the given input.
+
+    :param stderr: Stderr output from the scan-local-repo subcommand
+    :returns: A set of tuples each containing the old and new signature
+    """
+    deprecations: DeprecationSetT = set()
+    deprecation_rgx = re.compile(
+        r"DeprecationWarning: Signature (\w+) was.*use signature (\w+) instead\."
+    )
+
+    # Start at the beginning of the buffer
+    stderr.seek(0)
+    for line in stderr:
+        match = deprecation_rgx.search(line)
+
+        if match:
+            # This line had a deprecation warning
+            deprecations.add(match.groups())
+
+    return deprecations
+
+
+def update_signatures(
+    deprecations: DeprecationSetT, config_data: t.MutableMapping[str, t.Any]
+) -> int:
+    """Update the old deprecated signatures with the new signatures.
+
+    :param deprecations: The deprecated, and replacement signatures
+    :param config_data: The current tartufo config data
+    :returns: The number of items replaced in config_data
+    """
+    updated = 0
+
+    for old_sig, new_sig in deprecations:
+        targets = functools.partial(lambda o, s: o == s["signature"], old_sig)
+        # Iterate all the deprecations and update them everywhere
+        # they are found in the exclude-signatures section of config
+        for target_signature in filter(targets, config_data["exclude_signatures"]):
+            updated += 1
+            click.echo(f"{updated}) Updating {old_sig!r} -> {new_sig!r}")
+            target_signature["signature"] = new_sig
+
+    return updated
+
+
+def write_updated_signatures(
+    config_path: pathlib.Path, config_data: t.MutableMapping[str, t.Any]
+) -> None:
+    """Read the current config and update it with the new data.
+
+    :param config_path: The path to the tartufo config file
+    :param config_data: The updated config data
+    """
+    with open(str(config_path), "r") as file:
+        result = tomlkit.loads(file.read())
+
+    # Assign the new signatures and write it to the config
+    result["tool"]["tartufo"]["exclude-signatures"] = config_data[  # type: ignore
+        "exclude_signatures"
+    ]
+
+    with open(str(config_path), "w") as file:
+        file.write(tomlkit.dumps(result))
 
 
 @click.command("update-signatures")
@@ -84,20 +163,9 @@ def main(
             util.style_warning("No signatures found in configuration, exiting..."), ctx
         )
 
-    updated = 0
-    stdout = io.StringIO()
-    stderr = io.StringIO()
-    deprecations = set()
-    deprecation_rgx = re.compile(
-        r"DeprecationWarning: Signature (\w+) was.*use signature (\w+) instead\."
+    scanner, stdout, stderr = scan_local_repo(
+        options, repo_path, since_commit, max_depth, branch, include_submodules
     )
-
-    with contextlib.redirect_stdout(stdout):
-        with contextlib.redirect_stderr(stderr):
-            # Deprecation warnings are printed to stderr
-            scanner = _scan_local_repo(
-                options, repo_path, since_commit, max_depth, branch, include_submodules
-            )
 
     del stdout  # We are discarding stdout from the scan-local-repo command
     # Should we print it to the user instead?
@@ -106,36 +174,11 @@ def main(
         # Explicitly fail if we didn't get a scanner back
         util.fail(util.style_error("Unable to update signatures"), ctx)
 
-    # Start at the beginning of the buffer
-    stderr.seek(0)
-    for line in stderr:
-        match = deprecation_rgx.search(line)
-
-        if match:
-            # This line had a deprecation warning
-            deprecations.add(match.groups())
-
+    deprecations = get_deprecations(stderr)
     click.echo(f"Found {len(deprecations)} unique deprecated signatures.")
-    for old_sig, new_sig in deprecations:
-        targets = functools.partial(lambda o, s: o == s["signature"], old_sig)
-        # Iterate all the deprecations and update them everywhere
-        # they are found in the exclude-signatures section of config
-        for target_signature in filter(targets, config_data["exclude_signatures"]):
-            updated += 1
-            click.echo(f"{updated}) Updating {old_sig!r} -> {new_sig!r}")
-            target_signature["signature"] = new_sig
 
-    # Read the current config, for clean overwrite
-    with open(str(config_path), "r") as file:
-        result = tomlkit.loads(file.read())
-
-    # Assign the new signatures and write it to the config
-    result["tool"]["tartufo"]["exclude-signatures"] = config_data[  # type: ignore
-        "exclude_signatures"
-    ]
-
-    with open(str(config_path), "w") as file:
-        file.write(tomlkit.dumps(result))
+    updated = update_signatures(deprecations, config_data)
+    write_updated_signatures(config_path, config_data)
 
     if deprecations:
         click.echo(f"Updated {updated} total deprecated signatures.")
