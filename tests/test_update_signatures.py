@@ -239,10 +239,6 @@ class UpdateSignaturesTests(TestCase):
         with open(file_name, "w") as config_file:
             config_file.write(initial_file_content)
 
-        with open(file_name, "r") as config_file:
-            file_content = config_file.read()
-            self.assertEqual(initial_file_content, file_content)
-
         update_signatures.replace_deprecated_signatures(
             expected_deprecations, config_data
         )
