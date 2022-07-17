@@ -3,7 +3,14 @@ import functools
 import io
 import pathlib
 import re
-import typing as t
+from typing import (
+    Any,
+    MutableMapping,
+    MutableSet,
+    Optional,
+    Sequence,
+    Tuple,
+)
 
 import click
 import tomlkit
@@ -12,17 +19,17 @@ from tartufo import types, util
 from tartufo.config import load_config_from_path
 from tartufo.scanner import GitRepoScanner
 
-DeprecationSetT = t.MutableSet[t.Sequence[str]]
+DeprecationSetT = MutableSet[Sequence[str]]
 
 
 def scan_local_repo(
     options: types.GlobalOptions,
     repo_path: str,
-    since_commit: t.Optional[str],
+    since_commit: Optional[str],
     max_depth: int,
-    branch: t.Optional[str],
+    branch: Optional[str],
     include_submodules: bool,
-) -> t.Tuple[t.Optional[GitRepoScanner], io.StringIO, io.StringIO]:
+) -> Tuple[Optional[GitRepoScanner], io.StringIO, io.StringIO]:
     """A reworked version of the scan-local-repo command.
 
     :param options: The options provided to the top-level tartufo command
@@ -81,8 +88,8 @@ def get_deprecations(stderr: io.StringIO) -> DeprecationSetT:
     return deprecations
 
 
-def update_signatures(
-    deprecations: DeprecationSetT, config_data: t.MutableMapping[str, t.Any]
+def replace_deprecated_signatures(
+    deprecations: DeprecationSetT, config_data: MutableMapping[str, Any]
 ) -> int:
     """Update the old deprecated signatures with the new signatures.
 
@@ -105,9 +112,9 @@ def update_signatures(
 
 
 def write_updated_signatures(
-    config_path: pathlib.Path, config_data: t.MutableMapping[str, t.Any]
+    config_path: pathlib.Path, config_data: MutableMapping[str, Any]
 ) -> None:
-    """Read the current config and update it with the new data.
+    """Read the current config file and update it with the new data.
 
     :param config_path: The path to the tartufo config file
     :param config_data: The updated config data
@@ -151,16 +158,18 @@ def main(
     ctx: click.Context,
     options: types.GlobalOptions,
     repo_path: str,
-    since_commit: t.Optional[str],
+    since_commit: Optional[str],
     max_depth: int,
-    branch: t.Optional[str],
+    branch: Optional[str],
     include_submodules: bool,
 ) -> GitRepoScanner:
-    """Scan a local repository and update any deprecated signatures."""
+    """Update deprecated signatures for a local repository."""
     config_path, config_data = load_config_from_path(pathlib.Path(repo_path))
     if not config_data.get("exclude_signatures"):
         util.fail(
-            util.style_warning("No signatures found in configuration, exiting..."), ctx
+            util.style_warning("No signatures found in configuration, exiting..."),
+            ctx,
+            code=0,
         )
 
     scanner, stdout, stderr = scan_local_repo(
@@ -176,11 +185,10 @@ def main(
 
     deprecations = get_deprecations(stderr)
     click.echo(f"Found {len(deprecations)} unique deprecated signatures.")
-
-    updated = update_signatures(deprecations, config_data)
-    write_updated_signatures(config_path, config_data)
+    updated = replace_deprecated_signatures(deprecations, config_data)
 
     if deprecations:
+        write_updated_signatures(config_path, config_data)
         click.echo(f"Updated {updated} total deprecated signatures.")
 
     # We would have failed earlier so this assert is safe
