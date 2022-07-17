@@ -135,7 +135,7 @@ class UpdateSignaturesTests(TestCase):
                 "1) Updating '456' -> 'def'\n"
                 "2) Updating '123' -> 'abc'\n"
                 "Updated 2 total deprecated signatures.\n"
-            )
+            ),
         )
 
     @mock.patch("tartufo.commands.update_signatures.write_updated_signatures")
