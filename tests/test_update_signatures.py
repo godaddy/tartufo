@@ -4,7 +4,6 @@ from os import remove
 from pathlib import Path
 from typing import Sequence, Set
 
-
 from unittest import mock, TestCase
 import tomlkit
 from click.testing import CliRunner
