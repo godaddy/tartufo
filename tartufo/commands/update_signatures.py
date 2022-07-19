@@ -29,7 +29,7 @@ def scan_local_repo(
     max_depth: int,
     branch: Optional[str],
     include_submodules: bool,
-) -> Tuple[Optional[GitRepoScanner], io.StringIO, io.StringIO]:
+) -> Tuple[Optional[GitRepoScanner], io.StringIO]:
     """A reworked version of the scan-local-repo command.
 
     :param options: The options provided to the top-level tartufo command
@@ -62,7 +62,8 @@ def scan_local_repo(
             except types.TartufoException as exc:
                 click.echo(util.style_error(str(exc)), err=True)
 
-    return scanner, stdout, stderr
+    del stdout
+    return scanner, stderr
 
 
 def get_deprecations(stderr: io.StringIO) -> DeprecationSetT:
@@ -105,7 +106,7 @@ def replace_deprecated_signatures(
         # they are found in the exclude-signatures section of config
         for target_signature in filter(targets, config_data["exclude_signatures"]):
             updated += 1
-            click.echo(f"{updated}) Updating {old_sig!r} -> {new_sig!r}")
+            click.echo(f"{updated}) {old_sig!r} -> {new_sig!r}")
             target_signature["signature"] = new_sig
 
     return updated
@@ -131,6 +132,27 @@ def write_updated_signatures(
         file.write(tomlkit.dumps(result))
 
 
+def remove_duplicated_entries(config_data: MutableMapping[str, Any]) -> int:
+    """Removed any duplicated signature entries in the config.
+    Keeps the first instance of each duplicate.
+
+    :param config_data: The config data to check for duplicates
+    """
+    seen = set()
+    count = 0
+
+    for i, exclude in enumerate(config_data["exclude_signatures"].copy()):
+        if exclude["signature"] in seen:
+            # Remove this duplicated signature
+            del config_data["exclude_signatures"][i]
+            count += 1
+        else:
+            # Mark this signature as seen
+            seen.add(exclude["signature"])
+
+    return count
+
+
 @click.command("update-signatures")
 @click.option("--since-commit", help="Only scan from a given commit hash.", hidden=True)
 @click.option(
@@ -152,6 +174,20 @@ def write_updated_signatures(
     show_default=True,
     help="Controls whether the contents of git submodules are scanned",
 )
+@click.option(
+    "--update-configuration/--no-update-configuration",
+    is_flag=True,
+    default=True,
+    show_default=True,
+    help="Whether or not to overwrite the tartufo config file.",
+)
+@click.option(
+    "--remove-duplicates/--no-remove-duplicates",
+    is_flag=True,
+    default=True,
+    show_default=True,
+    help="Whether or not to remove duplicated signatures.",
+)
 @click.pass_obj
 @click.pass_context
 def main(
@@ -162,6 +198,8 @@ def main(
     max_depth: int,
     branch: Optional[str],
     include_submodules: bool,
+    update_configuration: bool,
+    remove_duplicates: bool,
 ) -> GitRepoScanner:
     """Update deprecated signatures for a local repository."""
     config_path, config_data = load_config_from_path(pathlib.Path(repo_path))
@@ -172,12 +210,9 @@ def main(
             code=0,
         )
 
-    scanner, stdout, stderr = scan_local_repo(
+    scanner, stderr = scan_local_repo(
         options, repo_path, since_commit, max_depth, branch, include_submodules
     )
-
-    del stdout  # We are discarding stdout from the scan-local-repo command
-    # Should we print it to the user instead?
 
     if not scanner:
         # Explicitly fail if we didn't get a scanner back
@@ -187,10 +222,16 @@ def main(
     click.echo(f"Found {len(deprecations)} unique deprecated signatures.")
     updated = replace_deprecated_signatures(deprecations, config_data)
 
-    if deprecations:
-        write_updated_signatures(config_path, config_data)
-        click.echo(f"Updated {updated} total deprecated signatures.")
+    dups = 0
+    if remove_duplicates:
+        dups = remove_duplicated_entries(config_data)
 
-    # We would have failed earlier so this assert is safe
-    assert scanner is not None
+    if update_configuration and (deprecations or dups):
+        # Only rewrite the config if we have altered it
+        write_updated_signatures(config_path, config_data)
+        plural = lambda n: "" if n == 1 else "s"
+
+        click.echo(f"Removed {dups} duplicated signature{plural(dups)}.")
+        click.echo(f"Updated {updated} total deprecated signature{plural(updated)}.")
+
     return scanner

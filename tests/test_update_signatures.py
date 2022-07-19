@@ -50,7 +50,7 @@ class UpdateSignaturesTests(TestCase):
     def test_update_signatures_when_scanner_is_none(
         self, mock_load_config: mock.MagicMock, mock_scan_local: mock.MagicMock
     ) -> None:
-        mock_scan_local.return_value = None, "a", "b"
+        mock_scan_local.return_value = None, "b"
         mock_load_config.return_value = Path("."), {
             "exclude_signatures": [{"signature": "a"}]
         }
@@ -64,6 +64,70 @@ class UpdateSignaturesTests(TestCase):
         self.assertGreater(result.exit_code, 0)
         self.assertEqual(result.output, "Unable to update signatures\n")
 
+    @mock.patch("tartufo.commands.update_signatures.write_updated_signatures")
+    @mock.patch("tartufo.commands.update_signatures.get_deprecations")
+    @mock.patch("tartufo.commands.update_signatures.remove_duplicated_entries")
+    @mock.patch("tartufo.commands.update_signatures.scan_local_repo")
+    @mock.patch("tartufo.commands.update_signatures.load_config_from_path")
+    def test_when_no_remove_duplicates(
+        self,
+        mock_load_config: mock.MagicMock,
+        mock_scan_local: mock.MagicMock,
+        mock_remove_dups: mock.MagicMock,
+        mock_get_deprecations: mock.MagicMock,
+        mock_write: mock.MagicMock,
+    ) -> None:
+        mock_scanner = mock.MagicMock()
+        mock_write.return_value = None
+        mock_get_deprecations.return_value = {("123", "abc"), ("456", "def")}
+        mock_scan_local.return_value = mock_scanner, "b"
+        mock_load_config.return_value = Path("."), {
+            "exclude_signatures": [{"signature": "a"}]
+        }
+
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            runner.invoke(
+                cli.main, ["update-signatures", ".", "--no-remove-duplicates"]
+            )
+
+        mock_get_deprecations.assert_called_once()
+        mock_remove_dups.assert_not_called()
+        mock_scan_local.assert_called_once()
+        mock_load_config.assert_called_once()
+        mock_write.assert_called_once()
+
+    @mock.patch("tartufo.commands.update_signatures.write_updated_signatures")
+    @mock.patch("tartufo.commands.update_signatures.get_deprecations")
+    @mock.patch("tartufo.commands.update_signatures.remove_duplicated_entries")
+    @mock.patch("tartufo.commands.update_signatures.scan_local_repo")
+    @mock.patch("tartufo.commands.update_signatures.load_config_from_path")
+    def test_when_remove_duplicates(
+        self,
+        mock_load_config: mock.MagicMock,
+        mock_scan_local: mock.MagicMock,
+        mock_remove_dups: mock.MagicMock,
+        mock_get_deprecations: mock.MagicMock,
+        mock_write: mock.MagicMock,
+    ) -> None:
+        mock_scanner = mock.MagicMock()
+        mock_scan_local.return_value = mock_scanner, "b"
+        mock_write.return_value = None
+        mock_get_deprecations.return_value = {("123", "abc"), ("456", "def")}
+        mock_load_config.return_value = Path("."), {
+            "exclude_signatures": [{"signature": "a"}]
+        }
+
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            runner.invoke(cli.main, ["update-signatures", "."])
+
+        mock_get_deprecations.assert_called_once()
+        mock_remove_dups.assert_called_once()
+        mock_scan_local.assert_called_once()
+        mock_load_config.assert_called_once()
+        mock_write.assert_called_once()
+
     @mock.patch("tartufo.commands.update_signatures.types.GlobalOptions")
     @mock.patch("tartufo.commands.update_signatures.util.process_issues")
     def test_scan_local_with_git_local_exc(
@@ -71,7 +135,7 @@ class UpdateSignaturesTests(TestCase):
     ) -> None:
         mock_process_issues.side_effect = types.GitLocalException()
 
-        scanner, _, stderr = update_signatures.scan_local_repo(
+        scanner, stderr = update_signatures.scan_local_repo(
             mock_global_options, ".", None, 1, None, False
         )
 
@@ -85,7 +149,7 @@ class UpdateSignaturesTests(TestCase):
     ) -> None:
         mock_process_issues.side_effect = types.TartufoException("TARTUFO EXC")
 
-        scanner, _, stderr = update_signatures.scan_local_repo(
+        scanner, stderr = update_signatures.scan_local_repo(
             mock_global_options, ".", None, 1, None, False
         )
 
@@ -108,7 +172,6 @@ class UpdateSignaturesTests(TestCase):
         mock_get_deprecations.return_value = {("123", "abc"), ("456", "def")}
         mock_scan_local.return_value = (
             mock_scanner,
-            "",
             (
                 "DeprecationWarning: Signature 123 was ... use signature abc instead.\n"
                 "DeprecationWarning: Signature 456 was ... use signature def instead."
@@ -131,9 +194,66 @@ class UpdateSignaturesTests(TestCase):
             result.output,
             (
                 "Found 2 unique deprecated signatures.\n"
-                "1) Updating '456' -> 'def'\n"
-                "2) Updating '123' -> 'abc'\n"
+                "1) '456' -> 'def'\n"
+                "2) '123' -> 'abc'\n"
+                "Removed 0 duplicated signatures.\n"
                 "Updated 2 total deprecated signatures.\n"
+            ),
+        )
+
+    @mock.patch("tartufo.commands.update_signatures.write_updated_signatures")
+    @mock.patch("tartufo.commands.update_signatures.get_deprecations")
+    @mock.patch("tartufo.commands.update_signatures.scan_local_repo")
+    @mock.patch("tartufo.commands.update_signatures.load_config_from_path")
+    def test_found_output_with_duplicated_signatures(
+        self,
+        mock_load_config: mock.MagicMock,
+        mock_scan_local: mock.MagicMock,
+        mock_get_deprecations: mock.MagicMock,
+        mock_write: mock.MagicMock,
+    ) -> None:
+        mock_scanner = mock.MagicMock()
+        mock_write.return_value = None
+        mock_get_deprecations.return_value = {
+            ("123", "abc"),
+            ("456", "def"),
+            ("789", "abc"),
+        }
+
+        mock_scan_local.return_value = (
+            mock_scanner,
+            (
+                "DeprecationWarning: Signature 123 was ... use signature abc instead.\n"
+                "DeprecationWarning: Signature 456 was ... use signature def instead.\n"
+                "DeprecationWarning: Signature 789 was ... use signature abc instead."
+            ),
+        )
+
+        mock_load_config.return_value = Path("."), {
+            "exclude_signatures": [
+                {"signature": "123"},
+                {"signature": "456"},
+                {"signature": "789"},
+            ]
+        }
+
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli.main, ["update-signatures", "."])
+
+        mock_write.assert_called_once()
+        mock_get_deprecations.assert_called_once()
+        mock_scan_local.assert_called_once()
+        mock_load_config.assert_called_once()
+        self.assertEqual(
+            result.output,
+            (
+                "Found 3 unique deprecated signatures.\n"
+                "1) '456' -> 'def'\n"
+                "2) '789' -> 'abc'\n"
+                "3) '123' -> 'abc'\n"
+                "Removed 1 duplicated signature.\n"
+                "Updated 3 total deprecated signatures.\n"
             ),
         )
 
@@ -154,7 +274,7 @@ class UpdateSignaturesTests(TestCase):
         mock_write.return_value = None
         mock_replace.return_value = 2
         mock_get_deprecations.return_value = {}
-        mock_scan_local.return_value = mock_scanner, "", ""
+        mock_scan_local.return_value = mock_scanner, ""
         mock_load_config.return_value = Path("."), {"exclude_signatures": "a"}
 
         runner = CliRunner()
@@ -165,6 +285,25 @@ class UpdateSignaturesTests(TestCase):
         mock_get_deprecations.assert_called_once()
         mock_scan_local.assert_called_once()
         self.assertEqual(result.output, "Found 0 unique deprecated signatures.\n")
+
+    def test_remove_duplicated_entries(self) -> None:
+        initial_data = {
+            "exclude_signatures": [
+                {"signature": "123", "reason": "first"},
+                {"signature": "123", "reason": "second"},
+                {"signature": "456"},
+            ]
+        }
+
+        expected_data = {
+            "exclude_signatures": [
+                {"signature": "123", "reason": "first"},
+                {"signature": "456"},
+            ]
+        }
+
+        update_signatures.remove_duplicated_entries(initial_data)
+        self.assertEqual(initial_data, expected_data)
 
     def test_get_deprecations_with_deprecations(self) -> None:
         expected_deprecations = {("123", "abc"), ("456", "def"), ("789", "ghi")}
