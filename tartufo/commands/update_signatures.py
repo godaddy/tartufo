@@ -218,8 +218,10 @@ def main(
         # Explicitly fail if we didn't get a scanner back
         util.fail(util.style_error("Unable to update signatures"), ctx)
 
+    plural = lambda n: "" if n == 1 else "s"
     deprecations = get_deprecations(stderr)
-    click.echo(f"Found {len(deprecations)} unique deprecated signatures.")
+    ndeps = len(deprecations)
+    click.echo(f"Found {ndeps} deprecated signature{plural(ndeps)}.")
     updated = replace_deprecated_signatures(deprecations, config_data)
 
     dups = 0
@@ -229,9 +231,8 @@ def main(
     if update_configuration and (deprecations or dups):
         # Only rewrite the config if we have altered it
         write_updated_signatures(config_path, config_data)
-        plural = lambda n: "" if n == 1 else "s"
 
         click.echo(f"Removed {dups} duplicated signature{plural(dups)}.")
-        click.echo(f"Updated {updated} total deprecated signature{plural(updated)}.")
+        click.echo(f"Updated {updated} deprecated signature{plural(updated)}.")
 
     return scanner

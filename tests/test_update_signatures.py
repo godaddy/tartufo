@@ -43,7 +43,7 @@ class UpdateSignaturesTests(TestCase):
 
         mock_scanner.assert_called_once()
         mock_load_config.assert_called_once()
-        self.assertEqual(result.output, "Found 0 unique deprecated signatures.\n")
+        self.assertEqual(result.output, "Found 0 deprecated signatures.\n")
 
     @mock.patch("tartufo.commands.update_signatures.scan_local_repo")
     @mock.patch("tartufo.commands.update_signatures.load_config_from_path")
@@ -191,7 +191,7 @@ class UpdateSignaturesTests(TestCase):
         mock_scan_local.assert_called_once()
         mock_load_config.assert_called_once()
         self.assertTrue(
-            result.output.startswith("Found 2 unique deprecated signatures.\n")
+            result.output.startswith("Found 2 deprecated signatures.\n")
         )
 
         # The numbers before the paren can vary so we leave them out of the test
@@ -199,7 +199,7 @@ class UpdateSignaturesTests(TestCase):
         self.assertTrue(") '456' -> 'def'\n" in result.output)
         self.assertTrue("Removed 0 duplicated signatures.\n" in result.output)
         self.assertTrue(
-            result.output.endswith("Updated 2 total deprecated signatures.\n")
+            result.output.endswith("Updated 2 deprecated signatures.\n")
         )
 
     @mock.patch("tartufo.commands.update_signatures.write_updated_signatures")
@@ -247,7 +247,7 @@ class UpdateSignaturesTests(TestCase):
         mock_scan_local.assert_called_once()
         mock_load_config.assert_called_once()
         self.assertTrue(
-            result.output.startswith("Found 3 unique deprecated signatures.\n")
+            result.output.startswith("Found 3 deprecated signatures.\n")
         )
 
         # The numbers before the paren can vary so we leave them out of the test
@@ -256,7 +256,7 @@ class UpdateSignaturesTests(TestCase):
         self.assertTrue(") '789' -> 'abc'\n" in result.output)
         self.assertTrue("Removed 1 duplicated signature.\n" in result.output)
         self.assertTrue(
-            result.output.endswith("Updated 3 total deprecated signatures.\n")
+            result.output.endswith("Updated 3 deprecated signatures.\n")
         )
 
     @mock.patch("tartufo.commands.update_signatures.write_updated_signatures")
@@ -286,7 +286,7 @@ class UpdateSignaturesTests(TestCase):
         mock_replace.assert_called_once()
         mock_get_deprecations.assert_called_once()
         mock_scan_local.assert_called_once()
-        self.assertEqual(result.output, "Found 0 unique deprecated signatures.\n")
+        self.assertEqual(result.output, "Found 0 deprecated signatures.\n")
 
     def test_remove_duplicated_entries(self) -> None:
         initial_data = {
