@@ -166,7 +166,7 @@ exclude-signatures in your tartufo config file, and removes any resulting duplic
 Use ``--no-update-configuration`` to prevent ``tartufo`` from overwriting your config.
 Use ``--no-remove-duplicates`` to prevent ``tartufo`` from removing duplicate signatures.
 
-When removing duplicate signatures, ``tartufo`` will keep the first signature it finds
+When removing duplicate signatures ``tartufo`` will keep the first signature it finds
 and discard the rest.
 
 External Rules Files
