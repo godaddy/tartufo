@@ -190,17 +190,13 @@ class UpdateSignaturesTests(TestCase):
         mock_get_deprecations.assert_called_once()
         mock_scan_local.assert_called_once()
         mock_load_config.assert_called_once()
-        self.assertTrue(
-            result.output.startswith("Found 2 deprecated signatures.\n")
-        )
+        self.assertTrue(result.output.startswith("Found 2 deprecated signatures.\n"))
 
         # The numbers before the paren can vary so we leave them out of the test
         self.assertTrue(") '123' -> 'abc'\n" in result.output)
         self.assertTrue(") '456' -> 'def'\n" in result.output)
         self.assertTrue("Removed 0 duplicated signatures.\n" in result.output)
-        self.assertTrue(
-            result.output.endswith("Updated 2 deprecated signatures.\n")
-        )
+        self.assertTrue(result.output.endswith("Updated 2 deprecated signatures.\n"))
 
     @mock.patch("tartufo.commands.update_signatures.write_updated_signatures")
     @mock.patch("tartufo.commands.update_signatures.get_deprecations")
@@ -246,18 +242,14 @@ class UpdateSignaturesTests(TestCase):
         mock_get_deprecations.assert_called_once()
         mock_scan_local.assert_called_once()
         mock_load_config.assert_called_once()
-        self.assertTrue(
-            result.output.startswith("Found 3 deprecated signatures.\n")
-        )
+        self.assertTrue(result.output.startswith("Found 3 deprecated signatures.\n"))
 
         # The numbers before the paren can vary so we leave them out of the test
         self.assertTrue(") '123' -> 'abc'\n" in result.output)
         self.assertTrue(") '456' -> 'def'\n" in result.output)
         self.assertTrue(") '789' -> 'abc'\n" in result.output)
         self.assertTrue("Removed 1 duplicated signature.\n" in result.output)
-        self.assertTrue(
-            result.output.endswith("Updated 3 deprecated signatures.\n")
-        )
+        self.assertTrue(result.output.endswith("Updated 3 deprecated signatures.\n"))
 
     @mock.patch("tartufo.commands.update_signatures.write_updated_signatures")
     @mock.patch("tartufo.commands.update_signatures.replace_deprecated_signatures")
