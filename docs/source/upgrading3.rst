@@ -154,6 +154,18 @@ Deprecated Options
 required at this time, replacing these options with their newer equivalents will
 reduce future disruptions when they are retired.
 
+Updating Signatures
+-------------------
+
+``tartufo`` release 3.2.0 deprecated a number of signatures that were generated
+with the leading `+`/`-` from the git diff erroneously. These signatures will no
+longer work in release 4. An additional command ``tartufo update-signatures`` was
+added which scans a local repository, automatically updates the deprecated
+exclude-signatures in your tartufo config file, and removes any resulting duplicates.
+
+Use ``--no-update-configuration`` to prevent ``tartufo`` from overwriting your config.
+Use ``--no-remove-duplicates`` to prevent ``tartufo`` from removing duplicate signatures.
+
 External Rules Files
 ++++++++++++++++++++
 
