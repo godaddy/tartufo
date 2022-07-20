@@ -17,6 +17,7 @@ from typing import (
     Generator,
     List,
     Optional,
+    NoReturn,
     Tuple,
     TYPE_CHECKING,
     Pattern,
@@ -170,7 +171,7 @@ else:
     style_ok = style_error = style_warning = partial(_style_func)
 
 
-def fail(msg: str, ctx: click.Context, code: int = 1) -> None:
+def fail(msg: str, ctx: click.Context, code: int = 1) -> NoReturn:
     """Print out a styled error message and exit.
 
     :param msg: The message to print out to the user

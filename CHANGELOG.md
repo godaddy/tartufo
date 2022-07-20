@@ -1,3 +1,9 @@
+Unreleased
+----------------------
+
+Features:
+* [#368](https://github.com/godaddy/tartufo/pull/368) - Add update-signatures command to migrate deprecated signatures
+
 v3.2.0 - 6 July 2022
 ----------------------
 
