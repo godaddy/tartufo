@@ -38,7 +38,7 @@ def scan_local_repo(
     :param max_depth: A maximum depth, or maximum number of commits back in history, to scan
     :param branch: A specific branch to scan
     :param include_submodules: Whether to also scan submodules of the repository
-    :returns: A tuple containing optional scanner, stdout, and stderr from the scan
+    :returns: A tuple containing optional scanner, and stderr from the scan
     """
     stdout = io.StringIO()
     stderr = io.StringIO()
