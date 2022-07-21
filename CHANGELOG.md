@@ -1,3 +1,9 @@
+Unreleased
+----------------------
+
+Bug fixes:
+* [#372](https://github.com/godaddy/tartufo/pull/372) - Handle the case where exclude-signatures is a list of strings
+
 v3.2.1 - 20 July 2022
 ----------------------
 
