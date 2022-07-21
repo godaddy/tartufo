@@ -28,6 +28,17 @@ class UpdateSignaturesTests(TestCase):
             result.output, "No signatures found in configuration, exiting...\n"
         )
 
+    @mock.patch("tartufo.commands.update_signatures.load_config_from_path")
+    def test_with_no_config(self, mock_load_config: mock.MagicMock) -> None:
+        mock_load_config.side_effect = FileNotFoundError()
+
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli.main, ["update-signatures", "."])
+
+        mock_load_config.assert_called_once()
+        self.assertEqual(result.output, "No tartufo config found, exiting...\n")
+
     @mock.patch("tartufo.commands.update_signatures.GitRepoScanner")
     @mock.patch("tartufo.commands.update_signatures.load_config_from_path")
     def test_with_no_deprecated_signatures(
@@ -279,6 +290,19 @@ class UpdateSignaturesTests(TestCase):
         mock_get_deprecations.assert_called_once()
         mock_scan_local.assert_called_once()
         self.assertEqual(result.output, "Found 0 deprecated signatures.\n")
+
+    def test_replace_deprecated_with_list_of_strings(self) -> None:
+        deprecations: Set[Sequence[str]] = set()
+        deprecations.update((("123", "abc"), ("456", "def")))
+        config_data = {"exclude_signatures": ["123", "456"]}
+        expected_result = {"exclude_signatures": ["abc", "def"]}
+
+        count = update_signatures.replace_deprecated_signatures(
+            deprecations, config_data
+        )
+
+        self.assertEqual(count, 2)
+        self.assertEqual(config_data, expected_result)
 
     def test_remove_duplicated_entries(self) -> None:
         initial_data = {

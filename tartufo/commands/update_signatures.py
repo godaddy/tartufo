@@ -10,6 +10,7 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
+    Union,
 )
 
 import click
@@ -20,6 +21,18 @@ from tartufo.config import load_config_from_path
 from tartufo.scanner import GitRepoScanner
 
 DeprecationSetT = MutableSet[Sequence[str]]
+
+
+def unwrap_signature(data: Union[str, MutableMapping[str, str]]) -> str:
+    """Handles the case where a signature can be a string or a dict
+
+    :param data: The string, or dictionary to pull the signature from
+    :returns: The unwrapped signature
+    """
+    if isinstance(data, str):
+        return data
+
+    return data["signature"]
 
 
 def scan_local_repo(
@@ -101,13 +114,20 @@ def replace_deprecated_signatures(
     updated = 0
 
     for old_sig, new_sig in deprecations:
-        targets = functools.partial(lambda o, s: o == s["signature"], old_sig)
+        targets = functools.partial(lambda o, s: o == unwrap_signature(s), old_sig)
         # Iterate all the deprecations and update them everywhere
         # they are found in the exclude-signatures section of config
-        for target_signature in filter(targets, config_data["exclude_signatures"]):
+        for i, target_signature in enumerate(config_data["exclude_signatures"]):
+            if not targets(target_signature):
+                continue
+
             updated += 1
             click.echo(f"{updated}) {old_sig!r} -> {new_sig!r}")
-            target_signature["signature"] = new_sig
+
+            if isinstance(target_signature, str):
+                config_data["exclude_signatures"][i] = new_sig
+            else:
+                target_signature["signature"] = new_sig
 
     return updated
 
@@ -120,16 +140,18 @@ def write_updated_signatures(
     :param config_path: The path to the tartufo config file
     :param config_data: The updated config data
     """
-    with open(str(config_path), "r") as file:
-        result = tomlkit.loads(file.read())
+    with open(str(config_path), "r+") as file:
+        file_content = file.read()
+        result = tomlkit.loads(file_content)
+        file.seek(0)
 
-    # Assign the new signatures and write it to the config
-    result["tool"]["tartufo"]["exclude-signatures"] = config_data[  # type: ignore
-        "exclude_signatures"
-    ]
+        # Assign the new signatures and write it to the config
+        result["tool"]["tartufo"]["exclude-signatures"] = config_data[  # type: ignore
+            "exclude_signatures"
+        ]
 
-    with open(str(config_path), "w") as file:
         file.write(tomlkit.dumps(result))
+        file.truncate()
 
 
 def remove_duplicated_entries(config_data: MutableMapping[str, Any]) -> int:
@@ -138,17 +160,19 @@ def remove_duplicated_entries(config_data: MutableMapping[str, Any]) -> int:
 
     :param config_data: The config data to check for duplicates
     """
-    seen = set()
+    seen: MutableSet[str] = set()
     count = 0
 
-    for i, exclude in enumerate(config_data["exclude_signatures"].copy()):
-        if exclude["signature"] in seen:
+    for i, exclude in enumerate(config_data["exclude_signatures"]):
+        signature = unwrap_signature(exclude)
+
+        if signature in seen:
             # Remove this duplicated signature
-            del config_data["exclude_signatures"][i]
+            config_data["exclude_signatures"].pop(i)
             count += 1
         else:
             # Mark this signature as seen
-            seen.add(exclude["signature"])
+            seen.add(signature)
 
     return count
 
@@ -202,7 +226,15 @@ def main(
     remove_duplicates: bool,
 ) -> GitRepoScanner:
     """Update deprecated signatures for a local repository."""
-    config_path, config_data = load_config_from_path(pathlib.Path(repo_path))
+    try:
+        config_path, config_data = load_config_from_path(pathlib.Path(repo_path))
+    except FileNotFoundError:
+        util.fail(
+            util.style_warning("No tartufo config found, exiting..."),
+            ctx,
+            code=0,
+        )
+
     if not config_data.get("exclude_signatures"):
         util.fail(
             util.style_warning("No signatures found in configuration, exiting..."),
