@@ -104,7 +104,7 @@ def echo_result(
             )
     else:
         for issue in scanner.scan():
-            click.echo(bytes(issue))
+            click.echo(str(issue))
         if scanner.issue_count == 0:
             if not options.quiet:
                 click.echo(f"Time: {now}\nAll clear. No secrets detected.")
