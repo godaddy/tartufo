@@ -1,3 +1,12 @@
+v3.2.2 - 5 August 2022
+----------------------
+
+Bug fixes:
+* [#375](https://github.com/godaddy/tartufo/pull/376) - Update the "Password in URL" default_regexes.json to identify the following:
+  * usernames of lengths between 3-40
+  * passwords of length between 3-40 
+  * URL domain name, port, path, query parameters, and fragments of any length
+
 v3.2.1 - 20 July 2022
 ----------------------
 
