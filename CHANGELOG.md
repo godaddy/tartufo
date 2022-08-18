@@ -1,3 +1,11 @@
+Unreleased
+----------------------
+
+Bug fixes:
+* [#372](https://github.com/godaddy/tartufo/pull/372)
+  - [#371](https://github.com/godaddy/tartufo/issues/371) Handle the case where exclude-signatures is a list of strings
+  - [#373](https://github.com/godaddy/tartufo/issues/373) Pass a string to click.echo rather than bytes
+
 v3.2.1 - 20 July 2022
 ----------------------
 
