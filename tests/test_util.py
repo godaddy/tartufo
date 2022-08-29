@@ -115,13 +115,13 @@ class OutputTests(unittest.TestCase):
         mock_scanner.exclude_signatures = []
         mock_scanner.scan.return_value = (1, 2, 3, 4)
         util.echo_result(options, mock_scanner, "", "")
-        # Ensure that the issues are output as a byte stream
+
         mock_click.echo.assert_has_calls(
             [
-                mock.call(bytes(1)),
-                mock.call(bytes(2)),
-                mock.call(bytes(3)),
-                mock.call(bytes(4)),
+                mock.call(str(1)),
+                mock.call(str(2)),
+                mock.call(str(3)),
+                mock.call(str(4)),
             ]
         )
         self.assertEqual(mock_click.echo.call_count, 4)
