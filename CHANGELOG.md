@@ -2,6 +2,12 @@ Unreleased
 ----------------------
 
 Bug fixes:
+
+* [#375](https://github.com/godaddy/tartufo/pull/376) - Update the "Password in URL" default_regexes.json to identify the following:
+  * usernames of lengths between 3-40
+  * passwords of length between 3-40 
+  * URL domain name, port, path, query parameters, and fragments of any length
+
 * [#372](https://github.com/godaddy/tartufo/pull/372)
   - [#371](https://github.com/godaddy/tartufo/issues/371) Handle the case where exclude-signatures is a list of strings
   - [#373](https://github.com/godaddy/tartufo/issues/373) Pass a string to click.echo rather than bytes
