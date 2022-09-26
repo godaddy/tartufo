@@ -8,7 +8,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f
+    - uses: actions/checkout@e6d535c99c374d0c3f6d8cd8086a57b43c6c700a
     - name: Set up Python 3.7
       uses: actions/setup-python@3105fb18c05ddd93efea5f9e0bef7a03a6e9e7df
       with:
