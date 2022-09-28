@@ -20,7 +20,7 @@ RUN poetry build && /venv/bin/pip install dist/*.whl
 
 FROM base as final
 
-RUN apt-get update && apt-get install -y git openssh-client
+RUN apt-get update && apt-get upgrade -y && apt-get install -y git openssh-client
 COPY --from=builder /venv /venv
 COPY scripts/docker/gitconfig /root/.gitconfig
 
