@@ -122,6 +122,7 @@ class TartufoCLI(click.MultiCommand):
             types.OutputFormat.Json.value,
             types.OutputFormat.Compact.value,
             types.OutputFormat.Text.value,
+            types.OutputFormat.Report.value,
         ]
     ),
     default="text",

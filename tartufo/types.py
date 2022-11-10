@@ -40,6 +40,7 @@ class OutputFormat(enum.Enum):
     Text = "text"  # pylint: disable=invalid-name
     Json = "json"  # pylint: disable=invalid-name
     Compact = "compact"  # pylint: disable=invalid-name
+    Report = "report"  # pylint: disable=invalid-name
 
 
 @dataclass
