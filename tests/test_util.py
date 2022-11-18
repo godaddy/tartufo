@@ -5,6 +5,8 @@ import re
 import unittest
 from pathlib import Path
 from unittest import mock
+from unittest.mock import call
+import pytest
 
 import git
 
@@ -12,6 +14,16 @@ from tartufo import scanner, types, util
 from tartufo.types import GlobalOptions, Rule, MatchType, Scope
 
 from tests.helpers import generate_options
+
+try:
+    from importlib import metadata  # type: ignore
+
+    importlib_metadata = None  # pylint: disable=invalid-name
+except ImportError:
+    # Python < 3.8
+    import importlib_metadata  # type: ignore
+
+    metadata = None  # type: ignore # pylint: disable=invalid-name
 
 
 class GitTests(unittest.TestCase):
@@ -369,6 +381,272 @@ class OutputTests(unittest.TestCase):
                 ],
             },
         )
+
+    @mock.patch("tartufo.scanner.ScannerBase")
+    @mock.patch("tartufo.util.click")
+    @mock.patch("tartufo.util.datetime")
+    @mock.patch("tartufo.util.get_version")
+    def test_echo_report_result_echos_report_output(
+        self, mock_getversion, mock_time, mock_click, mock_scanner
+    ):
+        mock_getversion.return_value = "3.2.2"
+        mock_time.now.return_value.isoformat.return_value = "now:now:now"
+
+        options = generate_options(
+            GlobalOptions,
+            quiet=False,
+            output_format="report",
+            entropy=True,
+            regex=True,
+            entropy_sensitivity=75,
+            exclude_signatures=[
+                "fffffffffffff",
+                "ooooooooooooo",
+            ],
+            exclude_path_patterns=["file1.txt", "file2.txt"],
+        )
+        mock_scanner.global_options = options
+        mock_scanner.issues = []
+        mock_scanner.issue_count = 0
+
+        util.echo_result(options, mock_scanner, "", "")
+        mock_click.echo.assert_has_calls(
+            (
+                call("Tartufo Scan Results (Time: now:now:now)"),
+                call("All clear. No secrets detected."),
+                call("\nConfiguration:"),
+                call("  version:             3.2.2"),
+                call("  entropy:             Enabled"),
+                call("    sensitivity: 75"),
+                call("  regex:               Enabled"),
+                call("\nExcluded paths:"),
+                call("  file1.txt: Unknown reason"),
+                call("  file2.txt: Unknown reason"),
+                call("\nExcluded signatures:"),
+                call("  fffffffffffff: Unknown reason"),
+                call("  ooooooooooooo: Unknown reason"),
+                call("\nExcluded entropy patterns:"),
+            ),
+            any_order=False,
+        )
+
+    @mock.patch("tartufo.scanner.ScannerBase")
+    @mock.patch("tartufo.util.click")
+    @mock.patch("tartufo.util.datetime")
+    @mock.patch("tartufo.util.get_version")
+    def test_echo_report_result_given_dict_options_echos_report_output_with_reasons(
+        self, mock_getversion, mock_time, mock_click, mock_scanner
+    ):
+        mock_getversion.return_value = "3.2.2"
+        mock_time.now.return_value.isoformat.return_value = "now:now:now"
+
+        options = generate_options(
+            GlobalOptions,
+            quiet=False,
+            output_format="report",
+            entropy=True,
+            regex=True,
+            entropy_sensitivity=75,
+            exclude_signatures=[
+                {"signature": "fffffffffffff", "reason": "reason 1"},
+                {"signature": "ooooooooooooo", "reason": "reason 2"},
+            ],
+            exclude_path_patterns=[
+                {"path-pattern": "file1.txt", "reason": "reason 1"},
+                {"path-pattern": "file2.txt", "reason": "reason 2"},
+            ],
+        )
+        mock_scanner.global_options = options
+        mock_scanner.issues = []
+        mock_scanner.issue_count = 0
+        mock_scanner.excluded_entropy = [
+            Rule(
+                "reason 1",
+                re.compile("pattern1"),
+                re.compile("file1.txt"),
+                MatchType.Search,
+                Scope.Line,
+            ),
+            Rule(
+                "reason 2",
+                re.compile("pattern2"),
+                re.compile("file2.txt"),
+                MatchType.Search,
+                Scope.Line,
+            ),
+        ]
+
+        util.echo_result(options, mock_scanner, "", "")
+        mock_click.echo.assert_has_calls(
+            (
+                call("Tartufo Scan Results (Time: now:now:now)"),
+                call("All clear. No secrets detected."),
+                call("\nConfiguration:"),
+                call("  version:             3.2.2"),
+                call("  entropy:             Enabled"),
+                call("    sensitivity: 75"),
+                call("  regex:               Enabled"),
+                call("\nExcluded paths:"),
+                call("  file1.txt: reason 1"),
+                call("  file2.txt: reason 2"),
+                call("\nExcluded signatures:"),
+                call("  fffffffffffff: reason 1"),
+                call("  ooooooooooooo: reason 2"),
+                call("\nExcluded entropy patterns:"),
+                call("  pattern1 (path=file1.txt, scope=line, type=search): reason 1"),
+                call("  pattern2 (path=file2.txt, scope=line, type=search): reason 2"),
+            ),
+            any_order=False,
+        )
+
+    @mock.patch("tartufo.scanner.ScannerBase")
+    @mock.patch("tartufo.util.click")
+    @mock.patch("tartufo.util.datetime")
+    @mock.patch("tartufo.util.get_version")
+    def test_echo_report_result_given_no_excludes_outputs_empty_report(
+        self, mock_getversion, mock_time, mock_click, mock_scanner
+    ):
+        mock_getversion.return_value = "3.2.2"
+        mock_time.now.return_value.isoformat.return_value = "now:now:now"
+
+        options = generate_options(
+            GlobalOptions,
+            quiet=False,
+            output_format="report",
+            entropy=True,
+            regex=True,
+            entropy_sensitivity=75,
+            exclude_signatures=[],
+            exclude_path_patterns=[],
+            exclude_entropy_patterns=[],
+        )
+        mock_scanner.global_options = options
+        mock_scanner.issues = []
+        mock_scanner.issue_count = 0
+
+        util.echo_result(options, mock_scanner, "", "")
+        mock_click.echo.assert_has_calls(
+            (
+                call("Tartufo Scan Results (Time: now:now:now)"),
+                call("All clear. No secrets detected."),
+                call("\nConfiguration:"),
+                call("  version:             3.2.2"),
+                call("  entropy:             Enabled"),
+                call("    sensitivity: 75"),
+                call("  regex:               Enabled"),
+                call("\nExcluded paths:"),
+                call("\nExcluded signatures:"),
+                call("\nExcluded entropy patterns:"),
+            ),
+            any_order=False,
+        )
+
+    @mock.patch("tartufo.scanner.ScannerBase")
+    @mock.patch("tartufo.util.click")
+    @mock.patch("tartufo.util.datetime")
+    @mock.patch("tartufo.util.get_version")
+    def test_echo_report_result_given_disabled_report_shows_disabled(
+        self, mock_getversion, mock_time, mock_click, mock_scanner
+    ):
+        mock_getversion.return_value = "3.2.2"
+        mock_time.now.return_value.isoformat.return_value = "now:now:now"
+
+        options = generate_options(
+            GlobalOptions,
+            quiet=False,
+            output_format="report",
+            entropy=False,
+            regex=False,
+            entropy_sensitivity=75,
+            exclude_signatures=[],
+            exclude_path_patterns=[],
+            exclude_entropy_patterns=[],
+        )
+        mock_scanner.global_options = options
+        mock_scanner.issues = []
+        mock_scanner.issue_count = 0
+
+        util.echo_result(options, mock_scanner, "", "")
+        mock_click.echo.assert_has_calls(
+            (
+                call("Tartufo Scan Results (Time: now:now:now)"),
+                call("All clear. No secrets detected."),
+                call("\nConfiguration:"),
+                call("  version:             3.2.2"),
+                call("  entropy:             Disabled"),
+                call("  regex:               Disabled"),
+                call("\nExcluded paths:"),
+                call("\nExcluded signatures:"),
+                call("\nExcluded entropy patterns:"),
+            ),
+            any_order=False,
+        )
+
+    @mock.patch("tartufo.scanner.ScannerBase")
+    @mock.patch("tartufo.util.click")
+    @mock.patch("tartufo.util.datetime")
+    @mock.patch("tartufo.util.get_version")
+    def test_echo_report_result_issues_report_shows_issues(
+        self, mock_getversion, mock_time, mock_click, mock_scanner
+    ):
+        mock_getversion.return_value = "3.2.2"
+        mock_time.now.return_value.isoformat.return_value = "now:now:now"
+
+        options = generate_options(
+            GlobalOptions,
+            quiet=False,
+            output_format="report",
+            entropy=False,
+            regex=False,
+            entropy_sensitivity=75,
+            exclude_signatures=[],
+            exclude_path_patterns=[],
+            exclude_entropy_patterns=[],
+        )
+        mock_scanner.global_options = options
+        issue_1 = scanner.Issue(
+            types.IssueType.Entropy, "foo", types.Chunk("foo", "/bar", {}, False)
+        )
+        mock_scanner.scan.return_value = [issue_1]
+        mock_scanner.issues = [issue_1]
+        mock_scanner.issue_count = 1
+
+        util.echo_result(options, mock_scanner, "", "")
+        mock_click.echo.assert_has_calls(
+            (
+                call("Tartufo Scan Results (Time: now:now:now)"),
+                call(
+                    "~~~~~~~~~~~~~~~~~~~~~\nReason: High Entropy\nFilepath: /bar\nSignature: 4db0024275a64ac2bf5e7d061e130e283b0b37a44167b605643e06e33177f74e\nfoo\n~~~~~~~~~~~~~~~~~~~~~"
+                ),
+                call("\nConfiguration:"),
+                call("  version:             3.2.2"),
+                call("  entropy:             Disabled"),
+                call("  regex:               Disabled"),
+                call("\nExcluded paths:"),
+                call("\nExcluded signatures:"),
+                call("\nExcluded entropy patterns:"),
+            ),
+            any_order=False,
+        )
+
+    @pytest.mark.skipif(
+        importlib_metadata is None,
+        reason="importlib_metadata not available",  # pylint: disable=used-before-assignment
+    )
+    def test_get_version_importlib_metadata(self):
+        with mock.patch("importlib_metadata.version") as mock_version:
+            mock_version.return_value = "1.0.0"
+
+            actual = util.get_version()
+            self.assertEqual(actual, "1.0.0")
+
+    @pytest.mark.skipif(metadata is None, reason="importlib.metadata not available")
+    def test_get_version_importlib(self):
+        with mock.patch("importlib.metadata.version") as mock_version:
+            mock_version.return_value = "1.0.0"
+
+            actual = util.get_version()
+            self.assertEqual(actual, "1.0.0")
 
 
 class GeneralUtilTests(unittest.TestCase):

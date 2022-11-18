@@ -6,6 +6,7 @@ import platform
 import stat
 import sys
 import tempfile
+from types import ModuleType
 import uuid
 from datetime import datetime
 from functools import lru_cache, partial
@@ -48,6 +49,74 @@ def del_rw(_func: Callable, name: str, _exc: Exception) -> None:
     """
     os.chmod(name, stat.S_IWRITE)
     os.remove(name)
+
+
+def get_version() -> str:
+    metadata: Optional[ModuleType]
+    try:
+        from importlib import metadata  # type: ignore # pylint: disable=import-outside-toplevel
+    except ImportError:
+        # Python < 3.8
+        import importlib_metadata as metadata  # type: ignore # pylint: disable=import-outside-toplevel
+
+    if metadata:
+        return metadata.version(__package__)  # type: ignore
+    return ""
+
+
+def echo_report_result(scanner: "ScannerBase", now: str):
+    click.echo(f"Tartufo Scan Results (Time: {now})")
+    for issue in scanner.scan():
+        click.echo(str(issue))
+    if scanner.issue_count == 0:
+        click.echo("All clear. No secrets detected.")
+
+    click.echo("\nConfiguration:")
+    version = get_version()
+    click.echo(f"  version:             {version}")
+    if scanner.global_options.entropy:
+        click.echo("  entropy:             Enabled")
+        click.echo(f"    sensitivity: {scanner.global_options.entropy_sensitivity}")
+    else:
+        click.echo("  entropy:             Disabled")
+    click.echo(
+        f"  regex:               {'Enabled' if scanner.global_options.regex else 'Disabled'}"
+    )
+
+    click.echo("\nExcluded paths:")
+
+    if scanner.global_options.exclude_path_patterns:
+        for item in scanner.global_options.exclude_path_patterns:
+            if isinstance(item, dict):
+                path_pattern = item.get("path-pattern")
+                reason = item.get("reason")
+            else:
+                path_pattern = item
+                reason = "Unknown reason"
+            click.echo(f"  {path_pattern}: {reason}")
+
+    click.echo("\nExcluded signatures:")
+    if scanner.global_options.exclude_signatures:
+        for item in scanner.global_options.exclude_signatures:
+            if isinstance(item, dict):
+                signature = item.get("signature")
+                reason = item.get("reason")
+            else:
+                signature = item
+                reason = "Unknown reason"
+
+            click.echo(f"  {signature}: {reason}")
+
+    click.echo("\nExcluded entropy patterns:")
+    for e_item in scanner.excluded_entropy:
+        pattern = e_item.pattern.pattern if e_item.pattern else ""
+        path_pattern = e_item.path_pattern.pattern if e_item.path_pattern else ""
+        m_scope = e_item.re_match_scope.value if e_item.re_match_scope else ""
+        m_type = e_item.re_match_type.value if e_item.re_match_type else ""
+        reason = e_item.name
+        click.echo(
+            f"  {pattern} (path={path_pattern}, scope={m_scope}, type={m_type}): {reason}"
+        )
 
 
 def echo_result(
@@ -102,6 +171,8 @@ def echo_result(
                 f"[{issue.issue_type.value}] {issue.chunk.file_path}: {issue.matched_string} "
                 f"({issue.signature}, {issue.issue_detail})"
             )
+    elif options.output_format == types.OutputFormat.Report.value:
+        echo_report_result(scanner, now)
     else:
         for issue in scanner.scan():
             click.echo(str(issue))
