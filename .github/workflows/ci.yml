@@ -105,7 +105,7 @@ jobs:
     - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8
       name: Checkout the repo
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@94ab11c41e45d028884a99163086648e898eed25
+      uses: docker/setup-buildx-action@8c0edbc76e98fa90f69d9a2c020dcb50019dc325
       with:
         install: true
     - name: Build
