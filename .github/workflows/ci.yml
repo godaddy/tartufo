@@ -57,7 +57,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -U pip
-        pip install poetry tox tox-gh-actions
+        pip install poetry setuptools tox tox-gh-actions
       # run:  pip install poetry tox codecov tox-gh-actions
     - name: Unit test in Python ${{ matrix.python-version }} on ${{ matrix.os }}
       run: tox -vv
