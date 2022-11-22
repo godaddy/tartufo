@@ -34,27 +34,28 @@ class ScanLocalRepoTests(unittest.TestCase):
             )
 
     def test_new_file_shows_up(self):
-        file_name = "secret_1.key"
+        file_name = helpers.get_data_path("config", "secret_1.key")
         runner = CliRunner()
         # Add file with high entropy
         secret_key = sha256(b"hello world")
-        with open(file_name, "a") as file:
+        with open(file_name.absolute(), "a") as file:
             file.write(secret_key.hexdigest())
-        repo = Repository(".")
+        repo = Repository(helpers.REPO_ROOT_PATH)
 
         # Check that tartufo picks up on newly added files
-        repo.index.add("tests/data/config/" + file_name)
+        file_name_relative = "tests/data/config/secret_1.key"
+        repo.index.add(file_name_relative)
         repo.index.write()  # This actually writes the index to disk. Without it, the tracked file is not actually staged.
         result = runner.invoke(cli.main, ["--entropy-sensitivity", "1", "pre-commit"])
         self.assertNotEqual(result.exit_code, 0)
 
         # Cleanup
-        repo.index.remove("tests/data/config/" + file_name)
+        repo.index.remove(file_name_relative)
         repo.index.write()  # This actually writes the index to disk. Without it, secret.key will not removed from the index.
         remove(file_name)
 
     def test_new_unstaged_file_does_not_show_up(self):
-        file_name = "secret_2.key"
+        file_name = helpers.get_data_path("secret_2.key")
         runner = CliRunner()
         # Add file with high entropy
         secret_key = sha256(b"hello world")
