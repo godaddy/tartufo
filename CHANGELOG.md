@@ -1,3 +1,9 @@
+vX.X.X - DD MMM YYYY
+--------------------
+
+Features:
+* [TBD](https://github.com/godaddy/tartufo/pull/401) - Drop python 3.6 support
+
 v3.3.1 - 23 Nov 2022
 --------------------
 
