@@ -55,7 +55,7 @@ cached-property = "^1.5.2"
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"
-coverage = {extras = ["toml"], version = "^5.1"}
+coverage = {extras = ["toml"], version = "^6.5"}
 mypy = {version = "^0.902", markers = "platform_python_implementation == 'CPython'"}
 pre-commit = "*"
 pylint = "^2.8.3"
