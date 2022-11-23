@@ -1,5 +1,14 @@
+v3.3.1 - 23 Nov 2022
+--------------------
+
+Bug fixes:
+* [#408](https://github.com/godaddy/tartufo/issues/408) - 3.3.0 container broken
+  * Rebuild container using python 3.10 base instead of python 3.11
+  * Eliminates reference to missing library present in 3.3.0 container
+  * Eliminates requirement for build-it-yerself libraries in container
+
 v3.3.0 - 22 Nov 2022
-----------------------
+--------------------
 Features:
 * [#401](https://github.com/godaddy/tartufo/pull/401) - Add report output format
 
