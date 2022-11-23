@@ -16,6 +16,7 @@ classifiers = [
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
   "Topic :: Security",
@@ -162,7 +163,7 @@ target-version = ['py36', 'py37', 'py38']
 # Not yet supported, see https://github.com/pytest-dev/pytest/issues/1556
 
 [tool.mypy]
-python_version = "3.7"
+python_version = "3.11"
 ignore_missing_imports = true
 
 [tool.pylint.'MESSAGES CONTROL']
