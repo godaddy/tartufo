@@ -38,15 +38,15 @@ version = "3.3.1"
 tartufo = "tartufo.cli:main"
 
 [tool.poetry.dependencies]
-GitPython = "<3.1.20"
+GitPython = "^3.1.29"
 pygit2 = "^1.10.0"
 click = "^8.1.0"
 colorama = {version = "*", markers = "sys_platform == 'win32'"}
 python = "^3.7"
-recommonmark = {version = "^0.6", optional = true}
-sphinx = {version = "^4.3.1", optional = true}
+recommonmark = {version = "^0.7", optional = true}
+sphinx = {version = "^5.0.0", optional = true}
 sphinx-autodoc-typehints = {version = "^1.12.0", optional = true}
-sphinx-click = {version = "^3.0.2", optional = true}
+sphinx-click = {version = "^4.0.0", optional = true}
 sphinx-rtd-theme = {version = "^1.0.0", optional = true}
 sphinxcontrib-spelling = {version = "^7.2.1", optional = true}
 tomlkit = "^0.11.4"
@@ -54,12 +54,12 @@ cached-property = "^1.5.2"
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"
-coverage = {extras = ["toml"], version = "^5.1"}
-mypy = {version = "^0.902", markers = "platform_python_implementation == 'CPython'"}
+coverage = {extras = ["toml"], version = "^6.5"}
+mypy = {version = "^0.991", markers = "platform_python_implementation == 'CPython'"}
 pre-commit = "*"
 pylint = "^2.8.3"
-pytest = "^6.2.2"
-pytest-cov = "^2.11.1"
+pytest = "^7.0.0"
+pytest-cov = "^4.0.0"
 pytest-sugar = "^0.9.4"
 tox = "^3.21.4"
 vulture = "^2.3"
