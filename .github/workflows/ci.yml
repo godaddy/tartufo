@@ -111,3 +111,6 @@ jobs:
     - name: Build
       run: |
         docker build .
+    - name: Verify
+      run: |
+        docker run --rm -v $PWD:/git tartufo:latest scan-local-repo /git
