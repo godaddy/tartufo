@@ -110,6 +110,5 @@ jobs:
         install: true
     - name: Build and Verify
       run: |
-        docker build -t sanitycheck .
-        docker images
+        docker build --load -t sanitycheck .
         docker run --rm -v $PWD:/git sanitycheck scan-local-repo /git
