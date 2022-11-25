@@ -13,10 +13,10 @@ RUN pip --no-cache-dir install "poetry==$POETRY_VERSION"
 RUN python -m venv /venv
 
 COPY pyproject.toml poetry.lock ./
-RUN poetry export -f requirements.txt | /venv/bin/pip install -r /dev/stdin
+RUN . /venv/bin/activate && poetry install --no-root --only=main
 
 COPY . .
-RUN poetry build && /venv/bin/pip install dist/*.whl
+RUN poetry build -f wheel && /venv/bin/pip install dist/*.whl
 
 FROM base as final
 
