@@ -38,7 +38,11 @@ class RepoLoadTests(ScannerTestCase):
         mock_repo.return_value.is_bare = False
         test_scanner.load_repo("../tartufo")
         mock_repo.assert_has_calls(
-            (mock.call("."), mock.call().is_bare.__bool__(), mock.call("../tartufo"))
+            [
+                mock.call("."),
+                mock.call().is_bare.__bool__(),  # pylint: disable=unnecessary-dunder-call
+                mock.call("../tartufo"),
+            ]
         )
 
     @mock.patch("pygit2.Repository")

@@ -42,7 +42,7 @@ GitPython = "^3.1.29"
 pygit2 = "^1.10.0"
 click = "^8.1.0"
 colorama = {version = "*", markers = "sys_platform == 'win32'"}
-python = "^3.7"
+python = "^3.7.2"
 recommonmark = {version = "^0.7", optional = true}
 sphinx = {version = "^5.0.0", optional = true}
 sphinx-autodoc-typehints = {version = "^1.12.0", optional = true}
@@ -52,12 +52,12 @@ sphinxcontrib-spelling = {version = "^7.2.1", optional = true}
 tomlkit = "^0.11.4"
 cached-property = "^1.5.2"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 black = "^22.3.0"
 coverage = {extras = ["toml"], version = "^6.5"}
 mypy = {version = "^0.991", markers = "platform_python_implementation == 'CPython'"}
 pre-commit = "*"
-pylint = "^2.8.3"
+pylint = "^2.15.6"
 pytest = "^7.0.0"
 pytest-cov = "^4.0.0"
 pytest-sugar = "^0.9.4"
@@ -169,15 +169,13 @@ ignore_missing_imports = true
 [tool.pylint.'MESSAGES CONTROL']
 # C0111: Missing docstrings
 # C0301: Line too long (Note: This is all handled by black now)
-# C0330: Wrong hanging indentation before block (Note: black disagrees on this)
-# R0201: Method could be a function
 # R0801: Similar lines in other files
 # R0903: Too few public methods
 # R0912: Too many branches
 # R0914: Too many local variables
 # W0511: FIXME
 # E1136: Unsubscriptable object (Disabled due to Python 3.9 compatibility bug in pylint)
-disable = "C0111,C0301,C0302, C0330,R0201,R0801,R0903,R0912,R0914,W0511,E1136,W1514"
+disable = "C0111,C0301,C0302,R0801,R0903,R0912,R0914,W0511,E1136,W1514"
 
 [tool.pylint.BASIC]
 module-rgx = "(([a-z_][a-z0-9_]*)|([a-z][a-zA-Z0-9]+))$"
