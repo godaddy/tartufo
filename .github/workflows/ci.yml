@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8
         name: Checkout the repo
-      - uses: godaddy/tartufo-action@8803be6cd9531f4f9e57136e141658bc2ccf188e
+      - uses: godaddy/tartufo-action@3d4684c758fa9fdaf9b9cb044d0b9daa86606525
         name: Run Tartufo
   unit-test:
     name: Unit Tests
