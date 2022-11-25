@@ -6,11 +6,12 @@ Features:
   This version reached end of life several years ago, and end of security support at
   the end of 2021. Users with a requirement to run tartufo on this python version
   should remain at v3.3.x.
+ 
+* [#403](https://github.com/godaddy/tartufo/pull/403) - Add support for python 3.11.
+  * Update various support libraries to current versions
+  * Rebase container to python 3.11
+  * Add CI step to verify container is operational
 
-Bug fixes:
-* [#403](https://github.com/godaddy/tartufo/pull/403) - Update dependent libraries
-  and streamline docker container image.
-  
 v3.3.1 - 23 Nov 2022
 --------------------
 
