@@ -108,9 +108,7 @@ jobs:
       uses: docker/setup-buildx-action@8c0edbc76e98fa90f69d9a2c020dcb50019dc325
       with:
         install: true
-    - name: Build
+    - name: Build and Verify
       run: |
-        docker build .
-    - name: Verify
-      run: |
-        docker run --rm -v $PWD:/git tartufo:latest scan-local-repo /git
+        docker build -t sanitycheck .
+        docker run --rm -v $PWD:/git sanitycheck scan-local-repo /git
