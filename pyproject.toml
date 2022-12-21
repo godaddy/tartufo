@@ -42,7 +42,7 @@ pygit2 = "^1.9.0"
 click = "^8.1.0"
 colorama = {version = "*", markers = "sys_platform == 'win32'"}
 python = "^3.7"
-recommonmark = {version = "^0.6", optional = true}
+recommonmark = {version = "^0.7", optional = true}
 sphinx = {version = "^4.3.1", optional = true}
 sphinx-autodoc-typehints = {version = "^1.12.0", optional = true}
 sphinx-click = {version = "^3.0.2", optional = true}
