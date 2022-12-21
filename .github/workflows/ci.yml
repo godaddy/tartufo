@@ -11,7 +11,7 @@ jobs:
     name: Run Tartufo
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8
+      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b
         name: Checkout the repo
       - uses: godaddy/tartufo-action@3d4684c758fa9fdaf9b9cb044d0b9daa86606525
         name: Run Tartufo
@@ -35,9 +35,9 @@ jobs:
       PYTHON: ${{ matrix.python-version }}
       OS: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8
+    - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b
       name: Checkout the repo
-    - uses: actions/cache@9b0c1fce7a93df8e3bb8926b0d6e9d89e92f20a7
+    - uses: actions/cache@c17f4bf4666a8001b1a45c09eb7a485c41aa64c3
       name: Cache Poetry & Tox deps
       with:
         path: |
@@ -75,9 +75,9 @@ jobs:
       matrix:
         toxenv: [pylint, vulture, mypy, black, docs]
     steps:
-    - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8
+    - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b
       name: Checkout the repo
-    - uses: actions/cache@9b0c1fce7a93df8e3bb8926b0d6e9d89e92f20a7
+    - uses: actions/cache@c17f4bf4666a8001b1a45c09eb7a485c41aa64c3
       name: Cache Poetry & Tox deps
       with:
         path: |
@@ -87,7 +87,7 @@ jobs:
         restore-keys: |
           venvs-${{ matrix.toxenv }}-
     - name: Set up Python
-      uses: actions/setup-python@13ae5bb136fac2878aff31522b9efb785519f984
+      uses: actions/setup-python@2c3dd9e7e29afd70cc0950079bde6c979d1f69f9
       with:
         python-version: 3.11
     - name: Install dependencies
@@ -102,7 +102,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ tartufo ]
     steps:
-    - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8
+    - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b
       name: Checkout the repo
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@8c0edbc76e98fa90f69d9a2c020dcb50019dc325
