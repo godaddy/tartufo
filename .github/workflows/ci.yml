@@ -22,7 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: [3.6, 3.7, 3.8, 3.9, "3.10"]
+        python-version: [3.7, 3.8, 3.9, "3.10"]
         include:
           - os: ubuntu-latest
             path: ~/.cache/pypoetry
@@ -39,7 +39,6 @@ jobs:
       name: Checkout the repo
     - uses: actions/cache@c64c572235d810460d0d6876e9c705ad5002b353
       name: Cache Poetry & Tox deps
-      if: ${{ !(matrix.os == 'windows-latest' && matrix.python-version == '3.6') }}
       with:
         path: |
           {{ matrix.path }}

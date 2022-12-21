@@ -350,7 +350,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             )
         return self._rules_regexes
 
-    @lru_cache(maxsize=None)
+    @lru_cache(maxsize=None)  # pylint: disable=cache-max-size-none
     def should_scan(self, file_path: str) -> bool:
         """Check if the a file path should be included in analysis.
 
@@ -472,8 +472,9 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             for p in self.excluded_entropy
         )
 
+    @staticmethod
     @lru_cache(maxsize=None)
-    def calculate_entropy(self, data: str) -> float:
+    def calculate_entropy(data: str) -> float:
         """Calculate the Shannon entropy for a piece of data.
 
         This essentially calculates the overall probability for each character
