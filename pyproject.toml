@@ -57,7 +57,7 @@ coverage = {extras = ["toml"], version = "^5.1"}
 mypy = {version = "^0.902", markers = "platform_python_implementation == 'CPython'"}
 pre-commit = "*"
 pylint = "^2.8.3"
-pytest = "^6.2.2"
+pytest = "^7.0.0"
 pytest-cov = "^2.11.1"
 pytest-sugar = "^0.9.4"
 tox = "^3.21.4"
