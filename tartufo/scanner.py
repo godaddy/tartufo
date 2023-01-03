@@ -895,12 +895,12 @@ class GitRepoScanner(GitScanner):
                         "Skipping commit %s because it has no parents", curr_commit.hex
                     )
                     continue
-                diff: pygit2.Diff = self._repo.diff(prev_commit, curr_commit)
                 diff_hash = hashlib.md5(
                     (str(prev_commit) + str(curr_commit)).encode("utf-8")
                 ).digest()
                 if diff_hash in already_searched:
                     continue
+                diff: pygit2.Diff = self._repo.diff(prev_commit, curr_commit)
                 already_searched.add(diff_hash)
                 diff.find_similar()
                 for blob, file_path in self._iter_diff_index(diff):
