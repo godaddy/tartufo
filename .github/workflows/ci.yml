@@ -48,7 +48,7 @@ jobs:
           ${{ matrix.os }}-venvs-${{ matrix.python-version }}
           ${{ matrix.os }}-venvs
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@13ae5bb136fac2878aff31522b9efb785519f984
+      uses: actions/setup-python@dec86ecf4e7508d3930ae42abcdc575f35ea490d
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install Enchant
@@ -87,7 +87,7 @@ jobs:
         restore-keys: |
           venvs-${{ matrix.toxenv }}-
     - name: Set up Python
-      uses: actions/setup-python@2c3dd9e7e29afd70cc0950079bde6c979d1f69f9
+      uses: actions/setup-python@dec86ecf4e7508d3930ae42abcdc575f35ea490d
       with:
         python-version: 3.11
     - name: Install dependencies
