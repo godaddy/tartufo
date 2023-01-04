@@ -368,20 +368,17 @@ class UpdateSignaturesTests(TestCase):
         self.assertEqual(config_data, expected_result)
 
     def test_write_updated_signatures(self) -> None:
-        def build_file_content(*signatures: str) -> str:
-            return textwrap.dedent(
-                """[tool.tartufo]
-                exclude-signatures = [
-                    {signature = '%s'},
-                    {signature = '%s'},
-                    {signature = '%s'}
-                ]
-                """  # pylint: disable=C0209
-                % signatures
-            )
-
         file_name = Path("test.toml")
-        initial_file_content = build_file_content("123", "456", "789")
+        initial_file_content = textwrap.dedent(
+            """[tool.tartufo]
+            exclude-signatures = [
+                {signature = '123'},
+                {signature = '456'},
+                {signature = '789'}
+            ]
+            """
+        )
+
         expected_deprecations: Set[Sequence[str]] = set()
         expected_deprecations.update((("123", "abc"), ("456", "def"), ("789", "ghi")))
         config_data = {

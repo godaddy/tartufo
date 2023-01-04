@@ -712,6 +712,12 @@ class GitScanner(ScannerBase, abc.ABC):
         """
         self.repo_path = repo_path
         super().__init__(global_options)
+
+        # Disable ownership sanity checks to maintain compatibility with
+        # behavior of libgit2 1.4.2 and earlier; later versions (i.e. with
+        # pygit2 1.9.2 and later) fail in docker context otherwise.
+        pygit2.option(pygit2.GIT_OPT_SET_OWNER_VALIDATION, 0)
+
         self._repo = self.load_repo(self.repo_path)
 
     def _iter_diff_index(
