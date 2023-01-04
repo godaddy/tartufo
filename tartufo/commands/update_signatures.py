@@ -250,7 +250,9 @@ def main(
         # Explicitly fail if we didn't get a scanner back
         util.fail(util.style_error("Unable to update signatures"), ctx)
 
-    plural = lambda n: "" if n == 1 else "s"
+    def plural(count: int) -> str:
+        return "" if count == 1 else "s"
+
     deprecations = get_deprecations(stderr)
     ndeps = len(deprecations)
     click.echo(f"Found {ndeps} deprecated signature{plural(ndeps)}.")
