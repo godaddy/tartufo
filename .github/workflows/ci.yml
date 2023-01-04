@@ -11,9 +11,9 @@ jobs:
     name: Run Tartufo
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
         name: Checkout the repo
-      - uses: godaddy/tartufo-action@3d4684c758fa9fdaf9b9cb044d0b9daa86606525
+      - uses: godaddy/tartufo-action@c8607e0e526850e5c5f0608459288b40f50fddbc
         name: Run Tartufo
   unit-test:
     name: Unit Tests
@@ -35,9 +35,9 @@ jobs:
       PYTHON: ${{ matrix.python-version }}
       OS: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b
+    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
       name: Checkout the repo
-    - uses: actions/cache@c17f4bf4666a8001b1a45c09eb7a485c41aa64c3
+    - uses: actions/cache@365406cb701e1cc758077b05049298a49a8b71c2
       name: Cache Poetry & Tox deps
       with:
         path: |
@@ -48,7 +48,7 @@ jobs:
           ${{ matrix.os }}-venvs-${{ matrix.python-version }}
           ${{ matrix.os }}-venvs
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@13ae5bb136fac2878aff31522b9efb785519f984
+      uses: actions/setup-python@dec86ecf4e7508d3930ae42abcdc575f35ea490d
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install Enchant
@@ -75,9 +75,9 @@ jobs:
       matrix:
         toxenv: [pylint, vulture, mypy, black, docs]
     steps:
-    - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b
+    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
       name: Checkout the repo
-    - uses: actions/cache@c17f4bf4666a8001b1a45c09eb7a485c41aa64c3
+    - uses: actions/cache@365406cb701e1cc758077b05049298a49a8b71c2
       name: Cache Poetry & Tox deps
       with:
         path: |
@@ -87,7 +87,7 @@ jobs:
         restore-keys: |
           venvs-${{ matrix.toxenv }}-
     - name: Set up Python
-      uses: actions/setup-python@2c3dd9e7e29afd70cc0950079bde6c979d1f69f9
+      uses: actions/setup-python@dec86ecf4e7508d3930ae42abcdc575f35ea490d
       with:
         python-version: 3.11
     - name: Install dependencies
@@ -102,10 +102,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ tartufo ]
     steps:
-    - uses: actions/checkout@755da8c3cf115ac066823e79a1e1788f8940201b
+    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
       name: Checkout the repo
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@8c0edbc76e98fa90f69d9a2c020dcb50019dc325
+      uses: docker/setup-buildx-action@c252a3bb80dae98127b9329b8aa1ff35b71ae980
       with:
         install: true
     - name: Build and Verify
