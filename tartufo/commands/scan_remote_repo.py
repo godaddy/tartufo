@@ -40,6 +40,14 @@ from tartufo.scanner import GitRepoScanner
     show_default=True,
     help="Controls whether the contents of git submodules are scanned",
 )
+@click.option(
+    "-p",
+    "--progress",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Controls whether to display a progress bar",
+)
 @click.argument("git-url")
 @click.pass_obj
 @click.pass_context
@@ -52,6 +60,7 @@ def main(
     branch: Optional[str],
     work_dir: Optional[str],
     include_submodules: bool,
+    progress: bool,
 ) -> GitRepoScanner:
     """Automatically clone and scan a remote git repository."""
     git_options = types.GitOptions(
@@ -59,6 +68,7 @@ def main(
         max_depth=max_depth,
         branch=None,
         include_submodules=include_submodules,
+        progress=progress,
     )
     repo_path: Optional[Path] = None
     if work_dir:

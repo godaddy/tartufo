@@ -27,6 +27,14 @@ from tartufo.scanner import GitRepoScanner
     show_default=True,
     help="Controls whether the contents of git submodules are scanned",
 )
+@click.option(
+    "-p",
+    "--progress",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Controls whether to display a progress bar",
+)
 @click.pass_obj
 @click.pass_context
 def main(
@@ -37,6 +45,7 @@ def main(
     max_depth: int,
     branch: Optional[str],
     include_submodules: bool,
+    progress: bool,
 ) -> GitRepoScanner:
     """Scan a repository already cloned to your local system."""
     git_options = types.GitOptions(
@@ -44,6 +53,7 @@ def main(
         max_depth=max_depth,
         branch=branch,
         include_submodules=include_submodules,
+        progress=progress,
     )
     scanner = None
     try:

@@ -149,11 +149,18 @@ class GitOptions:
     :param include_submodules: Whether to also scan submodules of the repository
     """
 
-    __slots__ = ("since_commit", "max_depth", "branch", "include_submodules")
+    __slots__ = (
+        "since_commit",
+        "max_depth",
+        "branch",
+        "include_submodules",
+        "progress",
+    )
     since_commit: Optional[str]
     max_depth: int
     branch: Optional[str]
     include_submodules: bool
+    progress: bool
 
 
 @dataclass

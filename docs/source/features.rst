@@ -54,6 +54,28 @@ To use ``docker``:
 When used this way, `tartufo` will clone the repository to a temporary
 directory, scan the local clone, and then delete it.
 
+Displaying Scan Progress
+******************************************
+
+When running any Git history scan, you can show scan progress by using
+the ``--progress`` or ``-p`` flag.
+
+.. code-block:: sh
+
+   $ tartufo scan-local-repo /path/to/my/repo --progress
+
+.. code-block:: text
+
+   ➜ Scanning master (1 of 59)[17942]  [#-----------------------------------]    4%  00:01:26
+
+   Legend:
+     master   = current branch being scanned
+     1 of 59  = number of branches completed (plus current branch) and total number of branches
+     17942    = number of commits in current branch to process
+     4%       = percentage of commits on current branch completed
+     00:01:26 = estimated time to complete current branch
+
+
 Accessing Repositories via SSH from Docker
 ******************************************
 
@@ -75,12 +97,6 @@ Using Docker for Linux, that will look something like this:
 When using Docker Desktop for Mac, use ``/run/host-services/ssh-auth.sock`` as
 both source and target, then point the environment variable ``SSH_AUTH_SOCK`` to
 this same location:
-
-.. code-block:: sh
-
-    $ docker run --rm -v "/path/to/my/repo:/git" \
-      -v /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock \
-      -e SSH_AUTH_SOCK="/run/host-services/ssh-auth.sock" godaddy/tartufo
 
 Scanning a Folder
 +++++++++++++++++++++++++++

@@ -209,6 +209,49 @@ class ChunkGeneratorTests(ScannerTestCase):
             mock_branch_foo.resolve().target, pygit2.GIT_SORT_TOPOLOGICAL
         )
 
+    def test_runs_scans_with_progressbar_enabled(self):
+        mock_branch_foo = mock.MagicMock()
+        mock_branch_bar = mock.MagicMock()
+        self.mock_repo.return_value.listall_branches.return_value = ["foo", "bar"]
+        self.mock_repo.return_value.branches = {
+            "foo": mock_branch_foo,
+            "bar": mock_branch_bar,
+        }
+        self.git_options.progress = True
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, "."
+        )
+
+        mock_commit_1 = mock.MagicMock()
+        mock_commit_1.parents = None
+        mock_commit_2 = mock.MagicMock()
+        mock_commit_2.parents = [mock_commit_1]
+        mock_commit_3 = mock.MagicMock()
+        mock_commit_3.parents = [mock_commit_2]
+
+        self.mock_repo.return_value.walk.return_value = [
+            mock_commit_3,
+            mock_commit_2,
+            mock_commit_1,
+        ]
+
+        self.mock_iter_diff.return_value = []
+        for _ in test_scanner.chunks:
+            pass
+
+        self.mock_repo.return_value.walk.assert_has_calls(
+            (
+                mock.call(
+                    mock_branch_foo.resolve().target, pygit2.GIT_SORT_TOPOLOGICAL
+                ),
+                mock.call(
+                    mock_branch_bar.resolve().target, pygit2.GIT_SORT_TOPOLOGICAL
+                ),
+            )
+        )
+
+        self.mock_iter_diff.assert_called()
+
     def test_all_branches_are_scanned_for_commits(self):
         mock_branch_foo = mock.MagicMock()
         mock_branch_bar = mock.MagicMock()
@@ -248,6 +291,8 @@ class ChunkGeneratorTests(ScannerTestCase):
                 ),
             )
         )
+
+        self.mock_iter_diff.assert_called()
 
     def test_all_commits_are_scanned_for_files(self):
         self.mock_repo.return_value.branches = {"foo": mock.MagicMock()}

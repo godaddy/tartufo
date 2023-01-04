@@ -16,6 +16,7 @@ from typing import (
     Any,
     Dict,
     Generator,
+    Iterable,
     List,
     MutableMapping,
     Optional,
@@ -740,11 +741,11 @@ class GitScanner(ScannerBase, abc.ABC):
             file_path = (
                 delta.new_file.path if delta.new_file.path else delta.old_file.path
             )
+            if delta.status == pygit2.GIT_DELTA_DELETED:
+                self.logger.debug("Skipping as the file was a git delete operation")
+                continue
             if delta.is_binary:
                 self.logger.debug("Binary file skipped: %s", file_path)
-                continue
-            if delta.status == pygit2.GIT_DELTA_DELETED:
-                self.logger.debug("Skipping as the file is deleted")
                 continue
             printable_diff: str = patch.text
             if not self.global_options.scan_filenames:
@@ -835,6 +836,53 @@ class GitRepoScanner(GitScanner):
         except git.GitError as exc:
             raise types.GitLocalException(str(exc)) from exc
 
+    def _get_chunks(
+        self, commits: Iterable, already_searched: Set[bytes], branch_name: str
+    ) -> Generator[types.Chunk, None, None]:
+        diff_hash: bytes
+        curr_commit: pygit2.Commit = None
+        prev_commit: pygit2.Commit = None
+        for curr_commit in commits:
+            try:
+                prev_commit = curr_commit.parents[0]
+            except (IndexError, KeyError, TypeError):
+                # IndexError: current commit has no parents
+                # KeyError: current commit has parents which are not local
+                # If a commit doesn't have a parent skip diff generation since it is the first commit
+                self.logger.debug(
+                    "Skipping commit %s because it has no parents",
+                    curr_commit.hex,
+                )
+                continue
+            diff_hash = hashlib.md5(
+                (str(prev_commit) + str(curr_commit)).encode("utf-8")
+            ).digest()
+            if diff_hash in already_searched:
+                continue
+            diff: pygit2.Diff = self._repo.diff(prev_commit, curr_commit)
+            already_searched.add(diff_hash)
+            diff.find_similar()
+            for blob, file_path in self._iter_diff_index(diff):
+                yield types.Chunk(
+                    blob,
+                    file_path,
+                    util.extract_commit_metadata(curr_commit, branch_name),
+                    True,
+                )
+
+        # Finally, yield the first commit to the branch
+        if curr_commit:
+            tree: pygit2.Tree = self._repo.revparse_single(curr_commit.hex).tree
+            tree_diff: pygit2.Diff = tree.diff_to_tree(swap=True)
+            iter_diff = self._iter_diff_index(tree_diff)
+            for blob, file_path in iter_diff:
+                yield types.Chunk(
+                    blob,
+                    file_path,
+                    util.extract_commit_metadata(curr_commit, branch_name),
+                    True,
+                )
+
     @property
     def chunks(self) -> Generator[types.Chunk, None, None]:
         """Yield individual diffs from the repository's history.
@@ -871,7 +919,8 @@ class GitRepoScanner(GitScanner):
             "Branches to be scanned: %s",
             ", ".join([str(branch) for branch in branches]),
         )
-
+        branch_cnt = 0
+        branch_len = len(branches)
         for branch_name in branches:
             self.logger.info("Scanning branch: %s", branch_name)
             if branch_name == "HEAD":
@@ -879,56 +928,29 @@ class GitRepoScanner(GitScanner):
             else:
                 branch = self._repo.branches.get(branch_name)
                 try:
-                    commits = self._repo.walk(
-                        branch.resolve().target, pygit2.GIT_SORT_TOPOLOGICAL
+                    commits = list(
+                        self._repo.walk(
+                            branch.resolve().target, pygit2.GIT_SORT_TOPOLOGICAL
+                        )
                     )
+
                 except AttributeError:
                     self.logger.debug(
                         "Skipping branch %s because it cannot be resolved.", branch_name
                     )
                     continue
-            diff_hash: bytes
-            curr_commit: pygit2.Commit = None
-            prev_commit: pygit2.Commit = None
-            for curr_commit in commits:
-                try:
-                    prev_commit = curr_commit.parents[0]
-                except (IndexError, KeyError, TypeError):
-                    # IndexError: current commit has no parents
-                    # KeyError: current commit has parents which are not local
-                    # If a commit doesn't have a parent skip diff generation since it is the first commit
-                    self.logger.debug(
-                        "Skipping commit %s because it has no parents", curr_commit.hex
-                    )
-                    continue
-                diff_hash = hashlib.md5(
-                    (str(prev_commit) + str(curr_commit)).encode("utf-8")
-                ).digest()
-                if diff_hash in already_searched:
-                    continue
-                diff: pygit2.Diff = self._repo.diff(prev_commit, curr_commit)
-                already_searched.add(diff_hash)
-                diff.find_similar()
-                for blob, file_path in self._iter_diff_index(diff):
-                    yield types.Chunk(
-                        blob,
-                        file_path,
-                        util.extract_commit_metadata(curr_commit, branch_name),
-                        True,
-                    )
+            branch_cnt = branch_cnt + 1
+            commit_len = len(commits)
 
-            # Finally, yield the first commit to the branch
-            if curr_commit:
-                tree: pygit2.Tree = self._repo.revparse_single(curr_commit.hex).tree
-                tree_diff: pygit2.Diff = tree.diff_to_tree(swap=True)
-                iter_diff = self._iter_diff_index(tree_diff)
-                for blob, file_path in iter_diff:
-                    yield types.Chunk(
-                        blob,
-                        file_path,
-                        util.extract_commit_metadata(curr_commit, branch_name),
-                        True,
-                    )
+            show_progress = self.git_options.progress
+            if show_progress:
+                with click.progressbar(
+                    commits,
+                    label=f"➜ Scanning {branch_name} ({branch_cnt} of {branch_len})[{commit_len}]",
+                ) as pcommits:
+                    yield from self._get_chunks(pcommits, already_searched, branch_name)
+            else:
+                yield from self._get_chunks(commits, already_searched, branch_name)
 
 
 class GitPreCommitScanner(GitScanner):

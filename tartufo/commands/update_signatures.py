@@ -62,6 +62,7 @@ def scan_local_repo(
         max_depth=max_depth,
         branch=branch,
         include_submodules=include_submodules,
+        progress=False,
     )
 
     with contextlib.redirect_stdout(stdout):
