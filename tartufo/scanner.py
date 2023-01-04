@@ -928,10 +928,8 @@ class GitRepoScanner(GitScanner):
             else:
                 branch = self._repo.branches.get(branch_name)
                 try:
-                    commits = list(
-                        self._repo.walk(
-                            branch.resolve().target, pygit2.GIT_SORT_TOPOLOGICAL
-                        )
+                    commits = self._repo.walk(
+                        branch.resolve().target, pygit2.GIT_SORT_TOPOLOGICAL
                     )
 
                 except AttributeError:
@@ -939,13 +937,14 @@ class GitRepoScanner(GitScanner):
                         "Skipping branch %s because it cannot be resolved.", branch_name
                     )
                     continue
-            branch_cnt = branch_cnt + 1
-            commit_len = len(commits)
 
             show_progress = self.git_options.progress
             if show_progress:
+                branch_cnt = branch_cnt + 1
+                lcommits = list(commits)
+                commit_len = len(lcommits)
                 with click.progressbar(
-                    commits,
+                    lcommits,
                     label=f"➜ Scanning {branch_name} ({branch_cnt} of {branch_len})[{commit_len}]",
                 ) as pcommits:
                     yield from self._get_chunks(pcommits, already_searched, branch_name)
