@@ -166,15 +166,6 @@ class ConfigureRegexTests(unittest.TestCase):
             f"The regexes dictionary should match the test rules (expected: {expected_regexes}, actual: {actual_regexes})",
         )
 
-    def test_loading_rules_from_file_raises_deprecation_warning(self):
-        rules_path = pathlib.Path(__file__).parent / "data" / "testRules.json"
-        rules_files = (rules_path.open(),)
-        with self.assertWarnsRegex(
-            DeprecationWarning,
-            "Storing rules in a separate file is deprecated and will be removed in tartufo 4.x. ",
-        ):
-            config.configure_regexes(rules_files=rules_files)
-
     def test_rule_patterns_without_defaults(self):
         rule_patterns = [
             {
