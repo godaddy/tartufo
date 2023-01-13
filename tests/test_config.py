@@ -16,67 +16,12 @@ from tests import helpers
 
 class ConfigureRegexTests(unittest.TestCase):
     def test_configure_regexes_rules_files_without_defaults(self):
-        rules_path = pathlib.Path(__file__).parent / "data" / "testRules.json"
-        rules_files = (rules_path.open(),)
-        expected_regexes = {
-            Rule(
-                name="RSA private key 2",
-                pattern=re.compile("-----BEGIN EC PRIVATE KEY-----"),
-                path_pattern=None,
-                re_match_type=MatchType.Match,
-                re_match_scope=None,
-            ),
-            Rule(
-                name="Complex Rule",
-                pattern=re.compile("complex-rule"),
-                path_pattern=re.compile("/tmp/[a-z0-9A-Z]+\\.(py|js|json)"),
-                re_match_type=MatchType.Match,
-                re_match_scope=None,
-            ),
-        }
-
-        actual_regexes = config.configure_regexes(
-            include_default=False, rules_files=rules_files
-        )
+        actual_regexes = config.configure_regexes(include_default=False)
 
         self.assertEqual(
-            expected_regexes,
+            set(),
             actual_regexes,
-            f"The regexes dictionary should match the test rules (expected: {expected_regexes}, actual: {actual_regexes})",
-        )
-
-    def test_configure_regexes_rules_files_with_defaults(self):
-        rules_path = pathlib.Path(__file__).parent / "data" / "testRules.json"
-        rules_files = (rules_path.open(),)
-        with config.DEFAULT_PATTERN_FILE.open() as handle:
-            expected_regexes = config.load_rules_from_file(handle)
-        expected_regexes.add(
-            Rule(
-                name="RSA private key 2",
-                pattern=re.compile("-----BEGIN EC PRIVATE KEY-----"),
-                path_pattern=None,
-                re_match_type=MatchType.Match,
-                re_match_scope=None,
-            )
-        )
-        expected_regexes.add(
-            Rule(
-                name="Complex Rule",
-                pattern=re.compile("complex-rule"),
-                path_pattern=re.compile("/tmp/[a-z0-9A-Z]+\\.(py|js|json)"),
-                re_match_type=MatchType.Match,
-                re_match_scope=None,
-            )
-        )
-
-        actual_regexes = config.configure_regexes(
-            include_default=True, rules_files=rules_files
-        )
-
-        self.assertEqual(
-            expected_regexes,
-            actual_regexes,
-            f"The regexes dictionary should match the test rules (expected: {expected_regexes}, actual: {actual_regexes})",
+            "The regexes dictionary should not have been been changed when no defaults or rules files are specified",
         )
 
     def test_configure_regexes_returns_just_default_regexes_by_default(self):

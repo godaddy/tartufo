@@ -195,8 +195,8 @@ class IncludeExcludePathsTests(ScannerTestCase):
     def test_include_paths_are_calculated_if_specified(
         self, mock_compile: mock.MagicMock
     ):
-        self.options.include_path_patterns = tuple(
-            [{"path-pattern": "foo", "reason": "Testing exclude path pattern"}]
+        self.options.include_path_patterns = (
+            {"path-pattern": "foo", "reason": "Testing exclude path pattern"},
         )
         test_scanner = TestScanner(self.options)
         test_scanner.included_paths  # pylint: disable=pointless-statement
@@ -219,8 +219,8 @@ class IncludeExcludePathsTests(ScannerTestCase):
     def test_exclude_paths_are_calculated_if_specified(
         self, mock_compile: mock.MagicMock
     ):
-        self.options.exclude_path_patterns = tuple(
-            [{"path-pattern": "foo", "reason": "Testing exclude path pattern"}]
+        self.options.exclude_path_patterns = (
+            {"path-pattern": "foo", "reason": "Testing exclude path pattern"},
         )
         test_scanner = TestScanner(self.options)
         test_scanner.excluded_paths  # pylint: disable=pointless-statement
@@ -289,8 +289,8 @@ class SignatureTests(ScannerTestCase):
     def test_matched_signatures_are_excluded(self, mock_signature: mock.MagicMock):
         mock_signature.return_value = "foo"
         test_scanner = TestScanner(self.options)
-        self.options.exclude_signatures = tuple(
-            [{"signature": "foo", "reason": "Testing exclude signature"}]
+        self.options.exclude_signatures = (
+            {"signature": "foo", "reason": "Testing exclude signature"},
         )
         self.assertTrue(test_scanner.signature_is_excluded("bar", "blah"))
 
@@ -300,16 +300,16 @@ class SignatureTests(ScannerTestCase):
     ):
         mock_signature.return_value = "bar"
         test_scanner = TestScanner(self.options)
-        self.options.exclude_signatures = tuple(
-            [{"signature": "foo", "reason": "Testing exclude signature"}]
+        self.options.exclude_signatures = (
+            {"signature": "foo", "reason": "Testing exclude signature"},
         )
         self.assertFalse(test_scanner.signature_is_excluded("blah", "stuff"))
 
     def test_signature_found_as_scan_match_is_excluded(self):
         test_scanner = TestScanner(self.options)
-        self.options.exclude_signatures = [
-            {"signature": "ford_prefect", "reason": "Testing exclude signature"}
-        ]
+        self.options.exclude_signatures = (
+            {"signature": "ford_prefect", "reason": "Testing exclude signature"},
+        )
         self.assertTrue(test_scanner.signature_is_excluded("ford_prefect", "/earth"))
 
 

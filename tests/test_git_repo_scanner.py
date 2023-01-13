@@ -70,14 +70,14 @@ class RepoLoadTests(ScannerTestCase):
         mock_load.return_value = (
             self.data_dir / "pyproject.toml",
             {
-                "include_path_patterns": [
+                "include_path_patterns": (
                     {"path-pattern": "tartufo/", "reason": "Inclusion reason"},
                     {"path-pattern": "scripts/", "reason": "Inclusion reason"},
-                ]
+                )
             },
         )
-        self.global_options.include_path_patterns = tuple(
-            [{"path-pattern": "foo/", "reason": "Inclusion reason"}]
+        self.global_options.include_path_patterns = (
+            {"path-pattern": "foo/", "reason": "Inclusion reason"},
         )
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, str(self.data_dir)
@@ -94,15 +94,15 @@ class RepoLoadTests(ScannerTestCase):
         mock_load.return_value = (
             self.data_dir / "pyproject.toml",
             {
-                "exclude_path_patterns": [
+                "exclude_path_patterns": (
                     {"path-pattern": "tests/", "reason": "Exclusion reason"},
                     {"path-pattern": r"\.venv/", "reason": "Exclusion reason"},
                     {"path-pattern": r".*\.egg-info/", "reason": "Exclusion reason"},
-                ]
+                )
             },
         )
-        self.global_options.exclude_path_patterns = tuple(
-            [{"path-pattern": "bar/", "reason": "Exclusion reason"}]
+        self.global_options.exclude_path_patterns = (
+            {"path-pattern": "bar/", "reason": "Exclusion reason"},
         )
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, str(self.data_dir)
@@ -129,8 +129,8 @@ class RepoLoadTests(ScannerTestCase):
                 ]
             },
         )
-        self.global_options.exclude_signatures = tuple(
-            [{"signature": "bar", "reason": "Reason to exclude signature"}]
+        self.global_options.exclude_signatures = (
+            {"signature": "bar", "reason": "Reason to exclude signature"},
         )
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, str(self.data_dir)
@@ -548,9 +548,9 @@ class ScanFilenameTests(ScannerTestCase):
 
 class ExcludedSignaturesTests(ScannerTestCase):
     def test_new_style_signatures_are_processed(self):
-        self.global_options.exclude_signatures = [
-            {"signature": "bar/", "reason": "path pattern"}
-        ]
+        self.global_options.exclude_signatures = (
+            {"signature": "bar/", "reason": "path pattern"},
+        )
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
@@ -572,9 +572,9 @@ class ExcludedSignaturesTests(ScannerTestCase):
 
 class IncludedPathsTests(ScannerTestCase):
     def test_new_style_included_paths_are_processed(self):
-        self.global_options.include_path_patterns = [
-            {"path-pattern": "bar/", "reason": "path pattern"}
-        ]
+        self.global_options.include_path_patterns = (
+            {"path-pattern": "bar/", "reason": "path pattern"},
+        )
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
@@ -596,9 +596,9 @@ class IncludedPathsTests(ScannerTestCase):
 
 class ExcludedPathsTests(ScannerTestCase):
     def test_new_style_excluded_paths_are_processed(self):
-        self.global_options.exclude_path_patterns = [
-            {"path-pattern": "bar/", "reason": "path pattern"}
-        ]
+        self.global_options.exclude_path_patterns = (
+            {"path-pattern": "bar/", "reason": "path pattern"},
+        )
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
