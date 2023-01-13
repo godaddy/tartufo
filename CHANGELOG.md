@@ -2,6 +2,8 @@ vX.X.X - DD MMM YYYY
 --------------------
 
 Features:
+* [#433](https://github.com/godaddy/tartufo/pull/433) - Dropped support for deprecated flags from v3.0
+
 * [#411](https://github.com/godaddy/tartufo/pull/411) - Drop support for python 3.6.
   This version reached end of life several years ago, and end of security support at
   the end of 2021. Users with a requirement to run tartufo on this python version
