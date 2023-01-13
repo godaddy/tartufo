@@ -556,7 +556,7 @@ class ExcludedSignaturesTests(ScannerTestCase):
         )
         self.assertEqual(test_scanner.excluded_signatures, ("bar/",))
 
-    def test_error_is_raised_when_two_styles_signatures_are_configured(self):
+    def test_error_is_raised_when_string_signature_is_used(self):
         self.global_options.exclude_signatures = [
             "foo/",
             {"signature": "bar/", "reason": "path pattern"},
@@ -565,7 +565,7 @@ class ExcludedSignaturesTests(ScannerTestCase):
             self.global_options, self.git_options, "."
         )
         with self.assertRaisesRegex(
-            ConfigException, "signature is illegal in exclude-signatures"
+            ConfigException, "str signature is illegal in exclude-signatures"
         ):
             self.assertIsNone(test_scanner.excluded_signatures)
 
@@ -580,7 +580,7 @@ class IncludedPathsTests(ScannerTestCase):
         )
         self.assertEqual(test_scanner.included_paths, [re.compile("bar/")])
 
-    def test_error_is_raised_when_two_styles_included_paths_are_configured(self):
+    def test_error_is_raised_when_string_include_path_is_used(self):
         self.global_options.include_path_patterns = [
             "foo/",
             {"path-pattern": "bar/", "reason": "path pattern"},
@@ -605,7 +605,7 @@ class ExcludedPathsTests(ScannerTestCase):
         self.assertEqual(test_scanner.excluded_paths, [re.compile("bar/")])
 
     @mock.patch("tartufo.scanner.GitScanner.filter_submodules", mock.MagicMock())
-    def test_error_is_raised_when_two_styles_excluded_paths_are_configured(self):
+    def test_error_is_raised_when_string_exclude_path_is_used(self):
         self.global_options.exclude_path_patterns = [
             "foo/",
             {"path-pattern": "bar/", "reason": "path pattern"},
