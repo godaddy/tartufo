@@ -25,7 +25,6 @@ from typing import (
     Tuple,
     IO,
 )
-import warnings
 
 from cached_property import cached_property
 import click
@@ -175,16 +174,6 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     def hex_entropy_limit(self) -> float:
         """Returns low entropy limit for suspicious hexadecimal encodings"""
 
-        # For backwards compatibility, allow the caller to manipulate this score
-        # # directly (but complain about it).
-        if self.global_options.hex_entropy_score:
-            warnings.warn(
-                "--hex-entropy-score is deprecated and will be removed in tartufo 4.x. "
-                "Please use --entropy-sensitivity instead.",
-                DeprecationWarning,
-            )
-            return self.global_options.hex_entropy_score
-
         # Each hexadecimal digit represents a 4-bit number, so we want to scale
         # the base score by this amount to account for the efficiency of the
         # string representation we're examining.
@@ -193,16 +182,6 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     @cached_property
     def b64_entropy_limit(self) -> float:
         """Returns low entropy limit for suspicious base64 encodings"""
-
-        # For backwards compatibility, allow the caller to manipulate this score
-        # # directly (but complain about it).
-        if self.global_options.b64_entropy_score:
-            warnings.warn(
-                "--b64-entropy-score is deprecated and will be removed in tartufo 4.x. "
-                "Please use --entropy-sensitivity instead.",
-                DeprecationWarning,
-            )
-            return self.global_options.b64_entropy_score
 
         # Each 4-character base64 group represents 3 8-bit bytes, i.e. an effective
         # bit rate of 24/4 = 6 bits per character. We want to scale the base score
@@ -249,7 +228,6 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         if self._included_paths is None:
             self.logger.info("Initializing included paths")
             patterns: Set[str] = set()
-            deprecated = False
             for pattern in tuple(
                 self.global_options.include_path_patterns or []
             ) + tuple(self.config_data.get("include_path_patterns", [])):
@@ -260,21 +238,10 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                         raise types.ConfigException(
                             "Required key path-pattern missing in include-path-patterns"
                         ) from exc
-                elif isinstance(pattern, str):
-                    deprecated = True
-                    patterns.add(pattern)
                 else:
                     raise types.ConfigException(
                         f"{type(pattern).__name__} pattern is illegal in include-path-patterns"
                     )
-            if deprecated:
-                warnings.warn(
-                    "Old format of --include-path-patterns option and config file setup include-path-patterns "
-                    "= ['inclusion pattern'] has been deprecated and will be removed in tartufo 4.x. "
-                    "Make sure all the inclusions are set up using new pattern i.e. include-path-patterns = "
-                    "[{path-pattern='inclusion pattern',reason='reason for inclusion'}] in the config file",
-                    DeprecationWarning,
-                )
             self._included_paths = config.compile_path_rules(patterns)
         return self._included_paths
 
@@ -298,7 +265,6 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         if self._excluded_paths is None:
             self.logger.info("Initializing excluded paths")
             patterns: Set[str] = set()
-            deprecated = False
             for pattern in tuple(
                 self.global_options.exclude_path_patterns or []
             ) + tuple(self.config_data.get("exclude_path_patterns", [])):
@@ -309,21 +275,10 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                         raise types.ConfigException(
                             "Required key path-pattern missing in exclude-path-patterns"
                         ) from exc
-                elif isinstance(pattern, str):
-                    deprecated = True
-                    patterns.add(pattern)
                 else:
                     raise types.ConfigException(
                         f"{type(pattern).__name__} pattern is illegal in exclude-path-patterns"
                     )
-            if deprecated:
-                warnings.warn(
-                    "Old format of --exclude-path-patterns option and config file setup exclude-path-patterns "
-                    "= ['exclusion pattern'] has been deprecated and will be removed in tartufo 4.x. "
-                    "Make sure all the exclusions are set up using new pattern i.e. exclude-path-patterns = "
-                    "[{path-pattern='exclusion pattern',reason='reason for exclusion'}] in the config file",
-                    DeprecationWarning,
-                )
             self._excluded_paths = config.compile_path_rules(patterns)
         return self._excluded_paths
 
@@ -338,7 +293,6 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             try:
                 self._rules_regexes = config.configure_regexes(
                     include_default=self.global_options.default_regexes,
-                    rules_files=self.global_options.rules,
                     rule_patterns=self.global_options.rule_patterns,
                     rules_repo=self.global_options.git_rules_repo,
                     rules_repo_files=self.global_options.git_rules_files,
@@ -386,7 +340,6 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         """
         if self._excluded_signatures is None:
             signatures: Set[str] = set()
-            deprecated = False
             for signature in tuple(
                 self.global_options.exclude_signatures or []
             ) + tuple(self.config_data.get("exclude_signatures", [])):
@@ -397,21 +350,10 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                         raise types.ConfigException(
                             "Required key signature missing in exclude-signatures"
                         ) from exc
-                elif isinstance(signature, str):
-                    deprecated = True
-                    signatures.add(signature)
                 else:
                     raise types.ConfigException(
                         f"{type(signature).__name__} signature is illegal in exclude-signatures"
                     )
-            if deprecated:
-                warnings.warn(
-                    "Configuring exclude-signatures as string has been deprecated and support for this format will "
-                    "be removed in tartufo 4.x. Please update your exclude-signatures configuration to "
-                    "an array of tables. For example: exclude-signatures = [{signature='signature', reason='The "
-                    "reason of excluding the signature'}]",
-                    DeprecationWarning,
-                )
             self._excluded_signatures = tuple(signatures)
         return self._excluded_signatures
 
@@ -599,23 +541,16 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             # If the chunk is diff output, the first character of each line is
             # generated metadata ("+", "-", etc.) that is not part of actual
             # repository content, and it should be ignored.
-            extra_char: Optional[str]
-            if chunk.is_diff:
-                extra_char = line[0]
-                analyze = line[1:]
-            else:
-                extra_char = None
-                analyze = line
+            analyze = line[1:] if chunk.is_diff else line
             for word in analyze.split():
                 for string in util.find_strings_by_regex(word, BASE64_REGEX):
                     yield from self.evaluate_entropy_string(
-                        chunk, analyze, string, self.b64_entropy_limit, extra_char
+                        chunk, analyze, string, self.b64_entropy_limit
                     )
                 for string in util.find_strings_by_regex(word, HEX_REGEX):
                     yield from self.evaluate_entropy_string(
-                        chunk, analyze, string, self.hex_entropy_limit, extra_char
+                        chunk, analyze, string, self.hex_entropy_limit
                     )
-                extra_char = None
 
     def evaluate_entropy_string(
         self,
@@ -623,7 +558,6 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         line: str,
         string: str,
         min_entropy_score: float,
-        backwards_compatibility_prefix: Optional[str],
     ) -> Generator[Issue, None, None]:
         """Check entropy string using entropy characters and score.
 
@@ -631,14 +565,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         :param line: Source line containing string of interest
         :param string: String to check
         :param min_entropy_score: Minimum entropy score to flag
-        :param backwards_compatibility_prefix: Possible prefix character
         :return: Generator of issues flagged
-
-        If the string in "string" would result in an Issue (i.e. it has high
-        entropy and is not excluded), and backwards_compatibility_prefix is not
-        None, re-check for exclusions based on "prefix" + "string". This preserves
-        the utility of signatures generated by earlier tartufo versions which did
-        not handle "diff" chunks correctly.
         """
 
         if not self.signature_is_excluded(string, chunk.file_path):
@@ -646,26 +573,6 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             if entropy_score > min_entropy_score:
                 if self.entropy_string_is_excluded(string, line, chunk.file_path):
                     self.logger.debug("line containing entropy was excluded: %s", line)
-                elif (
-                    backwards_compatibility_prefix is not None
-                    and self.signature_is_excluded(
-                        backwards_compatibility_prefix + string, chunk.file_path
-                    )
-                ):
-                    self.logger.debug(
-                        "line containing entropy was excluded (old signature): %s", line
-                    )
-                    # We should tell the user to update their old signature
-                    new_signature = util.generate_signature(string, chunk.file_path)
-                    old_signature = util.generate_signature(
-                        backwards_compatibility_prefix + string, chunk.file_path
-                    )
-                    warnings.warn(
-                        f"Signature {old_signature} was generated by an old version of tartufo and is deprecated. "
-                        "tartufo 4.x will not recognize this signature. "
-                        f"Please update your configuration to use signature {new_signature} instead.",
-                        DeprecationWarning,
-                    )
 
                 else:
                     yield Issue(types.IssueType.Entropy, string, chunk)

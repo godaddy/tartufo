@@ -61,8 +61,6 @@ class ScanTests(ScannerTestCase):
     def test_scan_iterates_through_all_chunks(self, mock_entropy: mock.MagicMock):
         # Make sure we do at least one type of scan
         self.options.entropy = True
-        self.options.b64_entropy_score = 4.5
-        self.options.hex_entropy_score = 3
         test_scanner = TestScanner(self.options)
         list(test_scanner.scan())
         mock_entropy.assert_has_calls(
@@ -197,7 +195,9 @@ class IncludeExcludePathsTests(ScannerTestCase):
     def test_include_paths_are_calculated_if_specified(
         self, mock_compile: mock.MagicMock
     ):
-        self.options.include_path_patterns = ("foo",)
+        self.options.include_path_patterns = (
+            {"path-pattern": "foo", "reason": "Testing exclude path pattern"},
+        )
         test_scanner = TestScanner(self.options)
         test_scanner.included_paths  # pylint: disable=pointless-statement
         mock_compile.assert_called_once_with({"foo"})
@@ -219,7 +219,9 @@ class IncludeExcludePathsTests(ScannerTestCase):
     def test_exclude_paths_are_calculated_if_specified(
         self, mock_compile: mock.MagicMock
     ):
-        self.options.exclude_path_patterns = ("foo",)
+        self.options.exclude_path_patterns = (
+            {"path-pattern": "foo", "reason": "Testing exclude path pattern"},
+        )
         test_scanner = TestScanner(self.options)
         test_scanner.excluded_paths  # pylint: disable=pointless-statement
         mock_compile.assert_called_once_with({"foo"})
@@ -269,7 +271,6 @@ class RegexRulesTests(ScannerTestCase):
 
     def test_regex_rules_are_computed_when_first_accessed(self):
         self.options.default_regexes = True
-        self.options.rules = "foo"  # type: ignore
         self.options.rule_patterns = "oof"  # type: ignore
         self.options.git_rules_repo = "bar"
         self.options.git_rules_files = "baz"  # type: ignore
@@ -277,7 +278,6 @@ class RegexRulesTests(ScannerTestCase):
         test_scanner.rules_regexes  # pylint: disable=pointless-statement
         self.mock_configure.assert_called_once_with(
             include_default=True,
-            rules_files="foo",
             rule_patterns="oof",
             rules_repo="bar",
             rules_repo_files="baz",
@@ -289,7 +289,9 @@ class SignatureTests(ScannerTestCase):
     def test_matched_signatures_are_excluded(self, mock_signature: mock.MagicMock):
         mock_signature.return_value = "foo"
         test_scanner = TestScanner(self.options)
-        self.options.exclude_signatures = ("foo",)
+        self.options.exclude_signatures = (
+            {"signature": "foo", "reason": "Testing exclude signature"},
+        )
         self.assertTrue(test_scanner.signature_is_excluded("bar", "blah"))
 
     @mock.patch("tartufo.util.generate_signature")
@@ -298,12 +300,16 @@ class SignatureTests(ScannerTestCase):
     ):
         mock_signature.return_value = "bar"
         test_scanner = TestScanner(self.options)
-        self.options.exclude_signatures = ("foo",)
+        self.options.exclude_signatures = (
+            {"signature": "foo", "reason": "Testing exclude signature"},
+        )
         self.assertFalse(test_scanner.signature_is_excluded("blah", "stuff"))
 
     def test_signature_found_as_scan_match_is_excluded(self):
         test_scanner = TestScanner(self.options)
-        self.options.exclude_signatures = ("ford_prefect",)
+        self.options.exclude_signatures = (
+            {"signature": "ford_prefect", "reason": "Testing exclude signature"},
+        )
         self.assertTrue(test_scanner.signature_is_excluded("ford_prefect", "/earth"))
 
 
@@ -643,14 +649,6 @@ class EntropyDetectionTests(ScannerTestCase):
         # 100% sensitivity means required entropy rate will be zero
         self.assertEqual(test_scanner.b64_entropy_limit, 6.0)
         self.assertEqual(test_scanner.hex_entropy_limit, 4.0)
-
-    def test_sensitivity_deprecated_overrides(self):
-        self.options.b64_entropy_score = 11.1
-        self.options.hex_entropy_score = 22.2
-        test_scanner = TestScanner(self.options)
-
-        self.assertEqual(test_scanner.b64_entropy_limit, 11.1)
-        self.assertEqual(test_scanner.hex_entropy_limit, 22.2)
 
     def test_calculate_entropy_minimum_calculation(self):
 

@@ -2,7 +2,6 @@ import json
 import pathlib
 import re
 import shutil
-import warnings
 from typing import (
     Any,
     Dict,
@@ -149,7 +148,6 @@ def read_pyproject_toml(
 
 def configure_regexes(
     include_default: bool = True,
-    rules_files: Optional[Iterable[TextIO]] = None,
     rule_patterns: Optional[Iterable[Dict[str, str]]] = None,
     rules_repo: Optional[str] = None,
     rules_repo_files: Optional[Iterable[str]] = None,
@@ -186,16 +184,7 @@ def configure_regexes(
                 f"Invalid rule-pattern; both reason and pattern are required fields. Rule: {pattern}"
             ) from exc
 
-    if rules_files:
-        warnings.warn(
-            "Storing rules in a separate file is deprecated and will be removed "
-            "in tartufo 4.x. Please use the 'rule-patterns' config "
-            " option instead.",
-            DeprecationWarning,
-        )
-        all_files: List[TextIO] = list(rules_files)
-    else:
-        all_files = []
+    all_files = []
     try:
         cloned_repo = False
         repo_path = None

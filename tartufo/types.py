@@ -1,7 +1,7 @@
 # pylint: disable=too-many-instance-attributes
 import enum
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, TextIO, Tuple, Pattern, Union
+from typing import Any, Dict, Optional, TextIO, Tuple, Pattern
 
 
 class IssueType(enum.Enum):
@@ -47,8 +47,6 @@ class OutputFormat(enum.Enum):
 class GlobalOptions:
     """Configuration options for controlling scans and output
 
-    :param rules: External files containing lists of regex patterns to match
-      against
     :param rule_patterns: Dictionaries containing regex patterns to match
       against
     :param default_regexes: Whether to include built-in regex patterns in the
@@ -78,17 +76,12 @@ class GlobalOptions:
     :param quiet: Whether to suppress all output
     :param log_timestamps: Whether to include timestamps in log output
     :param output_format: What format should be output from the scan
-    :param b64_entropy_score: A number from 0.0 - 6.0 representing the
-      sensitivity of b64 entropy scans
-    :param hex_entropy_score: A number from 0.0 - 4.0 representing the
-      sensitivity of hex entropy scans
     :param entropy_sensitivity: A number from 0 - 100 representing the
       sensitivity of entropy scans. A value of 0 will detect totally non-random
       values, while a value of 100 will detect only wholly random values.
     """
 
     __slots__ = (
-        "rules",
         "rule_patterns",
         "default_regexes",
         "entropy",
@@ -108,20 +101,17 @@ class GlobalOptions:
         "quiet",
         "log_timestamps",
         "output_format",
-        "b64_entropy_score",
-        "hex_entropy_score",
         "entropy_sensitivity",
     )
-    rules: Tuple[TextIO, ...]
     rule_patterns: Tuple[Dict[str, str], ...]
     default_regexes: bool
     entropy: bool
     regex: bool
     scan_filenames: bool
-    include_path_patterns: Union[Tuple[str, ...], Tuple[Dict[str, str], ...]]
-    exclude_path_patterns: Union[Tuple[str, ...], Tuple[Dict[str, str], ...]]
+    include_path_patterns: Tuple[Dict[str, str], ...]
+    exclude_path_patterns: Tuple[Dict[str, str], ...]
     exclude_entropy_patterns: Tuple[Dict[str, str], ...]
-    exclude_signatures: Union[Tuple[Dict[str, str], ...], Tuple[str, ...]]
+    exclude_signatures: Tuple[Dict[str, str], ...]
     output_dir: Optional[str]
     temp_dir: Optional[str]
     buffer_size: int
@@ -132,8 +122,6 @@ class GlobalOptions:
     quiet: bool
     log_timestamps: bool
     output_format: Optional[OutputFormat]
-    b64_entropy_score: float
-    hex_entropy_score: float
     entropy_sensitivity: int
 
 

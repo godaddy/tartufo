@@ -46,13 +46,6 @@ class TartufoCLI(click.MultiCommand):
     context_settings=dict(help_option_names=["-h", "--help"]),
 )
 @click.option(
-    "--rules",
-    multiple=True,
-    type=click.File("r"),
-    help="[DEPRECATED] Use the rule-patterns config options instead. Path(s) to regex "
-    "rules json list file(s).",
-)
-@click.option(
     "--rule-patterns",
     multiple=True,
     type=click.UNPROCESSED,
@@ -249,24 +242,6 @@ class TartufoCLI(click.MultiCommand):
     of 0 to 100, where 0 means "totally nonrandom" and 100 means "totally random".
     Decreasing the scanner's sensitivity increases the likelihood that a given
     string will be identified as suspicious.""",
-)
-@click.option(
-    "-b64",
-    "--b64-entropy-score",
-    help="""[DEPRECATED] Use `--entropy-sensitivity`. Modify the base64 entropy score. If
-    a value greater than the default (4.5 in a range of 0.0-6.0) is specified,
-    tartufo lists higher entropy base64 strings (longer or more randomized strings.
-    A lower value lists lower entropy base64 strings (shorter or less randomized
-    strings).""",
-)
-@click.option(
-    "-hex",
-    "--hex-entropy-score",
-    help="""[DEPRECATED] Use `--entropy-sensitivity`. Modify the hexadecimal entropy score.
-    If a value greater than the default (3.0 in a range of 0.0-4.0) is specified,
-    tartufo lists higher entropy hexadecimal strings (longer or more randomized
-    strings). A lower value lists lower entropy hexadecimal strings (shorter or less
-    randomized strings).""",
 )
 # The first positional argument here would be a hard-coded version, hence the `None`
 @click.version_option(None, "-V", "--version")

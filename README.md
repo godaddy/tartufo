@@ -45,9 +45,6 @@ Usage: tartufo [OPTIONS] COMMAND [ARGS]...
   commit hook.
 
 Options:
-  --rules FILENAME                [DEPRECATED] Use the rule-patterns config
-                                  options instead. Path(s) to regex rules json
-                                  list file(s).
   --default-regexes / --no-default-regexes
                                   Whether to include the default regex list
                                   when configuring search patterns. Only
@@ -108,23 +105,6 @@ Options:
                                   likelihood that a given string will be
                                   identified as suspicious.  [default: 75;
                                   0<=x<=100]
-  -b64, --b64-entropy-score TEXT  [DEPRECATED] Use `--entropy-sensitivity`.
-                                  Modify the base64 entropy score. If a value
-                                  greater than the default (4.5 in a range of
-                                  0.0-6.0) is specified, tartufo lists higher
-                                  entropy base64 strings (longer or more
-                                  randomized strings. A lower value lists
-                                  lower entropy base64 strings (shorter or
-                                  less randomized strings).
-  -hex, --hex-entropy-score TEXT  [DEPRECATED] Use `--entropy-sensitivity`.
-                                  Modify the hexadecimal entropy score. If a
-                                  value greater than the default (3.0 in a
-                                  range of 0.0-4.0) is specified, tartufo
-                                  lists higher entropy hexadecimal strings
-                                  (longer or more randomized strings). A lower
-                                  value lists lower entropy hexadecimal
-                                  strings (shorter or less randomized
-                                  strings).
   -V, --version                   Show the version and exit.
   -h, --help                      Show this message and exit.
 
