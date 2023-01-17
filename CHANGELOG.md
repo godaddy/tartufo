@@ -1,4 +1,4 @@
-vX.X.X - DD MMM YYYY
+v4.0.0 - Jan 17 2023
 --------------------
 
 Features:
