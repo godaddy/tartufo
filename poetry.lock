@@ -1756,4 +1756,4 @@ docs = ["recommonmark", "sphinx", "sphinx-autodoc-typehints", "sphinx-click", "s
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7.2"
-content-hash = "7d78f66b048be1c056dcfd7ad4f8981e1c1282c3de02cb9ff0ade0f71519d592"
+content-hash = "5befa5da38868265ca611ce4086190e66678a41e9c37e747e3ad8ff04da58f82"
