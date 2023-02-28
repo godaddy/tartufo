@@ -57,11 +57,11 @@ Options:
                                   Check the names of files being scanned as
                                   well as their contents.  [default: scan-
                                   filenames]
-  -of, --output-format [json|compact|text]
+  -of, --output-format [json|compact|text|report]
                                   Specify the format in which the output needs
                                   to be generated `--output-format
                                   json/compact/text`. Either `json`, `compact`
-                                  or `text` can be specified. If not provided
+                                  `text` or `report` can be specified. If not provided
                                   (default) the output will be generated in
                                   `text` format.
   -od, --output-dir DIRECTORY     If specified, all issues will be written out

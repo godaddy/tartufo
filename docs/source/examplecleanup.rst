@@ -120,7 +120,7 @@ More on this later!)
       mv tartufo.toml tartufo.toml_bak
       mv tartufo.toml_new tartufo.toml
       # one final run to make sure your signatures are all set
-      tartufo --regex scan-local-repo ${gitrepo}
+      tartufo --regex scan-local-repo ${GITHUBREPO}
 
 #. Once you are happy with the data that is being stored, time to commit the
    changes back up!
