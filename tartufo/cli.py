@@ -43,7 +43,7 @@ class TartufoCLI(click.MultiCommand):
 @click.command(
     cls=TartufoCLI,
     name="tartufo",
-    context_settings=dict(help_option_names=["-h", "--help"]),
+    context_settings={"help_option_names": ["-h", "--help"]},
 )
 @click.option(
     "--rule-patterns",
@@ -120,8 +120,8 @@ class TartufoCLI(click.MultiCommand):
     ),
     default="text",
     help="""Specify the format in which the output needs to be generated
-    `--output-format json/compact/text`. Either `json`, `compact` or `text`
-    can be specified. If not provided (default) the output will be generated
+    `--output-format json/compact/text`. Either `json`, `compact`, `text`
+    or `report` can be specified. If not provided (default) the output will be generated
     in `text` format.""",
 )
 @click.option(
