@@ -1,8 +1,9 @@
-vX.X.X - Feb 27 2023
+v4.0.1 - Mar 1 2023
 --------------------
 
 Features:
 * [#448](https://github.com/godaddy/tartufo/pull/448) - Update `GitPython` to `3.1.30` following [CVE-2022-24439](https://github.com/advisories/GHSA-hcpj-qp55-gfph)
+* [#449](https://github.com/godaddy/tartufo/pull/449) - Update documentation to remove deprecated config items.
 
 v4.0.0 - Jan 17 2023
 --------------------
