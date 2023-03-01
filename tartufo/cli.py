@@ -43,7 +43,7 @@ class TartufoCLI(click.MultiCommand):
 @click.command(
     cls=TartufoCLI,
     name="tartufo",
-    context_settings=dict(help_option_names=["-h", "--help"]),
+    context_settings={"help_option_names": ["-h", "--help"]},
 )
 @click.option(
     "--rule-patterns",
