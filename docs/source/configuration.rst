@@ -74,24 +74,9 @@ scans. To do this, you can add it to your config file.
 
     [tool.tartufo]
     exclude-signatures = [
-      "2a3cb329b81351e357b09f1b97323ff726e72bd5ff8427c9295e6ef68226e1d1",
-    ]
-
-Done! This particular issue will no longer show up in your scan results.
-
-As of version 3.0, a new format for specifying exclusion signatures has been added.
-
-.. code-block:: toml
-
-    [tool.tartufo]
-    exclude-signatures = [
         {signature = "2a3cb329b81351e357b09f1b97323ff726e72bd5ff8427c9295e6ef68226e1d1", reason = "reason for exclusion"},
     ]
 
-.. note::
-
-    Currently both formats of signature exclusions are supported. However, only `TOML`_ `array of tables`_ format
-    will be supported in future versions.
 
 .. _limiting-scans-by-paths:
 
@@ -111,47 +96,12 @@ Python Regular Expressions (regex) and the `--include-path-patterns` and
 
    [tool.tartufo]
    include-path-patterns = [
-      'src/',
-      'gradle/',
-      # regexes must match the entire path, but can use python's regex syntax
-      # for case-insensitive matching and other advanced options
-      '(.*/)?id_[rd]sa$',
-      # Single quoted strings in TOML don't require escapes for `\` in regexes
-      '(?i).*\.(properties|conf|ini|txt|y(a)?ml)$',
-   ]
-   exclude-path-patterns = [
-      '(.*/)?\.classpath$',
-      '.*\.jmx$',
-      '(.*/)?test/(.*/)?resources/',
-   ]
-
-The filter expressions can also be specified as command line arguments.
-Patterns specified like this are merged with any patterns specified
-in the config file:
-
-.. code-block:: sh
-
-   > tartufo \
-     --include-path-patterns 'src/' -ip 'gradle/' \
-     --exclude-path-patterns '(.*/)?\.classpath$' -xp '.*\.jmx$' \
-     scan-local-repo file://path/to/my/repo.git
-
-As of version 3.0, a new format for specifying paths has been added.
-
-.. code-block:: toml
-
-   [tool.tartufo]
-   include-path-patterns = [
       {path-pattern = 'src/', reason='reason for inclusion'},
    ]
    exclude-path-patterns = [
       {path-pattern = 'poetry\.lock', reason='reason for exclusion'},
    ]
 
-.. note::
-
-    Currently all 3 formats are supported. However, only `TOML`_ `array of tables`_ format
-    will be supported in future versions.
 
 Configuration File Exclusive Options
 ------------------------------------
