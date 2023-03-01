@@ -1527,14 +1527,14 @@ test = ["pytest"]
 
 [[package]]
 name = "sphinxcontrib-spelling"
-version = "7.7.0"
+version = "8.0.0"
 description = "Sphinx spelling extension"
 category = "dev"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 files = [
-    {file = "sphinxcontrib-spelling-7.7.0.tar.gz", hash = "sha256:56561c3f6a155b0946914e4de988729859315729dc181b5e4dc8a68fe78de35a"},
-    {file = "sphinxcontrib_spelling-7.7.0-py3-none-any.whl", hash = "sha256:95a0defef8ffec6526f9e83b20cc24b08c9179298729d87976891840e3aa3064"},
+    {file = "sphinxcontrib-spelling-8.0.0.tar.gz", hash = "sha256:199d0a16902ad80c387c2966dc9eb10f565b1fb15ccce17210402db7c2443e5c"},
+    {file = "sphinxcontrib_spelling-8.0.0-py3-none-any.whl", hash = "sha256:b27e0a16aef00bcfc888a6490dc3f16651f901dc475446c6882834278c8dc7b3"},
 ]
 
 [package.dependencies]
@@ -1869,4 +1869,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7.2"
-content-hash = "5befa5da38868265ca611ce4086190e66678a41e9c37e747e3ad8ff04da58f82"
+content-hash = "a70883d87102c488a4b8222806b5a9382bcef13cb1347b77d13875a438146d9b"
