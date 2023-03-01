@@ -709,7 +709,6 @@ class GeneralUtilTests(unittest.TestCase):
         self.assertEqual(strings, ["asdf"])
 
     def test_find_strings_by_regex_recognizes_hexadecimal(self):
-
         sample_input = """
         1111111111fffffCCCCC This is valid hexadecimal
         g111111111fffffCCCCC This is not because "g" is not in alphabet
@@ -719,7 +718,6 @@ class GeneralUtilTests(unittest.TestCase):
         self.assertEqual(strings, ["1111111111fffffCCCCC"])
 
     def test_find_strings_by_regex_recognizes_base64(self):
-
         sample_input = """
         111111111+ffffCCCC== This is valid base64
         @111111111+ffffCCCC= This is not because "@" is not in alphabet
@@ -731,7 +729,6 @@ class GeneralUtilTests(unittest.TestCase):
         self.assertEqual(strings, ["111111111+ffffCCCC=="])
 
     def test_find_strings_by_regex_recognizes_base64url(self):
-
         sample_input = """
         111111111-ffffCCCC== This is valid base64url
         @111111111-ffffCCCC= This is not because "@" is not in alphabet
@@ -743,7 +740,6 @@ class GeneralUtilTests(unittest.TestCase):
         self.assertEqual(strings, ["111111111-ffffCCCC=="])
 
     def test_find_strings_by_regex_recognizes_mutant_base64(self):
-
         sample_input = """
         +111111111-ffffCCCC= Can't mix + and - but both are in regex
         111111111111111111111== Not a valid length but we don't care
