@@ -1,3 +1,9 @@
+vX.X.X - Feb 27 2023
+--------------------
+
+Features:
+* [#448](https://github.com/godaddy/tartufo/pull/448) - Update `GitPython` to `3.1.30` following [CVE-2022-24439](https://github.com/advisories/GHSA-hcpj-qp55-gfph)
+
 v4.0.0 - Jan 17 2023
 --------------------
 
