@@ -651,13 +651,11 @@ class EntropyDetectionTests(ScannerTestCase):
         self.assertEqual(test_scanner.hex_entropy_limit, 4.0)
 
     def test_calculate_entropy_minimum_calculation(self):
-
         # We already know an empty string trivially has zero entropy.
         # Doing the math, a one-character string also should have zero entropy.
         self.assertEqual(self.scanner.calculate_entropy("a"), 0.0)
 
     def test_calculate_entropy_maximum_hexadecimal(self):
-
         # We reach maximum entropy when every character in the alphabet appears
         # once in the input string (order doesn't matter). Each character represents
         # 4 bits (has 2^4 = 16 possible values).
@@ -673,7 +671,6 @@ class EntropyDetectionTests(ScannerTestCase):
         self.assertEqual(self.scanner.calculate_entropy(alphabet), 4.0)
 
     def test_calculate_entropy_maximum_base64(self):
-
         # See above. base64 uses 4 characters to represent 3 bytes, so the
         # underlying bit rate is 24 / 4 = 6 bits per character. Unlike above,
         # case matters, so we include both upper- and lowercase letters.
