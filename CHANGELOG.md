@@ -1,3 +1,9 @@
+vX.X.X - Mar 3 2023
+--------------------
+
+Features:
+* [#455](https://github.com/godaddy/tartufo/pull/455) - Update documentation to fix incorrect wording
+
 v4.0.1 - Mar 1 2023
 --------------------
 
