@@ -239,7 +239,10 @@ Option 2:
     reason = 'URL with env variables for auth'
 
 
-There are 4 relevant keys for this directive, as described below.
+There are 4 relevant keys for this directive, as described below. Note that
+regex scans differ from entropy scans, so the exclusion pattern is always
+tested against the offending regex match(es). As a result, there is no
+``scope`` key for this directive.
 
 ============ ======== ============================ ==============================================================
 Key          Required Value                        Description
