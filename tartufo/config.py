@@ -278,15 +278,17 @@ def compile_rules(patterns: Iterable[Dict[str, str]], exclude_type: str) -> List
             raise ConfigException(
                 f"Invalid value for match-type: {pattern.get('match-type')}"
             ) from exc
-        if exclude_type != "regex":
+        if exclude_type == "regex":
+            # regex exclusions always have line scope
+            scope = Scope.Line
+        else:
+            # entropy exclusions can specify scope
             try:
                 scope = Scope(pattern.get("scope", Scope.Line.value))
             except ValueError as exc:
                 raise ConfigException(
                     f"Invalid value for scope: {pattern.get('scope')}"
                 ) from exc
-        else:
-            scope = Scope.Line
         try:
             rules.append(
                 Rule(

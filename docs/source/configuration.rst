@@ -206,7 +206,7 @@ scope        No       String ("word" or "line")    Whether to match against the 
 .. regex-exclusion-patterns:
 
 Regex Exclusion Patterns
-++++++++++++++++++++++++++
+++++++++++++++++++++++++
 
 Regex scans can produce false positive matches such as environment variables in
 URLs. To avoid these false positives, you can use the
