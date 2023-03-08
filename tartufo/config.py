@@ -264,7 +264,7 @@ def compile_path_rules(patterns: Iterable[str]) -> List[Pattern]:
     ]
 
 
-def compile_rules(patterns: Iterable[Dict[str, str]]) -> List[Rule]:
+def compile_rules(patterns: Iterable[Dict[str, str]], exclude_type: str) -> List[Rule]:
     """Take a list of regex string with paths and compile them into a List of Rule.
 
     :param patterns: The list of patterns to be compiled
@@ -278,12 +278,15 @@ def compile_rules(patterns: Iterable[Dict[str, str]]) -> List[Rule]:
             raise ConfigException(
                 f"Invalid value for match-type: {pattern.get('match-type')}"
             ) from exc
-        try:
-            scope = Scope(pattern.get("scope", Scope.Line.value))
-        except ValueError as exc:
-            raise ConfigException(
-                f"Invalid value for scope: {pattern.get('scope')}"
-            ) from exc
+        if exclude_type != "regex":
+            try:
+                scope = Scope(pattern.get("scope", Scope.Line.value))
+            except ValueError as exc:
+                raise ConfigException(
+                    f"Invalid value for scope: {pattern.get('scope')}"
+                ) from exc
+        else:
+            scope = Scope.Line
         try:
             rules.append(
                 Rule(
@@ -296,6 +299,6 @@ def compile_rules(patterns: Iterable[Dict[str, str]]) -> List[Rule]:
             )
         except KeyError as exc:
             raise ConfigException(
-                f"Invalid exclude-entropy-patterns: {patterns}"
+                f"Invalid exclude-{exclude_type}-patterns: {patterns}"
             ) from exc
     return rules

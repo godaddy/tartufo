@@ -58,6 +58,8 @@ class GlobalOptions:
     :param exclude_path_patterns: A list of paths to be excluded from the scan
     :param exclude_entropy_patterns: Patterns to be excluded from entropy
       matches
+    :param exclude_regex_patterns: Patterns to be excluded from regex
+      matches
     :param exclude_signatures: Signatures of previously found findings to be
       excluded from the list of current findings
     :param exclude_findings: Signatures of previously found findings to be
@@ -90,6 +92,7 @@ class GlobalOptions:
         "include_path_patterns",
         "exclude_path_patterns",
         "exclude_entropy_patterns",
+        "exclude_regex_patterns",
         "exclude_signatures",
         "output_dir",
         "temp_dir",
@@ -111,6 +114,7 @@ class GlobalOptions:
     include_path_patterns: Tuple[Dict[str, str], ...]
     exclude_path_patterns: Tuple[Dict[str, str], ...]
     exclude_entropy_patterns: Tuple[Dict[str, str], ...]
+    exclude_regex_patterns: Tuple[Dict[str, str], ...]
     exclude_signatures: Tuple[Dict[str, str], ...]
     output_dir: Optional[str]
     temp_dir: Optional[str]

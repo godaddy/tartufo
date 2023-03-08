@@ -18,7 +18,6 @@ from typing import (
     Generator,
     List,
     Optional,
-    NoReturn,
     Tuple,
     TYPE_CHECKING,
     Pattern,
@@ -118,6 +117,17 @@ def echo_report_result(scanner: "ScannerBase", now: str):
             f"  {pattern} (path={path_pattern}, scope={m_scope}, type={m_type}): {reason}"
         )
 
+    click.echo("\nExcluded regex patterns:")
+    for e_item in scanner.excluded_regex:
+        pattern = e_item.pattern.pattern if e_item.pattern else ""
+        path_pattern = e_item.path_pattern.pattern if e_item.path_pattern else ""
+        m_scope = e_item.re_match_scope.value if e_item.re_match_scope else ""
+        m_type = e_item.re_match_type.value if e_item.re_match_type else ""
+        reason = e_item.name
+        click.echo(
+            f"  {pattern} (path={path_pattern}, scope={m_scope}, type={m_type}): {reason}"
+        )
+
 
 def echo_result(
     options: "types.GlobalOptions",
@@ -145,6 +155,9 @@ def echo_result(
             ],
             "exclude_entropy_patterns": [
                 str(pattern) for pattern in options.exclude_entropy_patterns
+            ],
+            "exclude_regex_patterns": [
+                str(pattern) for pattern in options.exclude_regex_patterns
             ],
             # This member is for reference. Read below...
             # "found_issues": [
@@ -186,6 +199,8 @@ def echo_result(
             click.echo("\n".join(scanner.excluded_signatures))
             click.echo("\nExcluded entropy patterns:")
             click.echo("\n".join(str(path) for path in scanner.excluded_entropy))
+            click.echo("\nExcluded regex patterns:")
+            click.echo("\n".join(str(path) for path in scanner.excluded_regex))
 
 
 def write_outputs(
@@ -242,7 +257,7 @@ else:
     style_ok = style_error = style_warning = partial(_style_func)
 
 
-def fail(msg: str, ctx: click.Context, code: int = 1) -> NoReturn:
+def fail(msg: str, ctx: click.Context, code: int = 1) -> None:
     """Print out a styled error message and exit.
 
     :param msg: The message to print out to the user

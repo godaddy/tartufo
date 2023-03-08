@@ -136,6 +136,16 @@ class TartufoCLI(click.MultiCommand):
     "scope": "word"|"line"}).""",
 )
 @click.option(
+    "-xr",
+    "--exclude-regex-patterns",
+    multiple=True,
+    hidden=True,
+    type=click.UNPROCESSED,
+    help="""Specify a regular expression which matches regex strings to exclude from the scan. This option can be
+    specified multiple times to exclude multiple patterns. If not provided (default), no regex strings will be
+    excluded. ({"path-pattern": {path regex}, "pattern": {pattern regex}, "match-type": "match"|"search"}).""",
+)
+@click.option(
     "-e",
     "--exclude-signatures",
     multiple=True,

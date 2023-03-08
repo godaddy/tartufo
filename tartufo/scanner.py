@@ -140,6 +140,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     _included_paths: Optional[List[Pattern]] = None
     _excluded_paths: Optional[List[Pattern]] = None
     _excluded_entropy: Optional[List[Rule]] = None
+    _excluded_regex: Optional[List[Rule]] = None
     _rules_regexes: Optional[Set[Rule]] = None
     global_options: types.GlobalOptions
     logger: logging.Logger
@@ -253,11 +254,29 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             patterns = list(self.global_options.exclude_entropy_patterns or ()) + list(
                 self.config_data.get("exclude_entropy_patterns", ())
             )
-            self._excluded_entropy = config.compile_rules(patterns) if patterns else []
+            self._excluded_entropy = (
+                config.compile_rules(patterns, "entropy") if patterns else []
+            )
             self.logger.debug(
                 "Excluded entropy was initialized as: %s", self._excluded_entropy
             )
         return self._excluded_entropy
+
+    @property
+    def excluded_regex(self) -> List[Rule]:
+        """Get a list of regexes used as an exclusive list of paths to scan."""
+        if self._excluded_regex is None:
+            self.logger.info("Initializing excluded regex patterns")
+            patterns = list(self.global_options.exclude_regex_patterns or ()) + list(
+                self.config_data.get("exclude_regex_patterns", ())
+            )
+            self._excluded_regex = (
+                config.compile_rules(patterns, "regex") if patterns else []
+            )
+            self.logger.debug(
+                "Excluded regex was initialized as: %s", self._excluded_regex
+            )
+        return self._excluded_regex
 
     @property
     def excluded_paths(self) -> List[Pattern]:
@@ -371,7 +390,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
 
     @staticmethod
     @lru_cache(maxsize=None)
-    def rule_matches(rule: Rule, string: str, line: str, path: str) -> bool:
+    def rule_matches(rule: Rule, string: Optional[str], line: str, path: str) -> bool:
         """
         Match string and path against rule.
 
@@ -383,6 +402,8 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         """
         match = False
         if rule.re_match_scope == Scope.Word:
+            if not string:
+                raise TartufoException(f"String required for {Scope.Word} scope")
             scope = string
         elif rule.re_match_scope == Scope.Line:
             scope = line
@@ -413,6 +434,18 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         return bool(self.excluded_entropy) and any(
             ScannerBase.rule_matches(p, string, line, path)
             for p in self.excluded_entropy
+        )
+
+    def regex_string_is_excluded(self, line: str, path: str) -> bool:
+        """Find whether the signature of some data has been excluded in configuration.
+
+        :param line: Source line containing string of interest
+        :param path: Path to check against rule path pattern
+        :return: True if excluded, False otherwise
+        """
+
+        return bool(self.excluded_regex) and any(
+            ScannerBase.rule_matches(p, None, line, path) for p in self.excluded_regex
         )
 
     @staticmethod
@@ -589,9 +622,14 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
                 for match in found_strings:
                     # Filter out any explicitly "allowed" match signatures
                     if not self.signature_is_excluded(match, chunk.file_path):
-                        issue = Issue(types.IssueType.RegEx, match, chunk)
-                        issue.issue_detail = rule.name
-                        yield issue
+                        if self.regex_string_is_excluded(match, chunk.file_path):
+                            self.logger.debug(
+                                "line containing regex was excluded: %s", match
+                            )
+                        else:
+                            issue = Issue(types.IssueType.RegEx, match, chunk)
+                            issue.issue_detail = rule.name
+                            yield issue
 
     @property
     @abc.abstractmethod
