@@ -306,9 +306,7 @@ class ReadPyprojectTomlTests(unittest.TestCase):
             ),
         ]
 
-        result = config.read_pyproject_toml(
-            self.ctx, self.param, (str(alpha), str(beta))
-        )
+        config.read_pyproject_toml(self.ctx, self.param, (str(alpha), str(beta)))
 
         # Single-valued attributes set to conflicting values will be set by
         # beta because it is specified last.
