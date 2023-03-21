@@ -208,6 +208,7 @@ class TartufoCLI(click.MultiCommand):
     ),
     is_eager=True,
     callback=config.read_pyproject_toml,
+    multiple=True,
     help="Read configuration from specified file. [default: tartufo.toml]",
 )
 @click.option(

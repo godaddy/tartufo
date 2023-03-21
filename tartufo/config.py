@@ -100,50 +100,71 @@ def load_config_from_path(
 
 
 def read_pyproject_toml(
-    ctx: click.Context, _param: click.Parameter, value: str
+    ctx: click.Context, _param: click.Parameter, value: Tuple[str]
 ) -> Optional[str]:
     """Read config values from a file and load them as defaults.
 
     :param ctx: A context from a currently executing Click command
     :param _param: The command parameter that triggered this callback
-    :param value: The value passed to the command parameter
+    :param value: The value(s) passed to the command parameter
     :raises click.FileError: If there was a problem loading the configuration
     """
-    config_path: Optional[pathlib.Path] = None
-    # These are the names of the arguments the sub-commands can receive.
-    # NOTE: If a new sub-command is added, make sure its argument is
-    #   captured in this list.
-    target_args = ["repo_path", "git_url"]
-    for arg in target_args:
-        target_path = ctx.params.get(arg, None)
-        if target_path:
-            config_path = pathlib.Path(target_path)
-            break
-    if not config_path:
-        # If no path was specified, default to the current working directory
-        config_path = pathlib.Path().cwd()
-    try:
-        config_file, config = load_config_from_path(config_path, value)
-    except FileNotFoundError as exc:
-        # If a config file was specified but not found, raise an error.
-        # Otherwise, pass quietly.
-        if value:
-            raise click.FileError(filename=str(config_path / value), hint=str(exc))
-        return None
-    except types.ConfigException as exc:
-        # If a config file was found, but could not be read, raise an error.
-        if value:
-            target_file = config_path / value
-        else:
-            target_file = config_path / "tartufo.toml"
-        raise click.FileError(filename=str(target_file), hint=str(exc))
 
-    if not config:
-        return None
-    if ctx.default_map is None:
-        ctx.default_map = {}
-    ctx.default_map.update(config)  # type: ignore
-    return str(config_file)
+    config_files_used: List[str] = []
+    for config_candidate in value:
+        config_path: Optional[pathlib.Path] = None
+        # These are the names of the arguments the sub-commands can receive.
+        # NOTE: If a new sub-command is added, make sure its argument is
+        # captured in this list.
+        target_args = [
+            # pre-commit has no argument
+            "target",  # scan-folder
+            "repo_path",  # scan-local-repo and update-signatures
+            "git_url",  # scan-remote-repo
+        ]
+        for arg in target_args:
+            target_path = ctx.params.get(arg, None)
+            if target_path:
+                config_path = pathlib.Path(target_path)
+                break
+        if not config_path:
+            # If no path was specified, default to the current working directory
+            config_path = pathlib.Path().cwd()
+        try:
+            config_file, config = load_config_from_path(config_path, config_candidate)
+        except FileNotFoundError as exc:
+            # If a config file was specified but not found, raise an error.
+            # Otherwise, pass quietly.
+            if config_candidate:
+                raise click.FileError(
+                    filename=str(config_path / config_candidate), hint=str(exc)
+                )
+            continue
+        except types.ConfigException as exc:
+            # If a config file was found, but could not be read, raise an error.
+            if value:
+                target_file = config_path / config_candidate
+            else:
+                target_file = config_path / "tartufo.toml"
+            raise click.FileError(filename=str(target_file), hint=str(exc))
+
+        if not config:
+            continue
+        if ctx.default_map is None:
+            ctx.default_map = {}
+
+        # A simple .update() does not merge list-valued members
+        for key, val in config.items():
+            if key in ctx.default_map and isinstance(val, list):
+                # Concatenate list-valued members
+                ctx.default_map[key].extend(val)
+            else:
+                # Create (or overwrite) everything else
+                ctx.default_map[key] = val
+
+        config_files_used.append(str(config_file))
+
+    return ",".join(config_files_used) if config_files_used else None
 
 
 def configure_regexes(

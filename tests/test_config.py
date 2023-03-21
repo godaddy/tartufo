@@ -220,7 +220,7 @@ class ReadPyprojectTomlTests(unittest.TestCase):
     ):
         mock_load.return_value = (self.data_dir / "config" / "tartufo.toml", {})
         self.ctx.params["repo_path"] = str(self.data_dir / "config")
-        config.read_pyproject_toml(self.ctx, self.param, "")
+        config.read_pyproject_toml(self.ctx, self.param, ("",))
         mock_load.assert_called_once_with(self.data_dir / "config", "")
 
     @mock.patch("tartufo.config.load_config_from_path")
@@ -236,7 +236,7 @@ class ReadPyprojectTomlTests(unittest.TestCase):
         self, mock_load: mock.MagicMock
     ):
         mock_load.side_effect = FileNotFoundError("No file for you!")
-        self.assertIsNone(config.read_pyproject_toml(self.ctx, self.param, ""))
+        self.assertIsNone(config.read_pyproject_toml(self.ctx, self.param, ("",)))
 
     @mock.patch("tartufo.config.load_config_from_path")
     def test_file_error_is_raised_if_specified_config_file_cant_be_read(
@@ -258,7 +258,7 @@ class ReadPyprojectTomlTests(unittest.TestCase):
         os.chdir(str(self.data_dir))
         mock_load.side_effect = types.ConfigException("Bad TOML!")
         with self.assertRaisesRegex(click.FileError, "Bad TOML!") as exc:
-            config.read_pyproject_toml(self.ctx, self.param, "")
+            config.read_pyproject_toml(self.ctx, self.param, ("",))
             self.assertEqual(
                 exc.exception.filename, str(self.data_dir / "tartufo.toml")
             )
@@ -267,7 +267,7 @@ class ReadPyprojectTomlTests(unittest.TestCase):
     def test_fully_resolved_filename_is_returned(self):
         cur_dir = pathlib.Path()
         os.chdir(str(self.data_dir / "config"))
-        result = config.read_pyproject_toml(self.ctx, self.param, "")
+        result = config.read_pyproject_toml(self.ctx, self.param, ("",))
         os.chdir(str(cur_dir))
         self.assertEqual(result, str(self.data_dir / "config" / "tartufo.toml"))
 
