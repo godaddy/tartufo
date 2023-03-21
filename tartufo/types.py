@@ -79,6 +79,8 @@ class GlobalOptions:
     :param entropy_sensitivity: A number from 0 - 100 representing the
       sensitivity of entropy scans. A value of 0 will detect totally non-random
       values, while a value of 100 will detect only wholly random values.
+    :param color: Enable or disable terminal color. If not provided (default),
+      enabled if output is a terminal (TTY).
     """
 
     __slots__ = (
@@ -102,6 +104,7 @@ class GlobalOptions:
         "log_timestamps",
         "output_format",
         "entropy_sensitivity",
+        "color",
     )
     rule_patterns: Tuple[Dict[str, str], ...]
     default_regexes: bool
@@ -123,6 +126,7 @@ class GlobalOptions:
     log_timestamps: bool
     output_format: Optional[OutputFormat]
     entropy_sensitivity: int
+    color: Optional[bool]
 
 
 @dataclass

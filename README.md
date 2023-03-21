@@ -60,10 +60,10 @@ Options:
   -of, --output-format [json|compact|text|report]
                                   Specify the format in which the output needs
                                   to be generated `--output-format
-                                  json/compact/text`. Either `json`, `compact`
-                                  `text` or `report` can be specified. If not provided
-                                  (default) the output will be generated in
-                                  `text` format.
+                                  json/compact/text/report`. Either `json`,
+                                  `compact`, `text` or `report` can be
+                                  specified. If not provided (default) the
+                                  output will be generated in `text` format.
   -od, --output-dir DIRECTORY     If specified, all issues will be written out
                                   as individual JSON files to a uniquely named
                                   directory under this one. This will help
@@ -105,6 +105,9 @@ Options:
                                   likelihood that a given string will be
                                   identified as suspicious.  [default: 75;
                                   0<=x<=100]
+  --color / --no-color            Enable or disable terminal color. If not
+                                  provided (default), enabled if output is a
+                                  terminal (TTY).
   -V, --version                   Show the version and exit.
   -h, --help                      Show this message and exit.
 
