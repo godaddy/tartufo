@@ -229,7 +229,7 @@ class ReadPyprojectTomlTests(unittest.TestCase):
     ):
         mock_load.side_effect = FileNotFoundError("No file for you!")
         with self.assertRaisesRegex(click.FileError, "No file for you!"):
-            config.read_pyproject_toml(self.ctx, self.param, "foobar.toml")
+            config.read_pyproject_toml(self.ctx, self.param, ("foobar.toml",))
 
     @mock.patch("tartufo.config.load_config_from_path")
     def test_none_is_returned_if_file_not_found_and_none_specified(
@@ -246,7 +246,7 @@ class ReadPyprojectTomlTests(unittest.TestCase):
         os.chdir(str(self.data_dir))
         mock_load.side_effect = types.ConfigException("Bad TOML!")
         with self.assertRaisesRegex(click.FileError, "Bad TOML!") as exc:
-            config.read_pyproject_toml(self.ctx, self.param, "foobar.toml")
+            config.read_pyproject_toml(self.ctx, self.param, ("foobar.toml",))
             self.assertEqual(exc.exception.filename, str(self.data_dir / "foobar.toml"))
         os.chdir(str(cur_dir))
 

@@ -100,7 +100,7 @@ def load_config_from_path(
 
 
 def read_pyproject_toml(
-    ctx: click.Context, _param: click.Parameter, value: Tuple[str]
+    ctx: click.Context, _param: click.Parameter, value: Tuple[str, ...]
 ) -> Optional[str]:
     """Read config values from a file and load them as defaults.
 
@@ -150,6 +150,18 @@ def read_pyproject_toml(
 
         if not config:
             continue
+
+        # FIXME: The following logic (which has been around for quite some time)
+        # is abusive but empirically works. Click says default_map is "a dictionary
+        # (like object) with default values for parameters", but mypy knows that
+        # it is a Mapping[str, Any] -- which is immutable. A proper fix probably
+        # would be to store this data in ctx.params, which is a dict, but that
+        # has subtle interactions and updates to it tend to disappear (or be
+        # hidden, I don't know which). Interestingly, the .extend() is not a
+        # problem (evidently because changing the value does not change the
+        # Mapping itself); the create/overwrite assignment is annotated to silence
+        # the (correct) mypy warning.
+
         if ctx.default_map is None:
             ctx.default_map = {}
 
@@ -160,7 +172,7 @@ def read_pyproject_toml(
                 ctx.default_map[key].extend(val)
             else:
                 # Create (or overwrite) everything else
-                ctx.default_map[key] = val
+                ctx.default_map[key] = val  # type: ignore [index]
 
         config_files_used.append(str(config_file))
 
