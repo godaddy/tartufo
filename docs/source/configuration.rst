@@ -17,7 +17,13 @@ Python projects, such as ``tartufo`` itself. For an example of the tree
 traversal, let's say you running ``tartufo`` from the directory
 ``/home/my_user/projects/my_project``. ``tartufo`` will look for the
 configuration files first in this directory, then in ``/home/my_user/projects/``,
-then in ``/home/my_user``, etc.
+then in ``/home/my_user``, etc. The search stops when the first non-empty file
+is encountered.
+
+If multiple configuration files are specified, they will be located and processed
+in order. When conflicting directives are provided in different files, the value
+in the last file processed takes precedence. List-valued directives (such as
+``exclude-path-patterns``) that are present in multiple files are concatenated.
 
 Within these files, ``tartufo`` will look for a section labeled
 ``[tool.tartufo]`` to find its configuration, and will load all items from there
@@ -28,7 +34,7 @@ dealt with any other configuration file format before.
 All command line options can be specified in the configuration file, with or
 without the leading dashes, and using either dashes or underscores for word
 separators. When the configuration is read in, this will all be normalized
-automatically. For example, the configuration for `tartufo` itself looks like
+automatically. For example, the configuration for ``tartufo`` itself looks like
 this:
 
 .. code-block:: toml
