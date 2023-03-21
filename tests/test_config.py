@@ -271,6 +271,90 @@ class ReadPyprojectTomlTests(unittest.TestCase):
         os.chdir(str(cur_dir))
         self.assertEqual(result, str(self.data_dir / "config" / "tartufo.toml"))
 
+    @mock.patch("tartufo.config.load_config_from_path")
+    def test_multiple_config_file_data_merged(self, mock_load: mock.MagicMock):
+        # Mock up some fixture data; each call returns the path of the config
+        # file and the data loaded from it.
+        alpha = pathlib.Path("alpha.toml")
+        beta = pathlib.Path("beta.toml")
+        mock_load.side_effect = [
+            (
+                alpha,
+                {
+                    "regex": True,
+                    "exclude_path_patterns": [
+                        {"path-pattern": "alpha", "reason": "Testing"},
+                    ],
+                    "exclude_signatures": [
+                        {"signature": "alpha-signature", "reason": "Testing"},
+                        {"signature": "omega-signature", "reason": "Testing"},
+                    ],
+                },
+            ),
+            (
+                beta,
+                {
+                    "regex": False,
+                    "exclude_entropy_patterns": [
+                        {"path-pattern": "beta", "reason": "Testing"},
+                    ],
+                    "exclude_signatures": [
+                        {"signature": "beta-signature", "reason": "Testing"},
+                        {"signature": "omega-signature", "reason": "Testing"},
+                    ],
+                },
+            ),
+        ]
+
+        result = config.read_pyproject_toml(
+            self.ctx, self.param, (str(alpha), str(beta))
+        )
+
+        # Single-valued attributes set to conflicting values will be set by
+        # beta because it is specified last.
+        self.assertFalse(self.ctx.default_map["regex"])
+
+        # List-valued attributes specified by alpha but not beta are present
+        self.assertTrue("exclude_path_patterns" in self.ctx.default_map)
+
+        # List-valued attributes specified by beta but not alpha are present
+        self.assertTrue("exclude_entropy_patterns" in self.ctx.default_map)
+
+        # List-valued attributes specified by both alpha and beta are concatenated
+        # and order is preserved (without deduplication)
+        self.assertEqual(
+            self.ctx.default_map["exclude_signatures"],
+            [
+                {"signature": "alpha-signature", "reason": "Testing"},
+                {"signature": "omega-signature", "reason": "Testing"},
+                {"signature": "beta-signature", "reason": "Testing"},
+                {"signature": "omega-signature", "reason": "Testing"},
+            ],
+        )
+
+        # Attributes not specified in either file are not defined
+        self.assertFalse("exclude_regex_patterns" in self.ctx.default_map)
+
+    @mock.patch("tartufo.config.load_config_from_path")
+    def test_fully_resolved_multiple_config_files_returned(
+        self, mock_load: mock.MagicMock
+    ):
+        # Mock up some fixture data; each call returns the path of the config
+        # file and the data loaded from it.
+        alpha = pathlib.Path("alpha.toml")
+        beta = pathlib.Path("beta.toml")
+        mock_load.side_effect = [
+            (alpha, {"unit": "test"}),
+            (beta, {"unit": "test"}),
+        ]
+
+        result = config.read_pyproject_toml(
+            self.ctx, self.param, (str(alpha), str(beta))
+        )
+
+        # Filenames should be returned in order as a single string
+        self.assertEqual(result, f"{alpha},{beta}")
+
 
 class CompilePathRulesTests(unittest.TestCase):
     def test_commented_lines_are_ignored(self):
