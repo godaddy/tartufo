@@ -877,10 +877,23 @@ class GitPreCommitScanner(GitScanner):
         super().__init__(global_options, repo_path)
 
     def load_repo(self, repo_path: str) -> pygit2.Repository:
-        repo = pygit2.Repository(repo_path)
-        if not self._include_submodules:
-            self.filter_submodules(repo)
-        return repo
+        config_file: Optional[pathlib.Path] = None
+        data: MutableMapping[str, Any] = {}
+        try:
+            (config_file, data) = config.load_config_from_path(
+                pathlib.Path(repo_path), traverse=False
+            )
+        except (FileNotFoundError, types.ConfigException):
+            config_file = None
+        if config_file and str(config_file) != self.global_options.config:
+            self.config_data = data
+        try:
+            repo = pygit2.Repository(repo_path)
+            if not self._include_submodules:
+                self.filter_submodules(repo)
+            return repo
+        except git.GitError as exc:
+            raise types.GitLocalException(str(exc)) from exc
 
     @property
     def chunks(self):
@@ -920,6 +933,18 @@ class FolderScanner(ScannerBase):
         self.target = target
         self.recurse = recurse
         super().__init__(global_options)
+
+        # Load configuration data (like repo scanners do in .load_repo())
+        config_file: Optional[pathlib.Path] = None
+        data: MutableMapping[str, Any] = {}
+        try:
+            (config_file, data) = config.load_config_from_path(
+                pathlib.Path(target), traverse=False
+            )
+        except (FileNotFoundError, types.ConfigException):
+            config_file = None
+        if config_file and str(config_file) != self.global_options.config:
+            self.config_data = data
 
     @property
     def chunks(self) -> Generator[types.Chunk, None, None]:
