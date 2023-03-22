@@ -209,6 +209,7 @@ class LoadConfigFromPathTests(unittest.TestCase):
 
 class ReadPyprojectTomlTests(unittest.TestCase):
     def setUp(self):
+        config.REFERENCED_CONFIG_FILES = set()
         self.data_dir = pathlib.Path(__file__).parent / "data"
         self.ctx = click.Context(click.Command("foo"))
         self.param = click.Option(["--config"])
@@ -262,7 +263,9 @@ class ReadPyprojectTomlTests(unittest.TestCase):
         os.chdir(str(self.data_dir / "config"))
         result = config.read_pyproject_toml(self.ctx, self.param, ("",))
         os.chdir(str(cur_dir))
-        self.assertEqual(result, str(self.data_dir / "config" / "tartufo.toml"))
+        self.assertEqual(
+            config.REFERENCED_CONFIG_FILES, {self.data_dir / "config" / "tartufo.toml"}
+        )
 
     @mock.patch("tartufo.config.load_config_from_path")
     def test_multiple_config_file_data_merged(self, mock_load: mock.MagicMock):
@@ -339,12 +342,12 @@ class ReadPyprojectTomlTests(unittest.TestCase):
             (beta, {"unit": "test"}),
         ]
 
-        result = config.read_pyproject_toml(
-            self.ctx, self.param, (str(alpha), str(beta))
-        )
+        config.read_pyproject_toml(self.ctx, self.param, (str(alpha), str(beta)))
 
-        # Filenames should be returned in order as a single string
-        self.assertEqual(result, f"{alpha},{beta}")
+        # Each file (and no others) should be present in the referenced set
+        self.assertEqual(
+            config.REFERENCED_CONFIG_FILES, {alpha.resolve(), beta.resolve()}
+        )
 
 
 class CompilePathRulesTests(unittest.TestCase):

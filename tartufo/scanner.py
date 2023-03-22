@@ -173,7 +173,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             return
 
         # Do not reload data if it was already specified using `--config`
-        if str(config_file) != self.global_options.config:
+        if config_file.resolve() not in config.REFERENCED_CONFIG_FILES:
             self.config_data = data
 
     def compute_scaled_entropy_limit(self, maximum_bitrate: float) -> float:

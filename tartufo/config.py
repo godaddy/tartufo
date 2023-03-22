@@ -27,6 +27,9 @@ OptionTypes = Union[str, int, bool, None, TextIO, Tuple[TextIO, ...]]
 DEFAULT_PATTERN_FILE = pathlib.Path(__file__).parent / "data" / "default_regexes.json"
 EMPTY_PATTERN = re.compile("")
 
+# We need a stash of consumed configuration files
+REFERENCED_CONFIG_FILES: Set[pathlib.Path] = set()
+
 
 def load_config_from_path(
     config_path: pathlib.Path, filename: Optional[str] = None, traverse: bool = True
@@ -101,18 +104,23 @@ def load_config_from_path(
 
 def read_pyproject_toml(
     ctx: click.Context, _param: click.Parameter, value: Tuple[str, ...]
-) -> Optional[str]:
+) -> None:
     """Read config values from one or more files and load them as defaults.
 
     :param ctx: A context from a currently executing Click command
     :param _param: The command parameter that triggered this callback
     :param value: The value(s) passed to the command parameter
     :raises click.FileError: If there was a problem loading the configuration
+
+    This handles loading and merging all files specified on the tartufo command
+    line using `--config`. A set of fully-resolved Path objects for all ingested
+    configuration files is saved in config.REFERENCED_CONFIG_FILES.
     """
+
+    global REFERENCED_CONFIG_FILES  # pylint: disable=[global-variable-not-assigned]
 
     config_path = pathlib.Path().cwd()
     config_data: Dict[str, Any] = {}
-    config_files_used: List[str] = []
     for config_candidate in value:
         try:
             config_file, config = load_config_from_path(config_path, config_candidate)
@@ -125,6 +133,7 @@ def read_pyproject_toml(
             target_file = config_path / config_candidate
             raise click.FileError(filename=str(target_file), hint=str(exc))
 
+        # Ignore empty files
         if not config:
             continue
 
@@ -137,15 +146,12 @@ def read_pyproject_toml(
                 # Create (or overwrite) everything else
                 config_data[key] = val  # type: ignore [index]
 
-        config_files_used.append(str(config_file))
+        REFERENCED_CONFIG_FILES.add(config_file.resolve())
 
     # Store accumulated data in ctx.default_map. Completely replacing the entire
     # thing (which appears to be a Mapping[str, Any]) seems to be a little sketchy
     # but we've been doing that for a while and empirically it works.
     ctx.default_map = config_data
-
-    # Return the files we consumed to produce this data
-    return ",".join(config_files_used) if config_files_used else None
 
 
 def configure_regexes(
