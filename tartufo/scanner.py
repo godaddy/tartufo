@@ -645,8 +645,13 @@ class GitScanner(ScannerBase, abc.ABC):
         # pygit2 1.9.2 and later) fail in docker context otherwise.
         pygit2.option(pygit2.GIT_OPT_SET_OWNER_VALIDATION, 0)
 
-        self._repo = self.load_repo(self.repo_path)
+        # Load any configuration file in the target repository. This comes
+        # *BEFORE* load_repo() because that method may rely on configuration data
+        # existing already (for example, to filter out submodules); it's safe
+        # because the caller will already have populated the local working
+        # directory before initializing this object.
         self.load_config(self.repo_path)
+        self._repo = self.load_repo(self.repo_path)
 
     def _iter_diff_index(
         self, diff: pygit2.Diff
@@ -714,6 +719,10 @@ class GitScanner(ScannerBase, abc.ABC):
                 "A likely cause is that a file tree was committed in place of a "
                 "submodule."
             ) from exc
+
+        # FIXME: This is really sketchy, unless we know configuration already is
+        # complete by the time we do this (which will short-circuit any future
+        # re-evaluation). It happens to work now.
         self._excluded_paths = list(set(self.excluded_paths + patterns))
 
     @abc.abstractmethod

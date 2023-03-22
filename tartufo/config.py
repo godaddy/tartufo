@@ -120,10 +120,12 @@ def read_pyproject_toml(
     global REFERENCED_CONFIG_FILES  # pylint: disable=[global-variable-not-assigned]
 
     config_path = pathlib.Path().cwd()
-    config_data: Dict[str, Any] = {}
+    consolidated_config: Dict[str, Any] = {}
     for config_candidate in value:
         try:
-            config_file, config = load_config_from_path(config_path, config_candidate)
+            config_file, config_data = load_config_from_path(
+                config_path, config_candidate
+            )
         except FileNotFoundError as exc:
             raise click.FileError(
                 filename=str(config_path / config_candidate), hint=str(exc)
@@ -134,24 +136,24 @@ def read_pyproject_toml(
             raise click.FileError(filename=str(target_file), hint=str(exc))
 
         # Ignore empty files
-        if not config:
+        if not config_data:
             continue
 
         # A simple .update() does not merge list-valued members
-        for key, val in config.items():
-            if key in config_data and isinstance(val, list):
+        for key, val in config_data.items():
+            if key in consolidated_config and isinstance(val, list):
                 # Concatenate list-valued members
-                config_data[key].extend(val)
+                consolidated_config[key].extend(val)
             else:
                 # Create (or overwrite) everything else
-                config_data[key] = val  # type: ignore [index]
+                consolidated_config[key] = val  # type: ignore [index]
 
         REFERENCED_CONFIG_FILES.add(config_file.resolve())
 
     # Store accumulated data in ctx.default_map. Completely replacing the entire
     # thing (which appears to be a Mapping[str, Any]) seems to be a little sketchy
     # but we've been doing that for a while and empirically it works.
-    ctx.default_map = config_data
+    ctx.default_map = consolidated_config
 
 
 def configure_regexes(
