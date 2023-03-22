@@ -232,13 +232,6 @@ class ReadPyprojectTomlTests(unittest.TestCase):
             config.read_pyproject_toml(self.ctx, self.param, ("foobar.toml",))
 
     @mock.patch("tartufo.config.load_config_from_path")
-    def test_none_is_returned_if_file_not_found_and_none_specified(
-        self, mock_load: mock.MagicMock
-    ):
-        mock_load.side_effect = FileNotFoundError("No file for you!")
-        self.assertIsNone(config.read_pyproject_toml(self.ctx, self.param, ("",)))
-
-    @mock.patch("tartufo.config.load_config_from_path")
     def test_file_error_is_raised_if_specified_config_file_cant_be_read(
         self, mock_load: mock.MagicMock
     ):

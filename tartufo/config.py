@@ -102,7 +102,7 @@ def load_config_from_path(
 def read_pyproject_toml(
     ctx: click.Context, _param: click.Parameter, value: Tuple[str, ...]
 ) -> Optional[str]:
-    """Read config values from a file and load them as defaults.
+    """Read config values from one or more files and load them as defaults.
 
     :param ctx: A context from a currently executing Click command
     :param _param: The command parameter that triggered this callback
@@ -110,42 +110,18 @@ def read_pyproject_toml(
     :raises click.FileError: If there was a problem loading the configuration
     """
 
+    config_path = pathlib.Path().cwd()
     config_files_used: List[str] = []
     for config_candidate in value:
-        config_path: Optional[pathlib.Path] = None
-        # These are the names of the arguments the sub-commands can receive.
-        # NOTE: If a new sub-command is added, make sure its argument is
-        # captured in this list.
-        target_args = [
-            # pre-commit has no argument
-            "target",  # scan-folder
-            "repo_path",  # scan-local-repo and update-signatures
-            "git_url",  # scan-remote-repo
-        ]
-        for arg in target_args:
-            target_path = ctx.params.get(arg, None)
-            if target_path:
-                config_path = pathlib.Path(target_path)
-                break
-        if not config_path:
-            # If no path was specified, default to the current working directory
-            config_path = pathlib.Path().cwd()
         try:
             config_file, config = load_config_from_path(config_path, config_candidate)
         except FileNotFoundError as exc:
-            # If a config file was specified but not found, raise an error.
-            # Otherwise, pass quietly.
-            if config_candidate:
-                raise click.FileError(
-                    filename=str(config_path / config_candidate), hint=str(exc)
-                )
-            continue
+            raise click.FileError(
+                filename=str(config_path / config_candidate), hint=str(exc)
+            )
         except types.ConfigException as exc:
             # If a config file was found, but could not be read, raise an error.
-            if value:
-                target_file = config_path / config_candidate
-            else:
-                target_file = config_path / "tartufo.toml"
+            target_file = config_path / config_candidate
             raise click.FileError(filename=str(target_file), hint=str(exc))
 
         if not config:
