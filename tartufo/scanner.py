@@ -157,6 +157,25 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         self.global_options = options
         self.logger = logging.getLogger(__name__)
 
+    def load_config(self, config_path: str) -> None:
+        """Load 'local' configuration file from target location
+
+        :param config_path: Directory expected to hold configuration file
+        """
+
+        # Look for usable configuration file
+        try:
+            (config_file, data) = config.load_config_from_path(
+                pathlib.Path(config_path), traverse=False
+            )
+        except (FileNotFoundError, types.ConfigException):
+            # Nothing usable found; nothing to do
+            return
+
+        # Do not reload data if it was already specified using `--config`
+        if str(config_file) != self.global_options.config:
+            self.config_data = data
+
     def compute_scaled_entropy_limit(self, maximum_bitrate: float) -> float:
         """Determine low entropy cutoff for specified bitrate
 
@@ -627,6 +646,7 @@ class GitScanner(ScannerBase, abc.ABC):
         pygit2.option(pygit2.GIT_OPT_SET_OWNER_VALIDATION, 0)
 
         self._repo = self.load_repo(self.repo_path)
+        self.load_config(self.repo_path)
 
     def _iter_diff_index(
         self, diff: pygit2.Diff
@@ -724,16 +744,6 @@ class GitRepoScanner(GitScanner):
         super().__init__(global_options, repo_path)
 
     def load_repo(self, repo_path: str) -> pygit2.Repository:
-        config_file: Optional[pathlib.Path] = None
-        data: MutableMapping[str, Any] = {}
-        try:
-            (config_file, data) = config.load_config_from_path(
-                pathlib.Path(repo_path), traverse=False
-            )
-        except (FileNotFoundError, types.ConfigException):
-            config_file = None
-        if config_file and str(config_file) != self.global_options.config:
-            self.config_data = data
         try:
             repo = pygit2.Repository(repo_path)
             if not repo.is_bare:
@@ -877,16 +887,6 @@ class GitPreCommitScanner(GitScanner):
         super().__init__(global_options, repo_path)
 
     def load_repo(self, repo_path: str) -> pygit2.Repository:
-        config_file: Optional[pathlib.Path] = None
-        data: MutableMapping[str, Any] = {}
-        try:
-            (config_file, data) = config.load_config_from_path(
-                pathlib.Path(repo_path), traverse=False
-            )
-        except (FileNotFoundError, types.ConfigException):
-            config_file = None
-        if config_file and str(config_file) != self.global_options.config:
-            self.config_data = data
         try:
             repo = pygit2.Repository(repo_path)
             if not self._include_submodules:
@@ -933,18 +933,7 @@ class FolderScanner(ScannerBase):
         self.target = target
         self.recurse = recurse
         super().__init__(global_options)
-
-        # Load configuration data (like repo scanners do in .load_repo())
-        config_file: Optional[pathlib.Path] = None
-        data: MutableMapping[str, Any] = {}
-        try:
-            (config_file, data) = config.load_config_from_path(
-                pathlib.Path(target), traverse=False
-            )
-        except (FileNotFoundError, types.ConfigException):
-            config_file = None
-        if config_file and str(config_file) != self.global_options.config:
-            self.config_data = data
+        self.load_config(self.target)
 
     @property
     def chunks(self) -> Generator[types.Chunk, None, None]:
