@@ -258,10 +258,10 @@ class ReadPyprojectTomlTests(unittest.TestCase):
             )
         os.chdir(str(cur_dir))
 
-    def test_fully_resolved_filename_is_returned(self):
+    def test_fully_resolved_filename_is_stored(self):
         cur_dir = pathlib.Path()
         os.chdir(str(self.data_dir / "config"))
-        result = config.read_pyproject_toml(self.ctx, self.param, ("",))
+        config.read_pyproject_toml(self.ctx, self.param, ("",))
         os.chdir(str(cur_dir))
         self.assertEqual(
             config.REFERENCED_CONFIG_FILES, {self.data_dir / "config" / "tartufo.toml"}
