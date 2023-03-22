@@ -111,6 +111,7 @@ def read_pyproject_toml(
     """
 
     config_path = pathlib.Path().cwd()
+    config_data: Dict[str, Any] = {}
     config_files_used: List[str] = []
     for config_candidate in value:
         try:
@@ -127,31 +128,23 @@ def read_pyproject_toml(
         if not config:
             continue
 
-        # FIXME: The following logic (which has been around for quite some time)
-        # is abusive but empirically works. Click says default_map is "a dictionary
-        # (like object) with default values for parameters", but mypy knows that
-        # it is a Mapping[str, Any] -- which is immutable. A proper fix probably
-        # would be to store this data in ctx.params, which is a dict, but that
-        # has subtle interactions and updates to it tend to disappear (or be
-        # hidden, I don't know which). Interestingly, the .extend() is not a
-        # problem (evidently because changing the value does not change the
-        # Mapping itself); the create/overwrite assignment is annotated to silence
-        # the (correct) mypy warning.
-
-        if ctx.default_map is None:
-            ctx.default_map = {}
-
         # A simple .update() does not merge list-valued members
         for key, val in config.items():
-            if key in ctx.default_map and isinstance(val, list):
+            if key in config_data and isinstance(val, list):
                 # Concatenate list-valued members
-                ctx.default_map[key].extend(val)
+                config_data[key].extend(val)
             else:
                 # Create (or overwrite) everything else
-                ctx.default_map[key] = val  # type: ignore [index]
+                config_data[key] = val  # type: ignore [index]
 
         config_files_used.append(str(config_file))
 
+    # Store accumulated data in ctx.default_map. Completely replacing the entire
+    # thing (which appears to be a Mapping[str, Any]) seems to be a little sketchy
+    # but we've been doing that for a while and empirically it works.
+    ctx.default_map = config_data
+
+    # Return the files we consumed to produce this data
     return ",".join(config_files_used) if config_files_used else None
 
 
