@@ -87,6 +87,10 @@ Options:
                                   specified multiple times.
   --config FILE                   Read configuration from specified file.
                                   [default: tartufo.toml]
+  --no-local-config BOOL          Skip processing of local config file
+                                  i.e. config files like tartufo.toml or pyproject.toml
+                                  setup in local working directory
+                                  [default: False]
   -q, --quiet / --no-quiet        Quiet mode. No outputs are reported if the
                                   scan is successful and doesn't find any
                                   issues
