@@ -41,7 +41,7 @@ Consider:
 
 .. code-block:: shell
 
-   tartufo --config myconfig.toml scan-local-repo .
+   tartufo --config myconfig.toml scan-local-repo <target_directory>
 
 ``tartufo`` will look for ``myconfig.toml`` in the current directory, and then look for
 either ``tartufo.toml`` or (if not found) ``pyproject.toml`` in the current
@@ -54,14 +54,14 @@ However:
 
 .. code-block:: shell
 
-   tartufo --config tartufo.toml --config myconfig.toml scan-local-repo .
+   tartufo --config tartufo.toml --config myconfig.toml scan-local-repo <target_directory>
 
 will cause ``tartufo`` to read ``tartufo.toml`` in the current directory
 (assuming it exists), and then ``myconfig.toml``
 as above, and then either ``tartufo.toml`` or ``pyproject.toml`` in the current
 directory (only) because that is the target of the scan.
 
-If ``tartufo.toml`` exists in the current directory, the effect is that
+If ``tartufo.toml`` exists in the target directory, the effect is that
 ``tartufo.toml`` is read first, ``myconfig.toml`` is read second (possibly
 overriding directives), and ``tartufo.toml`` is not read again because it was
 processed already (and any ``pyproject.toml`` is ignored because ``tartufo.toml``

@@ -262,6 +262,13 @@ class TartufoCLI(click.MultiCommand):
     help="""Enable or disable terminal color. If not provided (default), enabled if
     output is a terminal (TTY).""",
 )
+@click.option(
+    "--target-config/--no-target-config",
+    is_flag=True,
+    default=True,
+    show_default=True,
+    help="Skipping auto discovery and use of config file present in the repository being scanned",
+)
 # The first positional argument here would be a hard-coded version, hence the `None`
 @click.version_option(None, "-V", "--version")
 @click.pass_context
