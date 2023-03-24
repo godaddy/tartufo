@@ -67,7 +67,7 @@ class RepoLoadTests(ScannerTestCase):
     @mock.patch("pygit2.Repository", new=mock.MagicMock())
     @mock.patch("tartufo.config.load_config_from_path")
     def test_extra_inclusions_get_added(self, mock_load: mock.MagicMock):
-        self.global_options.local_config = True
+        self.global_options.target_config = True
         mock_load.return_value = (
             self.data_dir / "pyproject.toml",
             {
@@ -92,7 +92,7 @@ class RepoLoadTests(ScannerTestCase):
     @mock.patch("pygit2.Repository", new=mock.MagicMock())
     @mock.patch("tartufo.config.load_config_from_path")
     def test_extra_exclusions_get_added(self, mock_load: mock.MagicMock):
-        self.global_options.local_config = True
+        self.global_options.target_config = True
         mock_load.return_value = (
             self.data_dir / "pyproject.toml",
             {
@@ -123,7 +123,7 @@ class RepoLoadTests(ScannerTestCase):
     @mock.patch("pygit2.Repository", new=mock.MagicMock())
     @mock.patch("tartufo.config.load_config_from_path")
     def test_extra_signatures_get_added(self, mock_load: mock.MagicMock):
-        self.global_options.local_config = True
+        self.global_options.target_config = True
         mock_load.return_value = (
             self.data_dir / "pyproject.toml",
             {
@@ -144,7 +144,7 @@ class RepoLoadTests(ScannerTestCase):
     @mock.patch("pygit2.Repository", new=mock.MagicMock())
     @mock.patch("tartufo.config.load_config_from_path")
     def test_pyproject_signatures_get_excluded(self, mock_load: mock.MagicMock):
-        self.global_options.local_config = False
+        self.global_options.target_config = False
         mock_load.return_value = (
             self.data_dir / "pyproject.toml",
             {

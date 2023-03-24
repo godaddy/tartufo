@@ -253,11 +253,11 @@ class TartufoCLI(click.MultiCommand):
     output is a terminal (TTY).""",
 )
 @click.option(
-    "--local-config/--no-local-config",
+    "--target-config/--no-target-config",
     is_flag=True,
     default=True,
     show_default=True,
-    help="Skipping auto discovery and use of local config file",
+    help="Skipping auto discovery and use of config file present in the repository being scanned",
 )
 # The first positional argument here would be a hard-coded version, hence the `None`
 @click.version_option(None, "-V", "--version")

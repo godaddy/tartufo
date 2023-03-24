@@ -162,8 +162,8 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
 
         :param config_path: Directory expected to hold configuration file
         """
-        # Skipping loading local config if --no-local-config is supplied.
-        if not self.global_options.local_config:
+        # Skipping loading default project config if --no-target-config is supplied.
+        if not self.global_options.target_config:
             return
         # Look for usable configuration file
         try:

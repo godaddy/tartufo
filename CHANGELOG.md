@@ -2,7 +2,7 @@ vX.X.X - Mar 3 2023
 --------------------
 
 Features:
-* [#473](https://github.com/godaddy/tartufo/pull/473) - Introduces new flag `--local-config/--no-local-config` to process or skip using local config files.
+* [#473](https://github.com/godaddy/tartufo/pull/473) - Introduces new flag `-target-config/--no-target-config` to process or skip using config file in the repository being scanned
 * [#455](https://github.com/godaddy/tartufo/pull/455) - Update documentation to fix incorrect wording
 
 Bug fixes:
