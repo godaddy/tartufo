@@ -67,6 +67,7 @@ class RepoLoadTests(ScannerTestCase):
     @mock.patch("pygit2.Repository", new=mock.MagicMock())
     @mock.patch("tartufo.config.load_config_from_path")
     def test_extra_inclusions_get_added(self, mock_load: mock.MagicMock):
+        self.global_options.local_config = True
         mock_load.return_value = (
             self.data_dir / "pyproject.toml",
             {
@@ -91,6 +92,7 @@ class RepoLoadTests(ScannerTestCase):
     @mock.patch("pygit2.Repository", new=mock.MagicMock())
     @mock.patch("tartufo.config.load_config_from_path")
     def test_extra_exclusions_get_added(self, mock_load: mock.MagicMock):
+        self.global_options.local_config = True
         mock_load.return_value = (
             self.data_dir / "pyproject.toml",
             {
@@ -121,6 +123,7 @@ class RepoLoadTests(ScannerTestCase):
     @mock.patch("pygit2.Repository", new=mock.MagicMock())
     @mock.patch("tartufo.config.load_config_from_path")
     def test_extra_signatures_get_added(self, mock_load: mock.MagicMock):
+        self.global_options.local_config = True
         mock_load.return_value = (
             self.data_dir / "pyproject.toml",
             {
@@ -137,6 +140,27 @@ class RepoLoadTests(ScannerTestCase):
         )
         test_scanner.load_repo("../tartufo")
         self.assertCountEqual(test_scanner.excluded_signatures, ["bar", "foo"])
+
+    @mock.patch("pygit2.Repository", new=mock.MagicMock())
+    @mock.patch("tartufo.config.load_config_from_path")
+    def test_pyproject_signatures_get_excluded(self, mock_load: mock.MagicMock):
+        self.global_options.local_config = False
+        mock_load.return_value = (
+            self.data_dir / "pyproject.toml",
+            {
+                "exclude_signatures": [
+                    {"signature": "foo", "reason": "Reason to exclude signature"}
+                ]
+            },
+        )
+        self.global_options.exclude_signatures = (
+            {"signature": "bar", "reason": "Reason to exclude signature"},
+        )
+        test_scanner = scanner.GitRepoScanner(
+            self.global_options, self.git_options, str(self.data_dir)
+        )
+        test_scanner.load_repo("../tartufo")
+        self.assertCountEqual(test_scanner.excluded_signatures, ["bar"])
 
 
 class FilterSubmoduleTests(ScannerTestCase):

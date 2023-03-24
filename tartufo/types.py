@@ -81,7 +81,7 @@ class GlobalOptions:
       values, while a value of 100 will detect only wholly random values.
     :param color: Enable or disable terminal color. If not provided (default),
       enabled if output is a terminal (TTY).
-    :param no_local_config: Disable local tartufo config from being used.
+    :param local_config: Enable/Disable local tartufo config from being used.
     """
 
     __slots__ = (
@@ -106,7 +106,7 @@ class GlobalOptions:
         "output_format",
         "entropy_sensitivity",
         "color",
-        "no_local_config",
+        "local_config",
     )
     rule_patterns: Tuple[Dict[str, str], ...]
     default_regexes: bool
@@ -129,7 +129,7 @@ class GlobalOptions:
     output_format: Optional[OutputFormat]
     entropy_sensitivity: int
     color: Optional[bool]
-    no_local_config: bool
+    local_config: bool
 
 
 @dataclass

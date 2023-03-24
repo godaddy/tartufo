@@ -253,9 +253,9 @@ class TartufoCLI(click.MultiCommand):
     output is a terminal (TTY).""",
 )
 @click.option(
-    "--no-local-config",
+    "--local-config/--no-local-config",
     is_flag=True,
-    default=False,
+    default=True,
     show_default=True,
     help="Skipping auto discovery and use of local config file",
 )
