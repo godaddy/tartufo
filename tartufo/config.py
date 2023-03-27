@@ -27,6 +27,9 @@ OptionTypes = Union[str, int, bool, None, TextIO, Tuple[TextIO, ...]]
 DEFAULT_PATTERN_FILE = pathlib.Path(__file__).parent / "data" / "default_regexes.json"
 EMPTY_PATTERN = re.compile("")
 
+# We need a stash of consumed configuration files
+REFERENCED_CONFIG_FILES: Set[pathlib.Path] = set()
+
 
 def load_config_from_path(
     config_path: pathlib.Path, filename: Optional[str] = None, traverse: bool = True
@@ -100,50 +103,57 @@ def load_config_from_path(
 
 
 def read_pyproject_toml(
-    ctx: click.Context, _param: click.Parameter, value: str
-) -> Optional[str]:
-    """Read config values from a file and load them as defaults.
+    ctx: click.Context, _param: click.Parameter, value: Tuple[str, ...]
+) -> None:
+    """Read config values from one or more files and load them as defaults.
 
     :param ctx: A context from a currently executing Click command
     :param _param: The command parameter that triggered this callback
-    :param value: The value passed to the command parameter
+    :param value: The value(s) passed to the command parameter
     :raises click.FileError: If there was a problem loading the configuration
-    """
-    config_path: Optional[pathlib.Path] = None
-    # These are the names of the arguments the sub-commands can receive.
-    # NOTE: If a new sub-command is added, make sure its argument is
-    #   captured in this list.
-    target_args = ["repo_path", "git_url"]
-    for arg in target_args:
-        target_path = ctx.params.get(arg, None)
-        if target_path:
-            config_path = pathlib.Path(target_path)
-            break
-    if not config_path:
-        # If no path was specified, default to the current working directory
-        config_path = pathlib.Path().cwd()
-    try:
-        config_file, config = load_config_from_path(config_path, value)
-    except FileNotFoundError as exc:
-        # If a config file was specified but not found, raise an error.
-        # Otherwise, pass quietly.
-        if value:
-            raise click.FileError(filename=str(config_path / value), hint=str(exc))
-        return None
-    except types.ConfigException as exc:
-        # If a config file was found, but could not be read, raise an error.
-        if value:
-            target_file = config_path / value
-        else:
-            target_file = config_path / "tartufo.toml"
-        raise click.FileError(filename=str(target_file), hint=str(exc))
 
-    if not config:
-        return None
-    if ctx.default_map is None:
-        ctx.default_map = {}
-    ctx.default_map.update(config)  # type: ignore
-    return str(config_file)
+    This handles loading and merging all files specified on the tartufo command
+    line using `--config`. A set of fully-resolved Path objects for all ingested
+    configuration files is saved in config.REFERENCED_CONFIG_FILES.
+    """
+
+    global REFERENCED_CONFIG_FILES  # pylint: disable=[global-variable-not-assigned]
+
+    config_path = pathlib.Path().cwd()
+    consolidated_config: Dict[str, Any] = {}
+    for config_candidate in value:
+        try:
+            config_file, config_data = load_config_from_path(
+                config_path, config_candidate
+            )
+        except FileNotFoundError as exc:
+            raise click.FileError(
+                filename=str(config_path / config_candidate), hint=str(exc)
+            )
+        except types.ConfigException as exc:
+            # If a config file was found, but could not be read, raise an error.
+            target_file = config_path / config_candidate
+            raise click.FileError(filename=str(target_file), hint=str(exc))
+
+        # Ignore empty files
+        if not config_data:
+            continue
+
+        # A simple .update() does not merge list-valued members
+        for key, val in config_data.items():
+            if key in consolidated_config and isinstance(val, list):
+                # Concatenate list-valued members
+                consolidated_config[key].extend(val)
+            else:
+                # Create (or overwrite) everything else
+                consolidated_config[key] = val  # type: ignore [index]
+
+        REFERENCED_CONFIG_FILES.add(config_file.resolve())
+
+    # Store accumulated data in ctx.default_map. Completely replacing the entire
+    # thing (which appears to be a Mapping[str, Any]) seems to be a little sketchy
+    # but we've been doing that for a while and empirically it works.
+    ctx.default_map = consolidated_config
 
 
 def configure_regexes(
