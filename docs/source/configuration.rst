@@ -37,7 +37,7 @@ configuration file will be processed after configuration files specified on the
 command line, unless it was also specified on the command line -- in which case,
 it will not be read a second time.
 
-Therefore, while it normally a target's configuration file will override settings
+Therefore, while normally a target's configuration file will override settings
 specified using ``--config`` on the command line, this behavior can be overridden
 by specifying the target's configuration explicitly first, and then the desired
 "master" configuration second.
@@ -78,7 +78,7 @@ effect is that ``../tartufo.toml`` is read first, ``myconfig.toml`` is read next
 and ``pyproject.toml`` (if it exists) would be processed last because it is in
 the scan target and ``tartufo.toml`` does not exist in the scan root.
 
-Note this behavior is not applicable to remote repository scans, because the
+**Note**: This behavior is not applicable to remote repository scans, because the
 remote repository will be cloned to a scratch directory and neither that directory
 nor the configuration files within it are available to specify with ``-config``.
 
