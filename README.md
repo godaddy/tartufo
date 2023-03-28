@@ -91,7 +91,7 @@ Options:
                                   Enable or Disable processing of config file in the
                                   repository being scanned
                                   i.e. config files like tartufo.toml or pyproject.toml
-                                  setup in the repository being scanned
+                                  setup in the repository or folder being scanned
                                   [default: target-config]
   -q, --quiet / --no-quiet        Quiet mode. No outputs are reported if the
                                   scan is successful and doesn't find any
