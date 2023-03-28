@@ -22,13 +22,7 @@ file processed takes precedence. List-valued directives (such as
 Configuration Discovery
 -----------------------
 
-``tartufo`` uses two additional heuristics to locate specified configuration files.
-First, the current working directory is used as a base for relative filenames.
-Second, if the specified file does not exist in the specified directory, ``tartufo``
-will search upwards in the directory hierarchy looking for a file with the same
-name.
-
-Additionally, ``tartufo`` will look for a configuration file in the scan target
+``tartufo`` will look for a configuration file in the scan target
 repository or folder. It looks first for ``tartufo.toml``, and if that does not
 exist, then ``pyproject.toml``. The latter is searched for as a matter of
 convenience for Python projects, such as ``tartufo`` itself. This file must

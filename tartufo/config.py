@@ -32,43 +32,12 @@ REFERENCED_CONFIG_FILES: Set[pathlib.Path] = set()
 
 
 def load_config_from_path(
-    config_path: pathlib.Path, filename: Optional[str] = None, traverse: bool = True
+    config_path: pathlib.Path, filename: Optional[str] = None
 ) -> Tuple[pathlib.Path, MutableMapping[str, Any]]:
     """Scan a path for a configuration file, and return its contents.
 
     All key names are normalized to remove leading "-"/"--" and replace "-"
     with "_". For example, "--repo-path" becomes "repo_path".
-
-    In addition to checking the specified path, if ``traverse`` is ``True``,
-    this will traverse up through the directory structure, looking for a
-    configuration file in parent directories. For example, given this directory
-    structure:
-
-    ::
-
-      working_dir/
-      |- tartufo.toml
-      |- group1/
-      |  |- project1/
-      |  |  |- tartufo.toml
-      |  |- project2/
-      |- group2/
-         |- tartufo.toml
-         |- project1/
-         |- project2/
-            |- tartufo.toml
-
-    The following ``config_path`` values will load the configuration files at
-    the corresponding paths:
-
-    ============================ ====
-    config_path                  file
-    ---------------------------- ----
-    working_dir/group1/project1/ working_dir/group1/project1/tartufo.toml
-    working_dir/group1/project2/ working_dir/tartufo.toml
-    working_dir/group2/project1/ working_dir/group2/tartufo.toml
-    working_dir/group2/project2/ working_dir/group2/project2/tartufo.toml
-    ============================ ====
 
     :param config_path: The path to search for configuration files
     :param filename: A specific filename to look for. By default, this will look
@@ -95,8 +64,6 @@ def load_config_from_path(
                 break
             except (tomlkit.exceptions.ParseError, OSError) as exc:
                 raise types.ConfigException(f"Error reading configuration file: {exc}")
-    if not config and traverse and config_path.parent != config_path:
-        return load_config_from_path(config_path.parent, filename, traverse)
     if not config:
         raise FileNotFoundError(f"Could not find config file in {config_path}.")
     return (full_path, {k.replace("--", "").replace("-", "_"): v for k, v in config.items()})  # type: ignore
