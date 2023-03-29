@@ -271,10 +271,10 @@ class RegexRulesTests(ScannerTestCase):
 
     def test_regex_rules_are_computed_when_first_accessed(self):
         self.options.default_regexes = True
-        self.options.rule_patterns = "oof"  # type: ignore
         self.options.git_rules_repo = "bar"
         self.options.git_rules_files = "baz"  # type: ignore
         test_scanner = TestScanner(self.options)
+        test_scanner._rule_patterns = "oof"  # pylint: disable=protected-access
         test_scanner.rules_regexes  # pylint: disable=pointless-statement
         self.mock_configure.assert_called_once_with(
             include_default=True,
@@ -282,6 +282,43 @@ class RegexRulesTests(ScannerTestCase):
             rules_repo="bar",
             rules_repo_files="baz",
         )
+
+    def test_rule_patterns_with_rules_in_default_config(self):
+        rule_patterns = [
+            {
+                "reason": "RSA private key 2",
+                "pattern": "-----BEGIN default PRIVATE KEY-----",
+            }
+        ]
+        self.options.rule_patterns = []
+        test_scanner = TestScanner(self.options)
+        test_scanner.config_data = {"rule_patterns": rule_patterns}
+        self.assertEqual(test_scanner.rule_patterns, rule_patterns)
+
+    def test_rule_patterns_with_rules_in_custom_config(self):
+        rule_patterns = [
+            {
+                "reason": "RSA private key 2",
+                "pattern": "-----BEGIN default PRIVATE KEY-----",
+            }
+        ]
+        self.options.rule_patterns = rule_patterns
+        test_scanner = TestScanner(self.options)
+        test_scanner.config_data = {}
+        self.assertEqual(test_scanner.rule_patterns, rule_patterns)
+
+    def test_rule_patterns_with_rule_patterns_syntax_issue(self):
+        rule_patterns = {
+            "reason": "RSA private key 2",
+            "pattern": "-----BEGIN default PRIVATE KEY-----",
+        }
+        self.options.rule_patterns = rule_patterns
+        test_scanner = TestScanner(self.options)
+        test_scanner.config_data = {}
+        with self.assertRaisesRegex(
+            types.ConfigException, "str pattern is illegal in rule-patterns"
+        ):
+            test_scanner.rule_patterns  # pylint: disable=pointless-statement
 
 
 class SignatureTests(ScannerTestCase):

@@ -8,6 +8,7 @@ Features:
 * [#479](https://github.com/godaddy/tartufo/pull/479) - Remove upward traversal logic for config discovery
 
 Bug fixes:
+* [#482](https://github.com/godaddy/tartufo/pull/482) - Code updates to process rule-patterns set up in the target's default config file i.e. tartufo.toml or pyproject.toml
 * [#467](https://github.com/godaddy/tartufo/issues/467) - Multiple fixes to configuration
   file processing:
   - If multiple configuration files were specified, only the last was processed
