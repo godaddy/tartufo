@@ -42,8 +42,7 @@ Consider:
 
    tartufo --config myconfig.toml scan-local-repo .
 
-``tartufo`` will look for ``myconfig.toml`` in the current directory, and then
-in the parent directory if it does not exist in ``.``, etc., and then look for
+``tartufo`` will look for ``myconfig.toml`` in the current directory, and then look for
 either ``tartufo.toml`` or (if not found) ``pyproject.toml`` in the current
 directory (only) because that is the target of the scan. Directives in, say,
 ``tartufo.toml`` would supersede settings in ``myconfig.toml``.
@@ -57,7 +56,7 @@ However:
    tartufo --config tartufo.toml --config myconfig.toml scan-local-repo .
 
 will cause ``tartufo`` to read ``tartufo.toml`` in the current directory
-(assuming it exists, and in parent directories otherwise), and then ``myconfig.toml``
+(assuming it exists), and then ``myconfig.toml``
 as above, and then either ``tartufo.toml`` or ``pyproject.toml`` in the current
 directory (only) because that is the target of the scan.
 
@@ -67,10 +66,7 @@ overriding directives), and ``tartufo.toml`` is not read again because it was
 processed already (and any ``pyproject.toml`` is ignored because ``tartufo.toml``
 was found).
 
-If ``tartufo.toml`` is not present but exists in the parent directory, then the
-effect is that ``../tartufo.toml`` is read first, ``myconfig.toml`` is read next,
-and ``pyproject.toml`` (if it exists) would be processed last because it is in
-the scan target and ``tartufo.toml`` does not exist in the scan root.
+If any file specified by `--config` doesn't exist, tartufo will raise an error and exit.
 
 **Note**: This behavior is not applicable to remote repository scans, because the
 remote repository will be cloned to a scratch directory and neither that directory
