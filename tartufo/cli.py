@@ -8,7 +8,7 @@ from typing import List, Optional
 
 import click
 
-from tartufo import config, scanner, types
+from tartufo import config, scanner, types, util
 
 
 PLUGIN_DIR = pathlib.Path(__file__).parent / "commands"
@@ -120,7 +120,7 @@ class TartufoCLI(click.MultiCommand):
     ),
     default="text",
     help="""Specify the format in which the output needs to be generated
-    `--output-format json/compact/text`. Either `json`, `compact`, `text`
+    `--output-format json/compact/text/report`. Either `json`, `compact`, `text`
     or `report` can be specified. If not provided (default) the output will be generated
     in `text` format.""",
 )
@@ -218,6 +218,7 @@ class TartufoCLI(click.MultiCommand):
     ),
     is_eager=True,
     callback=config.read_pyproject_toml,
+    multiple=True,
     help="Read configuration from specified file. [default: tartufo.toml]",
 )
 @click.option(
@@ -253,6 +254,14 @@ class TartufoCLI(click.MultiCommand):
     Decreasing the scanner's sensitivity increases the likelihood that a given
     string will be identified as suspicious.""",
 )
+@click.option(
+    "--color/--no-color",
+    is_flag=True,
+    default=None,
+    show_default=True,
+    help="""Enable or disable terminal color. If not provided (default), enabled if
+    output is a terminal (TTY).""",
+)
 # The first positional argument here would be a hard-coded version, hence the `None`
 @click.version_option(None, "-V", "--version")
 @click.pass_context
@@ -267,6 +276,10 @@ def main(ctx: click.Context, **kwargs: config.OptionTypes) -> None:
 
     options = types.GlobalOptions(**kwargs)  # type: ignore
     ctx.obj = options
+
+    util.init_styles(options)
+    ctx.color = options.color
+
     if options.quiet and options.verbose > 0:
         raise click.BadParameter("-v/--verbose and -q/--quiet are mutually exclusive.")
 

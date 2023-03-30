@@ -38,6 +38,11 @@ if TYPE_CHECKING:
 DATETIME_FORMAT: str = "%Y-%m-%d %H:%M:%S"
 
 
+style_ok: Callable = click.style
+style_error: Callable = click.style
+style_warning: Callable = click.style
+
+
 def del_rw(_func: Callable, name: str, _exc: Exception) -> None:
     """Attempt to grant permission to and force deletion of a file.
 
@@ -243,19 +248,23 @@ def clone_git_repo(
     return pathlib.Path(project_path), origin
 
 
-if sys.stdout.isatty():
-    style_ok = partial(click.style, fg="bright_green")
-    style_error = partial(click.style, fg="red", bold=True)
-    style_warning = partial(click.style, fg="bright_yellow")
-else:
-    # If stdout is not a TTY, don't include color - just pass the string back
-    def _style_func(msg: str, *_: Any, **__: Any) -> str:
-        # We define this func and pass it to partial still to preserve
-        # typing integrity and prevent issues when callers expect to be
-        # able to pass the same args as click.style accepts
-        return msg
+def init_styles(options: types.GlobalOptions):
+    global_vars = globals()
+    if options.color is True or (sys.stdout.isatty() and options.color is None):
+        global_vars["style_ok"] = partial(click.style, fg="bright_green")
+        global_vars["style_error"] = partial(click.style, fg="red", bold=True)
+        global_vars["style_warning"] = partial(click.style, fg="bright_yellow")
+    else:
+        # If stdout is not a TTY, don't include color - just pass the string back
+        def _style_func(msg: str, *_: Any, **__: Any) -> str:
+            # We define this func and pass it to partial still to preserve
+            # typing integrity and prevent issues when callers expect to be
+            # able to pass the same args as click.style accepts
+            return msg
 
-    style_ok = style_error = style_warning = partial(_style_func)
+        global_vars["style_ok"] = global_vars["style_error"] = global_vars[
+            "style_warning"
+        ] = partial(_style_func)
 
 
 def fail(msg: str, ctx: click.Context, code: int = 1) -> NoReturn:

@@ -678,9 +678,44 @@ class GeneralUtilTests(unittest.TestCase):
         mock_click.echo.assert_called_once_with(mock_style.return_value, err=True)
 
     @mock.patch("tartufo.util.sys.stdout")
+    def test_style_when_color_is_disabled(self, mock_stdout):
+        mock_stdout.isatty.return_value = True
+        importlib.reload(util)  # Forces sys.stdout.isatty to False
+
+        options = generate_options(GlobalOptions, verbose=0, color=False)
+        util.init_styles(options)
+
+        ok_result = util.style_ok("OK")
+        error_result = util.style_error("ERROR")
+        warning_result = util.style_warning("WARNING")
+
+        self.assertEqual(ok_result, "OK")
+        self.assertEqual(error_result, "ERROR")
+        self.assertEqual(warning_result, "WARNING")
+
+    @mock.patch("tartufo.util.sys.stdout")
+    def test_style_when_color_is_enabled(self, mock_stdout):
+        mock_stdout.isatty.return_value = False
+        importlib.reload(util)  # Forces sys.stdout.isatty to False
+
+        options = generate_options(GlobalOptions, verbose=0, color=True)
+        util.init_styles(options)
+
+        ok_result = util.style_ok("OK")
+        error_result = util.style_error("ERROR")
+        warning_result = util.style_warning("WARNING")
+
+        self.assertEqual(ok_result, "\x1b[92mOK\x1b[0m")
+        self.assertEqual(error_result, "\x1b[31m\x1b[1mERROR\x1b[0m")
+        self.assertEqual(warning_result, "\x1b[93mWARNING\x1b[0m")
+
+    @mock.patch("tartufo.util.sys.stdout")
     def test_style_when_not_a_tty(self, mock_stdout):
         mock_stdout.isatty.return_value = False
         importlib.reload(util)  # Forces sys.stdout.isatty to False
+
+        options = generate_options(GlobalOptions, verbose=0)
+        util.init_styles(options)
 
         ok_result = util.style_ok("OK")
         error_result = util.style_error("ERROR")
@@ -695,6 +730,9 @@ class GeneralUtilTests(unittest.TestCase):
     def test_style_when_is_a_tty(self, mock_stdout):
         mock_stdout.isatty.return_value = True
         importlib.reload(util)  # Forces sys.stdout.isatty to True
+
+        options = generate_options(GlobalOptions, verbose=0)
+        util.init_styles(options)
 
         ok_result = util.style_ok("OK")
         error_result = util.style_error("ERROR")

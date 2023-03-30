@@ -158,6 +158,25 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         self.global_options = options
         self.logger = logging.getLogger(__name__)
 
+    def load_config(self, config_path: str) -> None:
+        """Load 'local' configuration file from target location
+
+        :param config_path: Directory expected to hold configuration file
+        """
+
+        # Look for usable configuration file
+        try:
+            (config_file, data) = config.load_config_from_path(
+                pathlib.Path(config_path)
+            )
+        except (FileNotFoundError, types.ConfigException):
+            # Nothing usable found; nothing to do
+            return
+
+        # Do not reload data if it was already specified using `--config`
+        if config_file.resolve() not in config.REFERENCED_CONFIG_FILES:
+            self.config_data = data
+
     def compute_scaled_entropy_limit(self, maximum_bitrate: float) -> float:
         """Determine low entropy cutoff for specified bitrate
 
@@ -664,6 +683,12 @@ class GitScanner(ScannerBase, abc.ABC):
         # pygit2 1.9.2 and later) fail in docker context otherwise.
         pygit2.option(pygit2.GIT_OPT_SET_OWNER_VALIDATION, 0)
 
+        # Load any configuration file in the target repository. This comes
+        # *BEFORE* load_repo() because that method may rely on configuration data
+        # existing already (for example, to filter out submodules); it's safe
+        # because the caller will already have populated the local working
+        # directory before initializing this object.
+        self.load_config(self.repo_path)
         self._repo = self.load_repo(self.repo_path)
 
     def _iter_diff_index(
@@ -732,6 +757,10 @@ class GitScanner(ScannerBase, abc.ABC):
                 "A likely cause is that a file tree was committed in place of a "
                 "submodule."
             ) from exc
+
+        # FIXME: This is really sketchy, unless we know configuration already is
+        # complete by the time we do this (which will short-circuit any future
+        # re-evaluation). It happens to work now.
         self._excluded_paths = list(set(self.excluded_paths + patterns))
 
     @abc.abstractmethod
@@ -762,16 +791,6 @@ class GitRepoScanner(GitScanner):
         super().__init__(global_options, repo_path)
 
     def load_repo(self, repo_path: str) -> pygit2.Repository:
-        config_file: Optional[pathlib.Path] = None
-        data: MutableMapping[str, Any] = {}
-        try:
-            (config_file, data) = config.load_config_from_path(
-                pathlib.Path(repo_path), traverse=False
-            )
-        except (FileNotFoundError, types.ConfigException):
-            config_file = None
-        if config_file and str(config_file) != self.global_options.config:
-            self.config_data = data
         try:
             repo = pygit2.Repository(repo_path)
             if not repo.is_bare:
@@ -915,10 +934,13 @@ class GitPreCommitScanner(GitScanner):
         super().__init__(global_options, repo_path)
 
     def load_repo(self, repo_path: str) -> pygit2.Repository:
-        repo = pygit2.Repository(repo_path)
-        if not self._include_submodules:
-            self.filter_submodules(repo)
-        return repo
+        try:
+            repo = pygit2.Repository(repo_path)
+            if not self._include_submodules:
+                self.filter_submodules(repo)
+            return repo
+        except git.GitError as exc:
+            raise types.GitLocalException(str(exc)) from exc
 
     @property
     def chunks(self):
@@ -958,6 +980,7 @@ class FolderScanner(ScannerBase):
         self.target = target
         self.recurse = recurse
         super().__init__(global_options)
+        self.load_config(self.target)
 
     @property
     def chunks(self) -> Generator[types.Chunk, None, None]:

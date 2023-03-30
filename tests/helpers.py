@@ -20,6 +20,6 @@ def get_data_path(*added_paths: str) -> Path:
 
 
 def generate_options(option_class: Type[OptionsType], **kwargs) -> OptionsType:
-    option_args = {field.name: None for field in fields(option_class)}
+    option_args = {field.name: None for field in fields(option_class)}  # type: ignore [arg-type]
     option_args.update(kwargs)
     return option_class(**option_args)  # type: ignore

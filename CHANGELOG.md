@@ -4,6 +4,19 @@ vX.X.X - Mar 3 2023
 Features:
 * [#455](https://github.com/godaddy/tartufo/pull/455) - Update documentation to fix incorrect wording
 * [#458](https://github.com/godaddy/tartufo/pull/458) - Adds `--exclude-regex-patterns` to allow for regex-based exclusions
+* [#479](https://github.com/godaddy/tartufo/pull/479) - Remove upward traversal logic for config discovery
+
+Bug fixes:
+* [#467](https://github.com/godaddy/tartufo/issues/467) - Multiple fixes to configuration
+  file processing:
+  - If multiple configuration files were specified, only the last was processed
+    and no error or warning was generated. Now files are processed in order.
+  - When multiple configuration files are specified, list-valued parameters are
+    concatenated and single-valued parameters are overwritten by the last file
+    that defines them.
+  - Configuration files located in the target of a `scan-folder` operation were
+    ignored; now they are located and processed in the same manner as for a
+    `scan-local-repo` or `scan-remote-repo` operation.
 
 v4.0.1 - Mar 1 2023
 --------------------
