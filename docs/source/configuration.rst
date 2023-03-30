@@ -23,7 +23,7 @@ relative to the current working directory. List-valued directives (such as
 Configuration Discovery
 -----------------------
 
-``tartufo`` will look for a configuration file in the scan target
+By default, ``tartufo`` will look for a configuration file in the scan target
 repository or folder. It looks first for ``tartufo.toml``, and if that does not
 exist, then ``pyproject.toml``. The latter is searched for as a matter of
 convenience for Python projects, such as ``tartufo`` itself. This file must
