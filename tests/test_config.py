@@ -189,17 +189,6 @@ class LoadConfigFromPathTests(unittest.TestCase):
         ):
             config.load_config_from_path(self.data_dir)
 
-    def test_parent_directory_not_checked_if_traverse_is_false(self):
-        with self.assertRaisesRegex(
-            FileNotFoundError,
-            f"Could not find config file in {self.data_dir / 'config'}.".replace(
-                "\\", "\\\\"
-            ),
-        ):
-            config.load_config_from_path(
-                self.data_dir / "config", "pyproject.toml", False
-            )
-
     @mock.patch("tomlkit.loads")
     def test_config_keys_are_normalized(self, mock_load: mock.MagicMock):
         mock_load.return_value = {"tool": {"tartufo": {"--repo-path": "."}}}

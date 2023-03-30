@@ -3,6 +3,7 @@ vX.X.X - Mar 3 2023
 
 Features:
 * [#455](https://github.com/godaddy/tartufo/pull/455) - Update documentation to fix incorrect wording
+* [#479](https://github.com/godaddy/tartufo/pull/479) - Remove upward traversal logic for config discovery
 
 Bug fixes:
 * [#467](https://github.com/godaddy/tartufo/issues/467) - Multiple fixes to configuration
