@@ -707,6 +707,7 @@ class GeneralUtilTests(unittest.TestCase):
 
     @mock.patch("tartufo.util.blake2s")
     def test_signature_is_generated_with_snippet_and_filename(self, mock_hash):
+        util.generate_signature.cache_clear()
         util.generate_signature("foo", "bar")
         mock_hash.assert_called_once_with(b"foo$$bar")
 
