@@ -14,7 +14,8 @@ You can `tell tartufo what config file to use
 <usage.html#cmdoption-tartufo-config>`__ by specifying one or more configuration
 files on the command line. Each file is located and processed in order. When
 conflicting directives are provided in different files, the value in the last
-file processed takes precedence. List-valued directives (such as
+file processed takes precedence. Paths specified using --config are interpreted
+relative to the current working directory. List-valued directives (such as
 ``exclude-path-patterns``) that are present in multiple files are concatenated.
 
 .. _configuration-discovery:
