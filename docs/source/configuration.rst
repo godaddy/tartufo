@@ -265,6 +265,56 @@ match-type   No       String ("search" or "match")  Whether to perform a `search
 scope        No       String ("word" or "line")    Whether to match against the current word or full line of text
 ============ ======== ============================ ==============================================================
 
+.. regex-exclusion-patterns:
+
+Regex Exclusion Patterns
+++++++++++++++++++++++++
+
+Regex scans can produce false positive matches such as environment variables in
+URLs. To avoid these false positives, you can use the
+``exclude-regex-patterns`` configuration option. These patterns will be
+applied to and matched against any strings flagged by regex pattern checks. As
+above, this directive utilizes an `array of tables`_, enabling two forms:
+
+Option 1:
+
+.. code-block:: toml
+
+    [tool.tartufo]
+    exclude-regex-patterns = [
+        {path-pattern = 'products_.*\.txt', pattern = '^SK[\d]{16,32}$', reason = 'SKU pattern that resembles Twilio API Key'},
+        {path-pattern = '\.github/workflows/.*\.yaml', pattern = 'https://\${\S+}:\${\S+}@\S+', reason = 'URL with env variables for auth'},
+    ]
+
+Option 2:
+
+.. code-block:: toml
+
+    [[tool.tartufo.exclude-regex-patterns]]
+    path-pattern = 'products_.*\.txt'
+    pattern = '^SK[\d]{16,32}$'
+    reason = 'SKU pattern that resembles Twilio API Key'
+
+    [[tool.tartufo.exclude-regex-patterns]]
+    path-pattern = '\.github/workflows/.*\.yaml'
+    pattern = 'https://\${\S+}:\${\S+}@\S+'
+    reason = 'URL with env variables for auth'
+
+
+There are 4 relevant keys for this directive, as described below. Note that
+regex scans differ from entropy scans, so the exclusion pattern is always
+tested against the offending regex match(es). As a result, there is no
+``scope`` key for this directive.
+
+============ ======== ============================ ==============================================================
+Key          Required Value                        Description
+============ ======== ============================ ==============================================================
+pattern      Yes      Regular expression           The pattern used to check against the match
+path-pattern No       Regular expression           A pattern to specify to what files the exclusion will apply
+reason       No       String                       A plaintext reason the exclusion has been added
+match-type   No       String ("search" or "match")  Whether to perform a `search or match`_ regex operation
+============ ======== ============================ ==============================================================
+
 .. _TOML: https://toml.io/
 .. _array of tables: https://toml.io/en/v1.0.0#array-of-tables
 .. _search or match: https://docs.python.org/3/library/re.html#search-vs-match

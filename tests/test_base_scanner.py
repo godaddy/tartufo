@@ -404,6 +404,122 @@ class RegexScanTests(ScannerTestCase):
         self.assertEqual(issues[0].issue_type, types.IssueType.RegEx)
         self.assertEqual(issues[0].matched_string, "foo")
 
+    @mock.patch("tartufo.scanner.ScannerBase.regex_string_is_excluded")
+    def test_issue_is_not_created_if_regex_string_is_excluded(
+        self, mock_regex_string: mock.MagicMock
+    ):
+        mock_regex_string.return_value = True
+        test_scanner = TestScanner(self.options)
+        test_scanner._rules_regexes = {  # pylint: disable=protected-access
+            Rule(
+                name="foo",
+                pattern=re.compile("foo"),
+                path_pattern=None,
+                re_match_type=MatchType.Match,
+                re_match_scope=None,
+            )
+        }
+        chunk = types.Chunk("foo", "bar", {}, False)
+        issues = list(test_scanner.scan_regex(chunk))
+        mock_regex_string.assert_called_once_with("foo", "bar")
+        self.assertEqual(issues, [])
+
+    @mock.patch("tartufo.scanner.ScannerBase.regex_string_is_excluded")
+    def test_issue_is_returned_if_regex_string_is_not_excluded(
+        self, mock_regex_string: mock.MagicMock
+    ):
+        mock_regex_string.return_value = False
+        test_scanner = TestScanner(self.options)
+        test_scanner._rules_regexes = {  # pylint: disable=protected-access
+            Rule(
+                name="foo",
+                pattern=re.compile("foo"),
+                path_pattern=None,
+                re_match_type=MatchType.Match,
+                re_match_scope=None,
+            )
+        }
+        chunk = types.Chunk("foo", "bar", {}, False)
+        issues = list(test_scanner.scan_regex(chunk))
+        mock_regex_string.assert_called_once_with("foo", "bar")
+        self.assertEqual(len(issues), 1)
+        self.assertEqual(issues[0].issue_detail, "foo")
+        self.assertEqual(issues[0].issue_type, types.IssueType.RegEx)
+        self.assertEqual(issues[0].matched_string, "foo")
+
+    def test_regex_string_is_excluded(self):
+        self.options.exclude_regex_patterns = [
+            {
+                "path-pattern": r"docs/.*\.md",
+                "pattern": "f.*",
+            }
+        ]
+        test_scanner = TestScanner(self.options)
+        test_scanner._rules_regexes = {  # pylint: disable=protected-access
+            Rule(
+                name="foo",
+                pattern=re.compile("foo"),
+                path_pattern=None,
+                re_match_type=MatchType.Match,
+                re_match_scope=None,
+            )
+        }
+        excluded = test_scanner.regex_string_is_excluded("barfoo", "docs/README.md")
+        self.assertTrue(excluded)
+
+    def test_regex_string_is_excluded_given_partial_line_match(self):
+        self.options.exclude_regex_patterns = [
+            {"path-pattern": r"docs/.*\.md", "pattern": "line.+?foo"}
+        ]
+        test_scanner = TestScanner(self.options)
+        test_scanner._rules_regexes = {  # pylint: disable=protected-access
+            Rule(
+                name="foo",
+                pattern=re.compile("foo"),
+                path_pattern=None,
+                re_match_type=MatchType.Match,
+                re_match_scope=None,
+            )
+        }
+        excluded = test_scanner.regex_string_is_excluded(
+            "+a line that contains foo", "docs/README.md"
+        )
+        self.assertTrue(excluded)
+
+    def test_regex_string_is_not_excluded(self):
+        self.options.exclude_regex_patterns = [
+            {"path-pattern": r"foo\..*", "pattern": "f.*", "match-type": "match"}
+        ]
+        test_scanner = TestScanner(self.options)
+        test_scanner._rules_regexes = {  # pylint: disable=protected-access
+            Rule(
+                name="foo",
+                pattern=re.compile("foo"),
+                path_pattern=None,
+                re_match_type=MatchType.Match,
+                re_match_scope=None,
+            )
+        }
+        excluded = test_scanner.regex_string_is_excluded("bar", "foo.py")
+        self.assertFalse(excluded)
+
+    def test_regex_string_is_not_excluded_given_different_path(self):
+        self.options.exclude_regex_patterns = [
+            {"path-pattern": r"foo\..*", "pattern": "f.*", "match-type": "match"}
+        ]
+        test_scanner = TestScanner(self.options)
+        test_scanner._rules_regexes = {  # pylint: disable=protected-access
+            Rule(
+                name="foo",
+                pattern=re.compile("foo"),
+                path_pattern=None,
+                re_match_type=MatchType.Match,
+                re_match_scope=None,
+            )
+        }
+        excluded = test_scanner.regex_string_is_excluded("bar", "bar.py")
+        self.assertFalse(excluded)
+
 
 class EntropyManagementTests(ScannerTestCase):
     def setUp(self) -> None:

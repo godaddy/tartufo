@@ -3,6 +3,7 @@ vX.X.X - Mar 3 2023
 
 Features:
 * [#455](https://github.com/godaddy/tartufo/pull/455) - Update documentation to fix incorrect wording
+* [#458](https://github.com/godaddy/tartufo/pull/458) - Adds `--exclude-regex-patterns` to allow for regex-based exclusions
 * [#479](https://github.com/godaddy/tartufo/pull/479) - Remove upward traversal logic for config discovery
 
 Bug fixes:

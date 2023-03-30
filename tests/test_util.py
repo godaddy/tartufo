@@ -270,6 +270,7 @@ class OutputTests(unittest.TestCase):
             output_format=types.OutputFormat.Json.value,
             exclude_signatures=[],
             exclude_entropy_patterns=[],
+            exclude_regex_patterns=[],
         )
 
         # We're generating JSON piecemeal, so if we want to be safe we'll recover
@@ -288,6 +289,7 @@ class OutputTests(unittest.TestCase):
                 "excluded_paths": [],
                 "excluded_signatures": [],
                 "exclude_entropy_patterns": [],
+                "exclude_regex_patterns": [],
                 "found_issues": [
                     {
                         "issue_type": "High Entropy",
@@ -334,10 +336,15 @@ class OutputTests(unittest.TestCase):
             "aaaaa::bbbbb",
             "ccccc::ddddd",
         ]
+        exclude_regex_patterns = [
+            "eeeee::fffff",
+            "ggggg::hhhhh",
+        ]
         options = generate_options(
             GlobalOptions,
             output_format=types.OutputFormat.Json.value,
             exclude_entropy_patterns=exclude_entropy_patterns,
+            exclude_regex_patterns=exclude_regex_patterns,
         )
 
         # We're generating JSON piecemeal, so if we want to be safe we'll recover
@@ -360,6 +367,10 @@ class OutputTests(unittest.TestCase):
                 "exclude_entropy_patterns": [
                     "aaaaa::bbbbb",
                     "ccccc::ddddd",
+                ],
+                "exclude_regex_patterns": [
+                    "eeeee::fffff",
+                    "ggggg::hhhhh",
                 ],
                 "found_issues": [
                     {
@@ -519,6 +530,7 @@ class OutputTests(unittest.TestCase):
             exclude_signatures=[],
             exclude_path_patterns=[],
             exclude_entropy_patterns=[],
+            exclude_regex_patterns=[],
         )
         mock_scanner.global_options = options
         mock_scanner.issues = []
@@ -561,6 +573,7 @@ class OutputTests(unittest.TestCase):
             exclude_signatures=[],
             exclude_path_patterns=[],
             exclude_entropy_patterns=[],
+            exclude_regex_patterns=[],
         )
         mock_scanner.global_options = options
         mock_scanner.issues = []
@@ -602,6 +615,7 @@ class OutputTests(unittest.TestCase):
             exclude_signatures=[],
             exclude_path_patterns=[],
             exclude_entropy_patterns=[],
+            exclude_regex_patterns=[],
         )
         mock_scanner.global_options = options
         issue_1 = scanner.Issue(
@@ -731,6 +745,7 @@ class GeneralUtilTests(unittest.TestCase):
 
     @mock.patch("tartufo.util.blake2s")
     def test_signature_is_generated_with_snippet_and_filename(self, mock_hash):
+        util.generate_signature.cache_clear()
         util.generate_signature("foo", "bar")
         mock_hash.assert_called_once_with(b"foo$$bar")
 

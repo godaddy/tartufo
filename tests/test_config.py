@@ -367,7 +367,8 @@ class CompileRulesTests(unittest.TestCase):
                 {"path-pattern": r"src/.*", "pattern": r"^[a-zA-Z0-9]{26}$"},
                 {"pattern": r"^[a-zA-Z0-9]test$"},
                 {"path-pattern": r"src/.*", "pattern": r"^[a-zA-Z0-9]{26}::test$"},
-            ]
+            ],
+            "entropy",
         )
         self.assertCountEqual(
             rules,
@@ -402,7 +403,28 @@ class CompileRulesTests(unittest.TestCase):
         rules = config.compile_rules(
             [
                 {"pattern": r"^[a-zA-Z0-9]::test$"},
-            ]
+            ],
+            "entropy",
+        )
+        self.assertEqual(
+            rules,
+            [
+                Rule(
+                    None,
+                    re.compile(r"^[a-zA-Z0-9]::test$"),
+                    re.compile(r""),
+                    re_match_type=MatchType.Search,
+                    re_match_scope=Scope.Line,
+                )
+            ],
+        )
+
+    def test_regex_ignores_scope(self):
+        rules = config.compile_rules(
+            [
+                {"pattern": r"^[a-zA-Z0-9]::test$", "scope": "word"},
+            ],
+            "regex",
         )
         self.assertEqual(
             rules,
@@ -421,7 +443,7 @@ class CompileRulesTests(unittest.TestCase):
         with self.assertRaisesRegex(
             types.ConfigException, "Invalid exclude-entropy-patterns: "
         ):
-            config.compile_rules([{"foo": "bar"}])
+            config.compile_rules([{"foo": "bar"}], "entropy")
 
     @mock.patch("tartufo.util.process_issues", new=mock.MagicMock())
     @mock.patch("tartufo.scanner.FolderScanner")
