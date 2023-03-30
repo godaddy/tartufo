@@ -267,7 +267,7 @@ class TartufoCLI(click.MultiCommand):
     is_flag=True,
     default=True,
     show_default=True,
-    help="Enable or disable discovery and use of config file present in the repository or folder being scanned",
+    help="Enable or Disable processing of the config file present in the repository or folder being scanned",
 )
 # The first positional argument here would be a hard-coded version, hence the `None`
 @click.version_option(None, "-V", "--version")

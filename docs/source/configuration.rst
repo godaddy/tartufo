@@ -44,7 +44,7 @@ Consider:
    tartufo --config myconfig.toml scan-local-repo <target_directory>
 
 ``tartufo`` will look for ``myconfig.toml`` in the current directory, and then look for
-either ``tartufo.toml`` or (if not found) ``pyproject.toml`` in the current
+either ``tartufo.toml`` or (if not found) ``pyproject.toml`` in the target
 directory because that is the target of the scan. Directives in, say,
 ``tartufo.toml`` would supersede settings in ``myconfig.toml``.
 
@@ -54,15 +54,14 @@ However:
 
 .. code-block:: shell
 
-   tartufo --config tartufo.toml --config myconfig.toml scan-local-repo <target_directory>
+   tartufo --config <tartufo.toml in target directory> --config myconfig.toml scan-local-repo <target_directory>
 
-will cause ``tartufo`` to read ``tartufo.toml`` in the current directory
+will cause ``tartufo`` to read ``tartufo.toml`` in the target directory
 (assuming it exists), and then ``myconfig.toml``
-as above, and then either ``tartufo.toml`` or ``pyproject.toml`` in the current
-directory (only) because that is the target of the scan.
+as above
 
 If ``tartufo.toml`` exists in the target directory, the effect is that
-``tartufo.toml`` is read first, ``myconfig.toml`` is read second (possibly
+``tartufo.toml`` from target directory is read first, ``myconfig.toml`` from current directory is read second (possibly
 overriding directives), and ``tartufo.toml`` is not read again because it was
 processed already (and any ``pyproject.toml`` is ignored because ``tartufo.toml``
 was found).
