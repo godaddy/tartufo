@@ -12,10 +12,10 @@ configuration file!
 
 You can `tell tartufo what config file to use
 <usage.html#cmdoption-tartufo-config>`__ by specifying one or more configuration
-files on the command line. Each file is located and processed in order. When
-conflicting directives are provided in different files, the value in the last
-file processed takes precedence. Paths specified using --config are interpreted
-relative to the current working directory. List-valued directives (such as
+files on the command line. Paths specified using --config are interpreted
+relative to the current working directory.Each file is located and processed in order.
+When conflicting directives are provided in different files, the value in the last
+file processed takes precedence. List-valued directives (such as
 ``exclude-path-patterns``) that are present in multiple files are concatenated.
 
 .. _configuration-discovery:
@@ -45,7 +45,7 @@ Consider:
 
 ``tartufo`` will look for ``myconfig.toml`` in the current directory, and then look for
 either ``tartufo.toml`` or (if not found) ``pyproject.toml`` in the current
-directory (only) because that is the target of the scan. Directives in, say,
+directory because that is the target of the scan. Directives in, say,
 ``tartufo.toml`` would supersede settings in ``myconfig.toml``.
 
 For purposes of this scan, empty files are considered not to exist.
