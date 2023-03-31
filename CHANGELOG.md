@@ -2,6 +2,7 @@ vX.X.X - Mar 3 2023
 --------------------
 
 Features:
+* [#473](https://github.com/godaddy/tartufo/pull/473) - Introduces new flag `--target-config/--no-target-config` to enable or disable processing of the config file in the repository or folder being scanned
 * [#455](https://github.com/godaddy/tartufo/pull/455) - Update documentation to fix incorrect wording
 * [#458](https://github.com/godaddy/tartufo/pull/458) - Adds `--exclude-regex-patterns` to allow for regex-based exclusions
 * [#479](https://github.com/godaddy/tartufo/pull/479) - Remove upward traversal logic for config discovery

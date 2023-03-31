@@ -87,6 +87,11 @@ Options:
                                   specified multiple times.
   --config FILE                   Read configuration from specified file.
                                   [default: tartufo.toml]
+  --target-config/--no-target-config
+                                  Enable or Disable processing of the config file in the
+                                  repository or folder being scanned
+                                  i.e. config files like tartufo.toml or pyproject.toml
+                                  [default: target-config]
   -q, --quiet / --no-quiet        Quiet mode. No outputs are reported if the
                                   scan is successful and doesn't find any
                                   issues
