@@ -12,8 +12,8 @@ configuration file!
 
 You can `tell tartufo what config file to use
 <usage.html#cmdoption-tartufo-config>`__ by specifying one or more configuration
-files on the command line. Paths specified using --config are interpreted
-relative to the current working directory.Each file is located and processed in order.
+files on the command line. Paths specified using ``--config`` are interpreted
+relative to the current working directory. Each file is located and processed in order.
 When conflicting directives are provided in different files, the value in the last
 file processed takes precedence. List-valued directives (such as
 ``exclude-path-patterns``) that are present in multiple files are concatenated.
@@ -24,10 +24,9 @@ Configuration Discovery
 -----------------------
 
 By default, ``tartufo`` will look for a configuration file in the scan target
-repository or folder. It looks first for ``tartufo.toml``, and if that does not
+repository or folder. It looks for ``tartufo.toml`` first, and if that does not
 exist, then ``pyproject.toml``. The latter is searched for as a matter of
-convenience for Python projects, such as ``tartufo`` itself. This file must
-exist in the repository root directory (or target folder). The discovered
+convenience for Python projects, such as ``tartufo`` itself. The discovered
 configuration file will be processed after configuration files specified on the
 command line, unless it was also specified on the command line -- in which case,
 it will not be read a second time.
@@ -54,19 +53,16 @@ However:
 
 .. code-block:: shell
 
-   tartufo --config <tartufo.toml in target_directory> --config myconfig.toml scan-local-repo <target_directory>
+   tartufo --config tartufo.toml --config myconfig.toml scan-local-repo .
 
-will cause ``tartufo`` to read ``tartufo.toml`` in the target directory
-(assuming it exists), and then ``myconfig.toml``
-as above
+will cause ``tartufo`` to read ``tartufo.toml`` in the current directory
+(assuming it exists, because it the scan target), and then ``myconfig.toml`` as above.
 
-If ``tartufo.toml`` exists in the target directory, the effect is that
-``tartufo.toml`` from target directory is read first, ``myconfig.toml`` from current directory is read second (possibly
-overriding directives), and ``tartufo.toml`` is not read again because it was
-processed already (and any ``pyproject.toml`` is ignored because ``tartufo.toml``
-was found).
+If ``tartufo.toml`` exists, the effect is that ``tartufo.toml`` is read first, ``myconfig.toml``
+is read second (possibly overriding directives), and ``tartufo.toml`` is not read again because it was
+processed already (and any ``pyproject.toml`` is ignored because ``tartufo.toml`` was found).
 
-If any file specified by `--config` doesn't exist, tartufo will raise an error and exit.
+If any file specified by ``--config`` doesn't exist, tartufo will raise an error and exit.
 
 **Note**: This behavior is not applicable to remote repository scans, because the
 remote repository will be cloned to a scratch directory and neither that directory
