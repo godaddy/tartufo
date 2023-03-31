@@ -83,7 +83,7 @@ class GlobalOptions:
       values, while a value of 100 will detect only wholly random values.
     :param color: Enable or disable terminal color. If not provided (default),
       enabled if output is a terminal (TTY).
-    :param target_config: Enable/Disable tartufo config available in scanning repository or folder from being used.
+    :param target_config: Enable/Disable processing of the tartufo config available in scanning repository or folder.
     """
 
     __slots__ = (

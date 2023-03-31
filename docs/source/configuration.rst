@@ -44,8 +44,8 @@ Consider:
    tartufo --config myconfig.toml scan-local-repo <target_directory>
 
 ``tartufo`` will look for ``myconfig.toml`` in the current directory, and then look for
-either ``tartufo.toml`` or (if not found) ``pyproject.toml`` in the target
-directory because that is the target of the scan. Directives in, say,
+either ``tartufo.toml`` or (if not found) ``pyproject.toml`` in the ``target_directory``
+because that is the target of the scan. Directives in, say,
 ``tartufo.toml`` would supersede settings in ``myconfig.toml``.
 
 For purposes of this scan, empty files are considered not to exist.
@@ -54,7 +54,7 @@ However:
 
 .. code-block:: shell
 
-   tartufo --config <tartufo.toml in target directory> --config myconfig.toml scan-local-repo <target_directory>
+   tartufo --config <tartufo.toml in target_directory> --config myconfig.toml scan-local-repo <target_directory>
 
 will cause ``tartufo`` to read ``tartufo.toml`` in the target directory
 (assuming it exists), and then ``myconfig.toml``
