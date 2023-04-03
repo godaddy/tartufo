@@ -146,6 +146,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
     logger: logging.Logger
     _scan_lock: threading.Lock = threading.Lock()
     _excluded_signatures: Optional[Tuple[str, ...]] = None
+    _rule_patterns: Optional[Iterable[Dict[str, str]]] = None
     _config_data: MutableMapping[str, Any] = {}
     _issue_list: List[Issue] = []
     _issue_file: Optional[IO] = None
@@ -333,7 +334,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             try:
                 self._rules_regexes = config.configure_regexes(
                     include_default=self.global_options.default_regexes,
-                    rule_patterns=self.global_options.rule_patterns,
+                    rule_patterns=self.rule_patterns,
                     rules_repo=self.global_options.git_rules_repo,
                     rules_repo_files=self.global_options.git_rules_files,
                 )
@@ -371,6 +372,27 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             self.logger.info("%s excluded - matched excluded paths", file_path)
             return False
         return True
+
+    @cached_property
+    def rule_patterns(self) -> Optional[Iterable[Dict[str, str]]]:
+        """Get a list of patterns to the to search in the target repository or folder being scanned
+
+        :returns: The regular expression patterns to searched in the target
+        @return:
+        """
+        if self._rule_patterns is None:
+            rules: List[Dict[str, str]] = []
+            for rule in tuple(self.global_options.rule_patterns or []) + tuple(
+                self.config_data.get("rule_patterns", [])
+            ):
+                if isinstance(rule, dict):
+                    rules.append(rule)
+                else:
+                    raise types.ConfigException(
+                        f"{type(rule).__name__} pattern is illegal in rule-patterns"
+                    )
+            self._rule_patterns = rules
+        return self._rule_patterns
 
     @cached_property
     def excluded_signatures(self) -> Tuple[str, ...]:
