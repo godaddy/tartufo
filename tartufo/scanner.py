@@ -172,7 +172,7 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
             (config_file, data) = config.load_config_from_path(
                 pathlib.Path(config_path)
             )
-        except (FileNotFoundError, types.ConfigException):
+        except FileNotFoundError:
             # Nothing usable found; nothing to do
             return
 
