@@ -11,9 +11,9 @@ jobs:
     name: Run Tartufo
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
+      - uses: actions/checkout@f095bcc56b7c2baf48f3ac70d6d6782f4f553222
         name: Checkout the repo
-      - uses: godaddy/tartufo-action@67460c4e31678f51f6b88caff403bb37915e983a
+      - uses: godaddy/tartufo-action@d95293febe8f40a6b8ee3ac0acebfc36c3b7e0d1
         name: Run Tartufo
   unit-test:
     name: Unit Tests
@@ -35,7 +35,7 @@ jobs:
       PYTHON: ${{ matrix.python-version }}
       OS: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
+    - uses: actions/checkout@f095bcc56b7c2baf48f3ac70d6d6782f4f553222
       name: Checkout the repo
     - uses: actions/cache@6fd2d4538ca777f67fccddb233cf1a8ff1339012
       name: Cache Poetry & Tox deps
@@ -48,7 +48,7 @@ jobs:
           ${{ matrix.os }}-venvs-${{ matrix.python-version }}
           ${{ matrix.os }}-venvs
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@dec86ecf4e7508d3930ae42abcdc575f35ea490d
+      uses: actions/setup-python@db9987b4c1f10f0404fa60ee629f675fafbd6763
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install Enchant
@@ -75,7 +75,7 @@ jobs:
       matrix:
         toxenv: [pylint, vulture, mypy, black, docs]
     steps:
-    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
+    - uses: actions/checkout@f095bcc56b7c2baf48f3ac70d6d6782f4f553222
       name: Checkout the repo
     - uses: actions/cache@6fd2d4538ca777f67fccddb233cf1a8ff1339012
       name: Cache Poetry & Tox deps
@@ -87,7 +87,7 @@ jobs:
         restore-keys: |
           venvs-${{ matrix.toxenv }}-
     - name: Set up Python
-      uses: actions/setup-python@dec86ecf4e7508d3930ae42abcdc575f35ea490d
+      uses: actions/setup-python@db9987b4c1f10f0404fa60ee629f675fafbd6763
       with:
         python-version: 3.11
     - name: Install dependencies
@@ -102,7 +102,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ tartufo ]
     steps:
-    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
+    - uses: actions/checkout@f095bcc56b7c2baf48f3ac70d6d6782f4f553222
       name: Checkout the repo
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@c252a3bb80dae98127b9329b8aa1ff35b71ae980
