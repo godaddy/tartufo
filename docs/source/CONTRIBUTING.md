@@ -82,6 +82,8 @@ Any open source project relies heavily on code review to improve software qualit
 > change is also responsible for making all necessary review-related changes.
 
 Sometimes code reviews will take longer than you would hope for, especially for larger features. Here are some accepted
+* Ping the change on [slack]. If it is urgent, provide reasons why it is important to get this change landed. Remember
+  that you're asking for valuable time from other professional developers.
 ways to speed up review times for your patches:
 
 * Review other people's changes. If you help out, others will be more willing to do the same for you. Good will is our
@@ -246,6 +248,7 @@ Congratulations, you've just issued a new release for `tartufo`. The automation 
 [bump the version]: https://python-poetry.org/docs/cli/#version
 [issues]: https://github.com/godaddy/tartufo/issues
 [Install Poetry]: https://python-poetry.org/docs/#installation
+[slack]: https://godaddy-oss.slack.com/
 [Poetry Environments]: https://python-poetry.org/docs/managing-environments/
 [our security policy]: https://github.com/godaddy/tartufo/security/policy
 [PEP 8]: https://www.python.org/dev/peps/pep-0008/#a-foolish-consistency-is-the-hobgoblin-of-little-minds
