@@ -7,9 +7,7 @@ project.
 No matter how you want to get involved, we ask that you first learn what's expected of anyone who participates in the
 project by reading these Contribution Guidelines.
 
-**Please Note:** GitHub is for bug reports and contributions primarily - if you have a support question head over
-to [GoDaddy's Open Source Software Slack][slack], or the
-[Tartufo Mailing list].
+If you have a support question utilize the [Tartufo Mailing list].
 
 ## Table of Contents
 
@@ -28,8 +26,8 @@ to [GoDaddy's Open Source Software Slack][slack], or the
 
 ## Answering Questions
 
-One of the most important and immediate ways you can support this project is to answer questions on [Slack][slack]
-, [Github][issues], or the [Tartufo Mailing list]. Whether you're helping a newcomer understand a feature or
+One of the most important and immediate ways you can support this project is to answer questions on
+[Github][issues] or the [Tartufo Mailing list]. Whether you're helping a newcomer understand a feature or
 troubleshooting an edge case with a seasoned developer, your knowledge and experience with Python or security can go a
 long way to help others.
 
@@ -69,7 +67,7 @@ From a practical perspective, contributions are as simple as:
 * Push the changes to your fork and submit a pull request to the 'main' branch of the projects' repository.
 
 If you are interested in making a large change and feel unsure about its overall effect, please make sure to first
-discuss the change and reach a consensus with core contributors through [slack]. Then ask about the best way to go about
+discuss the change and reach a consensus with core contributors. Then ask about the best way to go about
 making the change.
 
 ## Code Review
@@ -88,8 +86,6 @@ ways to speed up review times for your patches:
   currency.
 * Split your change into multiple smaller changes. The smaller your change, the higher the probability that somebody
   will take a quick look at it.
-* Ping the change on [slack]. If it is urgent, provide reasons why it is important to get this change landed. Remember
-  that you're asking for valuable time from other professional developers.
 
 **Note that anyone is welcome to review and give feedback on a change, but only people with commit access to the
 repository can approve it.**
@@ -254,6 +250,5 @@ Congratulations, you've just issued a new release for `tartufo`. The automation 
 [pre-commit]: https://pre-commit.com/
 [PyPI]: http://pypi.org/
 [releases page]: https://github.com/godaddy/tartufo/releases
-[slack]: https://godaddy-oss.slack.com/
 [tox]: https://tox.readthedocs.io/en/latest/
 [Tartufo Mailing list]: https://groups.google.com/g/tartufo-secrets-scanner
