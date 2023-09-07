@@ -1,5 +1,6 @@
 # ![tartufo logo](docs/source/_static/img/tartufo.png)
 
+[![Join Slack](https://img.shields.io/badge/Join%20us%20on-Slack-e01563.svg)](https://www.godaddy.com/engineering/slack/)
 [![ci](https://github.com/godaddy/tartufo/workflows/ci/badge.svg)](https://github.com/godaddy/tartufo/actions?query=workflow%3Aci)
 [![Codecov](https://img.shields.io/codecov/c/github/godaddy/tartufo)](https://codecov.io/gh/godaddy/tartufo)
 [![PyPI](https://img.shields.io/pypi/v/tartufo)](https://pypi.org/project/tartufo/)
