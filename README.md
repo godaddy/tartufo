@@ -137,3 +137,4 @@ the [truffleHog] project.
 [pre-commit]: https://pre-commit.com/
 [truffleHog]: https://github.com/dxa4481/truffleHog
 [![Join Slack](https://img.shields.io/badge/Join%20us%20on-Slack-e01563.svg)](https://www.godaddy.com/engineering/slack/)
+[![Join Slack](https://img.shields.io/badge/Join%20us%20on-Slack-e01563.svg)](https://www.godaddy.com/engineering/slack/)
