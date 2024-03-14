@@ -1,5 +1,5 @@
-vT.B.D - Month D 2023
----------------------
+v5.0.0 - March 14 2024
+----------------------
 
 * [#502](https://github.com/godaddy/tartufo/pull/502) - Drop support for
   python 3.7; this version reached end of support on 27 June 2023.
