@@ -46,7 +46,7 @@ tomlkit = "^0.11.4"
 cached-property = "^1.5.2"
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.0.0"
+black = ">=23,<25"
 coverage = {version = "^7.2.2", extras = ["toml"]}
 mypy = "^1.1.1"
 pre-commit = "*"
