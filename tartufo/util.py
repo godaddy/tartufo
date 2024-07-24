@@ -302,7 +302,7 @@ def extract_commit_metadata(commit: pygit2.Commit, branch_name: str) -> Dict[str
             DATETIME_FORMAT
         ),
         "commit_message": commit.message,
-        "commit_hash": commit.hex,
+        "commit_hash": str(commit.id),
         "branch": branch_name,
     }
 

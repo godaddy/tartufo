@@ -839,7 +839,7 @@ class GitRepoScanner(GitScanner):
                 # If a commit doesn't have a parent skip diff generation since it is the first commit
                 self.logger.debug(
                     "Skipping commit %s because it has no parents",
-                    curr_commit.hex,
+                    str(curr_commit.id),
                 )
                 continue
             diff_hash = hashlib.md5(
@@ -860,7 +860,7 @@ class GitRepoScanner(GitScanner):
 
         # Finally, yield the first commit to the branch
         if curr_commit:
-            tree: pygit2.Tree = self._repo.revparse_single(curr_commit.hex).tree
+            tree: pygit2.Tree = self._repo.revparse_single(str(curr_commit.id)).tree
             tree_diff: pygit2.Diff = tree.diff_to_tree(swap=True)
             iter_diff = self._iter_diff_index(tree_diff)
             for blob, file_path in iter_diff:
