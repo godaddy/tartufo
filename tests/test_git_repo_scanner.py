@@ -443,7 +443,7 @@ class ChunkGeneratorTests(ScannerTestCase):
         # This is all the stuff that happens for yielding the "first commit".
         self.mock_repo.return_value.get.assert_called_once_with("commit-hash")
         revparse = self.mock_repo.return_value.revparse_single
-        revparse.assert_called_once_with(mock_head.hex)
+        revparse.assert_called_once_with(str(mock_head.id))
         tree = revparse.return_value.tree.diff_to_tree
         tree.assert_called_once_with(swap=True)
         self.mock_iter_diff.assert_called_with(tree.return_value)
