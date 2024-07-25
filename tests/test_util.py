@@ -668,13 +668,13 @@ class GeneralUtilTests(unittest.TestCase):
     def test_fail_exits_with_exit_code(self):
         mock_context = mock.MagicMock()
         util.fail("Foo!", mock_context, 42)
-        mock_context.exit.assert_called_once_with(42)
+        mock_context.exit.assert_called_once_with(42)  # pylint: disable=unreachable
 
     @mock.patch("tartufo.util.style_error")
     @mock.patch("tartufo.util.click")
     def test_fail_echos_styled_error_message(self, mock_click, mock_style):
         util.fail("Foo!", mock.MagicMock(), 42)
-        mock_style.assert_called_once_with("Foo!")
+        mock_style.assert_called_once_with("Foo!")  # pylint: disable=unreachable
         mock_click.echo.assert_called_once_with(mock_style.return_value, err=True)
 
     @mock.patch("tartufo.util.sys.stdout")
