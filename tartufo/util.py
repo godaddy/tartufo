@@ -17,11 +17,11 @@ from typing import (
     Dict,
     Generator,
     List,
-    Optional,
     NoReturn,
+    Optional,
+    Pattern,
     Tuple,
     TYPE_CHECKING,
-    Pattern,
 )
 
 import click
@@ -43,14 +43,15 @@ style_error: Callable = click.style
 style_warning: Callable = click.style
 
 
-def del_rw(_func: Callable, name: str, _exc: Exception) -> None:
+def del_rw(_func: Callable, name: str, _exc: Any) -> None:
     """Attempt to grant permission to and force deletion of a file.
 
     This is used as an error handler for `shutil.rmtree`.
 
     :param _func: The original calling function
     :param name: The name of the file to try removing
-    :param _exc: The exception raised originally when the file was removed
+    :param _exc: The exception raised originally when the file was removed; this
+    changed to a tuple in Python 3.12, but we don't use it and don't care
     """
     os.chmod(name, stat.S_IWRITE)
     os.remove(name)
