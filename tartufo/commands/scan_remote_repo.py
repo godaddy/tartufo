@@ -90,5 +90,6 @@ def main(
         util.fail(str(exc), ctx)
     finally:
         if repo_path and repo_path.exists():
+            # pylint: disable=deprecated-argument
             rmtree(str(repo_path), onerror=util.del_rw)
     return scanner  # type: ignore

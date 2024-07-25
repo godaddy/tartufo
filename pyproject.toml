@@ -16,6 +16,7 @@ classifiers = [
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
   "Topic :: Security",
@@ -37,34 +38,34 @@ version = "5.0.0"
 tartufo = "tartufo.cli:main"
 
 [tool.poetry.dependencies]
-GitPython = "^3.1.30"
+GitPython = "^3.1.43"
 pygit2 = "^1.11.0"
-click = "^8.1.0"
+click = "^8.1.7"
 colorama = {version = "*", markers = "sys_platform == 'win32'"}
-python = "^3.8"
-tomlkit = "^0.11.4"
+python = ">=3.8, <3.13"
+tomlkit = "^0.13.0"
 cached-property = "^1.5.2"
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.0.0"
+black = "^24.4.2"
 coverage = {version = "^7.2.2", extras = ["toml"]}
-mypy = "^1.1.1"
+mypy = "^1.11.0"
 pre-commit = "*"
-pylint = "^2.17.1"
-pytest = "^7.0.0"
-pytest-cov = "^4.0.0"
-pytest-sugar = "^0.9.4"
-tox = "^4.4.7"
-vulture = "^2.3"
-types-requests = "^2.25.2"
-types-click = "^7.1.2"
+pylint = "^3.2.6"
+pytest = "^8.3.2"
+pytest-cov = "^5.0.0"
+pytest-sugar = "^1.0.0"
+tox = "^4.16.0"
+vulture = "^2.11"
+types-requests = "^2.32.0.20240712"
+types-click = "^7.1.8"
 cached-property = "^1.5.2"
 
 [tool.poetry.group.docs]
 optional = true
 
 [tool.poetry.group.docs.dependencies]
-recommonmark = "^0.7"
+recommonmark = "^0.7.1"
 sphinx = "^5.0.0"
 sphinx-autodoc-typehints = "^1.12.0"
 sphinx-click = "^4.0.0"
@@ -157,13 +158,13 @@ exclude = '''
     | dist
 )/
 '''
-target-version = ['py36', 'py37', 'py38']
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
 
 [tool.pytest]
 # Not yet supported, see https://github.com/pytest-dev/pytest/issues/1556
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 ignore_missing_imports = true
 
 [tool.pylint.'MESSAGES CONTROL']

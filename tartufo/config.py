@@ -185,7 +185,8 @@ def configure_regexes(
                 rules.update(load_rules_from_file(rules_file))
     finally:
         if cloned_repo:
-            shutil.rmtree(repo_path, onerror=util.del_rw)  # type: ignore
+            # pylint: disable=deprecated-argument
+            shutil.rmtree(str(repo_path), onerror=util.del_rw)
 
     return rules
 
@@ -208,9 +209,9 @@ def load_rules_from_file(rules_file: TextIO) -> Set[Rule]:
             rule = Rule(
                 name=rule_name,
                 pattern=re.compile(rule_definition["pattern"]),
-                path_pattern=re.compile(path_pattern)
-                if path_pattern
-                else EMPTY_PATTERN,
+                path_pattern=(
+                    re.compile(path_pattern) if path_pattern else EMPTY_PATTERN
+                ),
                 re_match_type=MatchType.Match,
                 re_match_scope=None,
             )
