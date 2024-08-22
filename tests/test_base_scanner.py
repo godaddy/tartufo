@@ -323,6 +323,15 @@ class RegexRulesTests(ScannerTestCase):
 
 class SignatureTests(ScannerTestCase):
     @mock.patch("tartufo.util.generate_signature")
+    def test_no_signatures_should_not_generate_signature(
+        self, mock_signature: mock.MagicMock
+    ):
+        test_scanner = TestScanner(self.options)
+        self.options.exclude_signatures = ()
+        mock_signature.assert_not_called()
+        self.assertFalse(test_scanner.signature_is_excluded("bar", "blah"))
+
+    @mock.patch("tartufo.util.generate_signature")
     def test_matched_signatures_are_excluded(self, mock_signature: mock.MagicMock):
         mock_signature.return_value = "foo"
         test_scanner = TestScanner(self.options)
