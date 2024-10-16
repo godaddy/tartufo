@@ -9,10 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@f095bcc56b7c2baf48f3ac70d6d6782f4f553222
-    - name: Set up Python 3.12
+    - name: Set up Python 3.13
       uses: actions/setup-python@db9987b4c1f10f0404fa60ee629f675fafbd6763
       with:
-        python-version: 3.12
+        python-version: 3.13
     - name: Install dependencies
       run:  |
         pip install --upgrade pip
