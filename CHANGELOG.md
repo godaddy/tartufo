@@ -1,3 +1,9 @@
+v5.0.2 - Mmmm DD 2024
+---------------------
+
+* [#539](https://github.com/godaddy/tartufo/pull/539) - Add support for python
+  3.13, and update dependencies to latest versions.
+
 v5.0.1 - July 25 2024
 ---------------------
 
