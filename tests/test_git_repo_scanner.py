@@ -469,7 +469,7 @@ class IterDiffIndexTests(ScannerTestCase):
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
-        diffs = list(test_scanner._iter_diff_index([mock_diff]))
+        diffs = list(test_scanner._iter_diff_index([mock_diff]))  # type: ignore[arg-type]
         self.assertEqual(diffs, [])
         mock_should.assert_called_once()
 
@@ -502,7 +502,7 @@ class IterDiffIndexTests(ScannerTestCase):
         test_scanner = scanner.GitRepoScanner(
             self.global_options, self.git_options, "."
         )
-        diffs = list(test_scanner._iter_diff_index([mock_diff_1, mock_diff_2]))
+        diffs = list(test_scanner._iter_diff_index([mock_diff_1, mock_diff_2]))  # type: ignore[arg-type]
         self.assertEqual(
             diffs,
             [
