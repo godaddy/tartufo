@@ -705,7 +705,7 @@ class GitScanner(ScannerBase, abc.ABC):
         # Disable ownership sanity checks to maintain compatibility with
         # behavior of libgit2 1.4.2 and earlier; later versions (i.e. with
         # pygit2 1.9.2 and later) fail in docker context otherwise.
-        pygit2.option(pygit2.GIT_OPT_SET_OWNER_VALIDATION, 0)
+        pygit2.option(pygit2.GIT_OPT_SET_OWNER_VALIDATION, 0)  # type: ignore[attr-defined]
 
         # Load any configuration file in the target repository. This comes
         # *BEFORE* load_repo() because that method may rely on configuration data
@@ -735,13 +735,13 @@ class GitScanner(ScannerBase, abc.ABC):
             file_path = (
                 delta.new_file.path if delta.new_file.path else delta.old_file.path
             )
-            if delta.status == pygit2.GIT_DELTA_DELETED:
+            if delta.status == pygit2.GIT_DELTA_DELETED:  # type: ignore[attr-defined]
                 self.logger.debug("Skipping as the file was a git delete operation")
                 continue
             if delta.is_binary:
                 self.logger.debug("Binary file skipped: %s", file_path)
                 continue
-            printable_diff: str = patch.text
+            printable_diff: str = patch.text or ""
             if not self.global_options.scan_filenames:
                 # The `printable_diff` contains diff header,
                 # so we need to strip that before analyzing it
@@ -773,7 +773,7 @@ class GitScanner(ScannerBase, abc.ABC):
         self.logger.info("Excluding submodules paths from scan.")
         try:
             for module in repo.listall_submodules():
-                submodule = repo.lookup_submodule(module)
+                submodule = repo.lookup_submodule(module)  # type: ignore[attr-defined]
                 patterns.append(re.compile(f"^{submodule.path}"))
         except AttributeError as exc:
             raise TartufoException(
@@ -825,11 +825,14 @@ class GitRepoScanner(GitScanner):
             raise types.GitLocalException(str(exc)) from exc
 
     def _get_chunks(
-        self, commits: Iterable, already_searched: Set[bytes], branch_name: str
+        self,
+        commits: Iterable[pygit2.Commit],
+        already_searched: Set[bytes],
+        branch_name: str,
     ) -> Generator[types.Chunk, None, None]:
         diff_hash: bytes
-        curr_commit: pygit2.Commit = None
-        prev_commit: pygit2.Commit = None
+        curr_commit: Optional[pygit2.Commit] = None
+        prev_commit: Optional[pygit2.Commit] = None
         for curr_commit in commits:
             try:
                 prev_commit = curr_commit.parents[0]
@@ -847,7 +850,7 @@ class GitRepoScanner(GitScanner):
             ).digest()
             if diff_hash in already_searched:
                 continue
-            diff: pygit2.Diff = self._repo.diff(prev_commit, curr_commit)
+            diff: pygit2.Diff = self._repo.diff(prev_commit, curr_commit)  # type: ignore[attr-defined]
             already_searched.add(diff_hash)
             diff.find_similar()
             for blob, file_path in self._iter_diff_index(diff):
@@ -860,7 +863,7 @@ class GitRepoScanner(GitScanner):
 
         # Finally, yield the first commit to the branch
         if curr_commit:
-            tree: pygit2.Tree = self._repo.revparse_single(str(curr_commit.id)).tree
+            tree: pygit2.Tree = self._repo.revparse_single(str(curr_commit.id)).tree  # type: ignore[attr-defined]
             tree_diff: pygit2.Diff = tree.diff_to_tree(swap=True)
             iter_diff = self._iter_diff_index(tree_diff)
             for blob, file_path in iter_diff:
@@ -882,7 +885,7 @@ class GitRepoScanner(GitScanner):
         try:
             if self.git_options.branch:
                 # Single branch only
-                branch = self._repo.branches.get(self.git_options.branch)
+                branch = self._repo.branches.get(self.git_options.branch)  # type: ignore[attr-defined]
                 if not branch:
                     raise BranchNotFoundException(
                         f"Branch {self.git_options.branch} was not found."
@@ -899,7 +902,7 @@ class GitRepoScanner(GitScanner):
                     # scan not only the locally checked out branches (as provided
                     # by self._repo.listall_branches()), but to also scan all
                     # available remote refs
-                    branches = list(self._repo.branches)
+                    branches = list(self._repo.branches)  # type: ignore[attr-defined]
         except pygit2.GitError as exc:
             raise types.GitRemoteException(str(exc)) from exc
 
@@ -911,13 +914,15 @@ class GitRepoScanner(GitScanner):
         branch_len = len(branches)
         for branch_name in branches:
             self.logger.info("Scanning branch: %s", branch_name)
+            commits: Iterable[pygit2.Commit]
             if branch_name == "HEAD":
-                commits = [self._repo.get(self._repo.head.target)]
+                commits = [self._repo.get(self._repo.head.target)]  # type: ignore[attr-defined]
             else:
-                branch = self._repo.branches.get(branch_name)
+                branch = self._repo.branches.get(branch_name)  # type: ignore[attr-defined]
                 try:
                     commits = self._repo.walk(
-                        branch.resolve().target, pygit2.GIT_SORT_TOPOLOGICAL
+                        branch.resolve().target,
+                        pygit2.GIT_SORT_TOPOLOGICAL,  # type: ignore[attr-defined]
                     )
 
                 except AttributeError:

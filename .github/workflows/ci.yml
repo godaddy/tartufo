@@ -86,7 +86,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@db9987b4c1f10f0404fa60ee629f675fafbd6763
       with:
-        python-version: 3.13
+        python-version: 3.12
     - name: Install dependencies
       run: |
         pip install -U pip
