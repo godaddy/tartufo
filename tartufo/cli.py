@@ -174,6 +174,10 @@ class TartufoCLI(click.MultiCommand):
     "the results of individual runs of tartufo separated.",
 )
 @click.option(
+    "--output-dir-suffix",
+    help="An optional suffix to organize output directories under the main output directory.",
+)
+@click.option(
     "-td",
     "--temp-dir",
     type=click.Path(

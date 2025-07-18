@@ -356,7 +356,18 @@ def process_issues(
         if platform.system().lower() == "windows":  # pragma: no cover
             # Make sure we aren't using illegal characters for Windows folder names
             now = now.replace(":", "")
-        output_dir = pathlib.Path(options.output_dir) / f"tartufo-scan-results-{now}"
+        
+        base_output_dir = pathlib.Path(options.output_dir)
+        
+        # Check for output directory suffix from command line or repository config
+        output_suffix = options.output_dir_suffix
+        if not output_suffix and hasattr(scan, '_config_data'):
+            output_suffix = scan._config_data.get('output_dir_suffix')
+        
+        if output_suffix:
+            output_dir = base_output_dir / output_suffix / f"tartufo-scan-results-{now}"
+        else:
+            output_dir = base_output_dir / f"tartufo-scan-results-{now}"
         output_dir.mkdir(parents=True)
 
     echo_result(options, scan, repo_path, output_dir)

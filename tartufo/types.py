@@ -66,6 +66,7 @@ class GlobalOptions:
       excluded from the list of current findings
     :param output_dir: A directory where detailed findings results will be
       written
+    :param output_dir_suffix: An optional suffix to organize output directories
     :param temp_dir: A directory where temporary files will be written
     :param buffer_size: Maximum number of issues that will be buffered
       on the heap
@@ -98,6 +99,7 @@ class GlobalOptions:
         "exclude_regex_patterns",
         "exclude_signatures",
         "output_dir",
+        "output_dir_suffix",
         "temp_dir",
         "buffer_size",
         "git_rules_repo",
@@ -122,6 +124,7 @@ class GlobalOptions:
     exclude_regex_patterns: Tuple[Dict[str, str], ...]
     exclude_signatures: Tuple[Dict[str, str], ...]
     output_dir: Optional[str]
+    output_dir_suffix: Optional[str]
     temp_dir: Optional[str]
     buffer_size: int
     git_rules_repo: Optional[str]
