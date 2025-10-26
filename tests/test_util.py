@@ -6,7 +6,6 @@ import unittest
 from pathlib import Path
 from unittest import mock
 from unittest.mock import call
-import pytest
 
 import git
 
@@ -14,16 +13,6 @@ from tartufo import scanner, types, util
 from tartufo.types import GlobalOptions, Rule, MatchType, Scope
 
 from tests.helpers import generate_options
-
-try:
-    from importlib import metadata  # type: ignore
-
-    importlib_metadata = None  # pylint: disable=invalid-name
-except ImportError:
-    # Python < 3.8
-    import importlib_metadata  # type: ignore
-
-    metadata = None  # type: ignore # pylint: disable=invalid-name
 
 
 class GitTests(unittest.TestCase):
@@ -643,18 +632,6 @@ class OutputTests(unittest.TestCase):
             any_order=False,
         )
 
-    @pytest.mark.skipif(
-        importlib_metadata is None,
-        reason="importlib_metadata not available",  # pylint: disable=used-before-assignment
-    )
-    def test_get_version_importlib_metadata(self):
-        with mock.patch("importlib_metadata.version") as mock_version:
-            mock_version.return_value = "1.0.0"
-
-            actual = util.get_version()
-            self.assertEqual(actual, "1.0.0")
-
-    @pytest.mark.skipif(metadata is None, reason="importlib.metadata not available")
     def test_get_version_importlib(self):
         with mock.patch("importlib.metadata.version") as mock_version:
             mock_version.return_value = "1.0.0"
