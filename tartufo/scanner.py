@@ -705,7 +705,7 @@ class GitScanner(ScannerBase, abc.ABC):
         # Disable ownership sanity checks to maintain compatibility with
         # behavior of libgit2 1.4.2 and earlier; later versions (i.e. with
         # pygit2 1.9.2 and later) fail in docker context otherwise.
-        pygit2.option(pygit2.GIT_OPT_SET_OWNER_VALIDATION, 0)  # type: ignore[attr-defined]
+        pygit2.option(pygit2.GIT_OPT_SET_OWNER_VALIDATION, 0)  # type: ignore[attr-defined,call-overload]
 
         # Load any configuration file in the target repository. This comes
         # *BEFORE* load_repo() because that method may rely on configuration data
@@ -916,13 +916,13 @@ class GitRepoScanner(GitScanner):
             self.logger.info("Scanning branch: %s", branch_name)
             commits: Iterable[pygit2.Commit]
             if branch_name == "HEAD":
-                commits = [self._repo.get(self._repo.head.target)]  # type: ignore[attr-defined]
+                commits = [self._repo.get(self._repo.head.target)]  # type: ignore[attr-defined,list-item]
             else:
                 branch = self._repo.branches.get(branch_name)  # type: ignore[attr-defined]
                 try:
                     commits = self._repo.walk(
                         branch.resolve().target,
-                        pygit2.GIT_SORT_TOPOLOGICAL,  # type: ignore[attr-defined]
+                        pygit2.GIT_SORT_TOPOLOGICAL,  # type: ignore[attr-defined,arg-type]
                     )
 
                 except AttributeError:

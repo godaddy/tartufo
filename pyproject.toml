@@ -18,6 +18,7 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
   "Topic :: Security",
@@ -46,7 +47,7 @@ pygit2 = [
 ]
 click = "^8.1.7"
 colorama = {version = "*", markers = "sys_platform == 'win32'"}
-python = ">=3.8, <3.14"
+python = ">=3.8"
 tomlkit = "^0.13.0"
 cached-property = "^1.5.2"
 
