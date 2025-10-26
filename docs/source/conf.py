@@ -34,7 +34,7 @@ if now.year > 2019:
 copyright = "%s, GoDaddy.com, LLC" % copyright_year
 
 with open(str(DOCS_PATH.parent / "pyproject.toml"), encoding="utf-8") as filename:
-    version = tomlkit.loads(filename.read())["tool"]["poetry"]["version"]  # type: ignore
+    version = tomlkit.loads(filename.read())["project"]["version"]  # type: ignore
 release = version
 
 # -- General configuration ---------------------------------------------------
