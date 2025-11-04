@@ -180,9 +180,10 @@ ignore_missing_imports = true
 # R0903: Too few public methods
 # R0912: Too many branches
 # R0914: Too many local variables
+# R0917: Too many positional arguments
 # W0511: FIXME
 # E1136: Unsubscriptable object (Disabled due to Python 3.9 compatibility bug in pylint)
-disable = "C0111,C0301,C0302,R0801,R0903,R0912,R0914,W0511,E1136,W1514"
+disable = "C0111,C0301,C0302,R0801,R0903,R0912,R0914,R0917,W0511,E1136,W1514"
 
 [tool.pylint.BASIC]
 module-rgx = "(([a-z_][a-z0-9_]*)|([a-z][a-zA-Z0-9]+))$"
