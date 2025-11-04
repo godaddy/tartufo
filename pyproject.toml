@@ -39,7 +39,7 @@ maintainers = [{ name = "GoDaddy", email = "oss@godaddy.com" }]
 name = "tartufo"
 readme = "README.md"
 requires-python = ">=3.10"
-version = "5.0.2"
+version = "6.0.0"
 
 [project.scripts]
 tartufo = "tartufo.cli:main"

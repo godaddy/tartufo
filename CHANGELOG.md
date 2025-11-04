@@ -1,3 +1,21 @@
+v6.0.0 - November 4 2025
+------------------------
+
+The version bump is solely to indicate removal of support for EOL python versions.
+Users with python older than 3.10 should stick with the previous version. Users
+who want to use python 3.14 should upgrade; others won't care.
+
+Features:
+* [#547](https://github.com/godaddy/tartufo/pull/547)
+  - Drop support for python 3.8; this version reached end of support on 7 October 2024
+  - Add support for python 3.14
+  - Convert to poetry 2.x
+* [#548](https://github.com/godaddy/tartufo/pull/548)
+  - Drop support for python 3.9; this version reached end of support on 31 October 2025
+  - The container image is now based on python 3.13
+
+Additionally, several library dependencies have been updated.
+
 v5.0.2 - October 17 2024
 ------------------------
 
