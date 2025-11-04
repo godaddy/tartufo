@@ -6,11 +6,11 @@ import platform
 import stat
 import sys
 import tempfile
-from types import ModuleType
 import uuid
 from datetime import datetime
 from functools import lru_cache, partial
 from hashlib import blake2s
+from importlib import metadata
 from typing import (
     Any,
     Callable,
@@ -58,16 +58,7 @@ def del_rw(_func: Callable, name: str, _exc: Any) -> None:
 
 
 def get_version() -> str:
-    metadata: Optional[ModuleType]
-    try:
-        from importlib import metadata  # type: ignore # pylint: disable=import-outside-toplevel
-    except ImportError:
-        # Python < 3.8
-        import importlib_metadata as metadata  # type: ignore # pylint: disable=import-outside-toplevel
-
-    if metadata:
-        return metadata.version(__package__)  # type: ignore
-    return ""
+    return metadata.version(__package__)
 
 
 def echo_report_result(scanner: "ScannerBase", now: str):
