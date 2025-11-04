@@ -1,8 +1,8 @@
-FROM python:3.11-slim as base
+FROM python:3.13-slim AS base
 
 WORKDIR /app
 
-FROM base as builder
+FROM base AS builder
 
 ENV PIP_DEFAULT_TIMEOUT=100 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
@@ -18,7 +18,7 @@ RUN . /venv/bin/activate && poetry install --no-root --only=main
 COPY . .
 RUN poetry build -f wheel && /venv/bin/pip install dist/*.whl
 
-FROM base as final
+FROM base AS final
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y git openssh-client
 COPY --from=builder /venv /venv
