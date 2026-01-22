@@ -425,9 +425,13 @@ class ScannerBase(abc.ABC):  # pylint: disable=too-many-instance-attributes
         :param blob: The piece of data which is being scanned
         :param file_path: The path and file name for the data being scanned
         """
+        excluded_signatures = self.excluded_signatures
+        if len(excluded_signatures) == 0:
+            return False
+
         return (
             blob
-            in self.excluded_signatures  # Signatures themselves pop up as entropy matches
+            in excluded_signatures  # Signatures themselves pop up as entropy matches
             or util.generate_signature(blob, file_path) in self.excluded_signatures
         )
 
