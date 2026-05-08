@@ -24,7 +24,7 @@ classifiers = [
   "Typing :: Typed",
 ]
 dependencies = [
-  'GitPython>=3.1.43,<4.0.0',
+  'GitPython>=3.1.49,<4.0.0',
   'pygit2>=1.16.0,<2.0.0; python_version < "3.11"',
   'pygit2>=1.19.0,<2.0.0; python_version >= "3.11"',
   'click>=8.1.7,<9.0.0',
