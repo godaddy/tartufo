@@ -369,15 +369,13 @@ class UpdateSignaturesTests(TestCase):
 
     def test_write_updated_signatures(self) -> None:
         file_name = Path("test.toml")
-        initial_file_content = textwrap.dedent(
-            """[tool.tartufo]
+        initial_file_content = textwrap.dedent("""[tool.tartufo]
             exclude-signatures = [
                 {signature = '123'},
                 {signature = '456'},
                 {signature = '789'}
             ]
-            """
-        )
+            """)
 
         expected_deprecations: Set[Sequence[str]] = set()
         expected_deprecations.update((("123", "abc"), ("456", "def"), ("789", "ghi")))

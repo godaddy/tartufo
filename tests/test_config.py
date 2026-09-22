@@ -161,19 +161,19 @@ class LoadConfigFromPathTests(unittest.TestCase):
         return super().setUp()
 
     def test_pyproject_toml_is_discovered_if_present(self):
-        (config_path, _) = config.load_config_from_path(self.data_dir)
+        config_path, _ = config.load_config_from_path(self.data_dir)
         self.assertEqual(config_path, self.data_dir / "pyproject.toml")
 
     def test_tartufo_toml_is_discovered_if_present(self):
-        (config_path, _) = config.load_config_from_path(self.data_dir / "config")
+        config_path, _ = config.load_config_from_path(self.data_dir / "config")
         self.assertEqual(config_path, self.data_dir / "config" / "tartufo.toml")
 
     def test_prefer_tartufo_toml_config_if_both_are_present(self):
-        (config_path, _) = config.load_config_from_path(self.data_dir / "multiConfig")
+        config_path, _ = config.load_config_from_path(self.data_dir / "multiConfig")
         self.assertEqual(config_path, self.data_dir / "multiConfig" / "tartufo.toml")
 
     def test_specified_file_gets_read(self):
-        (config_path, _) = config.load_config_from_path(
+        config_path, _ = config.load_config_from_path(
             self.data_dir / "config", "other_config.toml"
         )
         self.assertEqual(config_path, self.data_dir / "config" / "other_config.toml")
@@ -192,7 +192,7 @@ class LoadConfigFromPathTests(unittest.TestCase):
     @mock.patch("tomlkit.loads")
     def test_config_keys_are_normalized(self, mock_load: mock.MagicMock):
         mock_load.return_value = {"tool": {"tartufo": {"--repo-path": "."}}}
-        (_, data) = config.load_config_from_path(self.data_dir)
+        _, data = config.load_config_from_path(self.data_dir)
         self.assertEqual(data, {"repo_path": "."})
 
 

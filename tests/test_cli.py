@@ -10,7 +10,6 @@ from tartufo import cli, scanner, types
 from tests import helpers
 from tests.commands import foo as command_foo
 
-
 FakeFile = namedtuple("FakeFile", ["name"])
 
 
