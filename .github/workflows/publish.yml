@@ -16,7 +16,7 @@ jobs:
     - name: Install dependencies
       run:  |
         pip install --upgrade pip
-        pip install --upgrade poetry
+        pip install poetry==2.5.1
     - name: Package and publish with Poetry
       run: |
         poetry config pypi-token.pypi $PYPI_TOKEN
