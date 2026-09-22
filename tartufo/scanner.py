@@ -731,6 +731,8 @@ class GitScanner(ScannerBase, abc.ABC):
         :param diff: The diff index / commit to be iterated over
         """
         for patch in diff:
+            if patch is None:
+                continue
             delta: pygit2.DiffDelta = patch.delta
             file_path = (
                 delta.new_file.path if delta.new_file.path else delta.old_file.path
