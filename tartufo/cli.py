@@ -10,7 +10,6 @@ import click
 
 from tartufo import config, scanner, types, util
 
-
 PLUGIN_DIR = pathlib.Path(__file__).parent / "commands"
 PLUGIN_MODULE = "tartufo.commands"
 
