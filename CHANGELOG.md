@@ -1,3 +1,35 @@
+v6.0.1 - September 29 2026
+--------------------------
+
+Bug fixes:
+* [41e3a71](https://github.com/godaddy/tartufo/commit/41e3a71640c0ceb5765d7bce82d0cc1fdeda3329)
+  - Skip `None` patches when iterating a pygit2 `Diff`, fixing compatibility
+    with newer pygit2/mypy stubs.
+
+Security:
+* [#567](https://github.com/godaddy/tartufo/pull/567) - Enable SSH host-key
+  verification in the Docker image. The image previously disabled host-key
+  checks (`StrictHostKeyChecking=no` with `UserKnownHostsFile=/dev/null`); it
+  now uses `accept-new` so first connections still work non-interactively while
+  host-key changes are rejected. Optional read-only `known_hosts` mounting
+  for pinning trusted hosts is documented.
+* [#561](https://github.com/godaddy/tartufo/pull/561) - Bump `GitPython` from
+  3.1.43 to 3.1.59 (security releases), and require `pygit2>=1.20.1` on
+  Python 3.11+ for Python 3.14 binary wheels.
+* [#565](https://github.com/godaddy/tartufo/pull/565) - Resolve Dependabot
+  alerts for `black`, `pytest`, `idna`, and `urllib3`; run Black/lint
+  tox environments on Python 3.14.
+
+Additionally, several other library dependencies have been updated, and Poetry
+has been bumped to 2.5.1 ([#550](https://github.com/godaddy/tartufo/pull/550),
+[#551](https://github.com/godaddy/tartufo/pull/551),
+[#552](https://github.com/godaddy/tartufo/pull/552),
+[#553](https://github.com/godaddy/tartufo/pull/553),
+[#554](https://github.com/godaddy/tartufo/pull/554),
+[#556](https://github.com/godaddy/tartufo/pull/556),
+[#557](https://github.com/godaddy/tartufo/pull/557),
+[#564](https://github.com/godaddy/tartufo/pull/564)).
+
 v6.0.0 - November 4 2025
 ------------------------
 
