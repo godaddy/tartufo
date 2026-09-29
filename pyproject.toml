@@ -81,6 +81,7 @@ requires-poetry = ">=2.0"
 cleanup = true
 entropy = true
 exclude-path-patterns = [
+    {path-pattern = 'CHANGELOG.md', reason = 'Excluding CHANGELOG.md from being scanned'},
     {path-pattern = 'poetry\.lock', reason = 'Excluding poetry lock file from being scanned'},
     {path-pattern = 'pyproject\.toml', reason = 'Excluding toml file from being scanned'},
     {path-pattern = 'tox\.ini', reason = 'There are no secrets in this file'},
