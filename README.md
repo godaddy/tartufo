@@ -1,5 +1,8 @@
 # ![tartufo logo](docs/source/_static/img/tartufo.png)
 
+> [!WARNING]
+> This project is not actively maintained anymore.
+
 [![ci](https://github.com/godaddy/tartufo/workflows/ci/badge.svg)](https://github.com/godaddy/tartufo/actions?query=workflow%3Aci)
 [![Codecov](https://img.shields.io/codecov/c/github/godaddy/tartufo)](https://codecov.io/gh/godaddy/tartufo)
 [![PyPI](https://img.shields.io/pypi/v/tartufo)](https://pypi.org/project/tartufo/)
