@@ -1,2 +1,4 @@
 [core]
-	sshCommand = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=ERROR"
+	# Verify SSH host keys: trust-on-first-use, then reject any key change.
+	# Mount your own known_hosts at /root/.ssh/known_hosts to pin hosts.
+	sshCommand = "ssh -o StrictHostKeyChecking=accept-new -o LogLevel=ERROR"

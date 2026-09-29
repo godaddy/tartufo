@@ -23,6 +23,8 @@ FROM base AS final
 RUN apt-get update && apt-get upgrade -y && apt-get install -y git openssh-client
 COPY --from=builder /venv /venv
 COPY scripts/docker/gitconfig /root/.gitconfig
+# Home for known_hosts so SSH host keys can be recorded/verified (or mounted in)
+RUN mkdir -p /root/.ssh && chmod 700 /root/.ssh
 
 WORKDIR /git
 
