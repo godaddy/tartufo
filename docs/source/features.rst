@@ -98,6 +98,23 @@ When using Docker Desktop for Mac, use ``/run/host-services/ssh-auth.sock`` as
 both source and target, then point the environment variable ``SSH_AUTH_SOCK`` to
 this same location:
 
+The image verifies SSH host keys using ``StrictHostKeyChecking=accept-new``:
+a host seen for the first time is recorded, and any later key change is
+rejected. Because the container is ephemeral, mount your own ``known_hosts``
+file read-only to pin the hosts you trust:
+
+.. code-block:: sh
+
+    $ docker run --rm -v "/path/to/my/repo:/git" \
+      -v $SSH_AUTH_SOCK:/agent -e SSH_AUTH_SOCK=/agent \
+      -v "$HOME/.ssh/known_hosts:/root/.ssh/known_hosts:ro" \
+      godaddy/tartufo scan-remote-repo git@github.com:godaddy/tartufo.git
+
+Mounting ``known_hosts`` does not change how unknown hosts are treated: they
+are still accepted on first use. A read-only mount also means new keys cannot
+be written back, so register the host on the host machine first (for example
+with ``ssh-keyscan``) rather than mounting the file read-write.
+
 Scanning a Folder
 +++++++++++++++++++++++++++
 
